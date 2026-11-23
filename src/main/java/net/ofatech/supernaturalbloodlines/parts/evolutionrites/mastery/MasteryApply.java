@@ -3,6 +3,7 @@ package net.ofatech.supernaturalbloodlines.parts.evolutionrites.mastery;
 import io.github.manasmods.manascore.skill.api.ManasSkillInstance;
 import io.github.manasmods.manascore.skill.api.SkillAPI;
 import io.github.manasmods.tensura.ability.TensuraSkill;
+import io.github.manasmods.tensura.util.EnergyHelper;
 import net.minecraft.server.level.ServerPlayer;
 import net.ofatech.supernaturalbloodlines.core.evolution.MasteryRules;
 import net.ofatech.supernaturalbloodlines.parts.evolutionrites.EvoSkills;
@@ -29,8 +30,11 @@ public final class MasteryApply {
         double before = inst.getMastery();
         if (EvoSkills.isResistance(inst.getSkill()) && inst.getSkill() instanceof TensuraSkill tensura) {
             // Tensura's own completion of a resistance's learning (mode 0): the new mastery is min(old + points, 0)
+            // Tensura charges its own price inside its unlock listener, which may run before another listener's veto: a refused completion gives it back
+            double ep = EnergyHelper.getBaseMaxEP(target);
             boolean went = tensura.addLearnPoint(inst, target, 0, MasteryRules.POINTS);
             if (!went || inst.getMastery() < 0) {
+                EnergyHelper.setBaseMaxEP(target, ep);
                 inst.setMastery(before);
                 SkillAPI.getSkillsFrom(target).markDirty();
                 return Result.VETOED;

@@ -19,7 +19,8 @@ public final class EvolutionCommandGameTests {
         var server = helper.getLevel().getServer();
         CommandSourceStack source = server.createCommandSourceStack();
         ParseResults<CommandSourceStack> parse = server.getCommands().getDispatcher().parse(command, source);
-        return !parse.getReader().canRead() && parse.getExceptions().isEmpty() && parse.getContext().build(command).getCommand() != null;
+        // a redirect (/sb bloodline) runs the command of the last child context, not the first
+        return !parse.getReader().canRead() && parse.getExceptions().isEmpty() && parse.getContext().build(command).getLastChild().getCommand() != null;
     }
 
     @GameTest(template = "empty", templateNamespace = NS)

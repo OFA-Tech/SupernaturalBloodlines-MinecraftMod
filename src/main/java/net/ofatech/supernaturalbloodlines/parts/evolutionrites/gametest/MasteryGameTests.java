@@ -155,7 +155,9 @@ public final class MasteryGameTests {
             work(helper, Tier.COMMON, caster);
             helper.assertTrue(inst.getMastery() == 0, "mastery is " + inst.getMastery() + "; " + target.heard());
             helper.assertTrue(has(target, "tensura:corrosion_resistance"), "the resistance is gone");
-            helper.assertTrue(Math.abs(EnergyHelper.getBaseMaxEP(target) - (EP - 100_000)) < 1, "EP is " + EnergyHelper.getBaseMaxEP(target));
+            // the rite's 100,000, and whatever Tensura's own completion of a resistance's learning takes for itself (it runs Tensura's path, so its small cost applies)
+            double paid = EP - EnergyHelper.getBaseMaxEP(target);
+            helper.assertTrue(paid >= 100_000 && paid < 101_000, "EP paid is " + paid);
             // a second rite on it: the choice is refused, it is done
             helper.assertTrue(MasteryChoice.choose(target, ResourceLocation.parse("tensura:corrosion_resistance")).orElse(null) == MasteryRules.Reason.ALREADY,
                     "a finished resistance could be chosen again");
@@ -535,18 +537,6 @@ public final class MasteryGameTests {
         helper.succeed();
     }
 
-    /** The first Ultimate skill of Tensura itself (a skill the rite must be able to master, found by its type, not by a name). */
-    private static String anUltimate(GameTestHelper helper) {
-        for (var key : io.github.manasmods.manascore.skill.api.SkillAPI.getSkillRegistry().getIds()) {
-            if (key.getNamespace().equals("tensura") && EvoSkills.skill(key).map(EvoSkills::tierOf).orElse(Tier.COMMON) == Tier.ULTIMATE
-                    && !EvolutionRitesConfig.masteryRefusedSkills().contains(key.toString())) {
-                return key.toString();
-            }
-        }
-        helper.fail("Tensura has no Ultimate skill in the registry: the Ultimate rite cannot be tested");
-        return "";
-    }
-
     @GameTest(template = "empty", templateNamespace = NS)
     public static void anUltimateIsMasteredInAnEclipseAndNotOnAPlainFullMoon(GameTestHelper helper) {
         if (noRite(helper)) {
@@ -555,7 +545,9 @@ public final class MasteryGameTests {
         RecordingPlayer caster = performer(helper, Species.WITCH);
         RecordingPlayer target = onTheCircle(helper, true, EP);
         try {
-            String id = anUltimate(helper);
+            // Tensura itself has no Ultimate skill (the addons do): for the test Anti Skill counts as one, which is all the rite looks at
+            EvoSkills.tierHook = skill -> skill.getRegistryName() != null && skill.getRegistryName().toString().equals("tensura:anti_skill") ? Tier.ULTIMATE : null;
+            String id = "tensura:anti_skill";
             ManasSkillInstance inst = give(target, id, 0);
             helper.assertTrue(MasteryChoice.choose(target, ResourceLocation.parse(id)).isEmpty(), "could not choose " + id);
             atNight(helper, true, () -> start(helper, rite(Tier.ULTIMATE), caster, items(Tier.ULTIMATE)));
@@ -566,11 +558,11 @@ public final class MasteryGameTests {
             helper.assertTrue(Math.abs(EnergyHelper.getBaseMaxEP(target) - (EP - 2_000_000)) < 1, "EP is " + EnergyHelper.getBaseMaxEP(target));
             helper.assertTrue(dropped(helper, "minecraft:nether_star") == 0, "a good rite gave the ingredients back");
         } finally {
+            EvoSkills.tierHook = null;
             clean(helper, caster, target);
         }
         helper.succeed();
     }
-
     /** A resistance's learning goes through Tensura's own completion, so a listener that vetoes the unlock stops it: nothing is taken, the old mastery is back. */
     @GameTest(template = "empty", templateNamespace = NS)
     public static void aVetoOnAResistanceIsRefusedAndNothingIsTaken(GameTestHelper helper) {
@@ -581,9 +573,9 @@ public final class MasteryGameTests {
         RecordingPlayer target = onTheCircle(helper, true, EP);
         SkillEvents.UnlockSkillEvent veto = (inst, entity, msg) ->
                 inst.getSkillId().toString().equals("tensura:corrosion_resistance") ? EventResult.interruptFalse() : EventResult.pass();
-        SkillEvents.UNLOCK_SKILL.register(veto);
         try {
             ManasSkillInstance inst = give(target, "tensura:corrosion_resistance", -100);
+            SkillEvents.UNLOCK_SKILL.register(veto); // after the grant: the listener must stop the rite's completion, not the test's own grant
             helper.assertTrue(MasteryChoice.choose(target, ResourceLocation.parse("tensura:corrosion_resistance")).isEmpty(), "could not choose it");
             clearDropped(helper);
             work(helper, Tier.COMMON, caster);
@@ -661,7 +653,7 @@ public final class MasteryGameTests {
             return;
         }
         RecordingPlayer caster = performer(helper, Species.WITCH);
-        RecordingPlayer target = onTheCircle(helper, true, 1);
+        RecordingPlayer target = onTheCircle(helper, true, 0); // no EP at all: only a cost of exactly 0 lets this through
         try {
             EvolutionRitesConfig.override("mastery_ep_unique", 0.0);
             ManasSkillInstance inst = give(target, "tensura:anti_skill", 0);
@@ -727,12 +719,14 @@ public final class MasteryGameTests {
                 } // the other target chose nothing and does not consent: the answer must be the same
                 clearDropped(helper);
                 EvoTestSupport.clearLying(helper);
+                String heardBefore = target.heard();
                 EvoTestSupport.lay(helper, "minecraft:nether_star", 2, 3);
                 unique(helper, caster, target, stacks("minecraft:nether_star", 1, "minecraft:netherite_ingot", 1));
                 helper.assertTrue(!inst.isMastered(target), "mastered on a short offering");
                 helper.assertTrue(caster.heard().equals(MasteryRiteFactory.SHORT_OFFERING), "sneaking " + sneaking + ": the performer heard " + caster.heard());
-                helper.assertTrue(target.heard().isEmpty(), "sneaking " + sneaking + ": the target heard " + target.heard());
-                helper.assertTrue(EvoTestSupport.lying(helper, "minecraft:nether_star") == 2, "loose items were taken: " + EvoTestSupport.lying(helper, "minecraft:nether_star"));
+                helper.assertTrue(target.heard().equals(heardBefore), "sneaking " + sneaking + ": the target heard " + target.heard());
+                // the 2 laid down, and the 1 star the cancelled rite gave back at the centre
+                helper.assertTrue(EvoTestSupport.lying(helper, "minecraft:nether_star") == 2 + dropped(helper, "minecraft:nether_star"), "loose items were taken: " + EvoTestSupport.lying(helper, "minecraft:nether_star"));
                 helper.assertTrue(dropped(helper, "minecraft:netherite_ingot") == 1, "what the rite took was not given back");
             } finally {
                 EvoTestSupport.clearLying(helper);

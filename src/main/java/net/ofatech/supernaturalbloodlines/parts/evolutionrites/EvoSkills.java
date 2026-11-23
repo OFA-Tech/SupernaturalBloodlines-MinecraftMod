@@ -38,8 +38,16 @@ public final class EvoSkills {
         return SkillAPI.getSkillsFrom(p).getSkill(skill);
     }
 
+    /** A test seam: Tensura itself ships no Ultimate skill (the addons do), so a test can say that one skill counts as an Ultimate. Null in play. */
+    public static volatile java.util.function.Function<ManasSkill, Tier> tierHook = null;
+
     /** The tier of a skill by its Tensura type; a skill that is not a Tensura {@code Skill} counts as Extra. */
     public static Tier tierOf(ManasSkill skill) {
+        var hook = tierHook;
+        Tier forced = hook == null ? null : hook.apply(skill);
+        if (forced != null) {
+            return forced;
+        }
         if (skill instanceof Skill s) {
             return Tier.ofSkillType(s.getType().name(), true);
         }
