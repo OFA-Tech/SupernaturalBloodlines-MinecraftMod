@@ -64,7 +64,7 @@ public final class SpeciesHub {
         List<String> names = new ArrayList<>();
         List<Boolean> hidden = new ArrayList<>();
         ancestors(server, sirelines, sireId, names, hidden);
-        List<HubSocial.Member> pack = werewolves() ? pack(p, server) : List.of();
+        List<HubSocial.Member> pack = pack(p, server);
         List<HubSocial.Person> people = new ArrayList<>();
         sire.filter(n -> !n.isEmpty() && sireId != null).ifPresent(n -> people.add(new HubSocial.Person(n, sireId)));
         sirelines.childrenOf(p.getUUID()).forEach(c -> people.add(new HubSocial.Person(c.name(), c.id())));
@@ -84,9 +84,9 @@ public final class SpeciesHub {
         long now = p.serverLevel().getGameTime();
         List<HubRequests.Request> out = new ArrayList<>();
         tokens(out, HubRequests.Kind.SIRE_CALL, SireCall.requests(), p, server, now);
+        tokens(out, HubRequests.Kind.PACK_INVITE, PackCommand.requests(), p, server, now);
+        tokens(out, HubRequests.Kind.ALLY_INVITE, PackCommand.allyRequests(), p, server, now);
         if (werewolves()) {
-            tokens(out, HubRequests.Kind.PACK_INVITE, PackCommand.requests(), p, server, now);
-            tokens(out, HubRequests.Kind.ALLY_INVITE, PackCommand.allyRequests(), p, server, now);
             PackDuel.board().asked(p.getUUID(), now).ifPresent(d -> {
                 String name = PackAccess.nameOf(server, d.challenger());
                 out.add(new HubRequests.Request(HubRequests.Kind.CHALLENGE, d.challenger(), name == null ? "" : name, "", left(d.expires(), now)));

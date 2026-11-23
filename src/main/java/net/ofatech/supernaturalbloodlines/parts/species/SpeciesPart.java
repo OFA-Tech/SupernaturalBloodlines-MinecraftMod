@@ -121,6 +121,8 @@ public final class SpeciesPart {
         LegacyConfig.register(); // reads the file before NeoForge loads it
         container.registerConfig(ModConfig.Type.COMMON, SpeciesConfig.SPEC, SpeciesConfig.FILE);
         AdminSpecs.register(SpeciesConfig.FILE, SpeciesConfig.SPEC);
+        container.registerConfig(ModConfig.Type.COMMON, net.ofatech.supernaturalbloodlines.parts.species.group.GroupsConfig.SPEC, net.ofatech.supernaturalbloodlines.parts.species.group.GroupsConfig.FILE);
+        AdminSpecs.register(net.ofatech.supernaturalbloodlines.parts.species.group.GroupsConfig.FILE, net.ofatech.supernaturalbloodlines.parts.species.group.GroupsConfig.SPEC);
         net.ofatech.supernaturalbloodlines.parts.species.profile.SpeciesProfiles.register();
         AdminSpecs.choices(SpeciesConfig.FILE + ":species.original_visibility", List.of(SpeciesConfig.LINE_DISCOVERED, SpeciesConfig.LINE_ALWAYS));
         AdminSpecs.choices(SpeciesConfig.FILE + ":species.gene_visibility", List.of(SpeciesConfig.GENES_DISCOVERED, SpeciesConfig.GENES_ALWAYS));
@@ -209,6 +211,7 @@ public final class SpeciesPart {
                         net.ofatech.supernaturalbloodlines.parts.vampirismenchanted.VampirismSupernatural.isWerewolf(p)),
                 net.ofatech.supernaturalbloodlines.parts.species.moon.AwakeningQueue.pending(p),
                 ModList.get().isLoaded("werewolves") ? net.ofatech.supernaturalbloodlines.parts.species.pack.AlphaTrialRiteFactory.noticeOf(p).ordinal() : 0));
+        net.ofatech.supernaturalbloodlines.parts.species.group.GroupsRegistry.registerAlways(); // every group type, with or without Werewolves
         if (ModList.get().isLoaded("werewolves")) {
             net.ofatech.supernaturalbloodlines.parts.species.moon.DelayedAwakening.register();
             FormBlocks.register();
@@ -221,12 +224,9 @@ public final class SpeciesPart {
             TransitionHandler.register();
             GeneAwakening.register();
             GeneHandler.register();
-            PackIndex.register();
+            PackIndex.registerWolf();
             net.ofatech.supernaturalbloodlines.parts.species.pack.PackLeader.register();
             net.ofatech.supernaturalbloodlines.parts.species.pack.PackDuel.register();
-            net.ofatech.supernaturalbloodlines.parts.species.pack.PackAbsence.register();
-            net.ofatech.supernaturalbloodlines.parts.species.pack.party.PartyLink.register();
-            net.ofatech.supernaturalbloodlines.parts.species.pack.AllyProtection.register();
             LineageBackfill.register();
             AlphaBite.register();
             SparkHandler.register(); // after GeneHandler: an awakening comes before the innocent kill that caused it
@@ -245,7 +245,6 @@ public final class SpeciesPart {
             NeoForge.EVENT_BUS.addListener((net.neoforged.neoforge.event.server.ServerStoppedEvent e) -> net.ofatech.supernaturalbloodlines.parts.species.pack.AlphaTrialRiteFactory.LEDGER.clear());
             NeoForge.EVENT_BUS.addListener((RegisterCommandsEvent e) -> net.ofatech.supernaturalbloodlines.parts.species.npc.NpcPackCommand.register(e.getDispatcher()));
             NeoForge.EVENT_BUS.addListener((RegisterCommandsEvent e) -> PackCommand.register(e.getDispatcher()));
-            NeoForge.EVENT_BUS.addListener((PlayerEvent.PlayerLoggedOutEvent e) -> PackCommand.forget(e.getEntity().getUUID()));
             FormControl.register();
             BloodThirst.register();
             Venom.register();

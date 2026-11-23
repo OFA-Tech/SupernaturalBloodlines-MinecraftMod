@@ -30,9 +30,10 @@ public final class AdminEntries {
     public static final String CELESTIALS_FILE = MOD + "-celestials.toml";
     public static final String BOSSES_FILE = MOD + "-bosses.toml";
     public static final String EVOLUTION_RITES_FILE = MOD + "-evolution_rites.toml";
+    public static final String GROUPS_FILE = MOD + "-groups.toml";
 
     /** The section ids, in the order the page lists them. */
-    public static final List<String> SECTIONS = List.of("core", "vampirismTensura", "supernatural", "hud", "artifacts", "species", "speciesTensura", "celestials", "bosses", "evolutionRites");
+    public static final List<String> SECTIONS = List.of("core", "vampirismTensura", "supernatural", "hud", "artifacts", "species", "speciesTensura", "celestials", "bosses", "evolutionRites", "groups");
 
     public static final String RESERVED = "reserved: the key does nothing";
 
@@ -227,6 +228,11 @@ public final class AdminEntries {
         for (String tier : List.of("common", "extra", "unique", "ultimate")) {
             all.add(SettingEntry.of(EVOLUTION_RITES_FILE, er, "mastery_sacrifice_" + tier, LIST));
         }
+        String gr = "groups";
+        for (String key : List.of("groups_enabled", "clans_enabled", "covens_enabled", "open_founding")) {
+            all.add(SettingEntry.of(GROUPS_FILE, gr, key, BOOL));
+        }
+        all.add(SettingEntry.of(GROUPS_FILE, gr, "max_members", INT));
         ALL = List.copyOf(all);
     }
 

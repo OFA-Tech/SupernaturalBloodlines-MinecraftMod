@@ -132,6 +132,12 @@ public final class PackIndex extends SavedData {
      * (not a werewolf) and a co-Alpha live in the index only.
      */
     public static void register() {
+        registerWolf();
+        registerSession();
+    }
+
+    /** The wolf-state sync: Werewolves worlds only. */
+    public static void registerWolf() {
         BloodlineAccess.addListener((p, change) -> {
             WolfState before = change.before().wolf();
             WolfState after = change.after().wolf();
@@ -157,6 +163,10 @@ public final class PackIndex extends SavedData {
                 get(p.serverLevel()).clearFormerAlpha(p.getUUID());
             }
         });
+    }
+
+    /** Login (notices, last seen, dissolved) and logout (last seen): every group type needs them, with or without Werewolves. */
+    public static void registerSession() {
         NeoForge.EVENT_BUS.addListener((PlayerEvent.PlayerLoggedInEvent e) -> {
             if (e.getEntity() instanceof ServerPlayer p) {
                 login(p);
