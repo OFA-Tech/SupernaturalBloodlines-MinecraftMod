@@ -387,6 +387,25 @@ public final class WheelTensuraUseGameTests {
         helper.succeed();
     }
 
+    /** The full cooldown is what a press started: noted at the press, so a build made after part of it has run still shows the whole length. */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aPressNotesTheFullTensuraCooldown(GameTestHelper helper) {
+        // the first of these that Tensura puts on cooldown when used (which ones do is Tensura's business, so ask it)
+        for (String path : java.util.List.of("heavy_slash", "aura_slash", "voice_cannon", "water_blade", "poison", "paralysis", "corrosion", "strength", "telepathy", "coercion")) {
+            ServerPlayer p = TestPlayers.create(helper);
+            ManasSkillInstance inst = WheelTestKit.learn(p, id(path));
+            if (TensuraUse.press(p, id(path), 0) != null || !inst.onCoolDown(0) || inst.getCoolDown(0) < 2) {
+                continue;
+            }
+            int full = inst.getCoolDown(0) * 20;
+            inst.setCoolDown(inst.getCoolDown(0) - 1, 0); // a second has gone by
+            var state = WheelTensuraGameTests.entry(p, id(path)).orElseThrow().state();
+            helper.assertTrue(state.cooldownTotal() == full, path + ": total " + state.cooldownTotal() + " but the press started " + full);
+            helper.succeed();
+            return;
+        }
+        helper.fail("setup: none of the candidate skills has a cooldown of 2 seconds or more after a press");
+    }
     /** A catalogue lock, read the way the wheel reads it. */
     private static final class WheelCatalogueTensura {
         static net.ofatech.supernaturalbloodlines.core.wheel.LockReason lock(ServerPlayer p, ResourceLocation id) {
