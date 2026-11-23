@@ -41,6 +41,7 @@ public final class SprintLeapClient {
         NeoForge.EVENT_BUS.addListener((net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent.LoggingOut e) -> {
             hinted = false;
             armedFor = -1;
+            net.ofatech.supernaturalbloodlines.parts.hud.client.HybridLeapGuard.reset();
         });
     }
 
@@ -72,7 +73,8 @@ public final class SprintLeapClient {
         IActionHandler handler = (IActionHandler) wolf.getActionHandler();
         boolean canJump = p.onGround() && !p.isPassenger() && !p.isInWater() && !p.getAbilities().flying && !p.isFallFlying();
         if (!SprintLeap.shouldLeap(true, true, p.isSprinting(), canJump, true, wolf.getForm().isTransformed(), handler.isActionUnlocked(action),
-                handler.isActionOnCooldown(action), handler.isActionActive(lasting), mc.screen != null)) {
+                handler.isActionOnCooldown(action), handler.isActionActive(lasting), mc.screen != null,
+                net.ofatech.supernaturalbloodlines.parts.hud.client.HybridLeapGuard.inFlight(p.level().getGameTime()))) {
             return;
         }
         HudSend.send(new ServerboundSimpleInputEventPacket(ServerboundSimpleInputEventPacket.Action.LEAP));

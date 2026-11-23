@@ -8,12 +8,12 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 
 class SprintLeapTest {
-    /** setting, jumpPressed, sprinting, canJump, werewolf, transformed, unlocked, onCooldown, active, screenOpen */
+    /** setting, jumpPressed, sprinting, canJump, werewolf, transformed, unlocked, onCooldown, active, screenOpen, hybridLeapInFlight */
     private static boolean leap(boolean... f) {
-        return SprintLeap.shouldLeap(f[0], f[1], f[2], f[3], f[4], f[5], f[6], f[7], f[8], f[9]);
+        return SprintLeap.shouldLeap(f[0], f[1], f[2], f[3], f[4], f[5], f[6], f[7], f[8], f[9], f[10]);
     }
 
-    private static final boolean[] OK = {true, true, true, true, true, true, true, false, false, false};
+    private static final boolean[] OK = {true, true, true, true, true, true, true, false, false, false, false};
 
     @Test
     void aTransformedWerewolfJumpingWhileSprintingLeaps() {
@@ -22,12 +22,26 @@ class SprintLeapTest {
 
     @Test
     void eachConditionAloneStopsIt() {
-        String[] names = {"setting off", "no jump press", "not sprinting", "cannot jump", "not a werewolf", "not transformed", "not unlocked", "on cooldown", "already active", "screen open"};
+        String[] names = {"setting off", "no jump press", "not sprinting", "cannot jump", "not a werewolf", "not transformed", "not unlocked", "on cooldown", "already active", "screen open", "a Hybrid Leap is in flight"};
         for (int i = 0; i < OK.length; i++) {
             boolean[] f = OK.clone();
             f[i] = !f[i];
             assertFalse(leap(f), names[i]);
         }
+    }
+
+    @Test
+    void aHybridLeapKeepsTheSprintLeapOffForTwentyTicksOnly() {
+        long until = SprintLeap.hybridGuardUntil(1000);
+        assertEquals(1020, until);
+        assertTrue(SprintLeap.hybridInFlight(1000, until));
+        assertTrue(SprintLeap.hybridInFlight(1019, until));
+        assertFalse(SprintLeap.hybridInFlight(1020, until));
+        assertFalse(SprintLeap.hybridInFlight(5, 0), "no Hybrid Leap was ever thrown");
+        boolean[] f = OK.clone();
+        f[10] = true;
+        assertFalse(leap(f), "the one guard: a jump never arms the sprint-leap during a Hybrid Leap");
+        assertTrue(leap(OK), "and every other combination is unchanged");
     }
 
     @Test

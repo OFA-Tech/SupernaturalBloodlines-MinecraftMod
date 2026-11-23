@@ -21,10 +21,24 @@ public final class SprintLeap {
      * @param onCooldown     the leap action is on cooldown
      * @param active         the leap action is already on (waiting for the jump)
      * @param screenOpen     a screen is open
+     * @param hybridLeapInFlight a Hybrid Leap was just thrown (R212): the two leaps share this one guard, so a jump in the air of one never arms the other
      */
     public static boolean shouldLeap(boolean setting, boolean jumpPressed, boolean sprinting, boolean canJump, boolean werewolf, boolean transformed,
-                                     boolean unlocked, boolean onCooldown, boolean active, boolean screenOpen) {
-        return setting && jumpPressed && sprinting && canJump && werewolf && transformed && unlocked && !onCooldown && !active && !screenOpen;
+                                     boolean unlocked, boolean onCooldown, boolean active, boolean screenOpen, boolean hybridLeapInFlight) {
+        return setting && jumpPressed && sprinting && canJump && werewolf && transformed && unlocked && !onCooldown && !active && !screenOpen && !hybridLeapInFlight;
+    }
+
+    /** How long (ticks) after a Hybrid Leap is thrown the sprint-leap stays off: the client does not see the server's flight, so it guesses it from its own trigger. */
+    public static final int HYBRID_GUARD_TICKS = 20;
+
+    /** The game time until which a Hybrid Leap thrown at {@code now} keeps the sprint-leap off. */
+    public static long hybridGuardUntil(long now) {
+        return now + HYBRID_GUARD_TICKS;
+    }
+
+    /** A Hybrid Leap is (still) in flight as far as the sprint-leap can tell. */
+    public static boolean hybridInFlight(long now, long guardUntil) {
+        return now < guardUntil;
     }
 
     /** Ticks after arming in which the jump must start (the player leaves the ground). */
