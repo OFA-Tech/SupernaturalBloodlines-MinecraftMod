@@ -56,6 +56,8 @@ class BossNarrationTest {
     void thePercentIsRoundedUpAndHeldInRangeSoALivingBossNeverReadsZero() {
         assertEquals(1, BossNarration.percent(1, 2000));
         assertEquals(82, BossNarration.percent(1640, 2000));
+        assertEquals(82, BossNarration.percent(1639, 2000), "81.95 reads as 82, the way the card's number is rounded up");
+        assertEquals(2, BossNarration.percent(21, 2000), "1.05 is 2, not 1");
         assertEquals(100, BossNarration.percent(2000, 2000));
         assertEquals(100, BossNarration.percent(9000, 2000));
         assertEquals(0, BossNarration.percent(0, 2000));
