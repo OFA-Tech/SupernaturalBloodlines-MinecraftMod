@@ -62,6 +62,7 @@ public final class HubClient {
             snapshot = HubSnapshotPayload.EMPTY;
             RETURN.clear();
             RequestsClient.clear();
+            net.ofatech.supernaturalbloodlines.parts.supernatural.client.GroupClient.clear();
         });
         NeoForge.EVENT_BUS.addListener((ScreenEvent.Opening e) -> {
             if (e.getNewScreen() instanceof DeathScreen) {

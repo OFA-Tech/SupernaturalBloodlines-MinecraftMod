@@ -48,6 +48,7 @@ public final class SpeciesHub {
         HubSocial.setMoonGift(p -> net.ofatech.supernaturalbloodlines.shared.werewolves.MoonControl.moonBound()
                 && net.ofatech.supernaturalbloodlines.parts.species.pack.PackMoonGift.has(p));
         HubRequests.set(SpeciesHub::requests);
+        net.ofatech.supernaturalbloodlines.shared.supernatural.HubGroups.set(net.ofatech.supernaturalbloodlines.parts.species.group.GroupViews::of);
     }
 
     static HubSocial.Social social(ServerPlayer p) {
@@ -173,7 +174,7 @@ public final class SpeciesHub {
         return o.has(key) && o.get(key).isJsonPrimitive() ? o.get(key).getAsString() : "";
     }
 
-    private static List<HubSocial.Member> pack(ServerPlayer p, MinecraftServer server) {
+    public static List<HubSocial.Member> pack(ServerPlayer p, MinecraftServer server) {
         PackIndex index = PackIndex.get(p.serverLevel());
         // a member has a leader, an emissary serves one, and anyone else is the leader of their own pack (if it has anyone)
         UUID alpha = index.alphaOf(p.getUUID()).or(() -> index.emissaryAlpha(p.getUUID())).orElse(p.getUUID());

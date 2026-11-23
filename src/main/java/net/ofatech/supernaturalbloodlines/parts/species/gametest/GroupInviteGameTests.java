@@ -248,6 +248,28 @@ public final class GroupInviteGameTests {
     }
 
     @GameTest(template = "empty", templateNamespace = NS)
+    public static void onlyTheViewersOwnGroupIsCarried(GameTestHelper helper) {
+        TalkingDuelist w = witch(helper, 1.5);
+        TalkingDuelist v = vampire(helper, 2.5);
+        TalkingDuelist wm = human(helper, 3.5);
+        TalkingDuelist vm = human(helper, 4.5);
+        TalkingDuelist alone = human(helper, 5.5);
+        online(w, v, wm, vm, alone);
+        try {
+            helper.assertTrue(join(w, wm) && join(v, vm), "the groups were not made");
+            var view = net.ofatech.supernaturalbloodlines.parts.species.group.GroupViews.of(wm);
+            var ids = view.members().stream().map(r -> r.id().orElseThrow()).toList();
+            helper.assertTrue(view.hasGroup() && view.type() == GroupType.COVEN && ids.equals(java.util.List.of(w.getUUID(), wm.getUUID())), "the view lists " + ids);
+            helper.assertTrue(view.viewerRank() == net.ofatech.supernaturalbloodlines.core.group.GroupView.MEMBER && net.ofatech.supernaturalbloodlines.parts.species.group.GroupViews.of(w).viewerRank() == net.ofatech.supernaturalbloodlines.core.group.GroupView.LEADER, "the viewer's rank is wrong");
+            var none = net.ofatech.supernaturalbloodlines.parts.species.group.GroupViews.of(alone);
+            helper.assertTrue(!none.hasGroup() && none.members().isEmpty(), "a player with no group sees people");
+        } finally {
+            clean(helper, w, v, wm, vm, alone);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
     public static void theAliasesAreTheSameTree(GameTestHelper helper) {
         CommandDispatcher<CommandSourceStack> d = new CommandDispatcher<>();
         GroupCommand.register(d);
