@@ -1366,6 +1366,7 @@
   "supernaturalbloodlines.downed.snapped.title": "Out cold",
   "supernaturalbloodlines.downed.snapped.body": "Your neck was snapped. You wake on your own in %s seconds. A heart-rip or white oak can still kill you.",
   "supernaturalbloodlines.snapped.woke": "You wake.",
+  "supernaturalbloodlines.venom.sick": "The venom is in your blood. You feel sick.",
   "effect.supernaturalbloodlines.snapped": "Snapped",
   "death.attack.rip_heart": "%1$s's heart was torn out",
   "death.attack.rip_heart.player": "%1$s had their heart torn out by %2$s",

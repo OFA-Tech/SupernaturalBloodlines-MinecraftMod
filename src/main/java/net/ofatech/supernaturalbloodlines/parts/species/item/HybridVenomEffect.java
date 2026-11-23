@@ -14,7 +14,7 @@ import net.ofatech.supernaturalbloodlines.parts.species.hybrid.Venom;
  * Milk and the like cannot cure it; only Hybrid's Blood removes it.
  */
 public final class HybridVenomEffect extends MobEffect {
-    private static final int PULSE_TICKS = 40;
+    private static final int PULSE_TICKS = Venom.PULSE_TICKS;
 
     public HybridVenomEffect() {
         super(MobEffectCategory.HARMFUL, 0x6B8E23);
@@ -28,7 +28,9 @@ public final class HybridVenomEffect extends MobEffect {
     @Override
     public boolean applyEffectTick(LivingEntity entity, int amplifier) {
         MobEffectInstance instance = entity.getEffect(SpeciesRegistries.HYBRID_VENOM);
-        Venom.pulse(entity, instance == null ? PULSE_TICKS : instance.getDuration());
+        // an infinite venom (/effect give ... infinite) has no clock: it stays where a fresh one starts, never at the end
+        int remaining = instance == null ? PULSE_TICKS : instance.isInfiniteDuration() ? Venom.DURATION_TICKS : instance.getDuration();
+        Venom.pulse(entity, remaining);
         return true;
     }
 
