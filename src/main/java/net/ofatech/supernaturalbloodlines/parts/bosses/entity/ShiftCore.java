@@ -23,6 +23,13 @@ final class ShiftCore {
      * sees the same one every frame and allocates nothing): the death pose held, the howl clip (the model's {@code howl} or {@code roar}) once, the arrival
      * {@code shift_in} once, and the three loops.
      */
+    /** Plays a clip on the wolf's controller: a blend of {@link MorphRules#blendTicks} first, none for the arrival, so that the first frame drawn at the swap is the first frame of {@code shift_in}. */
+    static <T extends software.bernie.geckolib.animatable.GeoAnimatable> software.bernie.geckolib.animation.PlayState play(software.bernie.geckolib.animation.AnimationState<T> state,
+            software.bernie.geckolib.animation.RawAnimation clip, boolean arriving) {
+        state.getController().transitionLength(net.ofatech.supernaturalbloodlines.core.boss.MorphRules.blendTicks(arriving));
+        return state.setAndContinue(clip);
+    }
+
     static java.util.Map<String, software.bernie.geckolib.animation.RawAnimation> clips(String model, String howlClip) {
         String p = "animation." + model + ".";
         return java.util.Map.of(

@@ -439,7 +439,7 @@ public final class PeterHaleEntity extends BossNpc implements GeoEntity, ShiftBo
             String name = net.ofatech.supernaturalbloodlines.core.boss.KlausRules.animation(p.isDeadOrDying(), false,
                     net.ofatech.supernaturalbloodlines.core.boss.MorphRules.arriving(p.form(), p.shiftTicks()), ShiftRules.howling(p.form(), p.shiftTicks()),
                     state.isMoving(), p.getDeltaMovement().horizontalDistance());
-            return state.setAndContinue(CLIPS.get(name));
+            return ShiftCore.play(state, CLIPS.get(name), name.equals("shift_in"));
         }).triggerableAnim(SWIPE, RawAnimation.begin().thenPlay("animation.peter_hale_alpha.attack_swipe"))
                 .triggerableAnim(BITE, RawAnimation.begin().thenPlay("animation.peter_hale_alpha.attack_bite"))
                 .triggerableAnim(POUNCE, RawAnimation.begin().thenPlay("animation.peter_hale_alpha.pounce")));

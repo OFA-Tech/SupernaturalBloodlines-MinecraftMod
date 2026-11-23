@@ -420,23 +420,23 @@ public final class BeastEntity extends BossNpc implements GeoEntity, ShiftBody {
         controllers.add(new AnimationController<>(this, CONTROLLER, 4, state -> {
             BeastEntity b = state.getAnimatable();
             if (b.collapsing()) {
-                return state.setAndContinue(COLLAPSE_CLIP);
+                return ShiftCore.play(state, COLLAPSE_CLIP, false);
             }
             if (b.isDeadOrDying()) {
-                return state.setAndContinue(DEATH_CLIP);
+                return ShiftCore.play(state, DEATH_CLIP, false);
             }
             // the change: the wolf arrives for the second half of it, then the howl runs to its end (both from the synced form and ticks, so a late joiner is right)
             if (MorphRules.arriving(b.form(), b.shiftTicks())) {
-                return state.setAndContinue(SHIFT_IN_CLIP);
+                return ShiftCore.play(state, SHIFT_IN_CLIP, true);
             }
             if (ShiftRules.howling(b.form(), b.shiftTicks())) {
-                return state.setAndContinue(ROAR_CLIP);
+                return ShiftCore.play(state, ROAR_CLIP, false);
             }
             if (b.roarTicks() > 0) {
-                return state.setAndContinue(REAR_UP_CLIP);
+                return ShiftCore.play(state, REAR_UP_CLIP, false);
             }
             double speed = b.getDeltaMovement().horizontalDistance();
-            return state.setAndContinue(!state.isMoving() ? IDLE_CLIP : speed > 0.16 ? RUN_CLIP : WALK_CLIP);
+            return ShiftCore.play(state, !state.isMoving() ? IDLE_CLIP : speed > 0.16 ? RUN_CLIP : WALK_CLIP, false);
         }).triggerableAnim(BITE, RawAnimation.begin().thenPlay("animation.beast_of_gevaudan.attack_bite"))
                 .triggerableAnim(SWIPE, RawAnimation.begin().thenPlay("animation.beast_of_gevaudan.attack_swipe"))
                 .triggerableAnim(REAR_UP, RawAnimation.begin().thenPlay("animation.beast_of_gevaudan.rear_up")));

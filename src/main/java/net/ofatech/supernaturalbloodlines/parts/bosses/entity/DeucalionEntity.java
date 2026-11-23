@@ -339,7 +339,7 @@ public final class DeucalionEntity extends BossNpc implements GeoEntity, ShiftBo
             DeucalionEntity d = state.getAnimatable();
             String name = KlausRules.animation(d.isDeadOrDying(), false, net.ofatech.supernaturalbloodlines.core.boss.MorphRules.arriving(d.form(), d.shiftTicks()),
                     ShiftRules.howling(d.form(), d.shiftTicks()), state.isMoving(), d.getDeltaMovement().horizontalDistance());
-            return state.setAndContinue(CLIPS.get(name));
+            return ShiftCore.play(state, CLIPS.get(name), name.equals("shift_in"));
         }).triggerableAnim(SWIPE, RawAnimation.begin().thenPlay("animation.deucalion_demon_wolf.attack_swipe"))
                 .triggerableAnim(BITE, RawAnimation.begin().thenPlay("animation.deucalion_demon_wolf.attack_bite")));
     }

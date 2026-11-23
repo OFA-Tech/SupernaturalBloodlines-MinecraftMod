@@ -128,6 +128,16 @@ class MorphNoClientImportsTest {
         assertTrue(found.isEmpty(), "a file of the morph reads ReduceMotion (it is for the interface only): " + found);
     }
 
+    /** The wolf's clip goes through {@code ShiftCore.play}, which starts the arrival without a blend: a plain {@code setAndContinue} would show the standing wolf at the cut. */
+    @Test
+    void everyWolfPlaysItsClipsThroughTheBlendRule() throws IOException {
+        for (String entity : List.of("KlausEntity", "DeucalionEntity", "PeterHaleEntity", "BeastEntity")) {
+            String code = withoutComments(Files.readString(MorphClipsTest.root().resolve(ROOT + "parts/bosses/entity/" + entity + ".java"), StandardCharsets.UTF_8));
+            assertTrue(code.contains("ShiftCore.play(state,"), entity + " does not play its clips through ShiftCore.play");
+            assertFalse(code.contains("state.setAndContinue("), entity + " calls setAndContinue itself: its arrival would be blended in from the standing pose");
+        }
+    }
+
     /** Entity event 2 (the old hurt event) is not handled on 1.21.1: the shake is a damage event. A call that sends it does nothing. */
     @Test
     void noBossSendsTheDeadHurtEvent() throws IOException {

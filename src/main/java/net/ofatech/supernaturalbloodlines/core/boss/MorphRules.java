@@ -52,6 +52,18 @@ public final class MorphRules {
         return form == BossForm.SHIFTING && ticks >= ShiftRules.SWAP_TICK && ticks < ShiftRules.SHIFT_TICKS;
     }
 
+    /** The ticks a GeckoLib controller blends from one clip to the next (and from the model's bind pose when it first draws anything): 4, as the wolves have always had. */
+    public static final int BLEND_TICKS = 4;
+
+    /**
+     * The blend into the clip that is about to play. The wolf is first drawn at the swap, and a controller that starts with a blend shows the model's standing pose
+     * for the first of its ticks and only then the first frame of {@code shift_in}: the cut would land on a standing wolf (a pop) and not on the one that is reared
+     * where the man stood. The arrival starts at once: no blend.
+     */
+    public static int blendTicks(boolean arriving) {
+        return arriving ? 0 : BLEND_TICKS;
+    }
+
     /** How far the man's pose has come, 0 to 1 over the first half; a partial tick over 1 counts as 1, and anything that is not a number counts as 0. */
     public static float manProgress(int ticks, float partial) {
         if (ticks < 0) {

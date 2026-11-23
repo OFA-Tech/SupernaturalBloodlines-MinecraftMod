@@ -98,6 +98,13 @@ class MorphRulesTest {
     }
 
     @Test
+    void theArrivalStartsAtOnceAndEverythingElseBlendsAsItAlwaysDid() {
+        assertEquals(0, MorphRules.blendTicks(true), "a blend would show the standing wolf at the cut");
+        assertEquals(4, MorphRules.blendTicks(false));
+        assertEquals(MorphRules.BLEND_TICKS, MorphRules.blendTicks(false));
+    }
+
+    @Test
     void theOldAnimationChoiceIsUnchanged() {
         assertEquals("death", KlausRules.animation(true, false, false, false, 0.0));
         assertEquals("howl", KlausRules.animation(false, false, true, false, 0.0));

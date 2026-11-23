@@ -325,7 +325,7 @@ public final class KlausEntity extends NpcOriginalBoss implements GeoEntity, Shi
             KlausEntity k = state.getAnimatable();
             String name = KlausRules.animation(k.isDeadOrDying(), k.isDesiccated(), net.ofatech.supernaturalbloodlines.core.boss.MorphRules.arriving(k.form(), k.shiftTicks()),
                     ShiftRules.howling(k.form(), k.shiftTicks()), state.isMoving(), k.getDeltaMovement().horizontalDistance());
-            return state.setAndContinue(CLIPS.get(name));
+            return ShiftCore.play(state, CLIPS.get(name), name.equals("shift_in"));
         }).triggerableAnim(ATTACK, RawAnimation.begin().thenPlay("animation.klaus_hybrid.attack_bite")));
     }
 }
