@@ -19,7 +19,7 @@
 - CI runs the GameTests with the part off (`-PpartsOff=evolutionRites`).
 
 ### Verified
-- 1,806 GameTests pass in every run of the 13-run matrix, with eight real addon jars (Ascension, Great Sage, FoxAblaze, Mysticism, Horizons, Kumo Desu ga, Slime Throne Extras and what they need) and with the pack set; a real dedicated server boots with them and with the part off. 28 mutants, all caught.
+- Unit tests 2,422 pass. The 13-run GameTest matrix passes in every run (1,944 GameTests with everything on), and so does the same suite with eight real addon jars (Ascension, Great Sage, FoxAblaze, Mysticism, Horizons, Kumo Desu ga, Slime Throne Extras and what they need) and with the pack set; a real dedicated server boots with them and with the part off. 28 mutants, all caught.
 - Mysticism charges Soul Energy for every skill learned and vetoes when the player cannot pay: the rite keeps that rule and refuses cleanly (nothing taken).
 
 ## Unreleased (plan 18i: Vampirism tweaks)

@@ -6,8 +6,9 @@
 > - `-PaddonJars` already existed on main (PR for 18g); Task 9 step 1 is done. The server boot uses RCON (`docs/parts/evolution_rites.md`, "Found while building").
 > - The Rite of Mastery (owner decision 2026-11-23) is built here; its picker is the hub''s Mastery tab over the existing command rows (no payload).
 > - `EP` means base Max EP, taken after the learn is confirmed (and given back when the learn is vetoed, because Tensura charges its own price inside the unlock listener).
+> - The Admin snapshot passed its 192-row limit with the merged plans (195 rows): `AdminSnapshotPayload.MAX_ROWS` is 256 and the hub protocol is 13 (no byte of the snapshot changed).
 > - Not built in 19a (by design): `GrantForm.FREE` and `PERMANENT`, the FoxAblaze single-owner reader and the Raphael merge (19b), Blood Sovereign (19c), the other addons (19d).
-> - Results: unit tests 2,352 pass; 13-run matrix all pass (1,806 GameTests with the part on); boots A (8 addons), B (pack set minus Trainer), C (without Mysticism) pass all 1,806 GameTests; real dedicated-server boots A, B and part-off D reach Done and stop cleanly; 28 mutants all caught (M19 needed a stronger test, the zeroed mastery is now observed by a listener). Logs: `%TEMP%\opencode\plan19a`.
+> - Results (merged with main at 5f0c7ee3): unit tests 2,422 pass; 13-run matrix all pass (1,944 GameTests with everything on; 30 with `-PnoLinkedMods`); the same 1,944 pass with the addon jars: boot A (8 addons), B (pack set minus Trainer), C (without Mysticism); real dedicated-server boots A, B and part-off D reach Done and stop cleanly; 28 mutants all caught (M19 needed a stronger test, the zeroed mastery is now observed by a listener). Logs: `%TEMP%\opencode\plan19a`.
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
