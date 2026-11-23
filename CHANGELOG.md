@@ -13,6 +13,17 @@
 
 ### Rolling back
 - **Roll the server and every client back together** (the network version goes back to 2). The saved `wheel_clock` is dropped by an older build, which is harmless: it only held a cooldown of at most a few minutes. With both settings off the wheel lists every side and no key is stopped.
+## Unreleased (plan 18i: Vampirism tweaks)
+
+### Added
+- **Four optional Vampirism tweaks (R213), all off by default**, COMMON keys in `supernaturalbloodlines-supernatural.toml` with Admin rows: `tweak_sunlight_ignites_vampires` (every time Vampirism's own sun damage hurts a player they are also set on fire for 4 s, so its level gate, grace period, Sun Ring, umbrella and creative all still apply), `tweak_cleansing_altar_disabled` (the cleansing altar refuses its click on the server and on every client, and the server refuses the altar's revert packet from any client, with or without this mod; Vampirism's med chair is untouched), `tweak_hostile_mobs_attack_vampires` (zombies, husks, drowned, zombie villagers, skeletons and strays also attack vampire players) and `tweak_skeletons_attack_werewolves` (skeletons and strays also attack werewolf players; needs Werewolves). The mob switches work at once, also on mobs already loaded, in both directions.
+- **Limits:** a client that sends the altar's revert packet with the switch on is refused, but Vampirism's handler still kills a player outside hardcore, so **a cheater dies and stays a vampire**; zombified piglins, wither skeletons, bogged and creepers are unchanged.
+
+### Network
+`LadderNet.PROTOCOL` is now `"12"` (the pack moon gift took 11; a new optional payload carries the altar switch to clients). **Update the server and every client together**: a client on another number does not get the hub's data from the server.
+
+### Rolling back
+Turning a switch off, or rolling back, puts nothing permanent on a player, and the extra goals are not saved. Burning stops with the fire. **Protocol 12 to 11:** a build on 11 and a client on 12 (or the other way round) have no channel to each other, so the hub shows nothing from the server until both are on the same number; roll back the server and every client together. The old build does not know the four `tweak_*` keys in `supernaturalbloodlines-supernatural.toml` and removes them when it rewrites the file, so after rolling forward again they are back at `false`: set them again.
 ## Unreleased (plan 18h: staged venom)
 
 ### Changed
