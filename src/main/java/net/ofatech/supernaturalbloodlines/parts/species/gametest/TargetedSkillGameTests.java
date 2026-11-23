@@ -1093,14 +1093,17 @@ public final class TargetedSkillGameTests {
         if (skipped(helper)) {
             return;
         }
-        Zombie z = zombie(helper, 20.0f);
-        z.setNoAi(false);
+        // a cow: a hostile mob would be discarded at once on the test world's peaceful difficulty
+        var z = EntityType.COW.create(helper.getLevel());
+        z.setPos(helper.absoluteVec(new Vec3(1.5, 1, 3.0)));
+        z.setPersistenceRequired();
+        helper.getLevel().addFreshEntity(z);
         z.addEffect(new net.minecraft.world.effect.MobEffectInstance(SpeciesRegistries.SNAPPED, 5));
         helper.assertTrue(z.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.MOVEMENT_SPEED) == 0.0, "setup: the effect did not hold the mob");
         helper.runAfterDelay(12, () -> {
             try {
                 helper.assertTrue(!z.hasEffect(SpeciesRegistries.SNAPPED), "the effect did not run out");
-                helper.assertTrue(z.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.MOVEMENT_SPEED) > 0.0, "the mob did not get its speed back");
+                helper.assertTrue(z.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.MOVEMENT_SPEED) > 0.0, "the mob did not get its speed back: " + z.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.MOVEMENT_SPEED) + ", effects " + z.getActiveEffects() + ", modifiers " + z.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.MOVEMENT_SPEED).getModifiers());
                 helper.assertTrue(net.ofatech.supernaturalbloodlines.parts.species.item.SnappedEffect.inGrace(z), "no grace after the natural end");
             } finally {
                 z.discard();
