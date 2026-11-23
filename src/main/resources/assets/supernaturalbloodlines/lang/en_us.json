@@ -1498,6 +1498,7 @@
   "supernaturalbloodlines.boss.white_oak_closed": "White oak only works on an Original who is down.",
   "supernaturalbloodlines.boss.notice.mikael.stake": "His stake is white oak. If he kills you, your whole line dies with you.",
   "supernaturalbloodlines.boss.bar.desiccated": "%s (desiccated)",
+  "supernaturalbloodlines.hub.detail.more_tasks": "+%s more tasks",
   "supernaturalbloodlines.boss.bar.form.human": "HUMAN",
   "supernaturalbloodlines.boss.bar.form.shifting": "SHIFTING",
   "supernaturalbloodlines.boss.bar.form.beast": "BEAST",

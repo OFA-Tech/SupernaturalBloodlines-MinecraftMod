@@ -28,6 +28,8 @@ import net.ofatech.supernaturalbloodlines.shared.hub.RungStatus;
 import net.ofatech.supernaturalbloodlines.shared.hub.TaskState;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.Counters;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.Detail;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.DetailRows;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.TextCache;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.EmblemData;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.Icons;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.KitFaces;
@@ -402,15 +404,27 @@ public final class TensuraHubTheme implements HubTheme, HubThemeViews {
         if (d.reward() != null && y + 12 <= limit) {
             y = text(g, font, d.reward(), x, y, w, GOLD, limit) + 3;
         }
+        // every task shows: at its own size when there is room, one line each when there is not, and what still does not fit is counted in a "+N more" line
+        int rowCount = d.rows().size();
+        int[] fullH = new int[rowCount];
+        int[] compactH = new int[rowCount];
+        for (int i = 0; i < rowCount; i++) {
+            Detail.Row asked = d.rows().get(i);
+            int tw = asked.source() == null ? 0 : KitDraw.tagWidth(font, asked.source()) + 4;
+            fullH[i] = 16 + 10 * TextCache.wrap(font, asked.label().getString(), w - tw - 12, 2, font::width).size();
+            compactH[i] = 26;
+        }
+        DetailRows.Plan plan = DetailRows.plan(fullH, compactH, limit - y + 1, 4, 10);
+        int rowIndex = -1;
         for (Detail.Row row : d.rows()) {
-            int tagW = row.source() == null ? 0 : KitDraw.tagWidth(font, row.source()) + 4;
-            // two lines at most; a task that does not fit ends its second line with an ellipsis
-            var lines = LabelFit.wrap(row.label().getString(), w - tagW - 12, 2, font::width);
-            int n = lines.size();
-            int h = 16 + 10 * n;
-            if (y + h + 2 > limit) {
+            if (++rowIndex >= plan.shown()) {
                 break;
             }
+            int tagW = row.source() == null ? 0 : KitDraw.tagWidth(font, row.source()) + 4;
+            // two lines at most; a task that does not fit ends its second line with an ellipsis
+            var lines = TextCache.wrap(font, row.label().getString(), w - tagW - 12, plan.compact() ? 1 : 2, font::width);
+            int n = lines.size();
+            int h = 16 + 10 * n;
             Rect card = new Rect(x, y, w, h);
             UiKit.draw(g, this, Part.INSET, card);
             if (row.complete()) {
@@ -428,6 +442,9 @@ public final class TensuraHubTheme implements HubTheme, HubThemeViews {
             drawBar(g, new Rect(card.x() + 6, by2 + 2, card.w() - 16 - cw, 4), row.total() <= 0 ? 0f : Math.min(1f, row.done() / (float) row.total()));
             g.drawString(font, count, card.right() - cw - 4, by2, row.complete() ? GREEN : MUTED, false);
             y += h + 4;
+        }
+        if (plan.more() > 0) {
+            g.drawString(font, Component.translatable("supernaturalbloodlines.hub.detail.more_tasks", plan.more()), x, y, MUTED, false);
         }
         KitDraw.detailActions(ctx, this, buttons, d);
     }

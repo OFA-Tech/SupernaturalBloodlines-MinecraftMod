@@ -29,11 +29,6 @@ final class BossPortraitTex {
         TEXTURES.clear();
     }
 
-    /** Whether a picture of this size can be drawn into the 24 x 24 window: square, and a whole multiple of 24 so a pixel stays a pixel. */
-    static boolean usable(int w, int h) {
-        return w == h && w >= BossBarLayout.ART && w % BossBarLayout.ART == 0;
-    }
-
     private static Tex tex(String name) {
         Tex t = TEXTURES.get(name);
         if (t == null) {
@@ -46,7 +41,7 @@ final class BossPortraitTex {
             } catch (IOException | RuntimeException unreadable) {
                 SupernaturalBloodlines.LOGGER.warn("Could not read the boss portrait {} ({}): its card is drawn without it", id, unreadable.toString());
             }
-            boolean ok = usable(w, h);
+            boolean ok = BossPortraits.usable(w, h);
             if (w > 0 && !ok) {
                 SupernaturalBloodlines.LOGGER.warn("The boss portrait {} is {} x {}, not a square multiple of 24 (a resource pack?): its card is drawn without it", id, w, h);
             }

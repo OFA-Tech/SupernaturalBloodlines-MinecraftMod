@@ -90,6 +90,17 @@ class BossPortraitsTest {
     }
 
     @Test
+    void aPortraitIsDrawnOnlyWhenItIsASquareWholeMultipleOf24() {
+        assertTrue(BossPortraits.usable(24, 24));
+        assertTrue(BossPortraits.usable(48, 48), "a hi-res pack's picture is scaled down by a whole number");
+        assertTrue(BossPortraits.usable(96, 96));
+        assertFalse(BossPortraits.usable(32, 32), "a pixel would be blurred");
+        assertFalse(BossPortraits.usable(24, 48));
+        assertFalse(BossPortraits.usable(0, 0), "an unreadable picture");
+        assertFalse(BossPortraits.usable(12, 12));
+    }
+
+    @Test
     void theSeamRunsDownTheMiddleOfThePortrait() {
         assertEquals(12, BossPortraits.SEAM_X);
     }

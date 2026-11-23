@@ -43,6 +43,19 @@ public final class KitFaces {
         throw new IllegalArgumentException(button + " is not a button or a surface");
     }
 
+    /** Whether the table above has a face for {@code part} (a button or a surface); a label on any other part is not checked against a face. */
+    public static boolean knows(Part part) {
+        return java.util.Arrays.asList(BUTTONS).contains(part) || java.util.Arrays.asList(SURFACES).contains(part);
+    }
+
+    /**
+     * The face to read a label on. The table holds the middle of the shipped art; a resource pack that repaints a sprite changes the middle, and the label must
+     * read on what is really drawn: the picture's own solid middle (read from the pack's PNG) when it has one and is opaque, else the table.
+     */
+    public static int resolveFace(int tableFace, @org.jetbrains.annotations.Nullable Integer pictureMiddle) {
+        return pictureMiddle != null && (pictureMiddle >>> 24) >= 0xC0 ? pictureMiddle | 0xFF000000 : tableFace;
+    }
+
     /** The label on a button: the theme's ink when it reads on the face (4.5:1), else white or black, whichever does. */
     public static int label(String kit, Part button, int ink) {
         return labelOn(face(kit, button), ink);

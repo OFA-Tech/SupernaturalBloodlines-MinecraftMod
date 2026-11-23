@@ -50,7 +50,7 @@ final class BossBarView {
 
         // the name
         UiKit.draw(g, kit, Part.BOSS_NAME_PLATE, x + geo.nameX(), y + geo.nameY(), geo.nameW(), BossBarLayout.NAME_H);
-        g.drawString(font, i.nameShown, x + geo.nameX() + BossBarLayout.NAME_TEXT_X, y + geo.nameY() + BossBarLayout.NAME_TEXT_Y, BossFaces.name(kit), false);
+        g.drawString(font, i.nameShown, x + geo.nameX() + BossBarLayout.NAME_TEXT_X, y + geo.nameY() + BossBarLayout.NAME_TEXT_Y, UiKit.labelOver(kit, Part.BOSS_NAME_PLATE, BossFaces.name(kit)), false);
 
         // the health: the track, the fill (gold while the boss can be hit), the ticks over it
         UiKit.draw(g, kit, Part.BOSS_BAR_TRACK, x + geo.trackX(), y + geo.trackY(), geo.trackW(), BossBarLayout.TRACK_H);
@@ -64,7 +64,7 @@ final class BossBarView {
             UiKit.draw(g, kit, Part.BOSS_BAR_TICK, x + tx, y + geo.fillY(), 1, BossBarLayout.FILL_H);
         }
         if (!i.hpShown.isEmpty()) {
-            g.drawString(font, i.hpShown, x + geo.hpX(), y + geo.hpY(), BossFaces.health(kit), false);
+            g.drawString(font, i.hpShown, x + geo.hpX(), y + geo.hpY(), UiKit.labelOver(kit, Part.BOSS_FRAME, BossFaces.health(kit)), false);
         }
 
         chips(g, font, kit, i, x, y, now, reduce);
@@ -91,7 +91,7 @@ final class BossBarView {
                 UiKit.draw(g, kit, lit, cx, cy, w, BossBarLayout.CHIP_H, alpha);
             }
             boolean showsLit = alpha >= 0.5f;
-            int text = BossFaces.chip(kit, showsLit ? lit : Part.CHIP);
+            int text = UiKit.labelOver(kit, showsLit ? lit : Part.CHIP, kit.ink());
             g.drawString(font, i.labels[c], cx + (w - i.chipTextW[c]) / 2, cy + BossBarLayout.CHIP_TEXT_Y, text, false);
         }
     }

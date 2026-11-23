@@ -35,6 +35,11 @@ public final class BossPortraits {
         return form == 0 ? new Portrait(human, null) : form == 1 ? new Portrait(human, wolf) : new Portrait(wolf, null);
     }
 
-    /** The x (of 24) where the seam of a shift runs, and its width in pixels. */
+    /** Whether a picture of this size can be drawn into the 24 x 24 window: square, and a whole multiple of 24 so a pixel stays a pixel (a hi-res pack's is drawn smaller, not stretched). */
+    public static boolean usable(int w, int h) {
+        return w == h && w >= BossBarLayout.ART && w % BossBarLayout.ART == 0;
+    }
+
+    /** The x (of 24) where the seam of a shift runs. */
     public static final int SEAM_X = 12;
 }

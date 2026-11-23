@@ -1,5 +1,14 @@
 # Changelog
 
+## Unreleased (UI overhaul phase 6: boss bars)
+
+- The nine bosses draw their own boss bar on the art kit, in the look of the hub's theme: a card with a portrait for each form, a name plate, the health bar with ticks, the health in numbers and the form chips (Klaus, Deucalion and Peter: HUMAN, SHIFTING, BEAST; the Beast of Gevaudan: HOST, BEAST, SPIRIT). Several bosses stack as cards, as many as fit in three fifths of the screen; another mod's bar stays vanilla and starts under them.
+- Network: the bosses part's payload version goes from "1" to "2". A new optional server-to-client payload (`boss_bar_info`) carries the boss, its form chips and its health. A client without it keeps the vanilla bar.
+- `reduce_motion` also covers the bar: no health easing, no pulse on the shifting fill, no flash on the portrait seam.
+- One access transformer line opens `BossHealthOverlay.events` (read only).
+- Tensura's Path pane lists every task of the next step: one line each when the pane is short, and "+N more tasks" for the rest. A label on a kit button or surface reads on the pack's own picture, so a recoloured pack keeps its 4.5:1.
+- The Grimoire's boss name plate has seven rows of leather for its text (the brass lines inside it were removed).
+
 ## Unreleased (plan 18c: Augustine vampires)
 
 ### Added
