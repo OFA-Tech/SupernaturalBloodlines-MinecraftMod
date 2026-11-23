@@ -46,6 +46,7 @@ Anti-goals (a failure even if it works)
 | D11 | Local test runs and a real server boot with all the addon jars are required before merge. | section 13 |
 | D12 | Build order: 19a engine + our own chains, 19b Great Sage + FoxAblaze, 19c Ascension, 19d the others + race links. Plan 19 is built after plan 18; UI overhaul phase 3 runs in parallel with plan 18. | section 12 |
 | D14 | **The two Raphaels are merged** (owner answer to Q1, 2026-11-22). With FoxAblaze installed its Raphael is the one real Raphael; any grant of Great Sage's Raphael (a command, a future Great Sage update, our dormant rite) is redirected to FoxAblaze's; owning either counts as owning Raphael and FoxAblaze's single-owner rule covers both; without FoxAblaze Great Sage's stays as it is. | E9, section 8.3 |
+| D15 | **The Rite of Mastery** (owner, 2026-11-23). A rite of ours that masters any one chosen skill the target holds. Cost by tier, all of it config: Common (full moon) 100,000 EP, 5 diamond blocks, 5 echo shards; Extra (full moon) 300,000 EP, 5 netherite ingots, 20 echo shards; Unique (full moon) 750,000 EP, 5 nether stars, 5 netherite ingots; Ultimate (lunar eclipse) 2,000,000 EP, 5 nether stars, 5 dragon's breath, 10 netherite ingots. Witch-type caster, consenting target, one skill per rite, one rite per player per 7 in-game days. Resistances: the rite finishes learning them. Refused: Ascension System skills, skills already mastered, skills in Rebalanced's retired tag. Sealed in the book, unlocked by kind (witch types). Research: [mastery.md](../research/tensura-addons/mastery.md). | section 8.5, E16 |
 | D13 | Compat is automatic and optional (each addon present or not) for: Ascension, Great Sage, Horizons, Mysticism, Kumo Desu ga, Slime Throne Extras and FoxAblaze Ultimate (the only one with Beelzebub). | E10, section 10.3 |
 
 ## 4. What the research found (the facts the design stands on)
@@ -170,6 +171,7 @@ Code layout (names are the plan's; section "File structure" of the 19a plan):
 | already holds the skill | the target | performer: `no_effect`; target: told | `supernaturalbloodlines.refusal.evolution.already` |
 | single-owner taken by another player | the world's secret | performer: `no_effect`; target: the **same** `not_ready` | (no separate key: it must not tell the target that someone else holds Raphael) |
 | a listener vetoed the learn | the target | as `not_ready` | |
+| Rite of Mastery: no choice, not held, temporary, already mastered, wrong tier, System skill, retired, not enough EP, cooldown, vetoed | the target | performer: `no_effect`; target: the reason (E16) | `supernaturalbloodlines.refusal.mastery.<no_choice\|not_held\|temporary\|already\|wrong_tier\|system\|retired\|no_ep\|cooldown\|vetoed>` |
 
 Same cost and same timing for every refusal (`cancel()`, the ingredients back). A GameTest asserts that the performer's messages for a human, a vampire, and a player holding the skill are identical (`rite.no_effect` with the target not sneaking, and with the target sneaking), and the unit test pins that the single-owner and the other addon refusals map to the same key.
 
@@ -225,6 +227,36 @@ Candidates for "an addon has a fitting unique" (D8). None has a road today; each
 
 Not recipes: Kumo Desu ga's uniques (Determination, Perseverance, Resolve, Weapon Creation: spider/ogre flavour, no fit), Horizons' uniques (Edict, Fortune, Inheritor, Storyteller, ...: no fit found), Mysticism's `embryo` (acquisition not found), the Horizons Sovereign awakening (a race state).
 
+### 8.5 The Rite of Mastery (D15, 19a)
+
+Not an evolution: it grants nothing. It brings **one chosen skill the target already holds** to mastered, because many skills cannot be mastered by play, and mastery gates evolutions and toggles (research `mastery.md`: Sage and Anti Skill have no mastery source, Degenerate needs blocks converted, Kumo's Determination, Perseverance and Resolve need the skill slotted below half health, every resistance stops at 0 and can never be mastered). It reuses the engine: the same order of checks, the same refusals through `refuseAbout`, the same book and unlock tables, a factory of its own (`supernaturalbloodlines:mastery`) and four rite files, one per tier, because Enchanted matches the sacrifice from the rite file.
+
+**E16. The Rite of Mastery.**
+
+1. *Night and cost, by tier of the chosen skill.* Tier is read from `Skill.getType()`: `RESISTANCE`, `INTRINSIC`, `COMMON` are Common; `EXTRA`, `UNIQUE`, `ULTIMATE` are themselves. A ManasSkill that is not a Tensura `Skill` (a magic or an art) counts as Extra (an assumption; 19a task 1's probe lists which registry skills have no type). Common, Extra and Unique need a full-moon night, Ultimate an eclipse (E3, with `Tier.COMMON` added). The rite file of a tier works only on a skill of that tier; a mismatch is refused to the target, naming the tier needed.
+
+| Tier | Night | EP spent | Sacrifice (the rite file) | Rite file |
+|---|---|---|---|---|
+| Common | full moon | 100,000 | 5 `minecraft:diamond_block`, 5 `minecraft:echo_shard` | `mastery_common` |
+| Extra | full moon | 300,000 | 5 `minecraft:netherite_ingot`, 20 `minecraft:echo_shard` | `mastery_extra` |
+| Unique | full moon | 750,000 | 5 `minecraft:nether_star`, 5 `minecraft:netherite_ingot` | `mastery_unique` |
+| Ultimate | lunar eclipse | 2,000,000 | 5 `minecraft:nether_star`, 5 `minecraft:dragon_breath`, 10 `minecraft:netherite_ingot` | `mastery_ultimate` |
+
+2. *EP is spent, not checked.* "EP" is the target's **base Max EP** (`EnergyHelper.getBaseMaxEP`, lowered with `EnergyHelper.setBaseMaxEP`, the read that Ascension and FoxAblaze costs also use). The rite refuses before taking anything if the base Max EP is not strictly more than the cost. The EP is taken **last**, after the mastery is confirmed, so a vetoed rite gives everything back (the ingredients through `cancel()`, nothing else was changed), and so the EP is still whole at the moment the skill is mastered (a Manipulation skill evolves into its Domination in `onSkillMastered` only when base Max EP is at or above a config threshold, once, research 1.4). Whether lowering base Max EP is the right "spend" for Tensura, and whether a floor applies (Ascension has a `MaxEpFloorHandler`), is not verified (19a task 1 probes it; the plan records the answer).
+3. *The numbers are config*, each with an Admin row (section 11): the four EP costs, the cooldown days and the refused list. **The sacrifice counts are in the four rite files**, because Enchanted matches ingredients from the file and consumes exactly them; a server changes them with a datapack like any rite. The owner asked for every number to be a config key; the item counts cannot be, without taking the sacrifice from the circle ourselves, which is a different design. Flagged to the owner.
+4. *Who and consent.* E4 unchanged: witch-type performer; a target who is not the performer sneaks; one skill per rite.
+5. *Choosing the skill: a hub picker, validated by the server.* The target picks on the hub **Skills** page, in a "Rite of Mastery" section that lists their own skills the rite could master, each with its tier and, when it cannot, the reason. The choice is sent to the server (`MasteryChoicePayload`), which re-validates it with the same pure rules as the rite and stores it in the player's persisted data (`supernaturalbloodlines_mastery_choice`). The rite reads the stored choice and **validates it again** (the skill may have been lost or mastered meanwhile); a target with no valid choice is told to choose in the hub (`refusal.mastery.no_choice`) and nothing happens. There is no default skill: a wrong default costs 100,000 to 2,000,000 EP. The caster never learns which skill was chosen. The two payloads (`MasteryOptionsPayload` S2C, `MasteryChoicePayload` C2S) are registered by the part on its own optional versioned channel, so `LadderNet.PROTOCOL` does not change; a client without the part sees no section.
+6. *Cooldown.* One rite per **target** per 7 in-game days (config `mastery_cooldown_days`): the game time of the last success is stored in the persisted data and compared with `getGameTime()` (not the day time, which sleeping and commands change). Set only after a success.
+7. *How mastery is applied* (research 1.5, the verified way):
+   - The skill instance must exist, not be temporary (a temporary skill never gains mastery), and not be mastered.
+   - A **resistance** has no mastery; the rite **finishes learning it**: mastery below 0 is set to 0, and `onLearnSkill` is called on the instance, as the native end of learning does. It is refused as "already finished" when mastery is 0 or more. (Native learning fires `UNLOCK_SKILL`; this path does not. A GameTest compares a native finish with the rite's on one resistance and the plan says what to do if they differ; if the difference matters the rite refuses resistances and says so.)
+   - Any other skill: if mastery is negative, `setMastery(0)` first (research 1.5 option b, the owner's choice); then `skill.addMasteryPoint(instance, target, instance.getMaxMastery() - instance.getMastery())`, which fires `SKILL_MASTERY`, `onSkillMastered` (evolutions), the `skill_mastered` statistic and advancement, and marks the storage dirty. The maximum is read at call time, never a literal.
+   - If afterwards `!instance.isMastered(target)` (a `SKILL_MASTERY` listener vetoed or rewrote it, as Ascension's sealed skills do), the rite **restores the old mastery, refuses (`refusal.mastery.vetoed`) and gives everything back**. The report's fallback (`setMastery(max)` + `onSkillMastered` + statistic + `markDirty`) is **not used**: it works by overriding a listener that vetoed on purpose, so it is not documented as safe here.
+8. *Refused, to the target, with the reason* (it is the target's own skill, so there is no oracle: the performer who is not the target still hears only `rite.no_effect`, through `refuseAbout`): no choice; not held; temporary; already mastered or finished; the wrong tier for this rite; an Ascension System skill (`ascension:the_system`, `ascension:shadow_necromancer`, `ascension:shadow_monarch`: `PlayerSystem.syncMastery` rewrites their mastery from the System level, so a forced value is overwritten; the list is the config `mastery_refused_skills`); a skill in Rebalanced's `retired` tag (E14); not enough EP; on cooldown (days left); a listener vetoed.
+9. *Book.* Four entries, sealed, in the Evolution Rites category, unlocked **by kind** (WITCH, SIPHONER, TRIBRID), all four tiers, including the Ultimate one: this is the owner's 2026-11-23 rule for this rite and takes precedence over D5's "ultimates are lore-gated", which is about evolving into an Ultimate. The text says that a Manipulation skill only evolves into its Domination if the EP is high enough at that moment, once.
+10. *What it makes reachable* (stuck examples, each has a test): Sage -> Great Sage (Sage cannot be mastered by play, so `great_sage` of 8.1 was unreachable); Anti Skill (its toggle needs it mastered, and nothing gives mastery); a resistance (finished); Kumo's Determination (needs health below half while slotted) or, with no addon, `tensura:self_regeneration` (injury-gated).
+11. *Known limits.* Skill Books and the pack's hooks do not touch `addMasteryPoint`. The `SKILL_MASTERY` listeners (Tensura's `AbilityHandler`, Ascension's `ModifierEffects` and six skills, Mysticism's `AbilityHandler` and `SubjugatorHandler`) were not traced one by one, nor their order (research 5.1). Rebalanced's `learningPointRequirement` of the pack instance is unknown (the client instance says 100).
+
 ## 9. Race links (D9, 19d)
 
 The links are data and one table, `ApexLines`-style, and change what counts as a vampire or a werewolf for `RiteKinds` and the apex offer. All ids are in the id lists.
@@ -246,6 +278,7 @@ A new category `evolutions` ("Evolution Rites", icon `minecraft:nether_star`) in
 
 `RiteUnlockTable.GATED` gets one row per evolution recipe (the table stays the single source; a data test checks each rite file's `unlock` against it):
 - Unique and below: `kind(...)` with the performer kinds (WITCH, SIPHONER, TRIBRID) plus the subject kind where the recipe has one (VAMPIRE for Deus Sanguis, WEREWOLF for Butcher): a witch learns to work it, and the vampire learns that such a rite exists (Q3).
+- The four Rite of Mastery rites (E16): `kind(...)` WITCH, SIPHONER, TRIBRID, all four tiers (D15).
 - Ultimate: `lore(...)` with one lore id, source in Q4 (recommended: `finn`, Finn's Notes, "the rites of the eclipse", no new item).
 
 ### 10.3 Absent addons
@@ -269,14 +302,21 @@ New file `config/supernaturalbloodlines-evolution_rites.toml` (`EvolutionRitesCo
 | `ultimate_rites_enabled` | BOOL | true | the eclipse (Ultimate) rites | `...:ultimate_rites_enabled` |
 | `disabled_recipes` | LIST | empty | recipe ids that are off (a server removes one skill from the game) | `...:disabled_recipes` |
 | `announce_ultimates` | BOOL | false | one server line when an Ultimate is granted (it names the player: off by default, E5) | `...:announce_ultimates` |
+| `mastery_enabled` | BOOL | true | the Rite of Mastery (E16) | `...:mastery_enabled` |
+| `mastery_ep_common` | DOUBLE | 100000 | EP spent for a Common skill | `...:mastery_ep_common` |
+| `mastery_ep_extra` | DOUBLE | 300000 | EP spent for an Extra skill | `...:mastery_ep_extra` |
+| `mastery_ep_unique` | DOUBLE | 750000 | EP spent for a Unique skill | `...:mastery_ep_unique` |
+| `mastery_ep_ultimate` | DOUBLE | 2000000 | EP spent for an Ultimate skill | `...:mastery_ep_ultimate` |
+| `mastery_cooldown_days` | INT | 7 | in-game days between two rites for one player | `...:mastery_cooldown_days` |
+| `mastery_refused_skills` | LIST | the three Ascension System skills | skill ids the rite refuses | `...:mastery_refused_skills` |
 
-`AdminEntriesTest` count 156 becomes 161 (the part row and four keys); the lang adds `hub.admin.section.evolutionRites` and one `hub.admin.key.<file>:<key>` per row. `AdminCoverageTest` fails the build for a key without a row, so the rows cannot be forgotten.
+`AdminEntriesTest` count 156 becomes 161 with the engine (the part row and four keys) and **168** with the Rite of Mastery (seven more keys); the lang adds `hub.admin.section.evolutionRites` and one `hub.admin.key.<file>:<key>` per row. `AdminCoverageTest` fails the build for a key without a row, so the rows cannot be forgotten.
 
 ## 12. Phases
 
-1. **19a engine + our own chain.** The part, config and admin rows, the pure rules, the factory and `AddonProbe` with the hook probe, the unlock/book integration, `great_sage`, GameTests, the 12-run matrix and a server boot with the addon jars. Full plan: [19a](../plans/2026-11-22-plan-19a-evolution-engine.md).
+1. **19a engine + our own chains (Sage -> Great Sage, the vampire road to Deus Sanguis where Ascension is installed) + the Rite of Mastery.** The part, config and admin rows, the pure rules, the factory and `AddonProbe` with the hook probe, the unlock/book integration, `great_sage`, GameTests, the 12-run matrix and a server boot with the addon jars. Full plan: [19a](../plans/2026-11-22-plan-19a-evolution-engine.md).
 2. **19b Great Sage + FoxAblaze.** `GreatSageProbe` and `FoxAblazeProbe` (single-owner reader), the dormant `raphael` row and the Raphael merge of D14 (`merge.RaphaelMerge`, an `UNLOCK_SKILL` listener, no mixin), the `free` grant form, the road-closed test, and the retired-skill check (E14) with its source.
-3. **19c Ascension.** `AscensionProbe`, `deus_sanguis`, `blood_sovereign` (only this pair, Q5), the `permanent` form, the catalyst ingredient.
+3. **19c Ascension.** `AscensionProbe`, `blood_sovereign` (only this pair, Q5; `deus_sanguis` is in 19a), the `permanent` form, the catalyst ingredient.
 4. **19d the others and the race links.** `great_mage`, `king_of_curses`, `butcher`, `imitator` (Q6 decided), the four links of section 9, the LinkedMods series.
 
 Each phase ends with its matrix and a server boot with the jars; none changes the wire.

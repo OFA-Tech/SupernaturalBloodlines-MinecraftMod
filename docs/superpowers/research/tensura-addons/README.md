@@ -77,6 +77,10 @@ There is no id list for Great Sage: it registers two skills, `greatsage:raphael`
 
 **Rebalanced rewrites the ultimates' routes.** Its `skill_numbers_obtain/ultimate_*.json` tables and mixins (read for Great Sage 1.1.2, FoxAblaze 1.0.4 and Ascension 1.2.3) say, in the pack: `greatsage:raphael` is unobtainable (the same constant); FoxAblaze's `azathoth`, `beelzebuth` and `velgrynd` are *retired* (blacklisted, `MixinFoxBeelzebubFusionRetired`); Shub-Niggurath's Beelzebuth prerequisite is replaced by `elitetensura:beelzebuth` (`MixinShubRetainedPrerequisite`); Ciel needs a mastered FoxAblaze Raphael and a free or own Raphael/Ciel ownership family; Fortuna, Hell Sniper, Mammon and Samael take MP payments and consume or retain named prerequisites (Mathematician and Usurper, Sniper, Greed, Poison and Merciless); Veldora and Satanael have kill-based handlers; Uriel is a Raphael Synthesise-mode evolution. Consequence for the design: **a rite must ask the installed addon (or read its live config), never copy a number into our data**, or it will drift from what the pack's players see. It also means several FoxAblaze roads are automatic or UI-driven, so a rite adds nothing to them (see the spec, section "Raphael and the automatic roads").
 
+## Mastery
+
+[mastery.md](mastery.md) (2026-11-23, from the owner's second research pass, copied unchanged): how mastery works, which skills cannot be mastered by play, which evolutions and toggles it gates, what already forces it, and the safe way to apply it. It is the basis of the Rite of Mastery (spec section 8.5).
+
 ## How to repeat
 
 ```

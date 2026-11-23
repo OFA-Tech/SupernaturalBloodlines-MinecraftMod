@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Build the shared rite engine of plan 19 (a new part, a data recipe per chain, addon probes, refusals without oracles, book and unlock integration, Admin rows) and ship the first chain on it: a witch-type performer evolves a consenting target from a mastered Sage to Tensura's Great Sage on a full-moon night.
+**Goal:** Build the shared rite engine of plan 19 (a new part, a data recipe per chain, addon probes, refusals without oracles, book and unlock integration, Admin rows) and ship on it: Sage to Great Sage (a witch-type performer, a consenting target, a full-moon night), the vampire road to Ascension's Deus Sanguis (only where Ascension is installed), and the Rite of Mastery (spec section 8.5). The Raphael merge (D14) is 19b: it needs the Great Sage and FoxAblaze jars and belongs to the plan that adds them.
 
 **Architecture:** Pure rules in `core.evolution` (nights, order of checks, refusal reasons). A `supernaturalbloodlines:evolution` rite factory whose codec **is** the recipe, so each rite file carries its own recipe. Addon requirements are asked of the installed addon through `AddonProbe`s (reflection, no compile dependency). The unlock table, book generator and `RiteUnlocks` of the rites-unlock work are extended, not replaced. One new part, `evolutionRites`.
 
@@ -20,10 +20,11 @@ Repo conventions that apply (from the plan-18 phases): one branch `feature/plan-
 - Performer: `SeveranceRiteFactory.isWitchType(BloodlineAccess.get(caster).species())`. Consent: `RiteTargets.consentAnswer(caster == target, target.isShiftKeyDown(), RiteTargets.SNEAK_TO_EVOLVE)`, with `SNEAK_TO_EVOLVE = "supernaturalbloodlines.rite.sneak_to_evolve"`.
 - Refusal keys (lang): `supernaturalbloodlines.refusal.evolution.closed`, `.not_witch`, `.not_ready`, `.already`; `supernaturalbloodlines.rite.needs_eclipse`; existing `supernaturalbloodlines.rite.needs_full_moon` and `supernaturalbloodlines.rite.no_effect` (`FactionRiteFactory.NEEDS_FULL_MOON`, `NO_EFFECT`); success `supernaturalbloodlines.rite.evolution_done` (target) and `supernaturalbloodlines.rite.evolution_done_caster`.
 - Everything about the target goes through `RiteTargets.refuseAbout(caster, target, key)`; the single-owner and every addon requirement share the key `.not_ready`.
-- Config file `supernaturalbloodlines-evolution_rites.toml`, section `evolutionRites`; keys `rites_enabled` (true), `ultimate_rites_enabled` (true), `disabled_recipes` (empty list), `announce_ultimates` (false). `AdminEntries.ALL.size()` becomes **161** (156 + `parts.evolutionRites` + 4).
+- Config file `supernaturalbloodlines-evolution_rites.toml`, section `evolutionRites`; keys `rites_enabled` (true), `ultimate_rites_enabled` (true), `disabled_recipes` (empty list), `announce_ultimates` (false). `AdminEntries.ALL.size()` becomes **161** (168 with Task 6) (156 + `parts.evolutionRites` + 4).
 - Data: every file of the part carries `{ "type": "supernaturalbloodlines:part_enabled", "part": "evolutionRites" }`; an addon recipe also `neoforge:mod_loaded`. Suggested rite power: 9000 for a Unique.
 - Sacrifice (spec E15): a recipe has `ep_cost` (the codec gets an optional `ep_cost` double, default 0) or an addon tribute; `great_sage` carries an `ep_cost` the builder sets, taken after the confirmed learn; a data test fails a recipe with neither. Plan 19 is built after plan 18.
-- No wire change: `LadderNet.PROTOCOL` stays.
+- Wire: `LadderNet.PROTOCOL` stays. The Rite of Mastery picker adds two payloads (`MasteryOptionsPayload` S2C, `MasteryChoicePayload` C2S) on the part's own optional channel registered with `registrar.optional().versioned("1")`; the CHANGELOG says so.
+- Rite of Mastery (spec E16, D15): tiers COMMON/EXTRA/UNIQUE/ULTIMATE; EP 100000, 300000, 750000, 2000000 (config `mastery_ep_*`), cooldown 7 days (`mastery_cooldown_days`), refused list (`mastery_refused_skills`: `ascension:the_system`, `ascension:shadow_necromancer`, `ascension:shadow_monarch`), switch `mastery_enabled`; the sacrifice counts are in the four rite files `mastery_common`, `mastery_extra`, `mastery_unique`, `mastery_ultimate`. `AdminEntries.ALL.size()` is 161 after Task 1 and **168** after Task 6.
 - GameTest runs one at a time with `--max-workers=2`; restore `run/config` after any killed run.
 
 ## Review Focus
@@ -43,7 +44,8 @@ Create (main, `src/main/java/net/ofatech/supernaturalbloodlines/`):
 - `core/rite/RiteAvailability.java`: pure switch the part sets, read by `RiteUnlocks`.
 - `parts/evolutionrites/EvolutionRitesPart.java`, `EvolutionRitesConfig.java`, `Recipes.java` (which recipes exist and are available).
 - `parts/evolutionrites/probe/AddonProbe.java`, `Hooks.java`, `Probes.java`, `HookList.java`.
-- `parts/evolutionrites/rite/EvolutionRiteFactory.java`.
+- `parts/evolutionrites/rite/EvolutionRiteFactory.java`, `rite/MasteryRiteFactory.java`.
+- `core/evolution/MasteryRules.java` (pure), `parts/evolutionrites/mastery/MasteryApply.java`, `MasteryChoice.java`, `MasteryNet.java` (payloads), client `parts/evolutionrites/client/MasterySection.java`.
 - `parts/evolutionrites/gametest/EvolutionHookProbeGameTests.java`, `EvolutionRiteGameTests.java`, `EvolutionUnlockGameTests.java`.
 - `src/main/resources/data/supernaturalbloodlines/enchanted/circle_magic/rite/evolve_great_sage.json`.
 - generated by the book test: advancements `known/evolve_great_sage.json` and `sealed/evolve_great_sage.json`, the real entry and the decoy under the book folder.
@@ -161,7 +163,7 @@ Modify: `core/Part.java`, `shared/admin/AdminEntries.java`, `core/rite/RiteUnloc
 - [ ] **Step 4: Implement `Recipes`**, add the constant to `RiteTargets`, register the factory and `EvolutionRiteGameTests`, write `evolve_great_sage.json` (conditions `part_enabled evolutionRites`; two ingredients of the builder's choice that name no state of the target; `enchanted:medium_circle` of `enchanted:ritual_chalk`; power 9000; the factory block with `tier: unique`, `grants: tensura:great_sage`, `needs: [{skill: tensura:sage, mastered: true}]`, `requires_mod: tensura`, `probe: own.sage_great_sage`, `subject_kinds: []`).
 - [ ] **Step 5: Lang**: every key of Global Constraints, the rite's name `rite.supernaturalbloodlines.evolve_great_sage`, and the `hub.rites.desc.evolve_great_sage.<n>` lines Task 5 needs.
 - [ ] **Step 6: Run** the Step 2 commands. Expected: PASS.
-- [ ] **Step 7: Mutants for this task** (apply one, run the named test, expect FAIL, revert): see the table in Task 8. Run them now for the rows marked M4 to M10.
+- [ ] **Step 7: Mutants for this task** (apply one, run the named test, expect FAIL, revert): see the table in Task 10. Run them now for the rows marked M4 to M10.
 - [ ] **Step 8: Commit** `feat(evolution): the evolution rite and Sage to Great Sage`.
 
 ---
@@ -188,11 +190,56 @@ Modify: `core/Part.java`, `shared/admin/AdminEntries.java`, `core/rite/RiteUnloc
 
 ---
 
-### Task 6: Docs, rules, changelog
+### Task 6: The Rite of Mastery (spec section 8.5, E16)
+
+**Files:**
+- Create: `core/evolution/MasteryRules.java`, `parts/evolutionrites/mastery/{MasteryApply,MasteryChoice,MasteryNet}.java`, `parts/evolutionrites/rite/MasteryRiteFactory.java`, client `parts/evolutionrites/client/MasterySection.java`, the four rite files `mastery_common.json`, `mastery_extra.json`, `mastery_unique.json`, `mastery_ultimate.json`, `parts/evolutionrites/gametest/MasteryGameTests.java`; test `core/evolution/MasteryRulesTest.java`.
+- Modify: `core/evolution/Tier.java` (add `COMMON`), `EvolutionRitesConfig.java` (seven keys), `shared/admin/AdminEntries.java` (seven rows; count 168), `core/rite/RiteUnlockTable.java` (four `kind` rows), `RitesBook.CATS`, `EvolutionRitesPart.java` (factory, payloads, client init), lang, `CHANGELOG.md`.
+
+**Interfaces:**
+- Produces (pure): `MasteryRules.tierOf(String skillTypeName, boolean isTensuraSkill): Tier` (`RESISTANCE`, `INTRINSIC`, `COMMON` give `COMMON`; `EXTRA`, `UNIQUE`, `ULTIMATE` themselves; not a Tensura skill gives `EXTRA`); `record MasteryRules.Facts(boolean enabled, boolean casterWitch, boolean fullMoonNight, boolean eclipse, boolean casterIsTarget, boolean targetSneaking, boolean hasChoice, boolean held, boolean temporary, boolean alreadyDone, Tier skillTier, Tier riteTier, boolean refusedId, boolean retired, boolean enoughEp, boolean onCooldown)`; `enum MasteryRules.Reason { CLOSED, NOT_WITCH, WRONG_NIGHT, NO_CONSENT, NO_CHOICE, NOT_HELD, TEMPORARY, ALREADY, WRONG_TIER, SYSTEM, RETIRED, NO_EP, COOLDOWN }`; `static Optional<Reason> check(Facts)`; `static boolean aboutTarget(Reason)` (every reason from `NO_CHOICE` on); `static String keyOf(Reason, Tier riteTier)` (`supernaturalbloodlines.refusal.mastery.<no_choice|not_held|temporary|already|wrong_tier|system|retired|no_ep|cooldown>`; night and witch keys as `EvolutionRules`).
+- Produces: `MasteryApply.apply(ServerPlayer target, ManasSkillInstance inst): MasteryApply.Result` (`DONE`, `VETOED`): the application of E16 item 7 (finish learning for a resistance; `setMastery(0)` when negative; `skill.addMasteryPoint(inst, target, max - current)`; restore and `VETOED` when `!isMastered` afterwards). `MasteryChoice.get(ServerPlayer): Optional<ResourceLocation>`, `set`, `clear`, `lastRiteTime(ServerPlayer): long`, `markRite(ServerPlayer, long gameTime)` over `RiteUnlocks.flags(p)`-style persisted data.
+- Produces: payloads `MasteryOptionsPayload(List<Option> options, Optional<ResourceLocation> chosen, int cooldownDaysLeft)` with `record Option(ResourceLocation skill, Tier tier, Optional<String> refusalKey)` and `MasteryChoicePayload(Optional<ResourceLocation> skill)`.
+- Consumes: Task 1 config, Task 2 `Tier`, Task 4 refusal helpers, `RiteTargets`, `EnergyHelper.getBaseMaxEP/setBaseMaxEP`, `SkillAPI`, `Skill.getType()`.
+
+- [ ] **Step 1: Write the failing tests.**
+  - `MasteryRulesTest`: `tierOfEachSkillType`; `theNightFollowsTheRiteTier` (ULTIMATE needs the eclipse, the other three a full moon); `theOrderIsFixed` (the reasons come out `CLOSED, NOT_WITCH, WRONG_NIGHT, NO_CONSENT, NO_CHOICE, NOT_HELD, TEMPORARY, ALREADY, WRONG_TIER, SYSTEM, RETIRED, NO_EP, COOLDOWN`, then empty); `aCasterWhoIsTheTargetNeedsNoConsent`; `onlyTargetReasonsAreAboutTheTarget`; `keysAreOneToOne`.
+  - `MasteryGameTests` (fixtures as Task 4; the target has chosen the skill through `MasteryChoice.set`; the night is a full moon unless stated; base Max EP is set high enough):
+    - `anAntiSkillIsMasteredAndItsToggleOpens` (`tensura:anti_skill`, UNIQUE: rite `mastery_unique`; afterwards `isMastered`, `canBeToggled` true; the stat `tensura:skill_mastered` went up).
+    - `aResistanceLearningIsFinished` (a registry skill of type RESISTANCE granted at its negative learning mastery: after `mastery_common` its mastery is 0 and it is active; a second rite on it is refused `already`). Also the comparison test `finishingMatchesNativeLearning` (spec 8.5 item 7).
+    - `aKumoBelowHalfHealthSkillIsMastered` (`tensura_kumodesu:determination`, skipped without Kumo Desu ga) and the no-addon stand-in `selfRegenerationIsMasteredWithoutInjury` (`tensura:self_regeneration`, EXTRA).
+    - `masteringSageMakesGreatSageReachable`: target holds `tensura:sage` unmastered: the `great_sage` rite is refused `not_ready`; after `mastery_extra` on Sage the `great_sage` rite succeeds.
+    - `masteringFiresTheSkillsEvolution` (`tensura:ranged_barrier` gives `tensura:multilayer_barrier`: proves `onSkillMastered` ran, so a raw `setMastery` fails it).
+    - `aNegativeMasteryIsZeroedFirst`; `aVetoingListenerRefusesAndGivesEverythingBack` (a test listener on `SkillEvents.SKILL_MASTERY` returning `interruptFalse`: old mastery restored, EP unchanged, ingredients back, `refusal.mastery.vetoed`).
+    - `epIsSpentLastAndOnlyOnSuccess` (base Max EP lower by exactly the tier cost after a success; unchanged after every refusal); `notEnoughEpRefusesBeforeTakingAnything`.
+    - `aSystemSkillIsRefused` (`ascension:the_system` through the config list: a fixture id in the list); `aRetiredSkillIsRefused` (a skill in a test `tensura_rebalanced:retired` tag, only when the tag can be made in the test data, else the pure test); `aTemporarySkillIsRefused`.
+    - `theWrongTierRiteIsRefusedWithTheTierNamed`; `theUniqueTierNeedsAFullMoonAndTheUltimateTierAnEclipse`.
+    - `oneRitePerTargetPerSevenDays` (second rite at day 6 refused `cooldown` with the days left, at day 7 allowed; the cooldown config override respected); `aRefusalDoesNotStartTheCooldown`.
+    - `thePerformerNeverLearnsTheChosenSkill` (all performer messages equal for two different chosen skills, and `rite.no_effect` for a non-consenting target).
+    - `theServerValidatesTheChoice` (`MasteryChoicePayload` naming a skill the target does not hold, a System skill, or a mastered one is rejected and stores nothing); `theOptionsListShowsEveryHeldSkillWithItsTierOrReason`.
+- [ ] **Step 2: Run** `./gradlew test --tests '*MasteryRulesTest'` (expected: compile error), then `./gradlew runGameTestServer` through the slot (expected: FAIL).
+- [ ] **Step 3: Implement** the pure rules, the config (seven keys: `mastery_enabled`, `mastery_ep_common|extra|unique|ultimate`, `mastery_cooldown_days`, `mastery_refused_skills`) and their Admin rows (count 168), `Tier.COMMON` (an evolution recipe may not use it: a codec test), `MasteryApply`, `MasteryChoice`, the payload pair, the factory (order of checks: the engine's, then the target block through `refuseAbout`, **apply, then spend EP last, then `markRite`**; the rite file of a tier is the factory's `tier` field), the four rite files (conditions `part_enabled evolutionRites`; `enchanted:medium_circle` of `enchanted:ritual_chalk`, `enchanted:large_circle` of `enchanted:otherwhere_chalk` for the Ultimate; the sacrifice of the spec table; power 6000, 9000, 12000, 20000), the four `RiteUnlockTable` rows and the book category entries, the lang.
+- [ ] **Step 4: The hub picker.** Find how the hub's Skills page (`SkillsPage`) gets rows that exist only with Tensura (the Tensura theme views) and add a "Rite of Mastery" section from the part's client init without a new `HubPage`: a list of the target's own skills (tier tag, greyed with the reason when refused), a Choose and a Clear button, the cooldown line and the EP cost of the tier; it opens by sending a request and shows `MasteryOptionsPayload`. Hidden hub shots per `docs/safe-screenshots.md`; a pure test for the section's row model.
+- [ ] **Step 5: Run** the Step 2 commands: PASS. Run the mutants M15 to M26 of Task 10 now.
+- [ ] **Step 6: Commit** `feat(mastery): the Rite of Mastery`.
+
+---
+
+### Task 7: Deus Sanguis, the vampire road (Ascension installed)
+
+**Files:** Create `parts/evolutionrites/probe/UniqueRoadProbe.java` (the generic `unique.road` probe: reads the addon's own on/off switch through `Hooks`), the rite `evolve_deus_sanguis.json` (conditions `part_enabled evolutionRites` and `neoforge:mod_loaded` `ascension`), `parts/evolutionrites/gametest/EvolutionAscensionGameTests.java`. Modify: `Probes.java`, `HookList.java` (rows for `AddonSkillConfig.DEUS_SANGUIS_ENABLED`), `RiteUnlockTable.java` (`kind` WITCH, SIPHONER, TRIBRID, VAMPIRE), `RitesBook.CATS`, `LinkedMods.TESTED` (`ascension` 3.1), lang.
+
+**Interfaces:** Consumes `AddonProbe`, `Hooks.method`. Produces `Probes.of("unique.road:ascension.deus_sanguis")` (an id of the form `unique.road:<switch field>`): `missingHook()` names `com.simplygray.tensuraaddon.AddonSkillConfig#DEUS_SANGUIS_ENABLED` when absent; `roadOpen()` reads the `ModConfigSpec.BooleanValue` live.
+
+- [ ] **Step 1: Write the failing tests.** `UniqueRoadProbeTest` (pure: the field read through a fake class, missing class, missing field, false switch); GameTests (with Ascension on the classpath, else skipped): `aVampireGetsDeusSanguisOnAFullMoon` (target of vampire kind, sneaking: holds `ascension:deus_sanguis`, price through plain `learnSkill`), `aHumanTargetIsRefusedToTheTargetOnly` (`not_ready`, performer `no_effect`), `theAddonSwitchOffClosesIt` (`DEUS_SANGUIS_ENABLED` false: `closed`, the book shows neither entry), `withoutAscensionNothingExists` (`-PnoLinkedMods` and the matrix: the rite is not registered, `known`/`sealed` not awarded), `deusSanguisOnlyThroughTheAscensionAddonId`. The Ascension Bloodfiend race counts as vampire only in 19d.
+- [ ] **Step 2: Run** (FAIL), **Step 3: implement**, **Step 4: run** (PASS; with `-PaddonJars` the Ascension tests run), **Step 5: Commit** `feat(evolution): the vampire road to Deus Sanguis`.
+
+---
+### Task 8: Docs, rules, changelog
 
 **Files:** Create `docs/parts/evolution_rites.md`. Modify `SPECIES-RULES.md`, `CHANGELOG.md`, README (the parts list), lang (one Guide paragraph).
 
-- [ ] **Step 1:** `docs/parts/evolution_rites.md` (first line **Mixin budget: 0 of 3 used**; the Raphael merge of 19b is an event, not a mixin): checklist (ticked items of 19a), the verified hooks the part uses (copy the Tensura rows of `verified-hooks.md` that it calls, with the version), the disabled-part note (what vanishes with the part off; data conditions), the settings table, the manual checks (spec section 13), and "Booting with the addon jars" (Task 7).
+- [ ] **Step 1:** `docs/parts/evolution_rites.md` (first line **Mixin budget: 0 of 3 used**; the Raphael merge of 19b is an event, not a mixin): checklist (ticked items of 19a), the verified hooks the part uses (copy the Tensura rows of `verified-hooks.md` that it calls, with the version), the disabled-part note (what vanishes with the part off; data conditions), the settings table, the manual checks (spec section 13), and "Booting with the addon jars" (Task 9).
 - [ ] **Step 2:** `SPECIES-RULES.md`: E1 to E14 of the spec under the next free R-numbers; `CHANGELOG.md`: entry with a "Rolling back" paragraph (turning the part off removes the rite and its book entries; a Great Sage already granted stays, it is an ordinary Tensura skill).
 - [ ] **Step 3:** Guide paragraph in lang: the two nights and the consent, no spoilers.
 - [ ] **Step 4:** `./gradlew test` (all unit tests). Expected: PASS.
@@ -200,7 +247,7 @@ Modify: `core/Part.java`, `shared/admin/AdminEntries.java`, `core/rite/RiteUnloc
 
 ---
 
-### Task 7: Addon jars on the run classpath, and the real server boot
+### Task 9: Addon jars on the run classpath, and the real server boot
 
 **Files:** Modify `build.gradle`. Modify `docs/parts/evolution_rites.md` (the procedure).
 
@@ -214,7 +261,7 @@ Modify: `core/Part.java`, `shared/admin/AdminEntries.java`, `core/rite/RiteUnloc
 
 ---
 
-### Task 8: The 12-run matrix, the 13th run and the mutation pass
+### Task 10: The 12-run matrix, the 13th run and the mutation pass
 
 - [ ] **Step 1: The matrix**, one run at a time with `--max-workers=2`, each `./gradlew runGameTestServer` plus: 1 none; 2 `-PnoWerewolves -PnoCurios`; 3 `-PnoLinkedMods`; 4 `-PpartsOff=species`; 5 `-PpartsOff=artifacts`; 6 `-PpartsOff=speciesTensura`; 7 `-PpartsOff=supernatural`; 8 `-PpartsOff=supernaturalTensura`; 9 `-PpartsOff=hud`; 10 `-PpartsOff=celestials`; 11 `-PpartsOff=bosses`; 12 `-PpartsOff=species,artifacts`; **13 `-PpartsOff=evolutionRites`** (the new part alone; runs 4 and 6 also turn it off through `requiredParts`, but only 13 tests that the rest of the mod is whole without it). The evolution GameTest classes skip themselves when the part is off or `-PnoLinkedMods`; `partDataFollowsSwitch` must see `evolve_great_sage` in the registry exactly when the part is on. Expected: all PASS; record the counts.
 - [ ] **Step 2: The mutation pass.** For each row: apply the change, run the named test, confirm it FAILS, revert. Record each in the PR.
@@ -235,6 +282,20 @@ Modify: `core/Part.java`, `shared/admin/AdminEntries.java`, `core/rite/RiteUnloc
 | M12 | `Hooks.method` returns a handle for a missing class | `HooksTest.namesAMissingClass` |
 | M13 | the part-data condition removed from `evolve_great_sage.json` | `EvolutionRitesDataTest`, run 13 |
 | M14 | `tier` of `great_sage` set to `ULTIMATE` | `tierMatchesTheSkillType` |
+| M15 | the Mastery tier-to-night mapping returns the full moon for ULTIMATE | `MasteryRulesTest.theNightFollowsTheRiteTier` |
+| M16 | EP spent before the checks | `epIsSpentLastAndOnlyOnSuccess`, `notEnoughEpRefusesBeforeTakingAnything` |
+| M17 | EP not given back (kept spent) when a listener vetoes | `aVetoingListenerRefusesAndGivesEverythingBack` |
+| M18 | `setMastery(max)` instead of `addMasteryPoint` | `masteringFiresTheSkillsEvolution`, `anAntiSkillIsMasteredAndItsToggleOpens` |
+| M19 | a negative mastery not zeroed first | `aNegativeMasteryIsZeroedFirst` |
+| M20 | the veto fallback (`setMastery(max)` after a veto) enabled | `aVetoingListenerRefusesAndGivesEverythingBack` |
+| M21 | the cooldown ignored, or started by a refusal | `oneRitePerTargetPerSevenDays`, `aRefusalDoesNotStartTheCooldown` |
+| M22 | the System skills not refused | `aSystemSkillIsRefused` |
+| M23 | a resistance given mastery above 0 | `aResistanceLearningIsFinished` |
+| M24 | the wrong-tier rite accepted | `theWrongTierRiteIsRefusedWithTheTierNamed` |
+| M25 | the server stores a choice it did not validate | `theServerValidatesTheChoice` |
+| M26 | a target-dependent mastery reason said to the performer | `thePerformerNeverLearnsTheChosenSkill` |
+| M27 | the Deus Sanguis recipe ignores the addon switch | `theAddonSwitchOffClosesIt`, `UniqueRoadProbeTest` |
+| M28 | the Deus Sanguis rite registered without Ascension | `withoutAscensionNothingExists` |
 
 - [ ] **Step 3: Open the PR** with the matrix counts, the mutation table with results, the boot logs and the SHA-256 list.
 
@@ -242,7 +303,7 @@ Modify: `core/Part.java`, `shared/admin/AdminEntries.java`, `core/rite/RiteUnloc
 
 ## Self-review
 
-- Spec coverage: sections 5 (E1 to E14) map to Tasks 2 and 4 (E3, E4, E5, E6, E8, E10, E11, E12), 1 (settings, section 11), 5 (E7, section 10), 3 (E2 hooks); E9 (single owner) and E14 (retired skills) are 19b work, in its outline (the engine's `ownedByOther` seam is built and tested here; `retired` is added with its source in 19b); section 9 (race links) is 19d; section 13 is Tasks 7 and 8.
+- Spec coverage: section 8.5 (the Rite of Mastery) is Task 6 and 8.2's `deus_sanguis` is Task 7; sections 5 (E1 to E14) map to Tasks 2 and 4 (E3, E4, E5, E6, E8, E10, E11, E12), 1 (settings, section 11), 5 (E7, section 10), 3 (E2 hooks); E9 (single owner) and E14 (retired skills) are 19b work, in its outline (the engine's `ownedByOther` seam is built and tested here; `retired` is added with its source in 19b); section 9 (race links) is 19d; section 13 is Tasks 7 and 8.
 - Types: `EvolutionRules.Facts` fields are used by name in Task 4; `Recipes.exists` is defined in Task 4 and consumed in Task 5; `AddonProbe` methods match the spec 6.3.
 - Proportion: the plan is the decisions the builder cannot make alone; bodies are left to the signatures and the tests.
 
@@ -266,7 +327,7 @@ Gate: none open (Q5 decided: only the Deus Sanguis pair). Branch `feature/plan-1
 1. Probe rows for `AwakeningRitual` helpers and `AddonConfig`/`AddonGameRules` fields; resolve the unverified items of `verified-hooks.md` (Shadow Monarch gate, `hasOtherBirdsMastered`, what `EpUtil.grantMaxEp` does to a rite's target, the exact registry id of the Ultimate Catalyst item).
 2. `GrantForm.PERMANENT` (`learnSkill(target, skill, -1)`).
 3. `AscensionProbe`: reads `doAscensionUltimate`, `minMaxEp`, `cooldownMinutes` live, `IExistence`, the pair from the addon's own table (`forcedAwakenings` shows the pairs the target can use), the extra gates through the public helpers; writes the cooldown tag on success and applies the addon's own consumption (`consumeSuppressionStoneOver400k`, `consumeDragonEssences30`).
-4. `deus_sanguis` (Unique, vampire-kind subject) and `blood_sovereign` (Ultimate, catalyst as an ingredient, lore gate); more pairs per Q5, one rite file and one lang block each.
+4. `blood_sovereign` (Ultimate, catalyst as an ingredient, lore gate; `deus_sanguis` itself shipped in 19a); only this pair (Q5), one rite file and one lang block.
 5. `LinkedMods.TESTED` row `ascension` 3.1; tests per spec section 8.2, including every extra gate the addon has for the chosen pairs; mutants (EP threshold read from a constant, cooldown ignored, Unique not forgotten, Deus Sanguis granted to a non-vampire).
 6. Matrix, boots A and B; a manual check on a real eclipse with the real Ascension altar left untouched.
 
