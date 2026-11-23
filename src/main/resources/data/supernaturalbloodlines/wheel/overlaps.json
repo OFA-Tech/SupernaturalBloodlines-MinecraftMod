@@ -1,0 +1,31 @@
+{
+  "format": 1,
+  "note": "Powers that two or more mods give. One entry on the wheel, the main member runs, one shared cooldown (the main side's own), no stacking. Whole powers only, never a mode of a skill. Accepted by the owner 2026-11-22 (docs/superpowers/research/skill-overlaps.md). Left out on purpose: every Infinity Stones power (a mode of its stone), M09 blood projectile (Ascension's costs health: both stay), the four haki skills of M07, tensura:traveler and tensura:suppressor (a mode is the teleport), Ascension blood_frenzy and the Horizons/Ascension rages of M06 (their drawbacks must stay visible), the boost-style race abilities of M04, Ascension judgement_bird of M11 (a skill with modes), and every loose match. The Great Sage members of M11 are built by the client (its functions are client statics), so only the client wheel can apply that group. To add an approved pair: add a group here, run OverlapTableTest. No code changes.",
+  "chains": [
+    ["tensura/tensura:self_regeneration", "tensura/tensura:ultraspeed_regeneration", "tensura/tensura:infinite_regeneration"]
+  ],
+  "groups": [
+    {"id": "invisibility", "research": "M01", "confidence": "same", "main": 0,
+     "members": ["vampirism/vampirism:vampire_invisibility", "tensura/tensura:invisible"]},
+    {"id": "night_vision", "research": "M02", "confidence": "same", "main": 0,
+     "members": ["vampirism/vampirism:vision", "tensura/tensura:godwolf_sense"]},
+    {"id": "bat_form", "research": "M03", "confidence": "close", "main": 0,
+     "members": ["vampirism/vampirism:bat", "tensura/tensura:race_ability"]},
+    {"id": "flight", "research": "M04", "confidence": "close", "main": 0,
+     "members": ["tensura/tensura:gravity_flight", "tensura/ascension:angel_wings"]},
+    {"id": "regeneration", "research": "M05", "confidence": "close", "main": 0,
+     "members": ["vampirism/vampirism:regen", "tensura/tensura:self_regeneration", "tensura/tensurahorizons:rapid_regeneration"]},
+    {"id": "rage", "research": "M06", "confidence": "same", "main": 0,
+     "members": ["vampirism/vampirism:vampire_rage", "werewolves/werewolves:rage"]},
+    {"id": "fear", "research": "M07", "confidence": "same", "main": 0,
+     "members": ["werewolves/werewolves:fear", "tensura/tensura:coercion", "tensura/ascension:intimidating_roar"]},
+    {"id": "teleport", "research": "M08", "confidence": "same", "main": 0,
+     "members": ["vampirism/vampirism:teleport", "tensura/tensurahorizons:void_step"]},
+    {"id": "sense", "research": "M10", "confidence": "close", "main": 0,
+     "members": ["werewolves/werewolves:sense", "tensura/tensura:magic_sense", "tensura/tensura:sense_heat_source"]},
+    {"id": "appraisal", "research": "M11", "confidence": "close", "main": 0,
+     "members": ["tensura/tensura:analytical_appraisal", "great_sage/greatsage:assess", "great_sage/greatsage:scan"]},
+    {"id": "bite", "research": "M12", "confidence": "close", "main": 0,
+     "members": ["bloodline/supernaturalbloodlines:bite", "tensura/tensura:race_ability"]}
+  ]
+}
