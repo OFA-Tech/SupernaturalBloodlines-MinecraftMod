@@ -33,10 +33,12 @@ class WheelPayloadCodecTest {
 
     @Test
     void entryRoundTripsThroughARegistryBuffer() {
-        WheelEntry in = entry(3);
+        WheelEntry in = entry(3).withCoverNote(Component.literal("Also covers: Vampirism Regeneration, locked while this is on"));
         RegistryFriendlyByteBuf b = buf();
         WheelEntry.STREAM_CODEC.encode(b, in);
         WheelEntry out = WheelEntry.STREAM_CODEC.decode(b);
+        assertEquals("Also covers: Vampirism Regeneration, locked while this is on", out.coverNote().getString());
+        assertEquals("", entry(4).coverNote().getString(), "an entry that covers nothing has no note");
         assertEquals(in.ref(), out.ref());
         assertEquals(in.group(), out.group());
         assertEquals("bat_form", out.groupId());

@@ -360,9 +360,19 @@ public final class WheelGate {
     private static boolean stillOn(ServerPlayer p, PowerRef ref) {
         return switch (ref.source()) {
             case VAMPIRISM, WEREWOLVES -> VampirismGate.loaded() && VampirismSides.stillOn(p, ref.id());
-            case TENSURA -> TensuraGate.loaded() && TensuraSides.stillOn(p, ref.id());
+            case TENSURA -> TensuraGate.loaded() && anyTierOn(p, ref);
             default -> false;
         };
+    }
+
+    /** A group names one tier of a chain, the player may own and have on any other: the clock saves them all as the first one, so this is on when any tier of the chain is. */
+    private static boolean anyTierOn(ServerPlayer p, PowerRef ref) {
+        for (PowerRef tier : table().tiersOf(ref)) {
+            if (TensuraSides.stillOn(p, tier.id())) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /** On in this group: the race ability is on in the bat form group only (Bats Mode), never in the bite one. */
@@ -375,18 +385,19 @@ public final class WheelGate {
         int usedSide = table().sideOf(g, used);
         int[] own = new int[g.members().size()];
         for (int i = 0; i < own.length; i++) {
-            own[i] = ownCooldown(p, g.members().get(i), i == usedSide, mode);
+            own[i] = ownCooldown(p, g.members().get(i), i == usedSide ? used : null, mode);
         }
         return SharedCooldown.pick(own, g.main(), usedSide);
     }
 
     /** One member's own cooldown in ticks, {@link SharedCooldown#NOT_OWNED} when the player does not have it or it cannot be read. */
-    private static int ownCooldown(ServerPlayer p, PowerRef member, boolean isUsed, int mode) {
+    private static int ownCooldown(ServerPlayer p, PowerRef member, @Nullable PowerRef usedHere, int mode) {
         return switch (member.source()) {
             case BLOODLINE -> ourCooldown(p, member.id());
             case VAMPIRISM, WEREWOLVES -> VampirismGate.loaded() ? VampirismSides.cooldownTicks(p, member.id()) : SharedCooldown.NOT_OWNED;
             // Tensura gives no cooldown before a press: the value is read from the instance right after the side was pressed; for another side it is unknown
-            case TENSURA -> TensuraGate.loaded() && isUsed ? TensuraSides.cooldownTicks(p, member.id(), mode) : SharedCooldown.NOT_OWNED;
+            // (the tier that was used, which may be a higher tier of the chain the group names)
+            case TENSURA -> TensuraGate.loaded() && usedHere != null ? TensuraSides.cooldownTicks(p, usedHere.id(), mode) : SharedCooldown.NOT_OWNED;
             default -> SharedCooldown.NOT_OWNED;
         };
     }

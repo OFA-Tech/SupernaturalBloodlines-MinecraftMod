@@ -49,6 +49,16 @@ public final class OverlapTable {
         return canonical.getOrDefault(ref, ref);
     }
 
+    /** Every tier of the chain this power is in, lowest first; just the power itself when it is in no chain. A player may own any tier of it. */
+    public List<PowerRef> tiersOf(PowerRef ref) {
+        for (List<PowerRef> chain : chains) {
+            if (chain.contains(ref)) {
+                return chain;
+            }
+        }
+        return List.of(ref);
+    }
+
     /** The groups a power is a member of (a tier counts as its chain), in file order. */
     public List<OverlapGroup> groupsOf(PowerRef ref) {
         PowerRef c = canonical(ref);

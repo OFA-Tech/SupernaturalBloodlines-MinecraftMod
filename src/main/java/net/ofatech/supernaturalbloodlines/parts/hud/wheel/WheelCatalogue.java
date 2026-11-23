@@ -8,10 +8,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.ofatech.supernaturalbloodlines.SupernaturalBloodlines;
 import net.ofatech.supernaturalbloodlines.core.wheel.LockReason;
 import net.ofatech.supernaturalbloodlines.core.wheel.PowerRef;
+import net.ofatech.supernaturalbloodlines.core.wheel.PowerSource;
 import net.ofatech.supernaturalbloodlines.core.wheel.PowerState;
 import net.ofatech.supernaturalbloodlines.core.wheel.overlap.Dedup;
 import net.ofatech.supernaturalbloodlines.core.wheel.overlap.GroupClock;
@@ -87,6 +89,8 @@ public final class WheelCatalogue {
         }
         List<Cand> shown = cands;
         Map<Cand, OverlapGroup> groupOf = Map.of();
+        Map<Cand, List<Cand>> covers = Map.of();
+        Map<Cand, OverlapGroup> hiddenBy = Map.of();
         if (HudConfig.wheelDedupEnabled()) {
             Map<String, OverlapGroup> byId = new HashMap<>();
             table.groups().forEach(g -> byId.put(g.id(), g));
@@ -96,6 +100,8 @@ public final class WheelCatalogue {
             });
             shown = r.shown();
             groupOf = r.groupOf();
+            covers = r.covers();
+            hiddenBy = r.hidden();
         }
         List<WheelEntry> out = new ArrayList<>(shown.size());
         for (Cand c : shown) {
@@ -106,9 +112,45 @@ public final class WheelCatalogue {
                 }
             }
             OverlapGroup stands = groupOf.get(c);
+            List<Cand> covered = covers.get(c);
+            if (covered != null && !covered.isEmpty()) {
+                OverlapGroup g = hiddenBy.get(covered.get(0));
+                boolean locked = HudConfig.wheelStackGuardEnabled() && g != null && clock.activeSide(g.id()).equals(java.util.Optional.of(table.sideKey(g, e.ref())));
+                e = e.withCoverNote(coverNote(covered, locked));
+            }
             out.add(stands == null ? e : e.withGroup(stands.id()));
         }
         return out;
+    }
+
+    /**
+     * The words under an entry that stands for others: "Also covers: Vampirism Regeneration", and when this side is the one that is on, ", locked while this is on". The tooltip and the
+     * side panel show it, so a power that is not listed is never gone without a hint.
+     */
+    static Component coverNote(List<? extends Dedup.Item> covered, boolean locked) {
+        net.minecraft.network.chat.MutableComponent names = Component.empty();
+        for (int i = 0; i < covered.size(); i++) {
+            WheelEntry hidden = covered.get(i) instanceof Cand c ? c.entry : null;
+            if (hidden == null) {
+                continue;
+            }
+            names.append(i == 0 ? Component.empty() : Component.literal(", "));
+            names.append(Component.translatableWithFallback("supernaturalbloodlines.wheel.covered_power", "%s %s", sourceLabel(hidden.ref().source()), hidden.name()));
+        }
+        return locked ? Component.translatableWithFallback("supernaturalbloodlines.wheel.also_covers_locked", "Also covers: %s, locked while this is on", names)
+                : Component.translatableWithFallback("supernaturalbloodlines.wheel.also_covers", "Also covers: %s", names);
+    }
+
+    private static Component sourceLabel(PowerSource source) {
+        String fallback = switch (source) {
+            case BLOODLINE -> "Bloodlines";
+            case VAMPIRISM -> "Vampirism";
+            case WEREWOLVES -> "Werewolves";
+            case TENSURA -> "Tensura";
+            case INFINITY -> "Infinity Stones";
+            case GREAT_SAGE -> "Great Sage";
+        };
+        return Component.translatableWithFallback("supernaturalbloodlines.wheel.source." + source.name().toLowerCase(java.util.Locale.ROOT), fallback);
     }
 
     /** An entry as the groups see it: {@code groupable} is false for a skill with modes and for the race ability of a race that is not the vampire's. */
