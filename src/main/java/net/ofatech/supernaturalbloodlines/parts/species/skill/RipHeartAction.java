@@ -151,8 +151,13 @@ public final class RipHeartAction implements ExtraActions.Action {
                 return;
             }
             hit[0] = target.hurt(source, blow);
-            if (hit[0] && target instanceof ServerPlayer sp && sp.isAlive() && TargetChecks.inVampirismDying(sp)) {
-                OriginalRules.killThroughDying(sp, kill);
+            if (hit[0] && target instanceof ServerPlayer sp && TargetChecks.inVampirismDying(sp)) {
+                if (sp.isAlive()) {
+                    OriginalRules.killThroughDying(sp, kill);
+                } else {
+                    // FinalDeath took Vampirism's save back and the player died with its dying state still set: only reset it (die again would drop the loot twice)
+                    OriginalRules.clearDyingState(sp);
+                }
             }
         });
         return hit[0];

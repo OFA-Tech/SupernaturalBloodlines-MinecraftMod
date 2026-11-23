@@ -195,13 +195,22 @@ public final class OriginalRules {
         Downed.letDie(p, () -> {
             p.setHealth(0.0F);
             p.die(kill);
-            try {
-                // giveUpDBNO is on the implementation only, not in the API jar; it resets the timer and pose
-                vampire.getClass().getMethod("giveUpDBNO").invoke(vampire);
-            } catch (ReflectiveOperationException ex) {
-                SupernaturalBloodlines.LOGGER.warn("Could not reset Vampirism's dying state of {}", p.getGameProfile().getName(), ex);
-            }
+            clearDyingState(p);
         });
         return true;
+    }
+
+    /**
+     * Ends Vampirism's dying state of a player who is already dead (Vampirism caught the death at HIGHEST and {@code FinalDeath} took the save back, so the
+     * player died with the state still set). Only the reset: not {@code die} again, which would drop the loot twice.
+     */
+    public static void clearDyingState(ServerPlayer p) {
+        IVampirePlayer vampire = VampirismAPI.vampirePlayer(p);
+        try {
+            // giveUpDBNO is on the implementation only, not in the API jar; it resets the timer and pose
+            vampire.getClass().getMethod("giveUpDBNO").invoke(vampire);
+        } catch (ReflectiveOperationException ex) {
+            SupernaturalBloodlines.LOGGER.warn("Could not reset Vampirism's dying state of {}", p.getGameProfile().getName(), ex);
+        }
     }
 }

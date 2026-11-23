@@ -79,3 +79,8 @@ Config `supernaturalbloodlines.devshots.mixins.json`, plugin `DevShotsMixinPlugi
 | Mixin | Target | Why |
 |---|---|---|
 | `DevShotsWindowMixin` | `Window.<init>`, `@Inject` at the `INVOKE` of `net.neoforged.fml.loading.ImmediateWindowHandler.setupMinecraftWindow(IntSupplier, IntSupplier, Supplier, LongSupplier)J` (verified with javap on NeoForge 21.1.265 / FML 4.0.45) | Sets `GLFW_VISIBLE`, `FOCUSED`, `FOCUS_ON_SHOW`, `DECORATED` to false right before the window is made. In 1.21.1 `Window.<init>` has no `glfwCreateWindow` call: with `earlyWindowControl=false` the call is inside NeoForge's `NoVizFallback`, which creates the window with the hints that are set at that moment. With `earlyWindowControl=true` FML's early window already exists and visible, so `runSafeShots` writes `earlyWindowControl = false` into `run-safeshots/config/fml.toml` only. |
+
+## Other mods' mixins on our targets
+
+Checked against the 33 Tensura addons of the OFA Holy Packs pack (docs/compat/tensura-addons.md): none of them mixes into a class or method we mix into (the nearest, Artifact X Tensura, redirects the call to RaceUtils.isUnderSun and reaches our hook by reflection). Tensura Slots, the one that did (AbilityStorage.isAbilityInActivePreset), is removed from the pack on release; the PR #63 support for running both stays.
+

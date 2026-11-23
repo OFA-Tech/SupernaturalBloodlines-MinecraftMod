@@ -26,6 +26,7 @@ import net.minecraft.server.level.ServerPlayer;
 public final class SkillOwners {
     public static final String GRANTED_TAG = "supernaturalbloodlines:granted";
     private static final String NO_MAGICULE_COST = "NoMagiculeCost";
+    private static final String NO_SOUL_ENERGY_COST = "NoSoulEnergyCost";
 
     /** Does this source still want {@code skill} for {@code p}, judging by the player's current state. */
     @FunctionalInterface
@@ -67,9 +68,17 @@ public final class SkillOwners {
         // Tensura removes this switch itself while it unlocks, so it is one-shot; the grant mark stays
         instance.getOrCreateTag().putBoolean(NO_MAGICULE_COST, true);
         instance.getOrCreateTag().putBoolean(GRANTED_TAG, true);
+        // Mysticism charges soul energy for learning a Tensura skill and vetoes it when there is none; this is its own one-shot free switch
+        instance.getOrCreateTag().putBoolean(NO_SOUL_ENERGY_COST, true);
         var skills = SkillAPI.getSkillsFrom(p);
         skills.learnSkill(instance);
-        return skills.getSkill(skill.getRegistryName()).isPresent();
+        var held = skills.getSkill(skill.getRegistryName());
+        held.map(ManasSkillInstance::getTag).ifPresent(tag -> {
+            if (tag != null) {
+                tag.remove(NO_SOUL_ENERGY_COST);
+            }
+        });
+        return held.isPresent();
     }
 
     /**
