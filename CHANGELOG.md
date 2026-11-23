@@ -11,6 +11,23 @@
 
 ### Rolling back
 Turning a switch off, or rolling back, puts nothing permanent on a player, and the extra goals are not saved. Burning stops with the fire. **Protocol 12 to 11:** a build on 11 and a client on 12 (or the other way round) have no channel to each other, so the hub shows nothing from the server until both are on the same number; roll back the server and every client together. The old build does not know the four `tweak_*` keys in `supernaturalbloodlines-supernatural.toml` and removes them when it rewrites the file, so after rolling forward again they are back at `false`: set them again.
+## Unreleased (plan 18h: staged venom)
+
+### Changed
+- **Werewolf venom goes through stages (R206).** Mild, then sick, then death. For the first `venom_sick_after_ticks` (4000 of the 12000) the venom is only its 1 damage a pulse that cannot kill. After that the vampire is sick: Nausea and Slowness I are kept up at every pulse, the hallucinations start (every 600 ticks, as before) and a line on the action bar says so once. The last tick still kills a non-Original. Originals keep Weakness II only, with no stages; the Venom Fang's 5 s of Slowness is unchanged. Hybrid's Blood and Klaus's Blood cure it at every stage.
+- **Downed and the turning.** Someone who cannot act (down for the turning or a Neck Snap, or in Vampirism's dying state) is spared the sickness, but the last tick is final: it ends the snap or the dying state with their death (no change for the kill itself; now pinned by tests).
+- Config (with an Admin row, section `species`): `venom_sick_after_ticks` (0 sick from the start, 12000 never sick; default 4000).
+
+### Fixed
+- **The Elixir saves from the venom's last tick.** The kill that backs up the venom's blow now runs only while the venom is still on the player, so an Elixir (which clears every effect) is no longer undone by a second kill (vanilla's invulnerability window usually blocked that kill already; a mod that removes the window made it real). Downed and Vampirism's dying state still die.
+- **An infinite venom** (`/effect give ... hybrid_venom infinite`) no longer kills within two seconds: it has no clock, so it pulses as a fresh venom and never reaches the end.
+- **The "you feel sick" line** is shown at the first pulse where the sickness actually runs, also for someone who was down at the threshold or who logged in already past it (it is kept per player, not saved, and forgotten when the venom ends). Venom Slowness no longer has particles.
+
+### Migration
+A venom that is already running continues in the new stages: the clock is the effect's remaining time, so nothing was stored and nothing is converted. A vampire poisoned 9000 ticks ago is sick the moment they load this build. No network payload changed.
+
+### Rolling back
+Rolling back puts the old single stage back: the damage, the hallucinations from the first minute, and death at the end. Nothing is stored, so nothing is left on a player. The old build does not know `venom_sick_after_ticks` in `supernaturalbloodlines-species.toml` and removes the key when it rewrites the file: after rolling forward again it is back at the default (4000), so set your value again.
 ## Unreleased (pack moon gift)
 
 ### Added

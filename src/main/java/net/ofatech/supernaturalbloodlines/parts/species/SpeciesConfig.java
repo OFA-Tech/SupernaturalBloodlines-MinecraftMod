@@ -228,6 +228,27 @@ public final class SpeciesConfig {
     private static final ModConfigSpec.IntValue NECK_SNAP_AUGUSTINE_SECONDS;
     private static final ModConfigSpec.IntValue NECK_SNAP_HYBRID_SECONDS;
     private static final ModConfigSpec.IntValue NECK_SNAP_ORIGINAL_SECONDS;
+    public static final int DEFAULT_VENOM_SICK_AFTER_TICKS = 4000;
+    private static final ModConfigSpec.IntValue VENOM_SICK_AFTER_TICKS;
+    private static volatile Integer venomSickAfterOverride;
+
+    /** For tests: pins {@link #venomSickAfterTicks()}; null clears it. */
+    public static void overrideVenomSickAfterTicks(Integer value) {
+        venomSickAfterOverride = value;
+    }
+
+    /** {@code venom_sick_after_ticks}. */
+    public static int venomSickAfterTicks() {
+        Integer pinned = venomSickAfterOverride;
+        if (pinned != null) {
+            return pinned;
+        }
+        try {
+            return VENOM_SICK_AFTER_TICKS.get();
+        } catch (IllegalStateException notLoaded) {
+            return DEFAULT_VENOM_SICK_AFTER_TICKS;
+        }
+    }
 
     /** The numbers of the pack's NPC members (plan 15d, R148). */
     public record MemberTuning(boolean recruit, int perPlayer, int perPack, boolean huntTrips, int huntPeriodMinutes, boolean chestSort, double weightBrother,
@@ -470,6 +491,8 @@ public final class SpeciesConfig {
                 .defineInRange("neck_snap_hybrid_seconds", DEFAULT_NECK_SNAP_HYBRID_SECONDS, MIN_SNAP_SECONDS, MAX_SNAP_SECONDS);
         NECK_SNAP_ORIGINAL_SECONDS = b.comment("R214: how long a snapped Original or Original hybrid lies down. Keep it equal to the others, or an observer can tell an Original by the time.")
                 .defineInRange("neck_snap_original_seconds", DEFAULT_NECK_SNAP_ORIGINAL_SECONDS, MIN_SNAP_SECONDS, MAX_SNAP_SECONDS);
+        VENOM_SICK_AFTER_TICKS = b.comment("R206: how long into the 12000-tick werewolf venom the vampire starts to be sick (Nausea, Slowness I, hallucinations), in ticks. Before that only the 1 damage a pulse. 0 is sick from the start, 12000 never sick. Originals have no stages.")
+                .defineInRange("venom_sick_after_ticks", DEFAULT_VENOM_SICK_AFTER_TICKS, 0, 12000);
         b.pop();
         SPEC = b.build();
     }
