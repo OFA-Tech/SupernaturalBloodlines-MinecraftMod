@@ -7,8 +7,7 @@ import java.util.function.Supplier;
  * {@code LivingIncomingDamageEvent} and deals nothing. While it does, {@link #active()} is true on that thread: every listener of ours that does something
  * when damage arrives (counts a blow, desiccates an NPC Original, marks an attacker) returns early, so a probe leaves no trace. Listeners that only
  * cancel or scale the damage keep running, because their answer is what the probe asks for. Another mod's listener cannot know: it sees a hit of the probe's
- * (tiny) amount that never lands (see the species docs). Force-feeding asks a claim mod the same way with a posted {@code EntityInteract}: our listeners that
- * pull a dagger, siphon or compel on a click return early too.
+ * (tiny) amount that never lands (see the species docs).
  */
 public final class DamageProbe {
     private static final ThreadLocal<Boolean> ACTIVE = ThreadLocal.withInitial(() -> Boolean.FALSE);

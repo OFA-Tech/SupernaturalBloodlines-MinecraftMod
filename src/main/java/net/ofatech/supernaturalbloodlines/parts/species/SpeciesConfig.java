@@ -150,6 +150,8 @@ public final class SpeciesConfig {
     public static final int DEFAULT_GIVE_BLOOD_COOLDOWN_SECONDS = 120;
     public static final double DEFAULT_FORCE_FEED_HEALTH_LIMIT = 0.30;
     public static final boolean DEFAULT_VAMPIRE_BLOOD_BUFF_ENABLED = true;
+    public static final int DEFAULT_VAMPIRE_BLOOD_REGEN_COOLDOWN_SECONDS = 600;
+    private static final ModConfigSpec.IntValue VAMPIRE_BLOOD_REGEN_COOLDOWN_SECONDS;
     private static final ModConfigSpec.IntValue GIVE_BLOOD_COOLDOWN_SECONDS;
     private static final ModConfigSpec.DoubleValue FORCE_FEED_HEALTH_LIMIT;
     private static final ModConfigSpec.BooleanValue VAMPIRE_BLOOD_BUFF_ENABLED;
@@ -361,8 +363,10 @@ public final class SpeciesConfig {
                 .defineInRange("give_blood_cooldown_seconds", DEFAULT_GIVE_BLOOD_COOLDOWN_SECONDS, 1, 3600);
         FORCE_FEED_HEALTH_LIMIT = b.comment("R208: an unwilling player can be fed vampire blood only while PvP is on and they are down or at or under this fraction of their health (0.30 = 30%). A target who sneaks accepts at any health.")
                 .defineInRange("force_feed_health_limit", DEFAULT_FORCE_FEED_HEALTH_LIMIT, 0.0, 1.0);
-        VAMPIRE_BLOOD_BUFF_ENABLED = b.comment("R207: while vampire blood is in a player's system (for vampire_blood_ticks) they get Regeneration II, a little less hunger, and heal faster. Anyone with the blood in them gets it, a bottle included. Off: the blood only marks them.")
+        VAMPIRE_BLOOD_BUFF_ENABLED = b.comment("R207: vampire blood in a player's system eases their hunger for the whole window (vampire_blood_ticks) and, once per vampire_blood_regen_cooldown_seconds, gives 90 seconds of Regeneration II. Anyone the blood marks gets it, a bottle included. Off: the blood only marks them.")
                 .define("vampire_blood_buff_enabled", DEFAULT_VAMPIRE_BLOOD_BUFF_ENABLED);
+        VAMPIRE_BLOOD_REGEN_COOLDOWN_SECONDS = b.comment("R207: a player gets the 90 second Regeneration II pulse of vampire blood once per this many seconds, whatever the source (a forced feed, a bottle, a bite), so drinking more does not keep it going. 0 = every drink gives it.")
+                .defineInRange("vampire_blood_regen_cooldown_seconds", DEFAULT_VAMPIRE_BLOOD_REGEN_COOLDOWN_SECONDS, 0, 86400);
         AUGUSTINE_ATTACK_BONUS = b.comment("R200: an Augustine's extra attack damage, as a fraction (0.10 = +10%; an Original has +20%).")
                 .defineInRange("augustine_attack_bonus", DEFAULT_AUGUSTINE_ATTACK_BONUS, 0.0, 1.0);
         AUGUSTINE_EXTRA_HEALTH = b.comment("R200: an Augustine's extra maximum health, in half hearts (an Original has 4).")
@@ -968,6 +972,26 @@ public final class SpeciesConfig {
     /** For tests: pins {@link #vampireBloodBuffEnabled()}; null clears it. */
     public static void overrideVampireBloodBuff(Boolean value) {
         bloodBuffOverride = value;
+    }
+
+    /** {@code vampire_blood_regen_cooldown_seconds}. */
+    public static int vampireBloodRegenCooldownSeconds() {
+        Integer pinned = regenCooldownOverride;
+        if (pinned != null) {
+            return pinned;
+        }
+        try {
+            return VAMPIRE_BLOOD_REGEN_COOLDOWN_SECONDS.get();
+        } catch (IllegalStateException notLoaded) {
+            return DEFAULT_VAMPIRE_BLOOD_REGEN_COOLDOWN_SECONDS;
+        }
+    }
+
+    private static volatile Integer regenCooldownOverride;
+
+    /** For tests: pins {@link #vampireBloodRegenCooldownSeconds()}; null clears it. */
+    public static void overrideVampireBloodRegenCooldown(Integer value) {
+        regenCooldownOverride = value;
     }
 
     /** {@code vampire_blood_buff_enabled}. */

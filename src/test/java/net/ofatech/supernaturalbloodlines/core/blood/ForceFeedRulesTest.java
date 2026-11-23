@@ -8,6 +8,7 @@ import static net.ofatech.supernaturalbloodlines.core.blood.ForceFeedRules.check
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.util.Optional;
+import net.ofatech.supernaturalbloodlines.core.blood.BloodBottleRules.Effect;
 import org.junit.jupiter.api.Test;
 
 class ForceFeedRulesTest {
@@ -34,8 +35,16 @@ class ForceFeedRulesTest {
     }
 
     @Test
-    void vervainBlocksAnUnwillingWeakTarget() {
+    void vervainBlocksAnUnwillingTargetThatCouldOtherwiseBeFed() {
         assertEquals(Optional.of(VERVAIN), check(true, false, true, false, true, 0.1f, true, LIMIT));
+    }
+
+    @Test
+    void consentComesBeforeVervain() {
+        // pvp off, healthy, not down, not sneaking: nobody may feed them, so the refusal must not say they carry vervain
+        assertEquals(Optional.of(NOT_WILLING), check(true, false, true, false, false, 1f, false, LIMIT));
+        assertEquals(Optional.of(NOT_WILLING), check(true, false, true, false, true, 1f, false, LIMIT));
+        assertEquals(Optional.of(NOT_WILLING), check(true, false, true, false, false, 0.1f, true, LIMIT));
     }
 
     @Test
@@ -72,5 +81,21 @@ class ForceFeedRulesTest {
     void aLimitOfZeroLeavesOnlyTheDowned() {
         assertEquals(Optional.of(NOT_WILLING), check(true, false, false, false, true, 0.01f, false, 0f));
         assertEquals(Optional.empty(), check(true, false, false, false, true, 0.01f, true, 0f));
+    }
+
+    @Test
+    void bloodForcedOnSomeoneNeverNamesASireOrTouchesATransition() {
+        assertEquals(Effect.REFUSED, ForceFeedRules.withoutConsent(Effect.NAME_SIRE));
+        assertEquals(Effect.REFUSED, ForceFeedRules.withoutConsent(Effect.TRANSITION_BLOOD));
+        assertEquals(Effect.MARK, ForceFeedRules.withoutConsent(Effect.MARK_AND_NAME_SIRE));
+    }
+
+    @Test
+    void everyOtherEffectIsUnchangedWithoutConsent() {
+        for (Effect e : Effect.values()) {
+            if (e != Effect.NAME_SIRE && e != Effect.TRANSITION_BLOOD && e != Effect.MARK_AND_NAME_SIRE) {
+                assertEquals(e, ForceFeedRules.withoutConsent(e), e.name());
+            }
+        }
     }
 }

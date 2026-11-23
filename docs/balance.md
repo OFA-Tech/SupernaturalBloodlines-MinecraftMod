@@ -151,7 +151,8 @@ All numbers are drafts to tune after a playtest; each is a config key.
 |---|---|---|
 | `give_blood_cooldown_seconds` | 120 | Twice a bottle's minute: it is a deliberate act on a person, not a supply line, and the cooldown starts whatever the blood did so it cannot be used to probe. |
 | `force_feed_health_limit` | 0.30 | An unwilling target must already be losing (or down); a healthy one is never made to drink. A sneaking target accepts at any health. |
-| `vampire_blood_buff_enabled` | true | Regeneration II (one health point every 1.25 s) and 0.15 less exhaustion a second, for the `vampire_blood_ticks` window (20 minutes). The owner asked for it for anyone with the blood in them, a bottle included; the switch lets a server take it off. |
+| `vampire_blood_buff_enabled` | true | Anyone the blood marks, a bottle included (owner). The switch lets a server take both gifts off. |
+| `vampire_blood_regen_cooldown_seconds` | 600 | Regeneration II (one health point every 1.25 s) lasts **90 s from the drink** and is given once per ten minutes per player, whatever the source: panel round of PR #75 found that 20 minutes of Regeneration II, refreshed by any bottle or forced feed, was permanent regeneration. The hunger ease (0.15 less exhaustion a second) still lasts the whole `vampire_blood_ticks` window. 0 makes every drink give it. |
 
 ## Plan 18c: the Augustine (R200 to R203)
 

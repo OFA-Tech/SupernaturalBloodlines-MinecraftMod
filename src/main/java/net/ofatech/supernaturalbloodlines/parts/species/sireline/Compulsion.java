@@ -154,7 +154,7 @@ public final class Compulsion {
     // ---- the click ----
 
     public static void onInteract(PlayerInteractEvent.EntityInteract e) {
-        if (e.getHand() != InteractionHand.MAIN_HAND || !(e.getEntity() instanceof ServerPlayer p) || net.ofatech.supernaturalbloodlines.core.death.DamageProbe.active()) {
+        if (e.getHand() != InteractionHand.MAIN_HAND || !(e.getEntity() instanceof ServerPlayer p)) {
             return;
         }
         Entity target = e.getTarget();

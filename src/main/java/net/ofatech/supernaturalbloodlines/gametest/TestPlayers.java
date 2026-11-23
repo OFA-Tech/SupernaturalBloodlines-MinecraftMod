@@ -99,7 +99,10 @@ public final class TestPlayers {
 
             @Override
             public boolean canHarmPlayer(net.minecraft.world.entity.player.Player other) {
-                return level().getServer().isPvpAllowed();
+                // the server's PvP setting and a team's friendly fire, as a real player's
+                var mine = getTeam();
+                boolean friendly = mine != null && mine.isAlliedTo(other.getTeam()) && !mine.isAllowFriendlyFire();
+                return level().getServer().isPvpAllowed() && !friendly;
             }
 
             @Override

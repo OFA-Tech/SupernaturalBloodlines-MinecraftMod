@@ -12,6 +12,7 @@ import net.ofatech.supernaturalbloodlines.core.BloodlineAccess;
 import net.ofatech.supernaturalbloodlines.core.bloodline.BloodlineState;
 import net.ofatech.supernaturalbloodlines.core.bloodline.Species;
 import net.ofatech.supernaturalbloodlines.gametest.TestPlayers;
+import net.ofatech.supernaturalbloodlines.parts.species.SpeciesConfig;
 import net.ofatech.supernaturalbloodlines.parts.species.SpeciesRegistries;
 import net.ofatech.supernaturalbloodlines.parts.species.blood.GiveBloodAction;
 import net.ofatech.supernaturalbloodlines.parts.species.item.BloodBottles;
@@ -43,6 +44,8 @@ public final class GiveBloodWerewolfGameTests {
     private static void clean(TestPlayers.TalkingDuelist... players) {
         for (TestPlayers.TalkingDuelist p : players) {
             p.removeAllEffects();
+            p.removeData(SpeciesRegistries.BLOOD_SOURCE);
+            p.removeData(SpeciesRegistries.BLOOD_SOURCE_SPECIES);
             p.setShiftKeyDown(false);
             BloodlineAccess.set(p, BloodlineState.NONE);
             if (VampirismAPI.factionPlayerHandler(p).getCurrentFaction() != null) {
@@ -71,6 +74,51 @@ public final class GiveBloodWerewolfGameTests {
         helper.succeed();
     }
 
+    /** Blood forced on a werewolf never names a sire and so never starts, or holds, a transition: only a willing one can. */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void forcedOriginalBloodDoesNotTouchAWerewolfButASneakingOneAcceptsIt(GameTestHelper helper) {
+        SpeciesConfig.overrideTransitionBloodAnyOriginal(true);
+        TestPlayers.TalkingDuelist original = giver(helper);
+        TestPlayers.TalkingDuelist control = giver(helper);
+        TestPlayers.TalkingDuelist forced = wolf(helper);
+        TestPlayers.TalkingDuelist accepting = wolf(helper);
+        try {
+            BloodlineAccess.set(original, BloodlineState.NONE.toBuilder().species(Species.ORIGINAL).build());
+            BloodlineAccess.set(control, BloodlineState.NONE.toBuilder().species(Species.ORIGINAL).build());
+            helper.getLevel().getServer().setPvpAllowed(true);
+            forced.setShiftKeyDown(false);
+            forced.setHealth(1f);
+            helper.assertTrue(GiveBloodAction.INSTANCE.trigger(original, forced) == null, "the forced feed was refused");
+            helper.assertTrue(!forced.hasData(SpeciesRegistries.BLOOD_SOURCE) && !forced.hasEffect(SpeciesRegistries.ORIGINAL_BLOOD_EFFECT) && !BloodlineAccess.get(forced).unstable(), "forced Original blood touched a werewolf: " + BloodlineAccess.get(forced));
+            helper.assertTrue(GiveBloodAction.INSTANCE.trigger(control, accepting) == null, "the accepting feed was refused");
+            helper.assertTrue(control.getUUID().equals(accepting.getData(SpeciesRegistries.BLOOD_SOURCE)), "a sneaking werewolf did not take the blood as transition blood");
+            helper.assertTrue(original.countOnActionBar(GiveBloodAction.DONE) == control.countOnActionBar(GiveBloodAction.DONE) && cooldown(original) == cooldown(control), "the givers heard or paid different things");
+        } finally {
+            helper.getLevel().getServer().setPvpAllowed(false);
+            SpeciesConfig.overrideTransitionBloodAnyOriginal(null);
+            clean(original, control, forced, accepting);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void theHybridKindsInTheWerewolfFactionCanGive(GameTestHelper helper) {
+        for (Species s : new Species[] {Species.ORIGINAL_HYBRID, Species.HYBRID, Species.TRIBRID}) {
+            TestPlayers.TalkingDuelist v = TestPlayers.createTalkingDuelist(helper);
+            TestPlayers.TalkingDuelist target = TestPlayers.createTalkingDuelist(helper);
+            target.setPos(helper.absoluteVec(new Vec3(1.5, 1, 3.0)));
+            try {
+                helper.assertTrue(VampirismAPI.factionPlayerHandler(v).setFactionAndLevel(WReference.WEREWOLF_FACTION, 1), "could not make a werewolf");
+                BloodlineAccess.set(v, BloodlineState.NONE.toBuilder().species(s).build());
+                target.setShiftKeyDown(true);
+                helper.assertTrue(GiveBloodAction.INSTANCE.available(v) && GiveBloodAction.INSTANCE.trigger(v, target) == null
+                        && BloodlineAccess.get(target).vampireBloodUntil() > 0, s + " in the werewolf faction cannot give blood");
+            } finally {
+                clean(v, target);
+            }
+        }
+        helper.succeed();
+    }
     private static int cooldown(TestPlayers.TalkingDuelist p) {
         return net.ofatech.supernaturalbloodlines.parts.species.skill.ActionClock.left(p, ExtraActions.GIVE_BLOOD);
     }

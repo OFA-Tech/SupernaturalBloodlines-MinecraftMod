@@ -53,6 +53,7 @@ The Cure needs a *desiccated* Original: see [Rites](Rites#rite-of-the-cure).
 - **Call your sired:** `/bloodline call` (Originals and hybrids, 10 minute cooldown).
 - **Read your sireline:** `/bloodline tree`.
 - **Run a pack:** `/pack invite`, `/pack info`, `/pack roar`, `/pack heal`. See [Werewolves and packs](Werewolves-And-Packs#packs-and-pack).
+- **Force-feed my blood** (any vampire, a Ghoul too): put your blood in the player you look at. Someone who **sneaks** accepts it; anyone else must be down or badly hurt with PvP on. Vampire blood in a human's system marks them (dying while it lasts starts the turning), heals them for 90 seconds once in a while and slows their hunger. Vervain and claims block it. **Do not sneak near a vampire you do not trust: sneaking is how you say yes.** An Original's blood forced on someone never makes them its sire; only a drink that was accepted does. See [Configuration](Configuration).
 - **Siphon** (siphoner, heretic, tribrid): sneak + right-click a powered block or a creature.
 - **Protect yourself:** Sun, Silver and Spirit Poppets; the Resurrection Ring; the Sun Ring and the Moon Ring. See [Items and blocks](Items-And-Blocks).
 - **Find vampires:** the Vampire Compass. **Stun supernaturals:** the Hearing Device.
