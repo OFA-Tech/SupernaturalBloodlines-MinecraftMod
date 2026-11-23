@@ -1,6 +1,6 @@
 # TVD rites (plan 21): design
 
-Date 2026-11-23. Status: **draft for the owner** (the six questions in section 11 have a recommended answer each; the rest follows the owner's approval of the three ideas). Plan: [plan 21](../plans/2026-11-23-plan-21-tvd-rites.md). Research: [bewitchment-tvd-rites.md](../research/bewitchment-tvd-rites.md).
+Date 2026-11-23. Status: **decided by the owner on 2026-11-23** (the six questions of the first draft are answered in section 11; Q3 was changed by the owner: only a non-vampiric owner makes a ward). Plan: [plan 21](../plans/2026-11-23-plan-21-tvd-rites.md). Research: [bewitchment-tvd-rites.md](../research/bewitchment-tvd-rites.md).
 
 **Clean-room note.** The three ideas come from Bewitchment, which is All Rights Reserved. Only mechanics are taken (the idea of an invitation rule, a locator from a person's blood, two curses). Names, numbers, art, sounds, lang text and book prose are ours. Nobody implementing this reads Bewitchment's code or Patchouli text. The show's rules (a vampire needs an invitation; a witch finds a person with their blood) are **from memory and not re-checked**; the design says where it follows the show and where it does not.
 
@@ -37,11 +37,11 @@ Checked with `javap` against the jars (Gradle cache and the pack's `mods` folder
 4. U4. Whether `vampirismEnchanted` already has a config file. `AdminCoverageTest` lists every config spec: if there is none, 21c creates one and adds it to the test.
 5. U5. The `HallucinationPayload` test spy's setter name (the field `spy` exists; the plan reads the class first).
 6. U6. Whether `AdminCommands` row ids starting with `W` are free (the table seen has B, P, D, X; the plan greps first).
-7. U7. Show canon: that hybrids and Originals need an invitation too, that revoking an invitation expels a vampire who is already inside (the owner asked for it; the show may only stop re-entry), and that a locator needs the person's blood. The design treats them as owner decisions, not canon.
+7. U7. Show canon: that hybrids and Originals need an invitation too, that revoking an invitation expels a vampire who is already inside (the owner asked for it; the show may only stop re-entry), that a locator needs the person's blood, and that a vampire's own home has no barrier (the owner's rule for who may own a ward). The design treats them as owner decisions, not canon.
 
 ## 2. Shared rules (R325 to R329)
 
-- **R325, no oracle.** No message, particle, sound, refusal text, cost or timing of any rite in this plan depends on what somebody is. A ward turns away *whatever it blocks* the same way for every blocked entity. Every refusal of a ward rite, a locator rite or a curse rite is **one message per rite** ("The ward will not take.", "The blood will not answer.") and costs the same (the ingredients and the altar's power are spent; a circle that was cancelled for a wrong person on the centre is the one exception, section 2 *Consent*), so a refusal never says which condition failed. The locator's needle spins for **every** reason a target cannot be found (offline, dead, another dimension, out of range, cloaked, a spent attunement): one state. The ward never tells its owner who was turned away (`ward_alert_owner`, default off, says "your ward was tested" with no name and no kind).
+- **R325, no oracle.** No message, particle, sound, refusal text, cost or timing of any rite in this plan depends on what somebody is. A ward turns away *whatever it blocks* the same way for every blocked entity. Every refusal of a ward rite, a locator rite or a curse rite is **one message per rite** ("The ward will not take.", "The blood will not answer.") and costs the same (the ingredients and the altar's power are spent; a circle that was cancelled for a wrong person on the centre is the one exception, section 2 *Consent*), so a refusal never says which condition failed. **The ward rite refuses a vampiric owner (R301) with that same one message**: it is the same text and the same cost as a full ward list, a claimed chunk or a caster who is not a witch type, so the refusal alone never tells the caster that the person on the centre is vampiric. It is not a perfect screen: a caster who already knows every other condition holds can infer it, so the message never says "vampire" and the ward rite is the only place in this plan where who somebody is changes an outcome (section 3.2 explains why the owner chose that). The locator's needle spins for **every** reason a target cannot be found (offline, dead, another dimension, out of range, cloaked, a spent attunement): one state. The ward never tells its owner who was turned away (`ward_alert_owner`, default off, says "your ward was tested" with no name and no kind).
 - **R326, hidden Originals.** Nothing here ever names an Original the viewer has not discovered (R123). A locator on an Original's blood or taglock works as on anybody's and shows **"?"** where a name would be for every secret kind (the label `BloodStamp` already keeps); the compass shows a direction, never a name. A ward's invite list shows the names the *owner* chose, not species. A curse on an undiscovered Original works the same as on anyone.
 - **R327, consent.** Where a rite binds a *person to something*, that person agrees by **sneaking on the circle's centre**, as in the other rites (R147: the caster is the subject unless somebody stands there; **a non-sneaking player standing on the centre cancels the rite and the ingredients come back**, so nobody is bound without a deliberate act). This governs the ward's owner (R301). The locator and the two curses act on **a taglock's owner or a bottle's source**, who is not at the circle; their "consent" is whatever the existing taglock rites ask (the owner's own taglock, taken by them), and the locator additionally tells the target (R317). Section 11, question 1, asks whether that is enough.
 - **R328, config and Admin rows.** Every setting below is a server config key with an Admin row (`AdminEntries`, one `species(...)`-style line each, plus `AdminEntriesTest` count and `AdminCoverageTest`). 23 rows (13 ward, 5 locator, 5 curses). Nothing is hard-coded that the table in section 9 calls a setting.
@@ -64,7 +64,13 @@ Why not the **Open Parties and Claims claim** as the definition: the claim is a 
 
 ### 3.2 The owner (R301)
 
-The **owner** is the player who **sneaks on the circle's centre** when the rite starts (R327); if nobody stands there, the **caster**. A non-sneaking player on the centre cancels the rite, the ingredients come back and the caster is told (R147's rule). The caster must be a **witch type** (`SeveranceRiteFactory.isWitchType`, as Severance, Linking and Cloaking); the owner may be anyone, of any species, so that **the rite's success never depends on what the owner is** (R325).
+The **owner** is the player who **sneaks on the circle's centre** when the rite starts (R327); if nobody stands there, the **caster**. A non-sneaking player on the centre cancels the rite, the ingredients come back and the caster is told (R147's rule). The caster must be a **witch type** (`SeveranceRiteFactory.isWitchType`, as Severance, Linking and Cloaking).
+
+**Only a non-vampiric owner makes a ward (owner decision, show canon: a vampire's home has no barrier).** "Vampiric" is `Supernatural.isVampiric` on the owner: a vampire, an Original, a hybrid, an Original hybrid, a tribrid or a heretic (a Vampirism vampire faction player or one of those species). A vampiric owner is refused with the one generic message (R325). Consequences, all deliberate:
+
+- A witch-type **caster who is herself a tribrid or a heretic** (both are witch types and both are vampiric) cannot make a ward for herself; she can only make one for a non-vampiric player who sneaks on the centre. A witch, a siphoner or a plain witch-type human can.
+- The rule is checked **when the rite starts**. A ward whose owner **later** becomes vampiric (turning, a hybrid transition) is **not** taken down: the owner decided the rule for raising a ward, and "falls when its owner dies" is the only fall (R307). *Gap, left for the owner:* a vampire could be handed a ward by a friend and then turn; if that matters, a one-line follow-up makes such a ward fall too.
+- `ward_owner_vampiric_ok` is **not** added: it is the owner's rule, not a setting.
 
 - The caster and the owner are on the invite list from the start.
 - A player owns at most `ward_max_per_owner` (3) wards, areas and doors together; the rite that would exceed it is the one generic refusal.
@@ -94,7 +100,7 @@ An invite is **immediate** (the show's way: no accept step) and lasts until with
 
 ### 3.6 Revoking (R308)
 
-`/ward uninvite` (or the hub's **Withdraw**, or saying **"get out"** at the same targeting as R305) removes the name. If `ward_expel_on_revoke` (default on, the owner's wish; the show may only stop re-entry, U7) and that player is **inside and now blocked**, the next push (R303) throws them out like any other uninvited vampire, and the timeout fallback applies. They are told "You are no longer welcome here." Nobody else is told.
+`/ward uninvite` (or the hub's **Withdraw**, or saying **"get out"** at the same targeting as R305) removes the name. If `ward_expel_on_revoke` (default **true**, decided by the owner; the show may only stop re-entry, U7; it is a setting with an Admin row, and `false` gives the re-entry-only behaviour) and that player is **inside and now blocked**, the next push (R303) throws them out like any other uninvited vampire, and the timeout fallback applies. They are told "You are no longer welcome here." Nobody else is told.
 
 ### 3.7 The dead-owner rule (R307)
 
@@ -239,11 +245,18 @@ Risks:
 
 Left out on purpose: Bewitchment's sigils as items, the Brazier, the curse poppet (low priority in the research), per-ward visual effects and sounds (a later art pass), group-wide invitations, wards that follow a claim, and anything from Bewitchment's art or text.
 
-## 11. Questions for the owner (each with a recommendation)
+## 11. Decisions (owner, 2026-11-23)
 
-1. **Locator consent.** The target is not at the circle, so the sneaking-on-the-centre rule cannot apply. *Pick:* no consent, but the target is told (R317), the cloak and range counter it, and it is switchable. Alternative: require the target to hold a "willing" taglock (a taglock they made and chose to give), which the show's secrecy argues against.
-2. **What a home is.** *Pick:* the altar's place plus a radius (area), or a door cell (door), owner = the player sneaking on the centre; Open Parties and Claims only as a build check. Alternative: the OPAC claim itself.
-3. **Who is blocked, and who can own.** *Pick:* every vampiric type (hybrids, Originals, tribrids and heretics included), werewolves not, any species may own, and the ward falls when its owner dies **in any form**. The show's exact reach for hybrids and Originals is unverified (U7).
-4. **Revoking.** *Pick:* throw an uninvited vampire out of the ward when the invitation is withdrawn (your brief). The show may only stop re-entry; `ward_expel_on_revoke = false` gives that.
-5. **Door ward.** *Pick:* ship both forms in 21a (the door is the same record with half-size 1 plus a door-interaction cancel, about a quarter of the work). Alternative: area only first.
-6. **Who may cast them.** *Pick:* the ward and the locator are **witch-type** rites; the two new curses are taught by the existing curse **lore pages** like the Tensura curses. Alternative: gate the locator behind a ladder rung (`S-WIT-*`) so a fresh witch cannot find a person on day one.
+The first draft asked six questions with a recommended answer each. The owner accepted the recommendations; **Q3 was changed** (the owner's change is marked). They are rules now, not options.
+
+1. **The locator needs no consent.** The target cannot be at the circle, so nothing is asked of them. They are told **"Somebody is looking for you."** (R317, `locator_tell_target`, default on); the cloak, range, the blur and the attunement's time are the counters, and `locator_enabled` switches it off.
+2. **A home is the altar spot plus a radius (the area ward), or a single door cell (the door ward). The owner is whoever sneaks on the circle centre** (the caster if nobody stands there). Open Parties and Claims is used **only to check build permission** (R301, `ward_use_claims`), never to define the home.
+3. **Ward targets and owners (changed by the owner).**
+   - The ward blocks **every vampiric type**: vampire, Original, hybrid, Original hybrid, tribrid, heretic. **Werewolves are not blocked** (`ward_blocks_werewolves`, default off, is the only switch for it).
+   - **Only a non-vampiric owner makes a ward** (show canon: a vampire's home has no barrier). A vampiric owner gets the one generic refusal (R301, R325).
+   - **The ward falls when its owner dies** (R307, `ward_falls_on_owner_death`, default on).
+4. **Revoking an invitation expels the vampire** who is inside (R308). `ward_expel_on_revoke` is a setting, **default true**.
+5. **Both ward forms ship in 21a.** The door ward is the same record at half-size 1 plus a door-interaction cancel (R300, R303).
+6. **The ward and the locator are witch-type rites** (`isWitchType`). The two new curses join the existing **curse lore pages** (`CURSES`, with the two Tensura curses), so a Torn Page of curses teaches four.
+
+Still open (not asked of the owner yet): a ward whose owner *later* turns vampiric stays standing (section 3.2); the show's reach for hybrids and Originals and whether revoking expels or only blocks re-entry are unverified canon (U7).

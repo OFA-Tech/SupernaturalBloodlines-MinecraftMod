@@ -14,6 +14,7 @@ Repo conventions that apply: one branch per sub-plan (`feature/plan-21a-ward`, `
 
 ## Global Constraints
 
+- **Decisions** are in spec section 11 (owner, 2026-11-23): no locator consent but the target is told; a home is an altar spot plus radius or a door cell, the owner whoever sneaks on the centre, OPAC only a build check; every vampiric type blocked, werewolves not, **only a non-vampiric owner raises a ward**, it falls when the owner dies; revoke expels (`ward_expel_on_revoke` default true); both forms ship; ward and locator are witch-type rites, the curses join the curse lore pages.
 - **Rules R300 to R329** (spec section 0): 21a R300-R314, 21b R315-R319, 21c R320-R324, shared R325-R329. If another plan took any of them by merge time, shift this block (as 20a's plan says to) and say so in the PR.
 - **No oracle (R325), hidden Originals (R326), consent (R327)** are acceptance criteria, not notes. Each has a named test in the task that builds the thing (see Review Focus). A refusal is **one message per rite and costs the same**; the needle has **one** unfindable state.
 - **No new Part.** Ward and locator-compass in `artifacts`, locator rite in `species`, curses in `vampirismEnchanted`. `Part`, `requiredParts` and the 12-run matrix do not change. (`ARTIFACTS` and `SPECIES` both require `VAMPIRISM_ENCHANTED`, verified in `Part.java`; `ARTIFACTS` does not require `SPECIES`, so the compass never imports a species class.)
@@ -28,11 +29,11 @@ Repo conventions that apply: one branch per sub-plan (`feature/plan-21a-ward`, `
 
 Inputs the spec implies and no happy path covers, most likely first. Each has a test in the task named in brackets.
 
-1. **The refusal oracle.** A ward rite for an owner who is a vampire, a human and an Original must succeed or fail identically; a locator on a villager's taglock, an NPC Original's bottle and an unknown bottle must give the same message at the same cost. [Task 6 `wardRiteIsIdenticalForEveryOwnerSpecies`, Task 15 `locatorRefusalsAreOneMessageAtOneCost`]
+1. **The refusal oracle.** A ward rite refused because the owner is vampiric (the owner's rule, spec 3.2) must give the same message at the same cost as a refusal for a full list, a claimed chunk or a non-witch caster; a locator on a villager's taglock, an NPC Original's bottle and an unknown bottle must give the same message at the same cost. [Task 6 `everyWardRefusalIsOneMessageAtOneCost`, Task 15 `locatorRefusalsAreOneMessageAtOneCost`]
 2. **A non-sneaking player on the circle's centre** cancels the ward rite and gives everything back. [Task 6 `aStandingPlayerOnTheCentreCancelsTheWard`]
 3. **A dead owner with the ward in an unloaded chunk.** The ward must stand down without the chunk loading. [Task 8 `ownerDeathFallsWardsInUnloadedChunks`]
 4. **A vampire boxed into the ward** (one-wide corridor, a roof) is not pushed forever. [Task 5 `aBoxedInVampireIsTeleportedOutAfterTheTimeout`]
-5. **A hybrid co-owner confusion**: a hybrid who is *invited* must not be pushed by a second ward they are not invited to, and one who is the owner of the first is not blocked by it. [Task 5 `invitationIsPerWard`]
+5. **Invitation is per ward**: a vampire invited to ward A is still pushed by ward B they are not invited to. And a witch-type caster who is a tribrid or a heretic (vampiric) cannot be the owner of her own ward, only of one for a non-vampiric player on the centre. [Task 5 `invitationIsPerWard`, Task 6 `aVampiricWitchCannotOwnButCanCastForAHuman`]
 6. **The compass in a chest keeps its attunement and loses its needle.** [Task 14 `aChestedCompassKeepsTheAttunementOnly`]
 7. **The same needle for every reason.** Offline, dead, other dimension, out of range, cloaked, expired and creative must yield the same tracker value. [Task 13 `everyReasonLooksTheSame`, Task 14 `theNeedleSpinsTheSameForEveryReason`]
 8. **Two curses on one player and a death.** Both end at death, neither survives a respawn, and a second application does not stack. [Task 11 `bothCursesEndAtDeathAndDoNotStack`]
@@ -153,6 +154,12 @@ class WardRulesTest {
     }
 
     @Test
+    void onlyANonVampiricOwnerMayRaiseAWard() {
+        assertTrue(WardRules.mayOwn(false));
+        assertFalse(WardRules.mayOwn(true));
+    }
+
+    @Test
     void theRadiusIsClamped() {
         assertEquals(1, WardRules.clampRadius(-5));
         assertEquals(10, WardRules.clampRadius(10));
@@ -237,6 +244,11 @@ public final class WardRules {
         return InviteResult.ADDED;
     }
 
+    /** A vampire's home has no barrier (owner decision): a vampiric owner may not raise a ward. */
+    public static boolean mayOwn(boolean ownerVampiric) {
+        return !ownerVampiric;
+    }
+
     public static int clampRadius(int r) {
         return Math.max(1, Math.min(MAX_RADIUS, r));
     }
@@ -255,7 +267,7 @@ public final class WardSpeech {
 }
 ```
 
-- [ ] **Step 4: Run green**, then **mutation checks** (each: replace, run the two tests, expect a failure, restore): `owner || invited` -> `owner`; `x < cx + half + 1` -> `x <= cx + half + 1`; `min == w` order swapped with `min == e`; `list.size() >= max` -> `list.size() > max`; `replaceAll("[.,!?\\s]+$", "")` -> `""`; `clampRadius` upper bound 24 -> 25; `vampiric || blocksWolves && wolfLike` -> `vampiric || wolfLike`.
+- [ ] **Step 4: Run green**, then **mutation checks** (each: replace, run the two tests, expect a failure, restore): `owner || invited` -> `owner`; `x < cx + half + 1` -> `x <= cx + half + 1`; `min == w` order swapped with `min == e`; `list.size() >= max` -> `list.size() > max`; `replaceAll("[.,!?\\s]+$", "")` -> `""`; `clampRadius` upper bound 24 -> 25; `vampiric || blocksWolves && wolfLike` -> `vampiric || wolfLike`; `mayOwn` returning `true`.
 - [ ] **Step 5: Commit** `feat(ward): pure ward rules (R302, R305)`.
 
 ## Task 2: The ward table (pure) and the saved index
@@ -317,12 +329,15 @@ public final class WardSpeech {
   - `aSneakingPlayerOnTheCentreOwnsTheWard`: the sneaking player is the owner; the caster is on the list.
   - `aStandingPlayerOnTheCentreCancelsTheWard`: a non-sneaking player there: no ward, the ingredients are back, the caster is told `ward.cancelled`.
   - `onlyAWitchTypeCanRaiseIt`: a plain player gets the one generic refusal.
-  - `wardRiteIsIdenticalForEveryOwnerSpecies`: the same rite with the owner a human, a vampire, an Original and a hybrid: the same outcome, the same message key and the same ingredients spent. **This is the no-oracle test (R325); it must fail if any branch looks at the owner's species.**
+  - `aVampiricOwnerCannotRaiseAWard`: the owner a vampire, an Original, a hybrid, an Original hybrid, a tribrid and a heretic (sneaking on the centre): no ward is created for any of them; a human, a witch, a siphoner and a werewolf each get one (werewolves are not vampiric).
+  - `everyWardRefusalIsOneMessageAtOneCost`: a vampiric owner, a full cap (`ward_max_per_owner`), claimed ground, a non-witch caster and `ward_enabled = false` all give the **same message key** and the **same spent ingredients and power**. **This is the no-oracle test (R325): it must fail if the vampiric-owner refusal has its own text or cost.** (The one exception stays: a non-sneaking player on the centre cancels and refunds, R327.)
+  - `aVampiricWitchCannotOwnButCanCastForAHuman`: a tribrid caster alone on the circle is refused (she would be the owner); the same tribrid with a sneaking human on the centre raises the ward for the human.
+  - `anOwnerWhoTurnsVampiricKeepsTheWard`: a standing ward whose owner becomes a vampire later is still standing (spec 3.2; the owner's rule gates raising only).
   - `theOwnerCapIsTheGenericRefusal`: the 4th ward for `ward_max_per_owner` 3 gives the same message and cost as any other refusal.
   - `aDoorWardMarksTheNearestDoorWithinFour`: the door cell is the ward's centre, half-size 1; none within 4 is the generic refusal.
   - `claimedGroundIsRefusedWithTheGenericMessage` (a fake `ClaimGuard` returning "somebody else's"), `unclaimedAndOwnClaimAndPartyClaimAreAllowed`.
 - [ ] **Step 2: Implement.** `onStart`: caster must be a witch type (`SeveranceRiteFactory.isWitchType`); find the entity on the centre (the existing helper the Linking rite uses); owner = the sneaking one or the caster; cancel and refund if a standing player is there; ask `ClaimGuard` (Task 8 provides the real one; here a stub interface installed by the test); on any failure call one `refuse(caster)`: the same message, ingredients spent (the exception is the cancel for a standing player, which refunds, as R147). `onTick`/`onStop` do nothing.
-- [ ] **Step 3: Green; mutants:** a species check in `onStart` (killed by the identical-for-every-species test); refund on the generic refusal (killed by the cost assertion); skip the sneak test (killed by the standing-player test); owner = always the caster (killed by the sneaking-owner test).
+- [ ] **Step 3: Green; mutants:** `WardRules.mayOwn` ignored in `onStart` (killed by `aVampiricOwnerCannotRaiseAWard`); a distinct message or a refund for the vampiric-owner refusal (killed by `everyWardRefusalIsOneMessageAtOneCost`); the tribrid caster treated as non-vampiric; refund on the generic refusal (killed by the cost assertion); skip the sneak test (killed by the standing-player test); owner = always the caster (killed by the sneaking-owner test).
 - [ ] **Step 4: Rite data tests:** `RiteUnlocksDataTest` (every rite file has its advancement pair; add the pair `rites/known/rite_of_the_ward` and the others by the existing generator), `RitesBookTest` (the entry is generated; the lang labels exist).
 - [ ] **Step 5: Commit** `feat(ward): the Rite of the Ward and the door ward (R300, R301, R327)`.
 
