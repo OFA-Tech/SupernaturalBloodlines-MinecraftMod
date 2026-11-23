@@ -8,7 +8,7 @@ A witch-type performer (witch, siphoner, heretic, tribrid) opens a road to a ski
 
 ## What 19a ships
 
-- [x] The part, `supernaturalbloodlines-evolution_rites.toml`, 11 Admin rows (`AdminEntries` 178), the part switch row.
+- [x] The part, `supernaturalbloodlines-evolution_rites.toml`, 15 Admin rows, the part switch row.
 - [x] The engine: `core.evolution` (`Tier`, `EvolutionRecipe`, `EvolutionRecipeCodec`, `EvolutionRules`, `MasteryRules`: pure), `parts.evolutionrites.rite.EvolutionRiteFactory` (factory `supernaturalbloodlines:evolution`: the rite file's `factory` block is the recipe), `probe/` (`AddonProbe`, `Hooks`, `Probes`, `UniqueRoadProbe`).
 - [x] **Sage to Great Sage** (`evolve_great_sage`, Unique, full moon): needs a mastered `tensura:sage`; Tensura's own `SkillHelper.learnSkill`, so its price and vetoes apply; Sage stays; `ep_cost` 100,000 of base Max EP, spent only after the learn is confirmed.
 - [x] **Deus Sanguis** (`evolve_deus_sanguis`, Unique, full moon, only with Ascension): the target is vampire-kind; the addon's own `AddonSkillConfig.DEUS_SANGUIS_ENABLED` switch decides whether the road is open; `ep_cost` 200,000. Its rite file and its two unlock advancements carry `neoforge:mod_loaded ascension`, so without the addon there is no rite, nothing known, nothing sealed, and no book entry.
@@ -17,9 +17,13 @@ A witch-type performer (witch, siphoner, heretic, tribrid) opens a road to a ski
 - [ ] 19b: the Raphael merge (`UNLOCK_SKILL` listener, no mixin), `GrantForm.FREE`, FoxAblaze single-owner reader, retired-skill check for evolutions.
 - [ ] 19c: `blood_sovereign`, `GrantForm.PERMANENT`. 19d: the other Uniques and the race links.
 
+## The performer who left (E5, plan 19a panel)
+
+Enchanted hands a rite only the performer's id. Nine factories (`Faction`, `BindItem`, `Lineage`, `Severance`, `HybridBlood`, `AncestralCalling`, `OriginalBlood`, `Evolution`, `Mastery`) used "the caster, or else the one on the circle", so a performer who logged out left the target standing in for them, and a rite that asks the target's consent only when performer and target differ then changed an unwilling player. They now call `RiteTargets.performer` (pure rule: `core.rite.PerformerRule`): the performer if present, else the target ONLY when the target is the performer, else the rite cancels (which gives the ingredients back). `CasterFallbackScanTest` fails if any `*RiteFactory` brings the old line back; GameTests cover the Augustine, Great Sage and Mastery rites with a witch target who does not sneak.
+
 ## Rite of Mastery (E16)
 
-| Tier | Night | EP spent (default) | Sacrifice (the rite file) |
+| Tier | Night | EP spent (default) | Sacrifice (default; a config list per tier) |
 |---|---|---|---|
 | Common (a resistance, an intrinsic, a common skill) | full moon | 100,000 | 5 diamond blocks, 5 echo shards |
 | Extra | full moon | 300,000 | 5 netherite ingots, 20 echo shards |
@@ -28,8 +32,9 @@ A witch-type performer (witch, siphoner, heretic, tribrid) opens a road to a ski
 
 - "EP" is the target's **base Max EP** (`EnergyHelper.getBaseMaxEP`, `setBaseMaxEP`). The rite refuses before taking anything unless the base Max EP is strictly more than the cost. The EP is taken after the mastery is confirmed, so a refusal or a veto costs nothing.
 - **Choosing the skill:** the hub's Skills page has a **Mastery** tab (shown when this part is installed) that lists the player's skills with their tier and Choose, Clear and Show buttons; they run `bloodline mastery choose <skill>`, `clear` and (no argument) show (rows B11 to B13 of `AdminCommands`). The server validates the choice when it is made and again when the rite runs. There is no default skill. No payload and no protocol change: the tab uses the hub's command rows. The supernatural part reaches the picker only through `shared.hub.MasteryAccess` (parts never import each other); this part installs the provider on the client.
-- **How mastery is applied** (`MasteryApply`): `setMastery(0)` if the skill is still in learning, then `addMasteryPoint(max - current)`, so `SKILL_MASTERY`, `onSkillMastered` (a skill's own evolution), the statistic and the advancement all happen. If afterwards the skill is not mastered (a listener vetoed it, as Ascension's sealed skills do) the old mastery is restored and the rite is refused: the research's "set it anyway" fallback is **not** used. A **resistance** has no mastery: the rite finishes its learning (`mastery` 0, `onLearnSkill`).
+- **How mastery is applied** (`MasteryApply`): `setMastery(0)` if the skill is still in learning, then `addMasteryPoint(max - current)`, so `SKILL_MASTERY`, `onSkillMastered` (a skill's own evolution), the statistic and the advancement all happen. If afterwards the skill is not mastered (a listener vetoed it, as Ascension's sealed skills do) the old mastery is restored and the rite is refused: the research's "set it anyway" fallback is **not** used. A **resistance** has no mastery: the rite finishes its learning (Tensura's own `addLearnPoint(inst, target, 0, points)`: the same path as the learning points in play, which fires `SkillLearningEvent` and `UNLOCK_SKILL` (so a veto applies) and runs `onLearnSkill`, the toggle and the chat line. A veto at either restores the old mastery AND the base Max EP Tensura's own listener may already have charged).
 - **Refused, to the target, with the reason:** no choice, not held, lent (temporary), already mastered or finished, the wrong tier for this file, in `mastery_refused_skills` (default: Ascension's System skills, whose mastery that addon rewrites from the System level), in Rebalanced's `tensura_rebalanced:retired` tag, not enough EP, on cooldown, vetoed. The performer who is not the target hears "The rite would change nothing." for all of them.
+- **The sacrifice is config.** The four rite files name only the item **kinds** (Enchanted needs each kind thrown on the circle to start the rite, and takes one stack of each); `mastery_sacrifice_<tier>` (`item:count` lines) says how many. In `onStart`, before anything about the target is read, the rite adds what Enchanted took to what lies loose on the circle (within 8 blocks, `Sacrifice.plan`): if that is short of the config it cancels and tells **only the performer** (nothing about the target; Enchanted gives back what it took, the loose items are never touched); if Enchanted took more than the count, the surplus is dropped back on the circle. A kind the rite file names but the config does not list counts as 1.
 - **Cooldown:** one rite per target per `mastery_cooldown_days` (7) of game time (24,000 ticks a day, `getGameTime`), set only after a success.
 - The point of it: `tensura:sage` has no mastery source at all, so Sage to Great Sage was unreachable; `tensura:anti_skill`'s toggle needs it mastered and nothing masters it; a resistance stops at 0 forever; Kumo's Determination only gains while the player is below half health.
 
@@ -45,8 +50,9 @@ A witch-type performer (witch, siphoner, heretic, tribrid) opens a road to a ski
 | `mastery_ep_common`, `_extra`, `_unique`, `_ultimate` | 100000, 300000, 750000, 2000000 | base Max EP each tier spends |
 | `mastery_cooldown_days` | 7 | days between two rites for one player |
 | `mastery_refused_skills` | the three Ascension System skills | skill ids the rite refuses |
+| `mastery_sacrifice_<tier>` (4 keys) | the owner's counts above | `item:count` lines taken from the circle |
 
-The **item counts** of the sacrifice are in the four rite files (Enchanted matches ingredients from the file), so a server changes them with a datapack, not in the config. This is the one number the owner asked to be a config key that is not: taking the sacrifice from the circle ourselves would be a different design (open question for the owner in the PR).
+The item counts are config too (`mastery_sacrifice_common|extra|unique|ultimate`, each with an Admin row). A server that wants a new KIND (not just a count) must also change the rite file by datapack: the circle only starts for the kinds the file names. `EvolutionRitesDataTest` fails if a rite file and the default sacrifice name different kinds.
 
 ## What vanishes with the part off
 
