@@ -74,9 +74,10 @@ final class WheelRenderer {
         WheelPalette pal = f.pal();
         int cx = l.centreX();
         int cy = l.centreY();
-        var shape = l.shape();
+        var shape = l.shape(Ring.INNER);
+        var outerShape = l.shape(Ring.OUTER);
         // the bands
-        fill(g, spans(shape, 88, 126, 0, 360), cx, cy, pal.outerBand());
+        fill(g, spans(outerShape, 88, 126, 0, 360), cx, cy, pal.outerBand());
         fill(g, spans(shape, 19, 49, 0, 360), cx, cy, pal.innerBand());
         List<Cell> inner = l.ring(Ring.INNER);
         List<Cell> middle = l.ring(Ring.MIDDLE);
@@ -99,7 +100,7 @@ final class WheelRenderer {
         if (f.hover() != null && f.hover().ring() == Ring.OUTER && f.hover().index() < outer.size()) {
             double b = l.bearing(Ring.OUTER, f.hover().index());
             double half = l.outerSegment() / 2;
-            fill(g, spans(shape, 88, 126, b - half, b + half), cx, cy, pal.outerLit());
+            fill(g, spans(outerShape, 88, 126, b - half, b + half), cx, cy, pal.outerLit());
         }
         // the dividers, the rim and the hub
         for (int i = 0; i <= outer.size(); i++) {
@@ -111,14 +112,14 @@ final class WheelRenderer {
                 UiKit.draw(g, f.kit(), Part.WHEEL_EDGE, cx + (int) Math.round(126 * Math.sin(b)) - edge / 2, cy - (int) Math.round(126 * Math.cos(b)) - edge / 2, edge, edge);
             }
         }
-        fill(g, spans(shape, 125, 126.5, 0, 360), cx, cy, pal.rim());
-        fill(g, spans(shape, 87, 88, 0, 360), cx, cy, pal.line());
+        fill(g, spans(outerShape, 125, 126.5, 0, 360), cx, cy, pal.rim());
+        fill(g, spans(outerShape, 87, 88, 0, 360), cx, cy, pal.line());
         fill(g, spans(shape, 51, 52, 0, 360), cx, cy, pal.line());
         fill(g, spans(shape, 0, 17, 0, 360), cx, cy, pal.hub());
         fill(g, spans(shape, 16, 17, 0, 360), cx, cy, pal.line());
         fill(g, spans(shape, 0, 9, 0, 360), cx, cy, pal.seal());
         String glyph = HudKeys.WHEEL.getTranslatedKeyMessage().getString();
-        g.drawString(font, glyph, cx - font.width(glyph) / 2, cy - 4, pal.onPill(), false);
+        g.drawString(font, glyph, cx - font.width(glyph) / 2, cy - 4, pal.hintInk(), false);
         // the carets of the open path
         if (!inner.isEmpty()) {
             caret(g, f, cx, cy, l.bearing(Ring.INNER, open), 50);
@@ -172,7 +173,7 @@ final class WheelRenderer {
             UiKit.draw(g, f.kit(), on ? Part.SLOT_ACTIVE : Part.SLOT, c.x() + 3, c.y() + 3, 22, 22);
             UiKit.icon(g, iconName(f.model().mods().get(c.index())), c.x() + 6, c.y() + 6, 16, 0);
             if (f.hover() != null && f.hover().ring() == Ring.INNER && f.hover().index() == c.index()) {
-                corners(g, c.x() - 2, c.y() - 2, c.w() + 4, c.h() + 4, 4, f.pal().rim());
+                corners(g, c.x() - 2, c.y() - 2, c.w() + 4, c.h() + 4, 4, bracket(f));
             }
         }
     }
@@ -232,12 +233,16 @@ final class WheelRenderer {
                 g.drawString(font, t, c.x() + 18 - w / 2 + 14, c.y() + 40, f.pal().ink(), false);
             }
             if (f.hover() != null && f.hover().ring() == Ring.OUTER && f.hover().index() == c.index()) {
-                corners(g, c.x() - 4, c.y() - 4, 44, 44, 6, f.pal().rim());
+                corners(g, c.x() - 4, c.y() - 4, 44, 44, 6, bracket(f));
             }
         }
     }
 
     /** Four corner brackets round a rectangle. */
+    private static int bracket(Frame f) {
+        return f.kit() == HudKit.GRIMOIRE ? f.pal().line() : f.kit().accent();
+    }
+
     private static void corners(GuiGraphics g, int x, int y, int w, int h, int arm, int color) {
         g.fill(x, y, x + arm, y + 2, color);
         g.fill(x, y, x + 2, y + arm, color);
@@ -344,8 +349,9 @@ final class WheelRenderer {
                 f.page().size() > 0 && f.layout().pageCount() > 1 ? new String[] {text("help.scroll"), text("help.scroll_page")} : new String[] {text("help.alt"), text("help.alt_mode")},
                 {text("help.close_keys"), text("help.close")}};
         for (String[] row : rows) {
-            g.drawString(font, Component.literal(row[0]).withStyle(ChatFormatting.BOLD), x, y, f.pal().ink(), false);
-            g.drawString(font, row[1], x + font.width(row[0]) + 5, y, f.pal().muted(), false);
+            Component key = Component.literal(row[0]).withStyle(ChatFormatting.BOLD);
+            g.drawString(font, key, x, y, f.pal().ink(), false);
+            g.drawString(font, row[1], x + font.width(key) + 5, y, f.pal().muted(), false);
             y += 10;
         }
     }
@@ -359,8 +365,8 @@ final class WheelRenderer {
     }
 
     private static void chip(GuiGraphics g, Font font, Frame f, Cell c, String key, String label) {
-        UiKit.draw(g, f.kit(), Part.HUD_LABEL, c.x(), c.y(), c.w(), c.h());
-        int ink = UiKit.labelOver(f.kit(), Part.HUD_LABEL, f.pal().hintInk());
+        UiKit.draw(g, f.kit(), Part.HUD_PILL, c.x(), c.y(), c.w(), c.h());
+        int ink = UiKit.labelOver(f.kit(), Part.HUD_PILL, f.pal().hintInk());
         g.drawString(font, key, c.x() + 8, c.y() + 3, ink, false);
         g.drawString(font, label, c.x() + 8 + font.width(key) + 6, c.y() + 3, ink, false);
     }

@@ -10,7 +10,17 @@ public final class ClientCatalogue {
     private ClientCatalogue() {
     }
 
+    /** Development only: the screenshot driver's demo list stays, whatever the server sends. */
+    public static volatile boolean frozen;
+
     public static void accept(WheelCataloguePayload payload) {
+        if (frozen) {
+            return;
+        }
+        set(payload);
+    }
+
+    public static void set(WheelCataloguePayload payload) {
         entries = payload.entries();
         revision = payload.revision();
     }

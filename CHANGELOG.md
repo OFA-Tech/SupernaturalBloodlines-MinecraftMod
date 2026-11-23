@@ -1,5 +1,24 @@
 # Changelog
 
+## Unreleased (skill wheel, phase W4: the wheel screen)
+
+### Added
+- **The skill wheel.** Hold G (key `Skill wheel (hold)`, default G, in our key category) and the wheel opens: the mods in the inner ring (Bloodline, Vampirism, Werewolves, Tensura, Infinity Stones, Great Sage: only those that are installed and have a power), Tensura's groups (Skills, Magic, Battlewill) in the middle ring when it has at least two, and the powers of the open group in the outer ring, 12 to a page. Let go of G over a power to use it, or over nothing to keep it open (a click, G or Esc closes it). A tap shorter than `wheel_tap_ms` (default 200) opens nothing and repeats the last power. Left click uses; right click opens the slot picker (our Loadout, or Tensura's active and next preset, saved through Tensura); Alt + click or Alt + scroll cycles a power's mode; scroll turns the page; arrows, Tab and Enter work without a mouse and every state is read to the narrator in words. A held power is released wherever the pointer is, and when the screen closes, loses focus or the player dies. An aimed power closes the wheel and waits for a click at the crosshair (right click, Esc or a tap of G cancels).
+- Three looks (Grimoire, Blood Moon, Tensura) in the hub's theme, on the art kit sprites of #81; the wheel follows `reduce_motion`.
+- Great Sage's powers (Magic Sense, Assess, Scan, Thought Acceleration, its menu) are on the wheel through its client calls; they appear only when Great Sage allows the player to use it.
+- Client settings (hub, Settings page): `wheel_tap_ms` (100 to 500) and `wheel_remember_last` (the tap's power is kept in `config/supernaturalbloodlines-wheel-last.json`).
+- The hub's Loadout page offers the powers the wheel offers once the wheel has been opened in the session.
+- Development: `-Dsupernaturalbloodlines.devshots=wheel:<look>:<open|alt|page|picker|aim|closed>`.
+
+### Changed
+- **Keys that moved onto the wheel are covered while the HUD works** (hidden and unbound, and put back when `hide_covered_keys` is off, `hud_enabled` is off or the server has no HUD channel): Vampirism's action wheel and vision key, Tensura's race-ability key, Great Sage's menu, assess, scan, magic sense and thought acceleration keys, and Infinity Stones' wheel and soul control keys. Great Sage's voice and panic keys and Infinity's soul release are left alone.
+- The six ability slots are not drawn while the wheel is open (it lists the same powers).
+
+### Network
+No payload changed: the hud network version stays at 3.
+
+### Rolling back
+Turn `hide_covered_keys` or `hud_enabled` off in the hub (Settings) and every covered key is back at once. The saved last power is one small file and can be deleted.
 ## Unreleased (skill wheel, phase W2: rule C, one entry per duplicated power)
 
 ### Added

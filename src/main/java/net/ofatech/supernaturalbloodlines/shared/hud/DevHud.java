@@ -20,6 +20,9 @@ public final class DevHud {
     /** The request toast of the demo is on screen (over the Tensura status HUD, when it is installed). */
     public static volatile boolean toast;
 
+    /** Installed by the HUD part's client: shows the demo wheel in a state (open, alt, page, picker, aim, closed). Null without it. */
+    public static volatile java.util.function.Consumer<String> wheelShow;
+
     private DevHud() {
     }
 }

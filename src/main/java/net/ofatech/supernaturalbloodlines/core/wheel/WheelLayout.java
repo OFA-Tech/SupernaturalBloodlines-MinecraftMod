@@ -158,6 +158,11 @@ public final class WheelLayout {
             return p.look == Look.TENSURA ? Annulus.Shape.polygon(6) : Annulus.Shape.CIRCLE;
         }
 
+        /** The shape of one ring: the Tensura look has a hexagon for the hub, inner and middle rings and a 14-sided polygon (a vertex near each divider) for the outer one. */
+        public Annulus.Shape shape(Ring ring) {
+            return p.look == Look.TENSURA ? Annulus.Shape.polygon(ring == Ring.OUTER ? 14 : 6) : Annulus.Shape.CIRCLE;
+        }
+
         public List<Cell> ring(Ring ring) {
             return switch (ring) {
                 case INNER -> inner;

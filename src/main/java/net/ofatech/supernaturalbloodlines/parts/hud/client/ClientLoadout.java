@@ -39,6 +39,17 @@ public final class ClientLoadout implements LoadoutAccess.Provider {
     @Override
     public List<LoadoutAccess.Entry> assignable() {
         List<LoadoutAccess.Entry> list = new ArrayList<>();
+        var catalogue = net.ofatech.supernaturalbloodlines.parts.hud.net.ClientCatalogue.entries();
+        if (!catalogue.isEmpty() && net.ofatech.supernaturalbloodlines.parts.hud.client.wheel.WheelList.current() == catalogue) {
+            // the wheel has been opened: the page offers what the wheel offers (one entry per power, rule C), not a second list
+            var refs = net.ofatech.supernaturalbloodlines.core.wheel.WheelRules.loadoutPowers(catalogue.stream().map(e -> e.ref()).toList());
+            for (var e : catalogue) {
+                if (refs.contains(e.ref())) {
+                    list.add(new LoadoutAccess.Entry(e.ref().id(), e.name(), e.icon(), null, e.state().locked() ? "supernaturalbloodlines.wheel.lock." + e.state().lock().name().toLowerCase(java.util.Locale.ROOT) : null));
+                }
+            }
+            return list;
+        }
         list.add(new LoadoutAccess.Entry(Loadout.BITE, Component.translatable("supernaturalbloodlines.hud.bite.name"), BITE_ICON, BiteView.note(), BiteView.greyed()));
         for (var a : net.ofatech.supernaturalbloodlines.shared.hud.ExtraActions.all()) {
             if (net.minecraft.client.Minecraft.getInstance().player != null && a.available(net.minecraft.client.Minecraft.getInstance().player)) {

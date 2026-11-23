@@ -92,6 +92,9 @@ public final class WheelScreen extends Screen {
 
     @Override
     public void removed() {
+        DevWheel.active = false;
+        DevWheel.alt = false;
+        net.ofatech.supernaturalbloodlines.parts.hud.net.ClientCatalogue.frozen = false;
         WheelActions.release();
         WheelActions.view(false);
         heldByMouse = null;
@@ -179,7 +182,7 @@ public final class WheelScreen extends Screen {
     public void render(GuiGraphics g, int mouseX, int mouseY, float partialTick) {
         refresh();
         boolean pickerOpen = pickerFor != null;
-        if (!pickerOpen) {
+        if (!pickerOpen && !DevWheel.active) {
             hover = layout.hit(mouseX, mouseY).orElse(null);
             if (hover != null && hover.ring() == Ring.INNER && hover.index() != open.mod()) {
                 open = model.openMod(hover.index());
@@ -195,7 +198,7 @@ public final class WheelScreen extends Screen {
         WheelEntry power = entryAt(shown);
         long now = minecraft.level == null ? 0 : minecraft.level.getGameTime();
         WheelRenderer.Picker picker = pickerOpen ? picker(mouseX, mouseY) : null;
-        WheelRenderer.draw(g, font, new WheelRenderer.Frame(layout, model, open, pageEntries(), shown, power, hasAltDown(), pal, kit, now, picker, WheelActions::slotOf));
+        WheelRenderer.draw(g, font, new WheelRenderer.Frame(layout, model, open, pageEntries(), shown, power, hasAltDown() || DevWheel.alt, pal, kit, now, picker, WheelActions::slotOf));
     }
 
     private Hit hitOf(WheelEntry e) {
@@ -287,6 +290,9 @@ public final class WheelScreen extends Screen {
 
     @Override
     public void tick() {
+        if (DevWheel.active) {
+            return; // the screenshot driver: a hidden window is never focused
+        }
         if (!minecraft.isWindowActive() || minecraft.player == null || !minecraft.player.isAlive()) {
             feed(Input.FOCUS_LOST, false);
             onClose();
@@ -512,10 +518,12 @@ public final class WheelScreen extends Screen {
 
     /** For the development screenshots: the state of a frame (the pointer and the picker) without a real mouse. */
     void devHover(Ring ring, int index) {
+        refresh();
         this.hover = new Hit(ring, index);
     }
 
     void devPicker(int outerIndex) {
+        refresh();
         List<WheelEntry> page = pageEntries();
         if (outerIndex >= 0 && outerIndex < page.size()) {
             pickerFor = page.get(outerIndex);
@@ -523,7 +531,9 @@ public final class WheelScreen extends Screen {
     }
 
     void devOpen(WheelModel.Open path) {
+        refresh();
         this.open = path;
         this.placed = true;
+        refresh();
     }
 }

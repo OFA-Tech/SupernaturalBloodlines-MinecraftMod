@@ -45,6 +45,10 @@ public final class WheelActions {
         return AIM;
     }
 
+    static void devAimEntry(WheelEntry e) {
+        aimEntry = e;
+    }
+
     public static WheelEntry aimEntry() {
         return aimEntry;
     }
@@ -132,6 +136,9 @@ public final class WheelActions {
 
     /** What the six slots of the target hold, as entry ids (null for empty). */
     public static List<ResourceLocation> holds(WheelRules.SlotTarget target) {
+        if (DevWheel.devHolds() != null) {
+            return DevWheel.devHolds();
+        }
         List<ResourceLocation> out = new ArrayList<>();
         LocalPlayer p = Minecraft.getInstance().player;
         if (target == WheelRules.SlotTarget.TENSURA_PRESET && p != null && ModList.get().isLoaded("tensura")) {

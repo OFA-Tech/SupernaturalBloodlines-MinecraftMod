@@ -37,6 +37,7 @@ class GestureMachineTest {
 
     @Test
     void tapUnder200RepeatsLastAndOpensNothing() {
+        assertEquals(NONE, GestureMachine.IDLE.step(G_DOWN, 1000, TAP).effect(), "the press itself opens nothing");
         GestureMachine m = down(1000);
         assertEquals(NONE, m.step(TICK, 1100, TAP).effect(), "no open before 200 ms");
         Step up = m.step(G_UP, 1199, TAP);

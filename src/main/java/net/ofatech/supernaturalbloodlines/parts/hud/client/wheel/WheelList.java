@@ -27,6 +27,9 @@ public final class WheelList {
 
     /** The sources whose mod is installed; a power of one that is not is never listed. */
     public static boolean installed(PowerSource s) {
+        if (DevWheel.active) {
+            return true;
+        }
         return switch (s) {
             case BLOODLINE -> true;
             case GREAT_SAGE -> GreatSageProvider.available();
