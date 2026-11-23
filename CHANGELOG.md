@@ -8,7 +8,7 @@
 - Config (with an Admin row, section `species`): `venom_sick_after_ticks` (0 sick from the start, 12000 never sick; default 4000).
 
 ### Fixed
-- **The Elixir saves from the venom's last tick.** The kill that backs up the venom's blow now runs only while the venom is still on the player, so an Elixir (which clears every effect) is no longer undone by a second kill. Downed and Vampirism's dying state still die.
+- **The Elixir saves from the venom's last tick.** The kill that backs up the venom's blow now runs only while the venom is still on the player, so an Elixir (which clears every effect) is no longer undone by a second kill (vanilla's invulnerability window usually blocked that kill already; a mod that removes the window made it real). Downed and Vampirism's dying state still die.
 - **An infinite venom** (`/effect give ... hybrid_venom infinite`) no longer kills within two seconds: it has no clock, so it pulses as a fresh venom and never reaches the end.
 - **The "you feel sick" line** is shown at the first pulse where the sickness actually runs, also for someone who was down at the threshold or who logged in already past it (it is kept per player, not saved, and forgotten when the venom ends). Venom Slowness no longer has particles.
 

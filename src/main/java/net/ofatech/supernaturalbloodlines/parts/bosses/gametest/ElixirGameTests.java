@@ -2,6 +2,8 @@ package net.ofatech.supernaturalbloodlines.parts.bosses.gametest;
 
 import de.teamlapen.vampirism.api.VReference;
 import de.teamlapen.vampirism.api.VampirismAPI;
+import java.util.function.Consumer;
+import net.neoforged.bus.api.EventPriority;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.server.level.ServerPlayer;
@@ -63,19 +65,32 @@ public final class ElixirGameTests {
         helper.succeed();
     }
 
-    /** R206: the venom's last pulse is an ordinary death the Elixir takes back; the fallback kill must not undo the save (it ran while the venom was gone). */
+    /**
+     * R206: the venom's last pulse is an ordinary death the Elixir takes back; the fallback kill must not undo the save (the Elixir cleared the venom).
+     * Vanilla's invulnerability window would block that second blow by itself, so a mod that removes it is modelled: the window is zeroed right after the save.
+     */
     @GameTest(template = "empty", templateNamespace = NS)
     public static void itSavesAVampireFromTheLastPulseOfTheVenom(GameTestHelper helper) {
         LineTestPlayer p = holder(helper, 1);
         helper.assertTrue(VampirismAPI.factionPlayerHandler(p).setFactionAndLevel(VReference.VAMPIRE_FACTION, 1), "could not make a vampire");
-        p.addEffect(new MobEffectInstance(SpeciesRegistries.HYBRID_VENOM, 1));
-        Venom.pulse(p, 1);
-        helper.assertTrue(!p.isDeadOrDying(), "the venom killed the holder of an Elixir");
-        helper.assertTrue(elixirs(p) == 0 && p.received(USED), "the Elixir was not the one that saved them: " + elixirs(p));
-        helper.assertTrue(!p.hasEffect(SpeciesRegistries.HYBRID_VENOM), "the venom outlived the Elixir");
-        p.addEffect(new MobEffectInstance(SpeciesRegistries.HYBRID_VENOM, 1));
-        Venom.pulse(p, 1);
-        helper.assertTrue(p.isDeadOrDying(), "with the Elixir spent the venom did not kill");
+        Consumer<LivingDeathEvent> noIFrames = e -> {
+            if (e.getEntity() == p && e.isCanceled()) {
+                p.invulnerableTime = 0;
+            }
+        };
+        NeoForge.EVENT_BUS.addListener(EventPriority.LOWEST, true, LivingDeathEvent.class, noIFrames);
+        try {
+            p.addEffect(new MobEffectInstance(SpeciesRegistries.HYBRID_VENOM, 1));
+            Venom.pulse(p, 1);
+            helper.assertTrue(!p.isDeadOrDying(), "the venom killed the holder of an Elixir");
+            helper.assertTrue(elixirs(p) == 0 && p.received(USED), "the Elixir was not the one that saved them: " + elixirs(p));
+            helper.assertTrue(!p.hasEffect(SpeciesRegistries.HYBRID_VENOM), "the venom outlived the Elixir");
+            p.addEffect(new MobEffectInstance(SpeciesRegistries.HYBRID_VENOM, 1));
+            Venom.pulse(p, 1);
+            helper.assertTrue(p.isDeadOrDying(), "with the Elixir spent the venom did not kill");
+        } finally {
+            NeoForge.EVENT_BUS.unregister(noIFrames);
+        }
         helper.succeed();
     }
 
