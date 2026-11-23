@@ -17,6 +17,7 @@ import net.ofatech.supernaturalbloodlines.core.blood.BloodBottleRules.Drinker;
 import net.ofatech.supernaturalbloodlines.core.blood.BloodBottleRules.Effect;
 import net.ofatech.supernaturalbloodlines.core.blood.BloodKind;
 import net.ofatech.supernaturalbloodlines.core.blood.BloodSource;
+import net.ofatech.supernaturalbloodlines.core.blood.ForceFeedRules;
 import net.ofatech.supernaturalbloodlines.core.bloodline.BloodlineState;
 import net.ofatech.supernaturalbloodlines.core.bloodline.NpcOriginal;
 import net.ofatech.supernaturalbloodlines.parts.species.SpeciesConfig;
@@ -124,6 +125,16 @@ public final class BloodBottles {
     /** Applies one drink of {@code source} to {@code target}; does not touch an item. @return the effect applied (REFUSED: nothing happened, keep the bottle) */
     public static Effect apply(ServerPlayer target, BloodSource source) {
         return apply(target, source, false);
+    }
+
+    /**
+     * One drink forced on a player who did not accept it: the effect is what {@link ForceFeedRules#withoutConsent} leaves of the one the rules chose, so it never
+     * names a sire. @return the effect applied
+     */
+    public static Effect applyWithoutConsent(ServerPlayer target, BloodSource source) {
+        Effect effect = ForceFeedRules.withoutConsent(decide(target, source));
+        run(target, source, effect, false);
+        return effect;
     }
 
     /** @param literalName print the source's real name in the drink message (Klaus's Blood is named after him) */
