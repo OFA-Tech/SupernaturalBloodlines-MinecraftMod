@@ -13,7 +13,7 @@ The man is `art/blockbench/bosses/klaus.bbmodel` posed from `man_klaus.json` exa
 | 1 | 6 | man key | The dip: chin down 16 degrees, arms drawn back, 0.7 px lower. Before the first crack. |
 | 2 | 12 | man key | **Man peak, the snap:** head thrown back 42 degrees and turned, right arm hooked up 62 degrees, right leg back; the left side has barely moved. |
 | 3 | 19 | man key | **Match (man):** both claws up at different heights (48 and 37 degrees), left leg forward, 0.93 size, top of the head at 29.96 px. |
-| 4 | 20 | `shift_in` 0.00 | **Match (wolf first frame):** reared on folded haunches, 29.81 px (1.86 blocks) tall, 11.15 px (0.70) wide, right claw higher, left hind foot a step forward. It stands where the man stood: hips over z = 3, the root 4.6 px forward, both hind feet ahead of their rest spots. |
+| 4 | 20 | `shift_in` 0.00 | **Match (wolf first frame):** reared on folded haunches, 29.81 px (1.86 blocks) tall, 11.15 px (0.70) wide, right claw higher, left hind foot a step forward. It stands where the man stood: hips over z = 3, both hind feet ahead of their rest spots. |
 | 5 | 26 | `shift_in` 0.30 | Tipping: 19 degrees along, hips starting to push, root at 0.89, forelegs reaching; the left hind foot has stepped back to its rest spot and the right is about to. |
 | 6 | 32 | `shift_in` 0.60 | **Landing:** left forepaw down (the LAND dust), right 2.1 px above the ground, hind legs at full push, tail streaming up. |
 | 7 | 34 | `shift_in` 0.70 | Impact: the top of the wolf is 6.8 px lower than at contact, the head whipping down after the chest, ruff and hackles flared, tail still up. |
@@ -30,8 +30,9 @@ The saved frames are the brief's ticks (0, 5, 10, 15, 19, 20, 25, 30, 32, 35, 39
 
 ## Changed after the owner's first check
 
-* The wolf's first frame stood about 9 px behind the man. Now the root starts 4.6 px forward (the contract allows 0.3 blocks) and the stance carries the
-  rest; the hind feet step back to their rest spots during the fall (left 0.10 to 0.32 s, right 0.32 to 0.50 s), so nothing slides.
+* The wolf's first frame stood about 9 px behind the man. Now its hips start over z = 3 with the hind feet 12.5 and 7.5 px forward of their rest spots,
+  and the feet step back to those spots during the fall (left 0.10 to 0.32 s, right 0.32 to 0.50 s), so nothing slides. The root bone also carries a
+  4.6 px offset in the clip, but the stance is what moves the wolf; the offset alone moves nothing.
 * Ticks 20 to 24 were close to one pose: a shudder through the shoulders, the hackles jumping at 0.07 s and the first hind step now fall there.
 * The end of `shift_out` was a held pose that shrank: it now walks its hind feet forward under itself (right 0.56 to 0.74 s, left 0.72 to 0.92 s) and shudders.
 * All gates above were measured again after these changes and hold with the same limits.

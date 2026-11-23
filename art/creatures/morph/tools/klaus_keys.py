@@ -80,8 +80,9 @@ def tr(keys, t):
 
 # ------------------------------------------------------------------ the match pose (shift_in's first frame, shift_out's last)
 # The wolf reared on folded haunches inside the man's outline: root 0.75, spine 60 degrees up, the nape the highest point, the muzzle thrown back.
-# It stands where the man stood: the root is 4.6 px forward (0.3 blocks is the most the contract allows) and the stance carries the other 2.9, so the
-# hips are over z = 3 and both hind feet are well forward of their rest spots. They step back to them, one after the other, while the body falls.
+# It stands where the man stood: the hips are over z = 3 and both hind feet are well forward of their rest spots. They step back to them, one after
+# the other, while the body falls. The hips and paws are placed in world px, so the root's own offset (4.6 px, inside the 0.3 blocks the contract
+# allows) moves nothing by itself: it only says where the root is while the body is solved around it.
 M_SCALE, M_PITCH, M_HIP, M_ROOT_Z = 0.75, -60.0, (6.0, 3.0), -4.6
 M_HOOK = {'fl': (-7.6, -4.2), 'fr': (-4.6, -7.2)}                    # paw joint from the shoulder (down, forward) in world px: his right is the higher claw
 M_HIND = {'hl': -12.5, 'hr': -7.5}                                   # world px from the rest spots; the left is a short step ahead, as the man's left leg is
