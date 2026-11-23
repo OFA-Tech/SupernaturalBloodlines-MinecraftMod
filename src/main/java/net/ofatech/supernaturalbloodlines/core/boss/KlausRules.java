@@ -90,8 +90,19 @@ public final class KlausRules {
      * both when he is dying and while he lies desiccated; then the howl of the shift; then by how fast he moves.
      */
     public static String animation(boolean deadOrDying, boolean desiccated, boolean howling, boolean moving, double speed) {
+        return animation(deadOrDying, desiccated, false, howling, moving, speed);
+    }
+
+    /**
+     * The same with the arrival of the shift (UI overhaul phase 7): after the death pose and before the howl, the wolf arrives with {@code shift_in} for
+     * the second half of the shift ({@link MorphRules#arriving}), although the howl has already begun by the rules ({@link ShiftRules#howling}).
+     */
+    public static String animation(boolean deadOrDying, boolean desiccated, boolean arriving, boolean howling, boolean moving, double speed) {
         if (deadOrDying || desiccated) {
             return "death";
+        }
+        if (arriving) {
+            return "shift_in";
         }
         if (howling) {
             return "howl";
