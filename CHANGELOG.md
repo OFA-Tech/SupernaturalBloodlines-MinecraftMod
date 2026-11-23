@@ -1,5 +1,18 @@
 # Changelog
 
+## Unreleased (skill wheel, phase W2: rule C, one entry per duplicated power)
+
+### Added
+- **One entry for a power that several mods give.** The approved list (`data/supernaturalbloodlines/wheel/overlaps.json`: invisibility, night vision, bat form, flight, regeneration, rage, fear, teleport, sense, appraisal and bite) is shown once on the wheel, as the main side's. The tiers of one Tensura skill (the three regenerations) show only the highest tier owned. Nothing changes in either mod's unlocks, levels, costs or mastery. A skill with several modes is never merged, and no Infinity Stones power is in a group.
+- **No stacking, one shared cooldown, from every key.** While one side of such a power is on, the other cannot be turned on from the wheel, our slots, Vampirism's or Werewolves' own keys or Tensura's own keys and screens. Using a side puts every side on **the main side's own cooldown**; a lasting side (rage, invisibility...) starts it when it ends, however it ends (turned off, ran out, death, logout). It survives a relog.
+- Config (Admin rows): `wheel_dedup_enabled`, `wheel_stack_guard_enabled`.
+
+### Changed
+- **The hud network version is 3. Update the server and every client together.** The entry now carries the id of its group; a client on version 2 is disconnected by a server on version 3 (and the other way round).
+- The hold bracket for a Tensura skill started from the wheel is now open for every hold, not only for a skill in no slot: a held skill that leaves its slot while it is held is no longer cut off after a second.
+
+### Rolling back
+- **Roll the server and every client back together** (the network version goes back to 2). The saved `wheel_clock` is dropped by an older build, which is harmless: it only held a cooldown of at most a few minutes. With both settings off the wheel lists every side and no key is stopped.
 ## Unreleased (skill wheel, phase W1: catalogue and server path)
 
 Nothing is drawn yet: this phase is the server half of the skill wheel (`docs/superpowers/specs/2026-11-22-skill-wheel-design.md`). The wheel screen comes in a later phase.
