@@ -9,6 +9,36 @@
 - Tensura's Path pane lists every task of the next step: one line each when the pane is short, and "+N more tasks" for the rest. A label on a kit button or surface reads on the pack's own picture, so a recoloured pack keeps its 4.5:1.
 - The Grimoire's boss name plate has seven rows of leather for its text (the brass lines inside it were removed). The health on a card is rounded up (a boss that is alive never reads 0) and grouped by the player's language. A boss's card is taken from a player who changes dimension or logs out.
 
+## Unreleased (plan 18f: Force-feed my blood)
+
+### Added
+- **Force-feed my blood (R208).** A HUD / hub Slots action for **every vampire type** (whoever the mod counts as vampiric: plain vampires, a Ghoul as with Bottle my blood, hybrids, heretics, Originals, Augustines; no skill): put your blood in the player you look at. It does what a bottle of your kind does to them (a human is marked with vampire blood for `vampire_blood_ticks`; a werewolf follows the existing rules, so one in the transition goes unstable). **A sneaking target accepts** at any health, and is told so ("you accepted it by sneaking": **do not sneak near a vampire you do not trust**). Anyone else needs **PvP on** and to be **down** or at or under `force_feed_health_limit` (30%) of their health. Consent is checked before **vervain**, which blocks even a willing target, and a **claim, duel or protection** blocks it (asked as a blow, never as a click). **Blood forced on someone who did not accept it never names a sire:** an Original's forced blood marks a human as common vampire blood, leaves a player in the turning with the pending sire they had, and does not start or hold a werewolf's transition; only an accepted drink does. The giver hears the same "You give X your blood" line and starts the same cooldown (`give_blood_cooldown_seconds`, 120) **whatever the blood did**, and **every refusal after a target is found costs that cooldown too**, so it cannot be used to find out who is human, protected or carrying vervain. The target is told who gave it (an Original's name only as the "unknown Original" line until they know that line), then what is in them.
+- **The blood's gifts (R207): Regeneration II for 90 seconds from the drink, once per `vampire_blood_regen_cooldown_seconds` (600), and a slower hunger for the whole 20-minute window.** This applies to **anyone the vampire blood marks, a plain Vampirism blood bottle included, not only to a forced feed**. Drinking more inside the ten minutes marks you again but does not renew the Regeneration. `vampire_blood_buff_enabled` (default on) turns both gifts off; the blood still marks.
+- Config (all with Admin rows): `give_blood_cooldown_seconds` (120), `force_feed_health_limit` (0.30), `vampire_blood_buff_enabled` (true), `vampire_blood_regen_cooldown_seconds` (600).
+
+### Changed
+- `TargetChecks` (Rip Heart, Neck Snap) is public so the blood action can reuse it; `BiteProtection` has a victim-only guard (`registerVictim`) that vervain registers. The marked messages list the perks.
+- **Known limit:** a claim mod that guards a player only through an interaction event (not the attack event) would not be asked.
+
+### Network
+- No payload changed: **no network version bump** (the action lists on the server and the hub from the installed `ExtraActions`).
+
+### Rolling back
+- The four config keys are ignored by an older build. A marked player keeps the `vampireBloodUntil` they already had (the same saved field as before) and simply loses the gifts. The action disappears from the Slots tab; a slot that held it is empty. The Regeneration clock is one extra entry in `action_ready`, which an older build ignores.
+
+### Art needed
+- `textures/gui/hud/give_blood.png` for Fable 5.2 (the action uses `unknown.png` until then).
+
+## Unreleased (UI overhaul phase 8: logo, mod icon, store art)
+
+### Added
+- **The mod icon is in the mod list.** `logoFile="logo.png"` (the 64 px "Drop" logo: a blood drop with the moon cut in, inside a red corona) and `logoBlur=false`, so the pixel art is drawn with hard edges. `pack.png` is the same picture.
+- **Store art in `docs/store/`**, made by `docs/store/build.py` from the hand-drawn logo at whole-number sizes only (nearest neighbour; nothing redrawn or generated): `avatar.png` (512 x 512, the CurseForge project avatar: square, at least 400 x 400), `banner.png` (1536 x 432, the logo lockup as drawn) and `readme-header.png` (672 x 204). CurseForge states no size for a header banner, so the banner is a plain wide picture.
+- The README and the wiki home start with the logo.
+
+### Changed
+- No in-game drawing changed: the design doc asks for the logo in the mod list and the store, not in the hub.
+
 ## Unreleased (plan 18e: Hybrid Leap)
 
 ### Added
@@ -27,7 +57,8 @@
 
 ### Migration
 - No existing player changes. Rolled back to an older build the skill stays in the skills list, dormant.
-`n## Unreleased (art: the plan 18 icons)
+
+## Unreleased (art: the plan 18 icons)
 
 ### Changed
 - **Rip Heart, Neck Snap, Bottle my blood, Garlic Ward and Blessed Skin have their own pictures** (the heart in a clawed hand, a head knocked off its neck, an open bottle filling with blood, a garlic bulb behind a shield, holy water under a halo) instead of a letter on a tile, the unknown rune or another skill's icon. One picture for a skill and its HUD action, drawn at 32 px for the hub and at 16 px for the slots (with the pale outline of the other slot icons). Hybrid Leap's picture (`s-hyb-3`, `hybrid_leap`) is in the kit for plan 18e.

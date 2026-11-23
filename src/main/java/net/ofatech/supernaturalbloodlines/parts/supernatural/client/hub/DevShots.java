@@ -295,6 +295,9 @@ public final class DevShots {
             wait = 1;
             return;
         }
+        if (wait == SETTLE_TICKS - 8 && "book_modlist".equals(s.variant())) {
+            DevModList.select();
+        }
         if (wait == SETTLE_TICKS - 6 && s.variant() != null && s.variant().endsWith("_last")) {
             DevBook.turnToTheEnd();
         }
