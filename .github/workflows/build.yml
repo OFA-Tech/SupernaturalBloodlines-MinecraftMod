@@ -42,5 +42,8 @@ jobs:
       - name: Run GameTests with the bosses part off
         run: ./gradlew runGameTestServer -PpartsOff=bosses --console=plain
 
+      - name: Run GameTests with the evolution rites part off
+        run: ./gradlew runGameTestServer -PpartsOff=evolutionRites --console=plain
+
       - name: Run GameTests with the species and artifacts parts off
         run: ./gradlew runGameTestServer "-PpartsOff=species,artifacts" --console=plain

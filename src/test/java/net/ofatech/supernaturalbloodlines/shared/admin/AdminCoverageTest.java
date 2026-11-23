@@ -45,6 +45,7 @@ class AdminCoverageTest {
             new Known(SpeciesTensuraConfig.FILE, SpeciesTensuraConfig.SPEC, true, "SpeciesTensuraConfig.java"),
             new Known(CelestialsConfig.FILE, CelestialsConfig.SPEC, true, "CelestialsConfig.java"),
             new Known(BossesConfig.FILE, BossesConfig.SPEC, true, "BossesConfig.java"),
+        new Known(net.ofatech.supernaturalbloodlines.parts.evolutionrites.EvolutionRitesConfig.FILE, net.ofatech.supernaturalbloodlines.parts.evolutionrites.EvolutionRitesConfig.SPEC, true, "EvolutionRitesConfig.java"),
             new Known(HudClientConfig.FILE, HudClientConfig.SPEC, false, "HudClientConfig.java"),
             new Known(HubClientConfig.FILE, HubClientConfig.SPEC, false, "HubClientConfig.java"));
 

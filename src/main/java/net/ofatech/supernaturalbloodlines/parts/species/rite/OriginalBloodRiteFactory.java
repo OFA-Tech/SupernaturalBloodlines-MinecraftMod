@@ -60,7 +60,10 @@ public record OriginalBloodRiteFactory() implements RiteFactory {
                 return cancel();
             }
             ServerPlayer target = found.get();
-            ServerPlayer caster = findEntity(params.caster) instanceof ServerPlayer p ? p : target;
+            ServerPlayer caster = RiteTargets.performer(findEntity(params.caster), params.caster, target).orElse(null);
+            if (caster == null) {
+                return cancel(); // the performer left: only the performer may stand for themselves, so nobody is asked and nobody is changed
+            }
             if (!RiteTargets.askForBlood(caster, target, OriginalRules.isOriginal(BloodlineAccess.get(target).species()), NOT_ORIGINAL, NO_ORIGINAL_BLOOD)) {
                 return cancel();
             }

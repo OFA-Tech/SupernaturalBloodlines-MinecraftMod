@@ -84,6 +84,18 @@ public final class RiteTargets {
     }
 
     /**
+     * The performer of a rite ({@link net.ofatech.supernaturalbloodlines.core.rite.PerformerRule}): the player Enchanted found for the caster id, else the
+     * target when the target IS the caster, else nobody, and the caller must {@code cancel()} (which gives the ingredients back).
+     */
+    public static Optional<ServerPlayer> performer(@org.jetbrains.annotations.Nullable net.minecraft.world.entity.Entity found, java.util.UUID casterId, ServerPlayer target) {
+        return switch (net.ofatech.supernaturalbloodlines.core.rite.PerformerRule.pick(found instanceof ServerPlayer, target.getUUID().equals(casterId))) {
+            case FOUND -> Optional.of((ServerPlayer) found);
+            case TARGET -> Optional.of(target);
+            case NONE -> Optional.empty();
+        };
+    }
+
+    /**
      * The player standing on the circle's centre block, else the caster (if online). {@code params} is needed because
      * Enchanted keeps the caster id private to the rite and only hands it to {@code onStart}.
      */

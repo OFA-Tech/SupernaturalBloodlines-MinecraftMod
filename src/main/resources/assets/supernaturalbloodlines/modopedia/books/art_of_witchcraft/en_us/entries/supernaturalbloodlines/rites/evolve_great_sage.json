@@ -1,0 +1,47 @@
+{
+  "title": "Rite of the Great Sage",
+  "icon": {
+    "count": 1,
+    "id": "minecraft:ender_eye"
+  },
+  "assigned_items": [],
+  "advancement": "supernaturalbloodlines:rites/known/evolve_great_sage",
+  "pages": [
+    {
+      "components": [
+        {
+          "template": "modopedia:page/headered_text",
+          "text": "Circle: medium circle, infernal chalk.\n\nA witch-type performer opens the road from Sage to Great Sage for the one on the circle, or for herself, on a full-moon night.",
+          "header": "The Great Sage"
+        }
+      ]
+    },
+    {
+      "components": [
+        {
+          "template": "modopedia:page/headered_text",
+          "text": "They must hold Sage, mastered, and agree by sneaking. Tensura's own price and rules for learning the skill still apply.",
+          "header": "The Great Sage"
+        }
+      ]
+    },
+    {
+      "components": [
+        {
+          "template": "modopedia:page/headered_text",
+          "text": "Costs rare items, altar power and 100,000 of their base Max EP (a setting of the recipe), spent once the skill is learned. Sage stays.",
+          "header": "The Great Sage"
+        }
+      ]
+    },
+    {
+      "components": [
+        {
+          "template": "supernaturalbloodlines:page/rite",
+          "rite": "supernaturalbloodlines:evolve_great_sage",
+          "header": "The Great Sage"
+        }
+      ]
+    }
+  ]
+}
