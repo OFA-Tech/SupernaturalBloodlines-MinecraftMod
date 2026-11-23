@@ -213,7 +213,7 @@ Modify: `parts/species/SpeciesPart.java` (registration split, HubSocial source i
 - [ ] **Step 1: Write the failing tests.** `AdminEntriesTest` size +5; `AdminCoverageTest.CONFIGS` gets `new Known(GroupsConfig.FILE, GroupsConfig.SPEC, true, "GroupsConfig.java")`; `GroupsConfigTest`: `defaultsAnswerBeforeTheFileLoads`, `overrideRestores`, `aNegativeMaxMembersIsClamped` (range 0 to 100000).
 - [ ] **Step 2: Run** `./gradlew test --tests '*AdminEntriesTest' --tests '*AdminCoverageTest' --tests '*GroupsConfigTest'`. Expected: compile error.
 - [ ] **Step 3: Implement** the config (copy `BossesConfig`'s shape), `AdminEntries.GROUPS_FILE`, append `"groups"` to `SECTIONS`, five `SettingEntry.of(GROUPS_FILE, "groups", key, BOOL/INT)` rows; lang: `supernaturalbloodlines.hub.admin.section.groups` ("Groups") and one `supernaturalbloodlines.hub.admin.key.supernaturalbloodlines-groups.toml:<key>` per key.
-- [ ] **Step 4: Check the bound.** Assert (or raise) `AdminEntries.ALL.size() <= AdminSnapshotPayload.MAX_ROWS` for the **final** count of plans 20a-20c (about 212 + the pack-moon row + 19a's rows). If `MAX_ROWS` is lower, raise it in this task and note that the protocol number in Task 8 covers it.
+- [ ] **Step 4: Check the bound.** Assert (or raise) `AdminEntries.ALL.size() <= AdminSnapshotPayload.MAX_ROWS` for the **final** count of plans 20a-20c (about 216 + the pack-moon row + 19a's rows). If `MAX_ROWS` is lower, raise it in this task and note that the protocol number in Task 8 covers it.
 - [ ] **Step 5: Run** the Step 2 command. Expected: PASS (the coverage test fails by name if a key has no row).
 - [ ] **Step 6: Commit** `feat(groups): the groups config and its Admin rows`.
 
