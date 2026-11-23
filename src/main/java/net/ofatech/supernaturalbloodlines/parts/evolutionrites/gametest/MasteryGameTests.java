@@ -261,13 +261,24 @@ public final class MasteryGameTests {
         }
         RecordingPlayer caster = performer(helper, Species.WITCH);
         RecordingPlayer target = onTheCircle(helper, true, EP);
+        // addMasteryPoint ends at min(current + amount, max), so the final mastery is the same whether or not the negative was zeroed: what a listener sees is not
+        double[] seenAtTheEvent = {Double.NaN};
+        SkillEvents.SkillMasteryEvent watch = (inst, entity, amount) -> {
+            if (inst.getSkillId().toString().equals("tensura:self_regeneration")) {
+                seenAtTheEvent[0] = inst.getMastery();
+            }
+            return EventResult.pass();
+        };
+        SkillEvents.SKILL_MASTERY.register(watch);
         try {
             Tier tier = tierOf("tensura:self_regeneration");
             ManasSkillInstance inst = give(target, "tensura:self_regeneration", -100);
             helper.assertTrue(MasteryChoice.choose(target, ResourceLocation.parse("tensura:self_regeneration")).isEmpty(), "could not choose it");
             work(helper, tier, caster);
             helper.assertTrue(inst.isMastered(target), "a skill still in learning was not mastered: mastery " + inst.getMastery());
+            helper.assertTrue(seenAtTheEvent[0] == 0, "a mastery listener saw " + seenAtTheEvent[0] + " as the current mastery: a skill still in learning must be zeroed first");
         } finally {
+            SkillEvents.SKILL_MASTERY.unregister(watch);
             clean(helper, caster, target);
         }
         helper.succeed();
