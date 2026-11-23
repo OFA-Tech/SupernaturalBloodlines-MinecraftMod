@@ -342,3 +342,50 @@ Each seed: idea, lore source, how it fits.
 - **Fandom pages** returned 403/404 through direct fetch; the MediaWiki API (`action=parse`) returned the wikitext used here.
 
 
+
+---
+
+## 8. BROTHERHOOD (hunter-led groups), added 2026-11-23 for plan 20d
+
+Read through the MediaWiki API like the rest: https://vampirediaries.fandom.com/wiki/Brotherhood_of_the_Five , https://vampirediaries.fandom.com/wiki/Hunter%27s_Mark , https://vampirediaries.fandom.com/wiki/Hunter%27s_Curse , https://teenwolf.fandom.com/wiki/The_Argent_Family , https://teenwolf.fandom.com/wiki/Hunters . The shipped hunter rules are in `SPECIES-RULES.md` R80-R84 and R173.
+
+### 8.1 The Brotherhood of the Five **[show]**
+- Founded in 1110 AD: a dying witch (a descendant of Qetsiyah) binds five warriors, led by **Alexander**, to one goal; the spell gives peak human strength, an urge to kill vampires, and the **Hunter's Mark**. Their real task is to find, cure and kill the first immortal, Silas. They carry swords engraved with the group's symbol; the tattoo is read with them.
+- At any time there are **five** hunters and **five** marks. When one dies, the mark appears on a **Potential** (only a hunter or Potential can see an incomplete mark); the Potential is **awakened by their first vampire kill**. Humans and the awakened are otherwise ordinary, so many hunters were "mostly unaware of one another".
+- The original five were killed by Klaus in 1114 (the white-oak daggers did not work on a hybrid). Replacing all five took 52 years, 4 months, 9 days.
+- Tools: swords of the Five, white oak ash daggers, vervain (darts, gloves, ropes, grenades), wooden bullets, werewolf venom, traps. Members work alone or in small groups; Galen Vaughn knows the true mission, Connor and Jeremy did not at first.
+
+### 8.2 The Hunter's Mark **[show]**
+- A tattoo from the back of the right hand up the arm and across the chest. It is a **map** (to Silas' tomb and the Cure), a **story**, a coded **message** (read with the sword's cryptex), an **empowerment** (strength, the urge to hunt, **immunity to compulsion**) and a **spell** (only a Qetsiyah descendant can use it to open the tomb).
+- It **grows with every vampire kill** (pain, a stronger urge); it is a record of how many were killed. It shows the **Grand Sigil** first, then Amara and Qetsiyah, a pentagram in a ring, Silas, and five swords.
+- **Completion:** Jeremy killed Kol with the white oak stake, which killed Kol's whole bloodline; the mark completed for him and **for every living hunter at once**, and became visible to everyone. The spell then took the mark from all of them; the bearers kept being hunters.
+- An incomplete mark is invisible to non-hunters; losing a hunter resets the new bearer's progress.
+
+### 8.3 The Hunter's Curse **[show]**
+- A fail-safe in the same spell: **a hunter killed by what they hunt (a vampire, a hybrid, an immortal) curses the killer** with vivid hallucinations (the killer's own victims, first the hunter) that push them toward suicide, until a **Potential awakens** (the next first kill). Klaus endured it for 52 years, Elena until Jeremy awakened, Silas shook it off in minutes.
+- **Humans are not cursed** (Julian compelled Rayna to kill her father so he would not be). The curse does not fire for a ghost hunter. It does not depend on the mark being visible.
+- It does not stack: one curse, ended by the one awakening.
+
+### 8.4 Kol and the hunters **[show]**
+- Kol wanted Silas left buried. He killed the vampires Klaus made for Jeremy to kill, and **tried to cut off Jeremy's arm** so the mark could never be completed. Jeremy staked him instead. (Rebekah was the only Original who knew how to read the mark.)
+- In the mod Kol already comes at night for a Hunter of the Five with enough prey kills (R173).
+
+### 8.5 Mikael **[show]**
+- Mikael is the Originals' hunter-father who slaughters vampires, the Strix and Marcel's army (section 2.4). In the mod he hunts a high-rung vampire player at night (bosses design).
+
+### 8.6 Teen Wolf: the Argents and the Code **[show]**
+- The **Argent family** has hunted for 400+ years ("powerful, wealthy, aristocratic"); the matriarch directs the local hunters; **males fight, females lead** (Chris explains). Allison trains with bow and blade; **silver bullets are forged as a symbol of finishing training**; the family keeps a **Bestiary** of every creature met.
+- **The Hunters' Code: "Nous chassons ceux qui nous chassent" ("We hunt those who hunt us").** Hunt only werewolves that **harm humans, with proof**; **do not kill children / young wolves; do not kill humans.** Kate breaks it (the Hale fire); Gerard says the Code is dropped; the Calaveras enforce it strictly. There is also an honour code: a hunter who is **bitten takes their own life** (Victoria, Alexander).
+- After Allison, Chris and Allison adopt a new code: **"We protect those who cannot protect themselves."** The hunters have contacts worldwide (Mexico, London, Brazil); a rogue group that kills for profit is denounced.
+
+### 8.7 Seeds
+| # | Seed | Source | Fit |
+|---|---|---|---|
+| H1 | Brotherhood type for a hunter leader; members are hunters, Potentials and humans | Five, Argents | the fourth group type |
+| H2 | **Leadership by the highest mark** (the most kills leads) | Mark = record of kills | live, no duel |
+| H3 | **Hunting together** bonus; marks seen by brothers | the Five share a mission; only hunters see the mark | shared sense / together bonus |
+| H4 | **The Code**: killing the innocent is punished | Argent Code | mark loss, strikes, expulsion |
+| H5 | **Hunter's Curse on a brother's killer**, non-stacking | Curse | extends R83 to every member |
+| H6 | The mark as a **map** that completes for all | Mark completion | a display, the Cure road parked |
+| H7 | Kol warns the brotherhood | Kol, section 8.4 | one line |
+| H8 | Honour suicide on a bite | Argent honour code | **rejected**: not a game rule |
