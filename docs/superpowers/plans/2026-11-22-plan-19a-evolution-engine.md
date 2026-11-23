@@ -1,5 +1,14 @@
 # Plan 19a: the evolution-rite engine and our own chain: Implementation Plan
 
+> **Status (2026-11-23): built in PR "plan 19a" on `feature/plan-19a`.** What was built differs from the task list below in these ways, each decided while building:
+> - The recipe codec is a pure class (`core.evolution.EvolutionRecipeCodec`) so unit tests decode the real rite files; `Tier`, `EvolutionRules` and `MasteryRules` are pure too.
+> - Probes: `Probes` has `own.sage_great_sage` and `unique.road:<class>#<FIELD>` (the addon''s own on/off config switch, read by reflection). There is no separate `OwnProbe` class file and no `RiteAvailability`: the unlock advancements carry the rite''s load conditions instead (the book generator copies them), and `RiteUnlocks.present` counts only rites whose advancements exist.
+> - `-PaddonJars` already existed on main (PR for 18g); Task 9 step 1 is done. The server boot uses RCON (`docs/parts/evolution_rites.md`, "Found while building").
+> - The Rite of Mastery (owner decision 2026-11-23) is built here; its picker is the hub''s Mastery tab over the existing command rows (no payload).
+> - `EP` means base Max EP, taken after the learn is confirmed (and given back when the learn is vetoed, because Tensura charges its own price inside the unlock listener).
+> - Not built in 19a (by design): `GrantForm.FREE` and `PERMANENT`, the FoxAblaze single-owner reader and the Raphael merge (19b), Blood Sovereign (19c), the other addons (19d).
+> - Results: unit tests 2,352 pass; 13-run matrix all pass (1,806 GameTests with the part on); boots A (8 addons), B (pack set minus Trainer), C (without Mysticism) pass all 1,806 GameTests; real dedicated-server boots A, B and part-off D reach Done and stop cleanly; 28 mutants all caught (M19 needed a stronger test, the zeroed mastery is now observed by a listener). Logs: `%TEMP%\opencode\plan19a`.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Build the shared rite engine of plan 19 (a new part, a data recipe per chain, addon probes, refusals without oracles, book and unlock integration, Admin rows) and ship on it: Sage to Great Sage (a witch-type performer, a consenting target, a full-moon night), the vampire road to Ascension's Deus Sanguis (only where Ascension is installed), and the Rite of Mastery (spec section 8.5). The Raphael merge (D14) is 19b: it needs the Great Sage and FoxAblaze jars and belongs to the plan that adds them.

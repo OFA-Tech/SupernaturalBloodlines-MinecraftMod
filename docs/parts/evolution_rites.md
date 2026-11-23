@@ -62,6 +62,15 @@ The six rite files are conditioned on `part_enabled evolutionRites` (and Deus Sa
 
 A real eclipse rite on a client with a real addon; the look of the six book entries and the Mastery tab; Skill Books pricing on `great_sage`; Ascension's Deus Sanguis in a real server with the jar.
 
+## Found while building (19a), for the next phases
+
+- **Mysticism closes Great Sage's learn.** `mysticism.handler.AbilityHandler` listens to `SkillEvents.UNLOCK_SKILL` and returns `interruptFalse` (message `mysticism.soulEnergy.no_skill`) when the player's Soul Energy cannot pay for any new skill; `RestrictedHandler` does the same for the "restricted learnable" tag from Max Aura. The rite keeps that rule (E1: the addon's own requirement), so a vetoed learn is refused, costs nothing, and the target is told (`not_ready`). The Mastery of Sage still works; the learn is up to Mysticism. The GameTests learn a control skill first (`EvoTestSupport.learnOpen`) and expect the refusal where Mysticism is installed.
+- **FoxAblaze's single-owner rule is the game rule `raphaelTrulyUnique`** (one per ultimate: `beelzebubTrulyUnique`, `veldoraTrulyUnique`, ...), read from `FoxAblazeGameRules`; the owner list is Tensura's `ITrulyUnique` (`TensuraStorages.getUniqueStorageFrom(level)`). Verified in `UltimateSkillProtector` bytecode; 19b reads it.
+- **Ascension's jar `ascension-3.1.0.jar` declares mod version 1.0.0** in its `neoforge.mods.toml` (the dependency block shows `ascensioncore` 1.0.0). `LinkedMods` tests against what the loader reports.
+- **Tensura Trainer 2.0.5 crashes a dedicated server** on mod construction (`com.antigravity.tensuratrainer.NeoForgeTrainerClient` loads a client class: "Attempted to load class net/minecraft/client/gui/screens/Screen for invalid dist DEDICATED_SERVER"). Not ours; a pack must not put it on a server. The boot with the pack set therefore leaves it out.
+- `-PpartsOff=` feeds only `runGameTestServer`. A dedicated-server boot with the part off needs `evolutionRites = false` written to `run/config/supernaturalbloodlines-common.toml` by hand (restore it after).
+- Gradle's `runServer` does not forward stdin: drive the console over RCON (`enable-rcon=true`).
+
 ## Booting with the addon jars
 
 `./gradlew runGameTestServer -PaddonJars=<folder>` puts every jar of the folder on the run classpath (`docs/compat/tensura-addons.md`). The research lists the jars and their SHA-256 (`docs/superpowers/research/tensura-addons/README.md`). Pass: it reaches "Done" (dedicated server, `runServer`), the log has `EvolutionRitesPart enabled`, no `Registry loading errors`, `Unknown type supernaturalbloodlines:evolution` or stack trace from this mod.
