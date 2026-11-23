@@ -22,6 +22,7 @@ Repo conventions that apply (from the plan-18 phases): one branch `feature/plan-
 - Everything about the target goes through `RiteTargets.refuseAbout(caster, target, key)`; the single-owner and every addon requirement share the key `.not_ready`.
 - Config file `supernaturalbloodlines-evolution_rites.toml`, section `evolutionRites`; keys `rites_enabled` (true), `ultimate_rites_enabled` (true), `disabled_recipes` (empty list), `announce_ultimates` (false). `AdminEntries.ALL.size()` becomes **161** (156 + `parts.evolutionRites` + 4).
 - Data: every file of the part carries `{ "type": "supernaturalbloodlines:part_enabled", "part": "evolutionRites" }`; an addon recipe also `neoforge:mod_loaded`. Suggested rite power: 9000 for a Unique.
+- Sacrifice (spec E15): a recipe has `ep_cost` (the codec gets an optional `ep_cost` double, default 0) or an addon tribute; `great_sage` carries an `ep_cost` the builder sets, taken after the confirmed learn; a data test fails a recipe with neither. Plan 19 is built after plan 18.
 - No wire change: `LadderNet.PROTOCOL` stays.
 - GameTest runs one at a time with `--max-workers=2`; restore `run/config` after any killed run.
 

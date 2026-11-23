@@ -34,8 +34,8 @@ Anti-goals (a failure even if it works)
 | # | Decision | Where it lands |
 |---|---|---|
 | D1 | Rites only open new roads to **existing** skills of Tensura and its addons. No ultimates of our own. | E1 |
-| D2 | Rites are rare and dramatic, but keep the same requirements as the addon's own path. | E2 |
-| D3 | Ultimates need an eclipse; Uniques and below need a full moon. | E3 |
+| D2 | Rites are rare and dramatic, but keep the SAME big requirements as the addons' own paths (for example Ascension's 5M EP plus True Demon Lord or True Hero, and Great Sage's Raphael gate). The rite is just another dramatic way in. | E2 |
+| D3 | An eclipse for Ultimates, a full moon for Uniques and below. The sacrifice is rare items plus EP, or the addon's own tribute. | E3, E15 |
 | D4 | Witch-type casters only; the target consents by sneaking. | E4 |
 | D5 | The rites start sealed in the book. Ultimates are lore-gated; the rest unlock by kind. | E7 |
 | D6 | A rite consumes skills only where the addon's own path does. | E8 |
@@ -43,8 +43,9 @@ Anti-goals (a failure even if it works)
 | D8 | Our chains: Sage -> Great Sage, a vampire rite to Ascension's Deus Sanguis, and werewolf/witch rites only where an addon has a fitting unique. No Starved -> Gluttony. | section 8 |
 | D9 | Race mapping: Ascension Bloodfiend = vampire; Mysticism Direwolf and Spirit Wolf = werewolf; addon undead follow our undead rules; the Beastfolk evolution is picked by id. | section 9 |
 | D10 | One data-driven recipe per chain, run by a shared rite engine. | section 6 |
-| D11 | Testing must include a real server boot with all the addon jars. | section 13 |
-| D12 | Build order: 19a engine + our own chains, 19b Great Sage + FoxAblaze, 19c Ascension, 19d the others + race links. | section 12 |
+| D11 | Local test runs and a real server boot with all the addon jars are required before merge. | section 13 |
+| D12 | Build order: 19a engine + our own chains, 19b Great Sage + FoxAblaze, 19c Ascension, 19d the others + race links. Plan 19 is built after plan 18; UI overhaul phase 3 runs in parallel with plan 18. | section 12 |
+| D13 | Compat is automatic and optional (each addon present or not) for: Ascension, Great Sage, Horizons, Mysticism, Kumo Desu ga, Slime Throne Extras and FoxAblaze Ultimate (the only one with Beelzebub). | E10, section 10.3 |
 
 ## 4. What the research found (the facts the design stands on)
 
@@ -84,6 +85,8 @@ The rules are numbered E1 to E14 here so they do not collide with the R-numbers 
 **E12. Performing teaches.** A completed rite calls `RiteSignal.completed` as every rite does, so the performer learns the rite (`RiteLearned`). A refusal does not.
 
 **E13. Parts and addons are optional.** The code is a new part (section 12.1). It has no compile dependency on any addon; addon classes are only reached through the probes.
+
+**E15. The sacrifice (D3).** Besides the circle's ingredients (rare items), a recipe pays either an **EP cost** (a recipe field `ep_cost`, taken from the target's EP only after the learn is confirmed, never below what the addon's own requirement needs) or **the addon's own tribute** where its path has one (Ascension's Ultimate Catalyst, Fortuna's 500,000 MP, the Suppression Stone, the Dragon Essences), mirrored exactly and consumed by the addon's own helper. A recipe with neither is a spec error (data test). The amounts of `ep_cost` are the builder's call within the addon's own thresholds; `great_sage` (19a) carries one, Tensura having no tribute. Horizons, Kumo Desu ga and Slime Throne Extras are covered by D13 as optional compat; they ship no recipe unless Q6 adds one.
 
 **E14. The Rebalanced `retired` skills.** A recipe never grants a skill in the Rebalanced `retired` skill tag (`tensura_rebalanced:retired`, seen in the nested jars' data) when that tag exists; it is checked by tag, never by id (question Q7).
 
@@ -177,7 +180,7 @@ Same cost and same timing for every refusal (`cancel()`, the ingredients back). 
 
 | Recipe | Grants (tier) | Source today | Requirement kept | Consumes | Moon | Unlock |
 |---|---|---|---|---|---|---|
-| `great_sage` | `tensura:great_sage` (Unique) | Tensura 2.0.1.5: reincarnation pool only; no road (research 4.1) | Tensura has none. **Ours (Q2):** target holds `tensura:sage` and it is mastered; the learn goes through plain `SkillHelper.learnSkill` so Tensura's own price and vetoes apply (its `mpAcquirement` default is 75000.0, and the pack's Skill Books may rescale it) | nothing (Sage stays) | F | WITCH, SIPHONER, TRIBRID |
+| `great_sage` | `tensura:great_sage` (Unique) | Tensura 2.0.1.5: reincarnation pool only; no road (research 4.1) | Tensura has none. **Ours (Q2):** target holds `tensura:sage` and it is mastered; the learn goes through plain `SkillHelper.learnSkill` so Tensura's own price and vetoes apply (its `mpAcquirement` default is 75000.0, and the pack's Skill Books may rescale it) | nothing (Sage stays); sacrifice: rare items plus an `ep_cost` (E15) | F | WITCH, SIPHONER, TRIBRID |
 
 Probe: `own.sage_great_sage` (reads `SkillUtils.hasSkill`, `Inst.isMastered`).
 
