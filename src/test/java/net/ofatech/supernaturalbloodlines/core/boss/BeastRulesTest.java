@@ -119,4 +119,17 @@ class BeastRulesTest {
         assertEquals(1.0F, BeastRules.wolfsbaneDamage(1.0F));
         assertEquals(0.5F, BeastRules.wolfsbaneDamage(0.5F));
     }
+
+    @Test
+    void theBeastIsAManUntilTheSwapAndThenTheWolfsSize() {
+        for (int t = 0; t < ShiftRules.SWAP_TICK; t++) {
+            assertEquals(new ShiftRules.Size(0.6F, 1.95F), BeastRules.dimensionsFor(BossForm.SHIFTING, t), "tick " + t);
+        }
+        for (int t = ShiftRules.SWAP_TICK; t <= ShiftRules.END_TICK; t++) {
+            assertEquals(new ShiftRules.Size(2.4F, 3.0F), BeastRules.dimensionsFor(BossForm.SHIFTING, t), "tick " + t);
+        }
+        assertEquals(new ShiftRules.Size(2.4F, 3.0F), BeastRules.dimensionsFor(BossForm.BEAST, 0), "a Beast with no morph is whole at any tick");
+        assertEquals(new ShiftRules.Size(2.4F, 3.0F), BeastRules.dimensionsFor(BossForm.BEAST, ShiftRules.END_TICK));
+        assertEquals(new ShiftRules.Size(0.6F, 1.95F), BeastRules.dimensionsFor(BossForm.HUMAN, 99), "the man is the man");
+    }
 }
