@@ -122,6 +122,8 @@ final class BossBarView {
         int ty = rowY + BossRow.TOKEN_DY;
         int px = x + RING;
         int py = ty + RING;
+        // the plate is round and the ring square: an opaque backing in the track's colour keeps the sky out of the corners, and gives the ring its 3:1 against what it stands on
+        g.fill(x, ty, x + BossRow.TOKEN, ty + BossRow.TOKEN, BossFaces.ringTrack(kit));
         UiKit.draw(g, kit, plate(i.look), px, py, BossBarLayout.PLATE, BossBarLayout.PLATE);
         if (i.portrait != null) {
             portrait(g, i, px + ART_IN_PLATE, py + ART_IN_PLATE, tick, reduce, 1f);
