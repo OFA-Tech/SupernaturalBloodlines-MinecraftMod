@@ -1,8 +1,12 @@
 package net.ofatech.supernaturalbloodlines.parts.species.hybrid;
 
+import java.util.Collections;
+import java.util.Set;
+import java.util.WeakHashMap;
 import net.ofatech.supernaturalbloodlines.shared.supernatural.LadderQuery;
 import net.ofatech.supernaturalbloodlines.shared.supernatural.TaskSignals;
 
+import net.minecraft.core.Holder;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceKey;
@@ -10,15 +14,18 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.damagesource.DamageType;
 import net.minecraft.world.damagesource.DamageTypes;
+import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.server.level.ServerPlayer;
+import net.neoforged.bus.api.EventPriority;
 import net.neoforged.neoforge.common.NeoForge;
 import net.ofatech.supernaturalbloodlines.core.network.HallucinationPayload;
 import net.neoforged.neoforge.event.entity.living.LivingDamageEvent;
+import net.neoforged.neoforge.event.entity.living.MobEffectEvent;
 import net.ofatech.supernaturalbloodlines.SupernaturalBloodlines;
 import net.ofatech.supernaturalbloodlines.core.BloodlineAccess;
 import net.ofatech.supernaturalbloodlines.core.bloodline.VenomStages;
@@ -48,11 +55,23 @@ public final class Venom {
     public static final int PULSE_TICKS = 40;
     private static final int SICK_EFFECT_TICKS = 60;
 
+    /** Players told "you feel sick" in this venom; not saved, so a login already past the threshold is told at its first sick pulse. Weak: a respawn is a new player. */
+    private static final Set<ServerPlayer> TOLD = Collections.newSetFromMap(new WeakHashMap<>());
+
     private Venom() {
     }
 
     public static void register() {
         NeoForge.EVENT_BUS.addListener(Venom::onDamaged);
+        NeoForge.EVENT_BUS.addListener(EventPriority.LOWEST, false, MobEffectEvent.Expired.class,
+                e -> ended(e.getEntity(), e.getEffectInstance() == null ? null : e.getEffectInstance().getEffect()));
+        NeoForge.EVENT_BUS.addListener(EventPriority.LOWEST, false, MobEffectEvent.Remove.class, e -> ended(e.getEntity(), e.getEffect()));
+    }
+
+    private static void ended(LivingEntity entity, Holder<MobEffect> effect) {
+        if (effect != null && effect.is(SpeciesRegistries.HYBRID_VENOM) && entity instanceof ServerPlayer sp) {
+            TOLD.remove(sp);
+        }
     }
 
     private static void onDamaged(LivingDamageEvent.Post e) {
@@ -105,14 +124,14 @@ public final class Venom {
             target.hurt(source(target), 1f);
         }
         if (stage == VenomStages.Stage.SICK && !(target instanceof Player p && Downed.cannotAct(p))) {
-            sicken(target, remaining, VenomStages.justFellSick(remaining, DURATION_TICKS, sickAfter, PULSE_TICKS));
+            sicken(target, remaining);
         }
     }
 
-    private static void sicken(LivingEntity target, int remaining, boolean first) {
+    private static void sicken(LivingEntity target, int remaining) {
         target.addEffect(new MobEffectInstance(MobEffects.CONFUSION, SICK_EFFECT_TICKS, 0, false, false, true));
-        target.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, SICK_EFFECT_TICKS, 0, false, true, true));
-        if (first && target instanceof ServerPlayer sp) {
+        target.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, SICK_EFFECT_TICKS, 0, false, false, true));
+        if (target instanceof ServerPlayer sp && TOLD.add(sp)) {
             sp.displayClientMessage(Component.translatable("supernaturalbloodlines.venom.sick"), true);
         }
         if (remaining % HALLUCINATION_EVERY == 0
@@ -128,8 +147,9 @@ public final class Venom {
 
     private static void kill(LivingEntity target) {
         target.hurt(source(target), Float.MAX_VALUE);
-        if (target.isAlive()) {
-            target.kill(); // something (a totem, another mod) kept it alive; also a player down or in Vampirism's dying state, which the blow above cannot reach
+        // the venom must still be there: the Elixir (or a totem) that saved them cleared it, and /kill would undo the save
+        if (target.isAlive() && target.hasEffect(SpeciesRegistries.HYBRID_VENOM)) {
+            target.kill(); // a player down or in Vampirism's dying state, which the blow above cannot reach
         }
     }
 }

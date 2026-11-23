@@ -14,6 +14,8 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.event.entity.living.MobEffectEvent;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 import net.ofatech.supernaturalbloodlines.SupernaturalBloodlines;
 import net.ofatech.supernaturalbloodlines.core.BloodlineAccess;
@@ -32,6 +34,7 @@ import net.ofatech.supernaturalbloodlines.parts.species.original.Downed;
 @PrefixGameTestTemplate(false)
 public final class VenomStageGameTests {
     private static final String NS = SupernaturalBloodlines.MODID;
+    private static final String SICK_LINE = "supernaturalbloodlines.venom.sick";
     /** 100 ticks into the venom, and 4000 (the default threshold) in. */
     private static final int ELAPSED_100 = Venom.DURATION_TICKS - 100;
     private static final int ELAPSED_4000 = Venom.DURATION_TICKS - 4000;
@@ -75,7 +78,8 @@ public final class VenomStageGameTests {
         MobEffectInstance slow = victim.getEffect(MobEffects.MOVEMENT_SLOWDOWN);
         helper.assertTrue(nausea != null && nausea.getAmplifier() == 0 && nausea.getDuration() > 0 && nausea.getDuration() <= 60 && !nausea.isVisible(),
                 "no hidden Nausea for 60 ticks: " + nausea);
-        helper.assertTrue(slow != null && slow.getAmplifier() == 0 && slow.getDuration() > 0 && slow.getDuration() <= 60, "no Slowness I for 60 ticks: " + slow);
+        helper.assertTrue(slow != null && slow.getAmplifier() == 0 && slow.getDuration() > 0 && slow.getDuration() <= 60 && !slow.isVisible(),
+                "no Slowness I for 60 ticks without particles: " + slow);
         // refreshed at every pulse: gone 60 ticks after the last one if nothing renews it, back at the next
         victim.removeAllEffects();
         Venom.pulse(victim, ELAPSED_4000 - 40);
@@ -160,6 +164,77 @@ public final class VenomStageGameTests {
         helper.succeed();
     }
 
+    private static TestPlayers.TalkingDuelist talkingVampire(GameTestHelper helper) {
+        TestPlayers.TalkingDuelist p = TestPlayers.createTalkingDuelist(helper);
+        helper.assertTrue(VampirismAPI.factionPlayerHandler(p).setFactionAndLevel(VReference.VAMPIRE_FACTION, 1), "could not make a vampire");
+        return p;
+    }
+
+    /** The line is said at the first pulse where the sickness runs: not at a threshold pulse a downed player was spared, and again in the next venom. */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void theSickLineIsToldAtTheFirstPulseThatSickens(GameTestHelper helper) {
+        TestPlayers.TalkingDuelist p = talkingVampire(helper);
+        try {
+            Downed.startSnapped(p, 600);
+            Venom.pulse(p, ELAPSED_4000);
+            helper.assertTrue(p.countOnActionBar(SICK_LINE) == 0, "told while down at the threshold");
+            Downed.clearForTest(p);
+            Venom.pulse(p, ELAPSED_4000 - 40);
+            helper.assertTrue(p.countOnActionBar(SICK_LINE) == 1, "not told at the first pulse that sickened: " + p.countOnActionBar(SICK_LINE));
+            Venom.pulse(p, ELAPSED_4000 - 80);
+            helper.assertTrue(p.countOnActionBar(SICK_LINE) == 1, "told again in the same venom: " + p.countOnActionBar(SICK_LINE));
+            p.addEffect(new MobEffectInstance(SpeciesRegistries.HYBRID_VENOM, 100));
+            p.removeEffect(SpeciesRegistries.HYBRID_VENOM);
+            Venom.pulse(p, ELAPSED_4000 - 120);
+            helper.assertTrue(p.countOnActionBar(SICK_LINE) == 2, "a cure did not end the told state: " + p.countOnActionBar(SICK_LINE));
+            NeoForge.EVENT_BUS.post(new MobEffectEvent.Expired(p, new MobEffectInstance(SpeciesRegistries.HYBRID_VENOM, 1)));
+            Venom.pulse(p, ELAPSED_4000 - 160);
+            helper.assertTrue(p.countOnActionBar(SICK_LINE) == 3, "an expiry did not end the told state: " + p.countOnActionBar(SICK_LINE));
+        } finally {
+            Downed.clearForTest(p);
+        }
+        helper.succeed();
+    }
+
+    /** Someone who logs in with a venom that is already past the threshold has never been told: the first pulse says it. */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aLoginPastTheThresholdIsToldAtItsFirstPulse(GameTestHelper helper) {
+        TestPlayers.TalkingDuelist p = talkingVampire(helper);
+        Venom.pulse(p, 2000);
+        helper.assertTrue(p.countOnActionBar(SICK_LINE) == 1, "a venom already past the threshold was never announced: " + p.countOnActionBar(SICK_LINE));
+        helper.succeed();
+    }
+
+    /** An infinite venom ({@code /effect give ... infinite}) has no clock: it hurts like the mild stage and never kills. */
+    @GameTest(template = "empty", templateNamespace = NS, timeoutTicks = 300)
+    public static void anInfiniteVenomNeverKills(GameTestHelper helper) {
+        ServerPlayer p = vampire(helper);
+        p.addEffect(new MobEffectInstance(SpeciesRegistries.HYBRID_VENOM, MobEffectInstance.INFINITE_DURATION));
+        SpeciesRegistries.HYBRID_VENOM.get().applyEffectTick(p, 0);
+        helper.assertTrue(!p.isDeadOrDying() && p.hasEffect(SpeciesRegistries.HYBRID_VENOM), "an infinite venom killed on its first pulse");
+        Mob cow = (Mob) helper.spawn(EntityType.COW, 1, 1, 1);
+        cow.addEffect(new MobEffectInstance(SpeciesRegistries.HYBRID_VENOM, MobEffectInstance.INFINITE_DURATION));
+        helper.runAfterDelay(130, () -> {
+            helper.assertTrue(cow.isAlive() && cow.hasEffect(SpeciesRegistries.HYBRID_VENOM), "an infinite venom killed within seconds: " + cow.getHealth());
+            helper.assertTrue(cow.getHealth() < cow.getMaxHealth(), "it never pulsed");
+            cow.discard();
+            helper.succeed();
+        });
+    }
+
+    /** The effect itself, ticking: 8040 left is the last mild pulse, the one 40 ticks later is the first sick one. */
+    @GameTest(template = "empty", templateNamespace = NS, timeoutTicks = 200)
+    public static void theTickingEffectFallsSickAtTheThreshold(GameTestHelper helper) {
+        Mob cow = (Mob) helper.spawn(EntityType.COW, 1, 1, 1);
+        cow.addEffect(new MobEffectInstance(SpeciesRegistries.HYBRID_VENOM, 8040));
+        helper.runAfterDelay(20, () -> helper.assertTrue(!sick(cow), "sick before the threshold: " + cow.getActiveEffects()));
+        helper.succeedWhen(() -> {
+            MobEffectInstance slow = cow.getEffect(MobEffects.MOVEMENT_SLOWDOWN);
+            helper.assertTrue(slow != null && slow.getAmplifier() == 0 && !slow.isVisible(), "not slowed after the threshold: " + cow.getActiveEffects());
+            cow.discard();
+        });
+    }
+
     /** A player who lies snapped is already out: no Nausea over the screen, and the damage cannot reach them; the end of the venom still does. */
     @GameTest(template = "empty", templateNamespace = NS)
     public static void aSnappedVampireIsSparedTheSicknessButNotTheEnd(GameTestHelper helper) {
@@ -169,6 +244,7 @@ public final class VenomStageGameTests {
             helper.assertTrue(Downed.isSnapped(p), "setup: not snapped");
             Venom.pulse(p, ELAPSED_4000);
             helper.assertTrue(!sick(p), "a snapped player was made sick: " + p.getActiveEffects());
+            p.addEffect(new MobEffectInstance(SpeciesRegistries.HYBRID_VENOM, 1));
             Venom.pulse(p, 1);
             helper.assertTrue(p.isDeadOrDying(), "the venom did not kill a snapped vampire");
             helper.assertTrue(!Downed.isDowned(p), "the snapped state outlived the player");
@@ -192,6 +268,7 @@ public final class VenomStageGameTests {
             Venom.pulse(victim, ELAPSED_4000);
             helper.assertTrue(!sick(victim), "a dying player was made sick: " + victim.getActiveEffects());
             helper.assertTrue(!victim.isDeadOrDying(), "a mild or sick pulse killed a dying player");
+            victim.addEffect(new MobEffectInstance(SpeciesRegistries.HYBRID_VENOM, 1));
             Venom.pulse(victim, 1);
             helper.assertTrue(victim.isDeadOrDying(), "the venom did not end Vampirism's dying state");
             helper.assertTrue(!VampirismAPI.vampirePlayer(victim).isDBNO(), "the dying state was left set on the dead");

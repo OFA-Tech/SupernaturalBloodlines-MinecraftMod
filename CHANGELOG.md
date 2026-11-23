@@ -7,11 +7,16 @@
 - **Downed and the turning.** Someone who cannot act (down for the turning or a Neck Snap, or in Vampirism's dying state) is spared the sickness, but the last tick is final: it ends the snap or the dying state with their death (no change for the kill itself; now pinned by tests).
 - Config (with an Admin row, section `species`): `venom_sick_after_ticks` (0 sick from the start, 12000 never sick; default 4000).
 
+### Fixed
+- **The Elixir saves from the venom's last tick.** The kill that backs up the venom's blow now runs only while the venom is still on the player, so an Elixir (which clears every effect) is no longer undone by a second kill. Downed and Vampirism's dying state still die.
+- **An infinite venom** (`/effect give ... hybrid_venom infinite`) no longer kills within two seconds: it has no clock, so it pulses as a fresh venom and never reaches the end.
+- **The "you feel sick" line** is shown at the first pulse where the sickness actually runs, also for someone who was down at the threshold or who logged in already past it (it is kept per player, not saved, and forgotten when the venom ends). Venom Slowness no longer has particles.
+
 ### Migration
 A venom that is already running continues in the new stages: the clock is the effect's remaining time, so nothing was stored and nothing is converted. A vampire poisoned 9000 ticks ago is sick the moment they load this build. No network payload changed.
 
 ### Rolling back
-Rolling back puts the old single stage back: the damage, the hallucinations from the first minute, and death at the end. Nothing is stored, so nothing is left on a player; `venom_sick_after_ticks` in `supernaturalbloodlines-species.toml` is ignored by the old build.
+Rolling back puts the old single stage back: the damage, the hallucinations from the first minute, and death at the end. Nothing is stored, so nothing is left on a player. The old build does not know `venom_sick_after_ticks` in `supernaturalbloodlines-species.toml` and removes the key when it rewrites the file: after rolling forward again it is back at the default (4000), so set your value again.
 
 ## Unreleased (plan 18d: Rip Heart and Neck Snap)
 

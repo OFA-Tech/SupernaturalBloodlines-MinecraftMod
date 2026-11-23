@@ -1,9 +1,12 @@
 package net.ofatech.supernaturalbloodlines.parts.bosses.gametest;
 
+import de.teamlapen.vampirism.api.VReference;
+import de.teamlapen.vampirism.api.VampirismAPI;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
@@ -15,6 +18,8 @@ import net.ofatech.supernaturalbloodlines.core.bloodline.Species;
 import net.ofatech.supernaturalbloodlines.core.boss.RingProbe;
 import net.ofatech.supernaturalbloodlines.parts.bosses.BossItems;
 import net.ofatech.supernaturalbloodlines.parts.bosses.BossesConfig;
+import net.ofatech.supernaturalbloodlines.parts.species.SpeciesRegistries;
+import net.ofatech.supernaturalbloodlines.parts.species.hybrid.Venom;
 import net.ofatech.supernaturalbloodlines.parts.species.item.WhiteOak;
 import net.ofatech.supernaturalbloodlines.parts.species.gametest.LineTestPlayer;
 import net.ofatech.supernaturalbloodlines.parts.species.line.LineDeath;
@@ -55,6 +60,22 @@ public final class ElixirGameTests {
         helper.assertTrue(Math.abs(p.getHealth() - p.getMaxHealth() * BossesConfig.elixirHealFraction()) < 0.01, "health is " + p.getHealth());
         helper.assertTrue(p.received(USED), "no word of it: " + p.heard());
         helper.assertTrue(!saved(p, helper.getLevel().damageSources().lava()), "a second death was saved with nothing left");
+        helper.succeed();
+    }
+
+    /** R206: the venom's last pulse is an ordinary death the Elixir takes back; the fallback kill must not undo the save (it ran while the venom was gone). */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void itSavesAVampireFromTheLastPulseOfTheVenom(GameTestHelper helper) {
+        LineTestPlayer p = holder(helper, 1);
+        helper.assertTrue(VampirismAPI.factionPlayerHandler(p).setFactionAndLevel(VReference.VAMPIRE_FACTION, 1), "could not make a vampire");
+        p.addEffect(new MobEffectInstance(SpeciesRegistries.HYBRID_VENOM, 1));
+        Venom.pulse(p, 1);
+        helper.assertTrue(!p.isDeadOrDying(), "the venom killed the holder of an Elixir");
+        helper.assertTrue(elixirs(p) == 0 && p.received(USED), "the Elixir was not the one that saved them: " + elixirs(p));
+        helper.assertTrue(!p.hasEffect(SpeciesRegistries.HYBRID_VENOM), "the venom outlived the Elixir");
+        p.addEffect(new MobEffectInstance(SpeciesRegistries.HYBRID_VENOM, 1));
+        Venom.pulse(p, 1);
+        helper.assertTrue(p.isDeadOrDying(), "with the Elixir spent the venom did not kill");
         helper.succeed();
     }
 

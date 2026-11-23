@@ -17,10 +17,4 @@ public final class VenomStages {
         }
         return totalTicks - remainingTicks >= sickAfterTicks ? Stage.SICK : Stage.MILD;
     }
-
-    /** The pulse {@code remaining} is sick and the one before it ({@code pulseTicks} earlier) was not: the line "you feel sick" is said once. */
-    public static boolean justFellSick(int remainingTicks, int totalTicks, int sickAfterTicks, int pulseTicks) {
-        return of(remainingTicks, totalTicks, sickAfterTicks) == Stage.SICK
-                && of(remainingTicks + pulseTicks, totalTicks, sickAfterTicks) == Stage.MILD;
-    }
 }
