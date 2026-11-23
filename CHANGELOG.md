@@ -1,5 +1,16 @@
 # Changelog
 
+## Unreleased (plan 18i: Vampirism tweaks)
+
+### Added
+- **Four optional Vampirism tweaks (R213), all off by default**, COMMON keys in `supernaturalbloodlines-supernatural.toml` with Admin rows: `tweak_sunlight_ignites_vampires` (a vampire player in the sun is also set on fire; not with a Sun Ring), `tweak_cleansing_altar_disabled` (the cleansing altar refuses its click on the server and on every client), `tweak_hostile_mobs_attack_vampires` (zombies and skeletons also attack vampire players) and `tweak_skeletons_attack_werewolves` (skeletons also attack werewolf players; needs Werewolves).
+- **Limits:** a modified client can still send the altar's confirm packet (there is no altar check on the server; closing that needs a mixin); the mob switches apply to mobs that join the world afterwards; creepers are unchanged.
+
+### Network
+`LadderNet.PROTOCOL` is now `"11"` (a new optional payload carries the altar switch to clients). **Update the server and every client together**: a client on another number does not get the hub's data from the server.
+
+### Rolling back
+Turning a switch off, or rolling back, puts nothing permanent on a player; a mob that already has the extra goal keeps it until it reloads. Burning stops with the fire.
 ## Unreleased (plan 18d: Rip Heart and Neck Snap)
 
 ### Added
