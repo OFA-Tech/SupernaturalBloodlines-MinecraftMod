@@ -52,7 +52,7 @@ class WheelCategoriesTest {
         for (PowerSource s : PowerSource.values()) {
             if (s != PowerSource.TENSURA) {
                 assertTrue(WheelCategories.groups(s, List.of(PowerGroup.MAIN)).isEmpty(), s.name());
-                assertTrue(WheelCategories.groups(s, List.of(PowerGroup.MAIN, PowerGroup.MAGIC)).isEmpty(), s.name() + " even with a stray second group");
+                assertTrue(WheelCategories.groups(s, List.of(PowerGroup.MAGIC, PowerGroup.BATTLEWILL)).isEmpty(), s.name() + " even with stray groups");
             }
         }
     }
