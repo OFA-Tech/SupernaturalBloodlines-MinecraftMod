@@ -30,7 +30,8 @@ class MergeTest(unittest.TestCase):
 
     def export(self, **changes):
         name = lambda s: 'animation.deucalion_demon_wolf.' + s  # noqa: E731
-        clip = lambda length: {'animation_length': length, 'bones': {self.bone: {'rotation': {'0.0': [0, 0, 0]}}}}  # noqa: E731
+        clip = lambda length: {'animation_length': length, 'bones': {self.bone: {'rotation': {  # noqa: E731
+            '0.0': [0, 0, 0], '0.5': {'vector': [5, 0, 0], 'easing': 'easeOutCubic'}}}}}
         clips = {name('shift_in'): clip(1.0), name('shift_out'): clip(1.0), name('roar'): clip(2.2)}
         clips.update({name(k): v for k, v in changes.items()})
         path = os.path.join(self.tmp, 'export.json')
@@ -90,6 +91,14 @@ class MergeTest(unittest.TestCase):
         path = self.export(**{'idle': {'animation_length': 9.0, 'bones': {}}})
         mc.merge('deucalion_demon_wolf', path, game_path=self.game, geo_path=self.geo)
         self.assertEqual(self.before['animation.deucalion_demon_wolf.idle'], self.merged()['animation.deucalion_demon_wolf.idle'])
+
+    def test_a_clip_whose_easings_were_dropped_is_refused(self):
+        linear = {'animation_length': 1.0, 'bones': {self.bone: {'rotation': {'0.0': [0, 0, 0], '0.5': [5, 0, 0]}}}}
+        before = open(self.game, encoding='utf-8').read()
+        with self.assertRaises(SystemExit):
+            mc.merge('deucalion_demon_wolf', self.export(shift_in=linear), game_path=self.game, geo_path=self.geo)
+        self.assertEqual(before, open(self.game, encoding='utf-8').read())
+        mc.merge('deucalion_demon_wolf', self.export(shift_in=linear), game_path=self.game, geo_path=self.geo, allow_linear=True)
 
     def test_a_missing_clip_is_refused(self):
         path = os.path.join(self.tmp, 'export.json')

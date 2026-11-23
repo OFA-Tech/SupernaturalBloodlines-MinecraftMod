@@ -171,6 +171,36 @@ public class MorphClipsTest {
         }
     }
 
+    /**
+     * A clip that moves says how it is eased. A Blockbench whose GeckoLib plugin is half loaded exports every eased key as linear, and neither the lengths nor
+     * the bones change, so this is the only thing that notices. A held placeholder (two keys a channel) has nothing to ease and is let through.
+     */
+    @Test
+    void theClipsKeepTheirEasing() throws IOException {
+        for (Boss b : BOSSES) {
+            List<String> names = b.out() ? List.of("shift_in", "shift_out", b.howl()) : List.of("shift_in", b.howl());
+            for (String n : names) {
+                int eased = 0;
+                int densest = 0;
+                JsonObject bones = clip(b, n).has("bones") ? clip(b, n).getAsJsonObject("bones") : new JsonObject();
+                for (String bone : bones.keySet()) {
+                    for (JsonElement channel : bones.getAsJsonObject(bone).asMap().values()) {
+                        if (!channel.isJsonObject() || channel.getAsJsonObject().has("vector") || channel.getAsJsonObject().has("post")) {
+                            continue;
+                        }
+                        densest = Math.max(densest, channel.getAsJsonObject().size());
+                        for (JsonElement key : channel.getAsJsonObject().asMap().values()) {
+                            if (key.isJsonObject() && (key.getAsJsonObject().has("easing") || key.getAsJsonObject().has("lerp_mode"))) {
+                                eased++;
+                            }
+                        }
+                    }
+                }
+                assertTrue(densest <= 2 || eased > 0, b.model() + " " + n + ": every key is linear, the easings were dropped on the way into the game file");
+            }
+        }
+    }
+
     @Test
     void noRootDrift() throws IOException {
         for (Boss b : BOSSES) {

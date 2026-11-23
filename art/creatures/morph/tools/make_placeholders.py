@@ -67,7 +67,7 @@ def make(model):
         path = os.path.join(tmp, model + '.json')
         with open(path, 'w', encoding='utf-8') as f:
             json.dump({'format_version': '1.8.0', 'animations': clips}, f)
-        mc.merge(model, path)
+        mc.merge(model, path, allow_linear=True)
 
 
 if __name__ == '__main__':
