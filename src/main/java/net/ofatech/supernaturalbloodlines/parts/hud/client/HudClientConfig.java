@@ -19,6 +19,8 @@ public final class HudClientConfig {
     private static final ModConfigSpec.EnumValue<Mode> MODE;
     private static final ModConfigSpec.EnumValue<net.ofatech.supernaturalbloodlines.core.hud.TrackerAnchor> TRACKER_ANCHOR;
     private static final ModConfigSpec.EnumValue<net.ofatech.supernaturalbloodlines.core.hud.TrackerAnchor> TOAST_ANCHOR;
+    private static final ModConfigSpec.IntValue WHEEL_TAP_MS;
+    private static final ModConfigSpec.BooleanValue WHEEL_REMEMBER_LAST;
 
     static {
         ModConfigSpec.Builder b = new ModConfigSpec.Builder();
@@ -38,7 +40,23 @@ public final class HudClientConfig {
                 "where Tensura and Vampirism draw your status) or ABOVE_MODE_PILL.").defineEnum("tracker_anchor", net.ofatech.supernaturalbloodlines.core.hud.TrackerAnchor.TOP_CENTER);
         TOAST_ANCHOR = b.comment("Where the request toast shows: TOP_LEFT (the default: the top left, under the status Tensura and Vampirism draw there), TOP_CENTER, TOP_RIGHT or ABOVE_MODE_PILL.",
                 "It moves under the tracked task's pill when the two would overlap.").defineEnum("toast_anchor", net.ofatech.supernaturalbloodlines.core.hud.TrackerAnchor.TOP_LEFT);
+        WHEEL_TAP_MS = b.comment("The skill wheel key: pressed for less than this many milliseconds it is a tap (repeat the last power); held longer it opens the wheel.")
+                .defineInRange("wheel_tap_ms", 200, 100, 500);
+        WHEEL_REMEMBER_LAST = b.comment("Remember the power a tap of the wheel key repeats between sessions (a small file in the config folder). Off: it is forgotten when the game closes.")
+                .define("wheel_remember_last", true);
         SPEC = b.build();
+    }
+
+    public static int wheelTapMs() {
+        try {
+            return WHEEL_TAP_MS.get();
+        } catch (IllegalStateException notLoaded) {
+            return 200;
+        }
+    }
+
+    public static boolean wheelRememberLast() {
+        return read(WHEEL_REMEMBER_LAST, true);
     }
 
     private HudClientConfig() {}

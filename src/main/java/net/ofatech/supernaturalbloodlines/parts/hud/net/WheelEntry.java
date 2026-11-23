@@ -20,7 +20,7 @@ import net.ofatech.supernaturalbloodlines.core.wheel.overlap.Dedup;
  * modes) and {@code modeNames} lists every mode in order. The codec bounds every list and string: a decode over a limit throws.
  */
 public record WheelEntry(PowerRef ref, PowerGroup group, PowerKind kind, Component name, Component modeName, List<Component> modeNames, ResourceLocation icon,
-                         PowerState state, boolean slottable, float mastery, String groupId) implements Dedup.Item {
+                         PowerState state, boolean slottable, float mastery, String groupId) implements Dedup.Item, net.ofatech.supernaturalbloodlines.core.wheel.WheelModel.Entry {
     public static final int MAX_STRING = 256;
     public static final int MAX_MODE_NAMES = 16;
 

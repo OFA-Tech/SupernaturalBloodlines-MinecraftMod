@@ -97,8 +97,7 @@ public final class HudNet {
             }
         }));
         // the wheel screen comes with W4; until then the catalogue is dropped on arrival
-        registrar.playToClient(WheelCataloguePayload.TYPE, WheelCataloguePayload.STREAM_CODEC, (payload, ctx) -> {
-        });
+        registrar.playToClient(WheelCataloguePayload.TYPE, WheelCataloguePayload.STREAM_CODEC, (payload, ctx) -> ctx.enqueueWork(() -> ClientCatalogue.accept(payload)));
         registrar.playToClient(LoadoutSyncPayload.TYPE, LoadoutSyncPayload.STREAM_CODEC,
                 (payload, ctx) -> ctx.enqueueWork(() -> ctx.player().setData(ModAttachments.HUD_LOADOUT, payload.loadout())));
         registrar.playToClient(ActionCooldownPayload.TYPE, ActionCooldownPayload.STREAM_CODEC,

@@ -20,6 +20,8 @@ public final class HudClient {
         BossBars.register();
         net.ofatech.supernaturalbloodlines.shared.hud.TrackerAccess.installHud();
         HudInput.register();
+        net.ofatech.supernaturalbloodlines.parts.hud.client.wheel.WheelInput.register();
+        modBus.addListener(net.ofatech.supernaturalbloodlines.parts.hud.client.wheel.WheelInput::registerLayers);
         net.neoforged.neoforge.common.NeoForge.EVENT_BUS.addListener((net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent.LoggingOut e) -> HudModeState.reset());
         if (ModList.get().isLoaded("tensura")) {
             boolean blood = ModList.get().isLoaded("vampirism");
