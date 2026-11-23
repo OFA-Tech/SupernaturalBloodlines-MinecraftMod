@@ -97,6 +97,8 @@ public final class SpeciesConfig {
     private static final ModConfigSpec.IntValue WEAK_SPARK_MAX_HELD;
     private static final ModConfigSpec.IntValue WEAK_SPARK_COOLDOWN_DAYS;
     private static final ModConfigSpec.BooleanValue MOONBLOOD_SURGE_ENABLED;
+    private static final ModConfigSpec.BooleanValue HYBRID_PACK_MOON_CONTROL;
+    private static volatile Boolean hybridPackMoonOverride;
     private static final ModConfigSpec.BooleanValue WOLF_SPIRITS_ENABLED;
     private static final ModConfigSpec.BooleanValue NPC_RECRUIT_ENABLED;
     private static final ModConfigSpec.IntValue MAX_NPC_MEMBERS_PER_PLAYER;
@@ -289,6 +291,25 @@ public final class SpeciesConfig {
         trialOverride = value;
     }
 
+    /** R96: whether the werewolf members of a pack led by a hybrid-like leader have moon control ({@code hybrid_pack_moon_control}). */
+    public static boolean hybridPackMoonControl() {
+        Boolean pinned = hybridPackMoonOverride;
+        if (pinned != null) {
+            return pinned;
+        }
+        try {
+            return HYBRID_PACK_MOON_CONTROL.get();
+        } catch (IllegalStateException notLoaded) {
+            return true;
+        }
+    }
+
+    /** For tests: pins {@link #hybridPackMoonControl()}; null clears it. */
+    @VisibleForTesting
+    public static void overrideHybridPackMoon(Boolean value) {
+        hybridPackMoonOverride = value;
+    }
+
     public static TrialTuning trial() {
         TrialTuning pinned = trialOverride;
         if (pinned != null) {
@@ -394,6 +415,8 @@ public final class SpeciesConfig {
                 .define("moonblood_surge_enabled", true);
         WOLF_SPIRITS_ENABLED = b.comment("R146: Wolf Spirits, an Alpha calls three spirit wolves that fight for the pack for three minutes (/pack spirits).")
                 .define("wolf_spirits_enabled", true);
+        HYBRID_PACK_MOON_CONTROL = b.comment("R96: while the pack's current leader is a hybrid, an Original hybrid or a tribrid, every werewolf member of the pack has moon control (as with a Moon Ring). Lost on leaving the pack or when the lead passes to someone else. Off: no pack gift.")
+                .define("hybrid_pack_moon_control", true);
         ALPHA_TRIAL_ENABLED = b.comment("R147: the Alpha Trial rite (a full-moon night, a transformed Beta or Omega) calls a boss; winning gives a new Alpha spark. Off: the rite refuses.")
                 .define("alpha_trial_enabled", true);
         ALPHA_TRIAL_MIN_LEVEL = b.comment("Lowest werewolf level that may try the Alpha Trial.")

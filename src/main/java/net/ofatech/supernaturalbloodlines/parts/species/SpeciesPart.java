@@ -215,6 +215,7 @@ public final class SpeciesPart {
             LunarEclipse.register();
             Anchors.register();
             AlphaRoar.register();
+            net.ofatech.supernaturalbloodlines.parts.species.pack.PackMoonGift.register();
             net.ofatech.supernaturalbloodlines.shared.hud.ExtraActions.install(net.ofatech.supernaturalbloodlines.parts.species.pack.AlphaRoarAction.INSTANCE);
             Emissary.register();
             TransitionHandler.register();
@@ -355,6 +356,7 @@ public final class SpeciesPart {
                 e.register(net.ofatech.supernaturalbloodlines.parts.species.gametest.SparkRulesGameTests.class);
                 e.register(net.ofatech.supernaturalbloodlines.parts.species.gametest.PackDuelGameTests.class);
                 e.register(net.ofatech.supernaturalbloodlines.parts.species.gametest.FreeWillGameTests.class);
+                e.register(net.ofatech.supernaturalbloodlines.parts.species.gametest.PackMoonGiftGameTests.class);
                 e.register(EclipseElectricityGameTests.class);
             }
         });

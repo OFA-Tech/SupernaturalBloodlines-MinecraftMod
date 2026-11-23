@@ -17,6 +17,27 @@ A venom that is already running continues in the new stages: the clock is the ef
 
 ### Rolling back
 Rolling back puts the old single stage back: the damage, the hallucinations from the first minute, and death at the end. Nothing is stored, so nothing is left on a player. The old build does not know `venom_sick_after_ticks` in `supernaturalbloodlines-species.toml` and removes the key when it rewrites the file: after rolling forward again it is back at the default (4000), so set your value again.
+## Unreleased (pack moon gift)
+
+### Added
+- **The pack's gift (R96, `hybrid_pack_moon_control`, default on; needs Werewolves).** As in The Originals: while the **current leader** of a pack is a hybrid, an Original hybrid or a tribrid (curse not bound), every **werewolf member** of that pack has moon control, as with a Moon Ring: half forms at will, full forms from Werewolves level 8 (`full_form_level`), and the forced full-moon shift is skipped. It is read from the pack each time, so leaving, a kick, a dissolved pack or the lead passing to someone who is not hybrid-like ends it at once. A hybrid co-Alpha who does not lead gives nothing; Packmates who are no werewolves are not changed. A member who loses it mid-shift keeps the form they are in until the next forced or normal change (as with a Moon Ring taken off).
+- **Hub:** the Pack page shows the perk line "Your Alpha's blood frees you from the moon" while you have it (every theme; the server says so in the snapshot). The task "Control your shift under the full moon" follows it like any other control, as with the Moon Ring.
+- **Messages:** one line when a member gains the gift and one when they lose it.
+- **Admin:** `hybrid_pack_moon_control` has a row under Species.
+
+### Changed (review of the pack gift)
+- **The gift does not earn the rung "Controlled" (L-WOL-3a).** That task and the migration ask for the player's own control (Moon Ring, Free Will, an unbound hybrid, an Alpha, an anchor); the gift can be taken away at once, so it never completes the rung (`MoonControl.earned`).
+- **A leader away for `absent_leader_days` (7) or more gives no gift** from that moment, before the pack passes the lead on (0 = off).
+- **The "lost" line is only sent when the member has no other moon control left.** The "gained" line says what it gives: half forms now, full forms from the configured level (`full_form_level`).
+- **The perk line is hidden while `moon_bound_werewolves` is off** (the server does not send it); its colour is tested at 4.5:1 on every theme.
+- **The pack index hears the hybrid curse being lifted** (`BloodlineAccess` listeners now see a change of `hybridCurseBound`), and sets its hybrid-like flag before it refreshes the strength.
+- **One definition of "hybrid type"** (`Species.hybridType()`), used by the control source, the gift, the ladder predicate and the bloodline rules. The `moon_unbound` predicate used to leave out the tribrid; no ladder read it for a tribrid, so nothing changed in play.
+
+### Network
+- The hub snapshot carries one more flag (the gift), so the protocol is **11** (was 10). Clients and servers must match.
+
+### Migration
+- The pack index remembers who was hybrid-like when last seen (saved with it, nothing else changes). A pack led by an offline hybrid gives the gift once its leader has logged in after the update.
 ## Unreleased (skill wheel, phase W1: catalogue and server path)
 
 Nothing is drawn yet: this phase is the server half of the skill wheel (`docs/superpowers/specs/2026-11-22-skill-wheel-design.md`). The wheel screen comes in a later phase.
