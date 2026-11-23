@@ -7,6 +7,7 @@ import com.google.gson.JsonParser;
 import com.mojang.serialization.JsonOps;
 import java.util.List;
 import java.util.Set;
+import net.ofatech.supernaturalbloodlines.core.evolution.EvolutionRecipe;
 import net.ofatech.supernaturalbloodlines.core.evolution.GrantForm;
 import net.ofatech.supernaturalbloodlines.core.evolution.Tier;
 import net.ofatech.supernaturalbloodlines.core.rite.RiteKind;
