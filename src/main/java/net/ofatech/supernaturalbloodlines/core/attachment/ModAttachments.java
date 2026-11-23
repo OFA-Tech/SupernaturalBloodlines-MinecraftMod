@@ -52,6 +52,13 @@ public final class ModAttachments {
                     .copyOnDeath()
                     .build());
 
+    /** The shared clock of the wheel's groups (which side of a duplicated power is on, and the cooldown they share): rule C. Game time, so a relog keeps it; kept on death. */
+    public static final DeferredHolder<AttachmentType<?>, AttachmentType<net.ofatech.supernaturalbloodlines.core.wheel.overlap.GroupClock>> WHEEL_CLOCK =
+            ATTACHMENTS.register("wheel_clock", () -> AttachmentType.builder(net.ofatech.supernaturalbloodlines.core.wheel.overlap.GroupClock::idle)
+                    .serialize(net.ofatech.supernaturalbloodlines.core.wheel.overlap.GroupClock.CODEC)
+                    .copyOnDeath()
+                    .build());
+
     /** The Tensura race this mod replaced (a werewolf's Beastfolk line), put back on a cure (plan 13d); kept on death. */
     public static final DeferredHolder<AttachmentType<?>, AttachmentType<RaceMemory>> RACE_MEMORY =
             ATTACHMENTS.register("race_memory", () -> AttachmentType.builder(() -> RaceMemory.NONE)

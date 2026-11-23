@@ -13,13 +13,14 @@ import net.ofatech.supernaturalbloodlines.core.wheel.PowerGroup;
 import net.ofatech.supernaturalbloodlines.core.wheel.PowerKind;
 import net.ofatech.supernaturalbloodlines.core.wheel.PowerRef;
 import net.ofatech.supernaturalbloodlines.core.wheel.PowerState;
+import net.ofatech.supernaturalbloodlines.core.wheel.overlap.Dedup;
 
 /**
  * One power the player has, as the wheel needs it. {@code mastery} is -1 for none. {@code modeName} is the current mode's name (empty for a power with no
  * modes) and {@code modeNames} lists every mode in order. The codec bounds every list and string: a decode over a limit throws.
  */
 public record WheelEntry(PowerRef ref, PowerGroup group, PowerKind kind, Component name, Component modeName, List<Component> modeNames, ResourceLocation icon,
-                         PowerState state, boolean slottable, float mastery) {
+                         PowerState state, boolean slottable, float mastery, String groupId, Component coverNote) implements Dedup.Item {
     public static final int MAX_STRING = 256;
     public static final int MAX_MODE_NAMES = 16;
 
@@ -29,6 +30,42 @@ public record WheelEntry(PowerRef ref, PowerGroup group, PowerKind kind, Compone
 
     public WheelEntry {
         modeNames = List.copyOf(modeNames);
+        java.util.Objects.requireNonNull(groupId);
+        java.util.Objects.requireNonNull(coverNote);
+    }
+
+    /** An entry that stands for a group (or none) and has no note of what else it covers. */
+    public WheelEntry(PowerRef ref, PowerGroup group, PowerKind kind, Component name, Component modeName, List<Component> modeNames, ResourceLocation icon, PowerState state,
+                      boolean slottable, float mastery, String groupId) {
+        this(ref, group, kind, name, modeName, modeNames, icon, state, slottable, mastery, groupId, Component.empty());
+    }
+
+    /** An entry that stands for one power only (it is in no group). */
+    public WheelEntry(PowerRef ref, PowerGroup group, PowerKind kind, Component name, Component modeName, List<Component> modeNames, ResourceLocation icon, PowerState state,
+                      boolean slottable, float mastery) {
+        this(ref, group, kind, name, modeName, modeNames, icon, state, slottable, mastery, "");
+    }
+
+    @Override
+    public int modeCount() {
+        return state.modeCount();
+    }
+
+    public WheelEntry withState(PowerState s) {
+        return new WheelEntry(ref, group, kind, name, modeName, modeNames, icon, s, slottable, mastery, groupId, coverNote);
+    }
+
+    /** The same entry standing for the group of this id: several mods give this power and this is the one shown (rule C). */
+    public WheelEntry withGroup(String id) {
+        return new WheelEntry(ref, group, kind, name, modeName, modeNames, icon, state, slottable, mastery, id, coverNote);
+    }
+
+    /**
+     * What else this entry stands for, for its tooltip and side panel: the other sides of the group that are hidden behind it, so nothing vanishes without a hint. Empty when it covers
+     * nothing.
+     */
+    public WheelEntry withCoverNote(Component note) {
+        return new WheelEntry(ref, group, kind, name, modeName, modeNames, icon, state, slottable, mastery, groupId, note);
     }
 
     private static void encode(RegistryFriendlyByteBuf buf, WheelEntry e) {
@@ -51,6 +88,8 @@ public record WheelEntry(PowerRef ref, PowerGroup group, PowerKind kind, Compone
         ByteBufCodecs.VAR_INT.encode(buf, s.modeCount());
         buf.writeBoolean(e.slottable);
         buf.writeFloat(e.mastery);
+        STRING.encode(buf, e.groupId);
+        ComponentSerialization.STREAM_CODEC.encode(buf, e.coverNote);
     }
 
     private static <E extends Enum<E>> E enumAt(E[] values, int ordinal, String what) {
@@ -86,6 +125,8 @@ public record WheelEntry(PowerRef ref, PowerGroup group, PowerKind kind, Compone
         int modeCount = ByteBufCodecs.VAR_INT.decode(buf);
         boolean slottable = buf.readBoolean();
         float mastery = buf.readFloat();
-        return new WheelEntry(ref, group, kind, name, modeName, modes, icon, new PowerState(on, end, total, lock, mode, modeCount), slottable, mastery);
+        String groupId = STRING.decode(buf);
+        Component coverNote = ComponentSerialization.STREAM_CODEC.decode(buf);
+        return new WheelEntry(ref, group, kind, name, modeName, modes, icon, new PowerState(on, end, total, lock, mode, modeCount), slottable, mastery, groupId, coverNote);
     }
 }
