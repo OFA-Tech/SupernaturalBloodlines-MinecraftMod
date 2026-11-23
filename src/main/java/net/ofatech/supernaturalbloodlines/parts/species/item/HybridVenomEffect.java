@@ -14,7 +14,7 @@ import net.ofatech.supernaturalbloodlines.parts.species.hybrid.Venom;
  * Milk and the like cannot cure it; only Hybrid's Blood removes it.
  */
 public final class HybridVenomEffect extends MobEffect {
-    private static final int PULSE_TICKS = 40;
+    private static final int PULSE_TICKS = Venom.PULSE_TICKS;
 
     public HybridVenomEffect() {
         super(MobEffectCategory.HARMFUL, 0x6B8E23);

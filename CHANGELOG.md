@@ -1,5 +1,18 @@
 # Changelog
 
+## Unreleased (plan 18h: staged venom)
+
+### Changed
+- **Werewolf venom goes through stages (R206).** Mild, then sick, then death. For the first `venom_sick_after_ticks` (4000 of the 12000) the venom is only its 1 damage a pulse that cannot kill. After that the vampire is sick: Nausea and Slowness I are kept up at every pulse, the hallucinations start (every 600 ticks, as before) and a line on the action bar says so once. The last tick still kills a non-Original. Originals keep Weakness II only, with no stages; the Venom Fang's 5 s of Slowness is unchanged. Hybrid's Blood and Klaus's Blood cure it at every stage.
+- **Downed and the turning.** Someone who cannot act (down for the turning or a Neck Snap, or in Vampirism's dying state) is spared the sickness, but the last tick is final: it ends the snap or the dying state with their death and leaves nothing set on the dead (before, a vampire in Vampirism's dying state could die with the state still set).
+- Config (with an Admin row, section `species`): `venom_sick_after_ticks` (0 sick from the start, 12000 never sick; default 4000).
+
+### Migration
+A venom that is already running continues in the new stages: the clock is the effect's remaining time, so nothing was stored and nothing is converted. A vampire poisoned 9000 ticks ago is sick the moment they load this build. No network payload changed.
+
+### Rolling back
+Rolling back puts the old single stage back: the damage, the hallucinations from the first minute, and death at the end. Nothing is stored, so nothing is left on a player; `venom_sick_after_ticks` in `supernaturalbloodlines-species.toml` is ignored by the old build.
+
 ## Unreleased (plan 18d: Rip Heart and Neck Snap)
 
 ### Added

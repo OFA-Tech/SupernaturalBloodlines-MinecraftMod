@@ -162,3 +162,9 @@ The ladder pays what a plain vampire's does (7 rungs, 23 SP, 212,000 EP): an Aug
 | `neck_snap_*_seconds` | 60 each | The wiki gives no time; all four kinds are equal so the time never says what the target is. |
 
 The five ladders of the vampire-like types that were short pay 1 to 3 SP more over their rungs, so every tree stays at 80% to 110% of its ladder after the two skills (2 SP each).
+
+## Plan 18h: Staged venom (R206)
+
+| Key | Default | Why |
+|---|---|---|
+| `venom_sick_after_ticks` | 4000 (of 12000) | The first third of the venom is a warning that only hurts a little; the rest is sick (Nausea, Slowness I, hallucinations) until death, so there is time to find Hybrid's Blood and a reason to hurry. 0 is sick from the start, 12000 never sick (death still comes). |

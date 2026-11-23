@@ -3,7 +3,9 @@ package net.ofatech.supernaturalbloodlines.parts.species.hybrid;
 import net.ofatech.supernaturalbloodlines.shared.supernatural.LadderQuery;
 import net.ofatech.supernaturalbloodlines.shared.supernatural.TaskSignals;
 
+import de.teamlapen.vampirism.api.VampirismAPI;
 import net.minecraft.core.registries.Registries;
+import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.damagesource.DamageSource;
@@ -20,8 +22,11 @@ import net.ofatech.supernaturalbloodlines.core.network.HallucinationPayload;
 import net.neoforged.neoforge.event.entity.living.LivingDamageEvent;
 import net.ofatech.supernaturalbloodlines.SupernaturalBloodlines;
 import net.ofatech.supernaturalbloodlines.core.BloodlineAccess;
+import net.ofatech.supernaturalbloodlines.core.bloodline.VenomStages;
+import net.ofatech.supernaturalbloodlines.parts.species.SpeciesConfig;
 import net.ofatech.supernaturalbloodlines.parts.species.SpeciesRegistries;
 import net.ofatech.supernaturalbloodlines.parts.vampirismenchanted.VampirismSupernatural;
+import net.ofatech.supernaturalbloodlines.parts.species.original.Downed;
 import net.ofatech.supernaturalbloodlines.parts.species.original.OriginalRules;
 
 /**
@@ -40,6 +45,9 @@ public final class Venom {
 
     private static final int HALLUCINATION_EVERY = 600;
     private static final int HALLUCINATION_TICKS = 100;
+    /** The effect pulses this often (see {@code HybridVenomEffect}). */
+    public static final int PULSE_TICKS = 40;
+    private static final int SICK_EFFECT_TICKS = 60;
 
     private Venom() {
     }
@@ -70,28 +78,43 @@ public final class Venom {
     }
 
     /**
-     * One pulse of the effect, {@code remaining} ticks before it runs out. 1 damage that cannot kill (like poison);
-     * a hallucination every 600 ticks ({@link HallucinationPayload}; Nausea II for a mob or a client that cannot receive it); Originals are kept in Weakness II;
-     * on the last pulse a non-Original dies of {@code supernaturalbloodlines:venom}, which ignores Resistance and
-     * Vampirism's dying state. Creative and spectator players are not touched.
+     * One pulse of the effect, {@code remaining} ticks before it runs out, by stage ({@link VenomStages}, R206). MILD: 1 damage that cannot kill (like
+     * poison) and nothing else. SICK (from {@code venom_sick_after_ticks} on): the same damage, Nausea and Slowness I kept up, a hallucination every 600 ticks
+     * ({@link HallucinationPayload}; Nausea II for a mob or a client that cannot receive it), and one line the first time. Someone who cannot act (down for
+     * the turning or a snap, or in Vampirism's dying state) is spared the sickness: they are lying there already. DEATH: a non-Original dies of
+     * {@code supernaturalbloodlines:venom}, which ignores Resistance, even down or in Vampirism's dying state. Originals are kept in Weakness II, with no stages.
+     * Creative and spectator players are not touched.
      */
     public static void pulse(LivingEntity target, int remaining) {
         if (!target.isAlive() || target instanceof Player p && (p.isCreative() || p.isSpectator())) {
             return;
         }
         boolean original = target instanceof Player p && OriginalRules.isOriginal(BloodlineAccess.get(p).species());
-        if (remaining <= 1) {
+        int sickAfter = SpeciesConfig.venomSickAfterTicks();
+        VenomStages.Stage stage = VenomStages.of(remaining, DURATION_TICKS, sickAfter);
+        if (stage == VenomStages.Stage.DEATH) {
             if (!original) {
                 kill(target);
             }
             return;
         }
-        if (original) { // R42v: weakened only, no tick damage and no hallucination
+        if (original) { // R42v: weakened only, no tick damage, no stages
             target.addEffect(new MobEffectInstance(MobEffects.WEAKNESS, 60, 1, true, false, true));
             return;
         }
         if (target.getHealth() > 1f) {
             target.hurt(source(target), 1f);
+        }
+        if (stage == VenomStages.Stage.SICK && !(target instanceof Player p && Downed.cannotAct(p))) {
+            sicken(target, remaining, VenomStages.justFellSick(remaining, DURATION_TICKS, sickAfter, PULSE_TICKS));
+        }
+    }
+
+    private static void sicken(LivingEntity target, int remaining, boolean first) {
+        target.addEffect(new MobEffectInstance(MobEffects.CONFUSION, SICK_EFFECT_TICKS, 0, false, false, true));
+        target.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, SICK_EFFECT_TICKS, 0, false, true, true));
+        if (first && target instanceof ServerPlayer sp) {
+            sp.displayClientMessage(Component.translatable("supernaturalbloodlines.venom.sick"), true);
         }
         if (remaining % HALLUCINATION_EVERY == 0
                 && !(target instanceof ServerPlayer sp && HallucinationPayload.send(sp, HallucinationPayload.Kind.random(sp.getRandom())))) {
@@ -107,7 +130,11 @@ public final class Venom {
     private static void kill(LivingEntity target) {
         target.hurt(source(target), Float.MAX_VALUE);
         if (target.isAlive()) {
-            target.kill(); // something (a totem, another mod) kept it alive
+            target.kill(); // something (a totem, another mod) kept it alive; also a player down or in Vampirism's dying state, which the blow above cannot reach
+        }
+        // the end of the venom ends Vampirism's dying state too, so nothing is left set on the dead
+        if (!target.isAlive() && target instanceof ServerPlayer sp && VampirismAPI.vampirePlayer(sp).isDBNO()) {
+            OriginalRules.clearDyingState(sp);
         }
     }
 }

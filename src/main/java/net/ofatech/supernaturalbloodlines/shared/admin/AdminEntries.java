@@ -118,6 +118,7 @@ public final class AdminEntries {
         species(all, "neck_snap_augustine_seconds", INT);
         species(all, "neck_snap_hybrid_seconds", INT);
         species(all, "neck_snap_original_seconds", INT);
+        species(all, "venom_sick_after_ticks", INT);
         species(all, "augustine_attack_bonus", DOUBLE);
         species(all, "augustine_extra_health", DOUBLE);
         species(all, "augustine_blood_from_vampire_factor", DOUBLE);
