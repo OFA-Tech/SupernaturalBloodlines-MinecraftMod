@@ -526,6 +526,16 @@ Tests: `LineRulesTest`, `RingFillTest`, `LineIndexTest`, `LineTreeTest`, `LineTr
 - **Tests:** `BloodKindTest`, `BloodBottleRulesTest`, `BloodSealCodecTest`; GameTests `BloodBottleGameTests`, `BloodBottleWerewolfGameTests`, `OriginalGameTests` (the two rites), `KlausGameTests.klausBloodAlsoPutsVampireBloodInAHuman`, `LoadoutVampirismGameTests.bottleBloodIsOfferedInTheFirstFreeSlot`.
 - **Not verified:** a real dedicated server and client pair over the network (the wire is checked by encoding with `ItemStack.STREAM_CODEC`).
 
+## Plan 18f: Force-feed my blood (R207, R208)
+
+- [x] **Pure rule** (`core/blood/ForceFeedRules`): not a player, self, then consent (willing, or PvP on and down or at the health limit), then vervain; `withoutConsent` strips the sire-naming effects of a drink forced on someone.
+- [x] **Action** (`blood/GiveBloodAction`, `ExtraActions.GIVE_BLOOD`): available to `Supernatural.isVampiric` (every vampire type, a Ghoul too, as Bottle my blood). Reuses 18d's `TargetChecks` (made public: `inView`, `untouchable`, `mayAttack`, `damageWouldLand`) through `ActionService`/`HudTargets`. Applies `BloodBottles.apply` (willing) or `applyWithoutConsent` (not) with the giver as the source. Claims (**chosen: both cases are asked as a blow, no `EntityInteract` is posted**): the attack event and the damage probe for everyone, PvP, friendly fire and pack-mates only for an unwilling target; the probe is skipped for a downed one. **Not verified:** a claim mod that guards a player only through an interaction event would not be consulted. Every refusal after a target is found starts the cooldown.
+- [x] **Vervain:** `BiteProtection.registerVictim`/`victimProtected` (shared); the artifacts part registers it, so the species part does not import artifacts. Without the artifacts part nothing is protected.
+- [x] **The gifts** (`blood/VampireBloodBuff`): `drank(p)` (called by `TurningHandler.drankVampireBlood` when the state changed, so every source) gives Regeneration II for 90 s once per `vampire_blood_regen_cooldown_seconds` (a silent `ActionClock` entry, `vampire_blood_regen`); `tick` eases hunger for the whole window. `ActionClock.startSilent` is the clock without a HUD slot.
+- [x] Config `give_blood_cooldown_seconds`, `force_feed_health_limit`, `vampire_blood_buff_enabled`, `vampire_blood_regen_cooldown_seconds` (`AdminEntries` rows). No payload changes: no network version bump.
+- [x] **Art:** the slot icon is the placeholder `unknown.png`: **Fable 5.2 / Blockbench still needs to draw `textures/gui/hud/give_blood.png`** (the size of `alpha_roar.png`) and then `GiveBloodAction.ICON` points at it.
+- **Tests:** `ForceFeedRulesTest`; GameTests `GiveBloodGameTests` (skip with `species` off), `GiveBloodWerewolfGameTests` (needs Werewolves); `TestPlayers.createPvpAware` now follows a team's friendly fire.
+
 ## Plan 18b: dying with vampire blood stands you up (R209)
 
 - [x] **Rule** (core/bloodline): BloodlineEvent.TURNING_GAVE_UP -> BloodlineRules.turningGaveUp (clears the turning, the vampire blood and the pending sire; no kill action; a Ghoul stays one).
