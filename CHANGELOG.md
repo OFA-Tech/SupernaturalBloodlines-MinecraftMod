@@ -1,5 +1,27 @@
 # Changelog
 
+## Unreleased (plan 20a: the groups base)
+
+### Added
+- **Groups.** The pack system is now one system for four kinds of group, with the kind taken from the leader: a werewolf or hybrid-type leader leads a **pack**, a vampire a **clan**, a witch, siphoner, heretic or human a **coven**, a hunter a **brotherhood** (first match wins). Clan, coven and brotherhood have **no perks yet** (plans 20b to 20d): here they are a name, a founding gate, a leader title, ranks and a way to pass the lead on.
+- **A leader who changes kind changes the type**, and nobody is removed and nothing deleted: what belongs to the old type stays, hidden, and returns if the leader goes back. Every member is told once.
+- **Founding gate:** a pack needs an active Alpha (as before), a clan a vampire, a coven a witch, siphoner or heretic, a brotherhood a hunter. `open_founding` lifts it.
+- **Commands:** `/group invite|accept|leave|kick|ally ...|info|challenge`, with `/clan`, `/coven`, `/brotherhood` and `/sb group` as the same tree. `/pack` is unchanged. A challenge in anything but a pack answers `wrong_type` until its own plan.
+- **Leader absence by type** (7 days): a clan passes to its longest Day Walker who is here, a coven to its longest Elder, a brotherhood to the online member with the highest mark; the old leader stays one rank down.
+- **Hub:** the Pack page is the **Group** page: its tab, title, ranks, legend and buttons say the group's own word in all three themes; the wolf-only parts (wolves, Roar, duels, anchor) show only for a pack. The Profile's pack fact is "Group" and names the type. The shared buttons run `/group` when the group is not a pack.
+- **Admin page:** section "Groups", 5 settings (`supernaturalbloodlines-groups.toml`: `groups_enabled`, `clans_enabled`, `covens_enabled`, `open_founding`, `max_members`). `AdminEntries` is 204.
+- Rules **R240 to R249** in `SPECIES-RULES.md`; wiki page "Groups".
+
+### Changed
+- **Without Werewolves** the parts of the pack stack that are not wolf-only now run: last-seen and login notices, the absence rule, the Open Parties and Claims link, alliance protection and the hub's group rows. Before, a coven (or any group) in such a world never noticed its leader was away.
+- The hub's shared pack rows (P1 to P10) run as `/group` in a world that has no `/pack`.
+- **Hub protocol 14** (was 13): a new server-to-client payload, `group_view` (the viewer's own group only). Update client and server together.
+
+### Rolling back
+Delete `supernaturalbloodlines_groups.dat`. The pack file `supernaturalbloodlines_packs.dat` is never rewritten by this plan, so every pack, member and alliance stays exactly as it was; groups would be seeded again as packs. The hub channel number changed (13 to 14), so update client and server together when going back.
+
+### Verified
+- Unit tests and the 12-run GameTest matrix: see the PR. 16 mutants of the groups rules, all caught.
 ## Unreleased (plan 19a: the evolution rites engine and the Rite of Mastery)
 
 ### Added
