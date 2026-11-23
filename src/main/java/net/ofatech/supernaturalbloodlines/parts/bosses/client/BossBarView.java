@@ -9,7 +9,8 @@ import net.ofatech.supernaturalbloodlines.shared.hud.HudKit;
 
 /**
  * Draws one card of the kit: the frame, the portrait under its plate, the name plate, the health bar with its ticks, the health in numbers and the chips. Nothing is
- * allocated or measured here; {@link BossBarInfo#prepare} has worked it all out. Client only.
+ * measured here and builds no list or string of its own; {@link BossBarInfo#prepare} has worked out the text, the cut name and the geometry. ({@code UiKit.draw} builds the
+ * small plan of a nine-slice per draw: the only allocation left in a frame.) Client only.
  */
 final class BossBarView {
     private static final int SEAM_COLOUR = 0xFFE8A0;

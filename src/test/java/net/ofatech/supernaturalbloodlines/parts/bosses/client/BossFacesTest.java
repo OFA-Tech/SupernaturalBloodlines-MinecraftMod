@@ -116,7 +116,7 @@ class BossFacesTest {
     void theWordOnEachChipReadsOnTheChipInEveryLook() throws Exception {
         for (HudKit k : HudKit.values()) {
             for (Part chip : new Part[] {Part.CHIP, Part.CHIP_ON, Part.CHIP_SHIFTING}) {
-                assertReads(k + " " + chip, BossFaces.chip(k, chip), chipBox(k, chip));
+                assertReads(k + " " + chip, net.ofatech.supernaturalbloodlines.shared.hub.kit.KitFaces.label(k.kit(), chip, k.ink()), chipBox(k, chip));
             }
         }
     }
@@ -149,6 +149,33 @@ class BossFacesTest {
             }
         }
         assertTrue(faint.isEmpty(), "a fill the eye cannot tell from its track: " + faint);
+    }
+
+    private static int blend(int fill, int over, int percent) {
+        int out = 0xFF000000;
+        for (int shift = 16; shift >= 0; shift -= 8) {
+            int a = fill >> shift & 0xFF;
+            int b = over >> shift & 0xFF;
+            out |= Math.round(a * percent / 100f + b * (100 - percent) / 100f) << shift;
+        }
+        return out;
+    }
+
+    @Test
+    void theShiftingFillStillStandsOutFromItsTrackAtTheLowestPointOfItsPulse() throws Exception {
+        int floor = 100;
+        for (long tick = 0; tick < 128; tick++) {
+            floor = Math.min(floor, BossBarMotion.shiftFillPercent(tick, false));
+        }
+        List<String> faint = new ArrayList<>();
+        for (HudKit k : HudKit.values()) {
+            int seen = blend(dominant(k, Part.BOSS_BAR_FILL_SHIFTING), dominant(k, Part.BOSS_BAR_TRACK), floor);
+            double r = Contrast.ratio(seen, dominant(k, Part.BOSS_BAR_TRACK));
+            if (r < 3.0) {
+                faint.add(k + " " + String.format("%.2f", r) + ":1 at " + floor + " %");
+            }
+        }
+        assertTrue(faint.isEmpty(), "the pulse washes the fill into its track: " + faint);
     }
 
     @Test

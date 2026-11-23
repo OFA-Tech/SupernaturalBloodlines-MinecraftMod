@@ -26,7 +26,7 @@ public final class BossBarLayout {
     /** A chip is its text and this much (3 px each side). */
     public static final int CHIP_PAD = 6;
     public static final int CHIP_GAP = 2;
-    /** The stack takes at most this share of the screen's height (three tenths and a half: 3/5), like vanilla's limit but wide enough for three cards. */
+    /** The stack takes at most this share of the screen's height (3/5): vanilla's own limit is a third, too little for three cards. */
     private static final int SHARE_NUM = 3;
     private static final int SHARE_DEN = 5;
     /** The card's left edge to the name plate and the bar: the portrait plate and its air. */
@@ -87,15 +87,6 @@ public final class BossBarLayout {
         return base + index * (CARD_H + GAP);
     }
 
-    /** What {@code bars} cards take going down, with the gap after the last: the increment that puts another mod's vanilla bar under them. */
-    public static int stackHeight(int bars) {
-        return bars <= 0 ? 0 : bars * (CARD_H + GAP);
-    }
-
-    public static int bottom(int base, int bars) {
-        return base + stackHeight(bars);
-    }
-
     /** How many cards fit in the top share of a screen {@code guiH} high when the stack starts at {@code base}; one at least. */
     public static int barsThatFit(int guiH, int base) {
         return Math.max(1, (guiH * SHARE_NUM / SHARE_DEN - base + GAP) / (CARD_H + GAP));
@@ -152,8 +143,13 @@ public final class BossBarLayout {
     public record Health(String full, String compact) {
     }
 
-    public static Health health(int hp, int max) {
-        NumberFormat f = NumberFormat.getIntegerInstance(Locale.ROOT);
+    /** The locale of a Minecraft language code ({@code pt_br} is Brazilian Portuguese): the grouping of the health follows the player's language. */
+    public static Locale localeOf(String code) {
+        return code == null || code.isBlank() ? Locale.ROOT : Locale.forLanguageTag(code.replace('_', '-'));
+    }
+
+    public static Health health(int hp, int max, Locale locale) {
+        NumberFormat f = NumberFormat.getIntegerInstance(locale);
         String now = f.format(hp);
         return new Health(now + " / " + f.format(max), now);
     }

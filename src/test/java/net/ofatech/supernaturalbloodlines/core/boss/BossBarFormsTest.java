@@ -44,6 +44,14 @@ class BossBarFormsTest {
     }
 
     @Test
+    void onlyAShiftersChipsAreDrawnUntilTheBeastsHostAndSpiritHaveBars() {
+        assertEquals(3, Set.SHIFTER.shownChips());
+        assertEquals(0, Set.HOST.shownChips(), "a row with one lit chip and two that never light says nothing");
+        assertEquals(0, Set.NONE.shownChips());
+        assertEquals(3, Set.HOST.chips(), "the row exists for when they do (the key and the portrait follow it)");
+    }
+
+    @Test
     void anActiveChipOutsideTheRowIsClampedAndABossWithoutChipsLightsNone() {
         assertEquals(2, new Look(Set.SHIFTER, 9).active());
         assertEquals(0, new Look(Set.SHIFTER, -4).active());

@@ -85,7 +85,7 @@ final class BossBarInfo {
             dirty = true;
         }
         if (dirty || width != cardW || geo == null) {
-            int n = look.set().chips();
+            int n = look.set().shownChips();
             if (chipTextW.length != n) {
                 chipTextW = n == 0 ? NO_CHIPS : new int[n];
             }
@@ -95,7 +95,7 @@ final class BossBarInfo {
             }
             cardW = width;
             geo = BossBarLayout.geometry(width, chipTextW, look.active());
-            hpShown = BossBarLayout.healthText(BossBarLayout.health(hp, max), geo.hpMaxW(), font::width);
+            hpShown = BossBarLayout.healthText(BossBarLayout.health(hp, max, BossBarLayout.localeOf(lang)), geo.hpMaxW(), font::width);
             nameRef = null;
             dirty = false;
         }
@@ -103,10 +103,5 @@ final class BossBarInfo {
             nameRef = name;
             nameShown = LabelFit.cut(name.getString(), geo.nameW() - 16, font::width);
         }
-    }
-
-    /** Whether the row of chips this bar has is the one the layout was built for (the draw reads {@link #geo}). */
-    boolean hasChips() {
-        return look.set() != BossBarForms.Set.NONE;
     }
 }

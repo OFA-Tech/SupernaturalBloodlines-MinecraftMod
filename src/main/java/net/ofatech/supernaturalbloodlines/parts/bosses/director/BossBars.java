@@ -12,7 +12,6 @@ import net.minecraft.world.entity.Entity;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.entity.EntityLeaveLevelEvent;
 import net.neoforged.neoforge.event.server.ServerStoppedEvent;
-import net.neoforged.neoforge.network.PacketDistributor;
 import net.ofatech.supernaturalbloodlines.parts.bosses.BossesConfig;
 import net.ofatech.supernaturalbloodlines.parts.bosses.entity.BossNpc;
 import net.ofatech.supernaturalbloodlines.parts.bosses.entity.NpcOriginalBoss;
@@ -62,6 +61,12 @@ public final class BossBars {
         bar.setProgress(Math.max(0f, Math.min(1f, boss.getHealth() / boss.getMaxHealth())));
         BossBarInfoPayload info = info(boss, bar.getId(), fallen);
         boolean changed = !info.equals(SENT.put(boss.getUUID(), info));
+        // a viewer who changed dimension or logged out is not in this level's player list, so the loop below would never take the card from them
+        for (ServerPlayer gone : java.util.List.copyOf(bar.getPlayers())) {
+            if (!stillViewing(gone.level() == boss.level(), gone.isRemoved())) {
+                bar.removePlayer(gone);
+            }
+        }
         for (ServerPlayer p : players) {
             if (p.distanceToSqr(boss) > RANGE * RANGE) {
                 bar.removePlayer(p);
@@ -70,12 +75,22 @@ public final class BossBars {
             boolean viewing = bar.getPlayers().contains(p);
             if (mustSend(viewing, changed)) {
                 // the card's facts go first, so the client never draws a vanilla bar for a boss it knows nothing about
-                PacketDistributor.sendToPlayer(p, info);
+                BossNet.send(p, info);
             }
             if (!viewing) {
                 bar.addPlayer(p);
             }
         }
+    }
+
+    /** Whether a player who is watching a bar still may: in the boss's dimension, and still in the game. */
+    static boolean stillViewing(boolean sameLevel, boolean removed) {
+        return sameLevel && !removed;
+    }
+
+    /** The health as a card writes it: rounded up, so a boss that is alive never shows 0. */
+    public static int shownHealth(float health) {
+        return Math.max(0, (int) Math.ceil(health));
     }
 
     /** A viewer who is just coming into range always gets the facts; one who is already watching only when they changed. */
@@ -90,7 +105,7 @@ public final class BossBars {
 
     /** What a card shows that the vanilla packet cannot say: the boss, the chips, the health in numbers. */
     public static BossBarInfoPayload info(BossNpc boss, UUID bar, boolean fallen) {
-        return BossBarInfoPayload.of(bar, boss.boss(), boss.barLook(), fallen, Math.round(boss.getHealth()), Math.round(boss.getMaxHealth()));
+        return BossBarInfoPayload.of(bar, boss.boss(), boss.barLook(), fallen, shownHealth(boss.getHealth()), shownHealth(boss.getMaxHealth()));
     }
 
     /** The bar's name: the boss's own, and "(desiccated)" while an Original lies open to white oak. */

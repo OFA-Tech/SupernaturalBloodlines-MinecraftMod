@@ -79,10 +79,9 @@ class BossBarLayoutTest {
         assertEquals(12 + 104, BossBarLayout.cardY(12, 2));
         for (int n = 1; n <= 5; n++) {
             int lastBottom = BossBarLayout.cardY(12, n - 1) + BossBarLayout.CARD_H;
-            assertEquals(lastBottom + BossBarLayout.GAP, BossBarLayout.bottom(12, n), n + " cards: the next bar starts a gap under the last");
-            assertEquals(BossBarLayout.stackHeight(n), BossBarLayout.bottom(12, n) - 12);
+            assertEquals(lastBottom - 12 + BossBarLayout.VANILLA_HEAD, BossBarLayout.increment(n), n + " cards: another mod's bar starts under the last, with room for its name");
         }
-        assertEquals(0, BossBarLayout.stackHeight(0));
+        assertEquals(0, BossBarLayout.increment(0));
     }
 
     @Test
@@ -189,22 +188,31 @@ class BossBarLayoutTest {
 
     @Test
     void theHealthIsWrittenWithCommasAndShortensToTheCurrentNumberBeforeItIsDropped() {
-        BossBarLayout.Health h = BossBarLayout.health(1640, 2000);
+        BossBarLayout.Health h = BossBarLayout.health(1640, 2000, java.util.Locale.ROOT);
         assertEquals("1,640 / 2,000", h.full());
         assertEquals("1,640", h.compact());
         assertEquals("1,640 / 2,000", BossBarLayout.healthText(h, 100, BossBarLayoutTest::width));
         assertEquals("1,640", BossBarLayout.healthText(h, 40, BossBarLayoutTest::width));
         assertEquals("", BossBarLayout.healthText(h, 10, BossBarLayoutTest::width));
-        BossBarLayout.Health big = BossBarLayout.health(12000, 12000);
+        BossBarLayout.Health big = BossBarLayout.health(12000, 12000, java.util.Locale.ROOT);
         Geometry g = BossBarLayout.geometry(250, SHIFTER, 0);
         String shown = BossBarLayout.healthText(big, g.hpMaxW(), BossBarLayoutTest::width);
         assertTrue(width(shown) <= g.hpMaxW(), "whatever is shown fits: " + shown);
     }
 
     @Test
+    void theHealthIsGroupedTheWayThePlayersLanguageDoes() {
+        assertEquals("1.640 / 2.000", BossBarLayout.health(1640, 2000, BossBarLayout.localeOf("de_de")).full());
+        assertEquals("1.640 / 2.000", BossBarLayout.health(1640, 2000, BossBarLayout.localeOf("pt_br")).full());
+        assertEquals("1,640 / 2,000", BossBarLayout.health(1640, 2000, BossBarLayout.localeOf("en_us")).full());
+        assertEquals("1,640 / 2,000", BossBarLayout.health(1640, 2000, BossBarLayout.localeOf(null)).full(), "no language: the plain grouping");
+        assertEquals("1,640 / 2,000", BossBarLayout.health(1640, 2000, BossBarLayout.localeOf("")).full());
+    }
+
+    @Test
     void theApprovedExampleFitsBesideTheChipsOnTheApprovedCard() {
         Geometry g = BossBarLayout.geometry(250, SHIFTER, 0);
-        BossBarLayout.Health h = BossBarLayout.health(1640, 2000);
+        BossBarLayout.Health h = BossBarLayout.health(1640, 2000, java.util.Locale.ROOT);
         assertEquals(h.full(), BossBarLayout.healthText(h, g.hpMaxW(), BossBarLayoutTest::width), "1,640 / 2,000 is the first line of the style guide");
     }
 }

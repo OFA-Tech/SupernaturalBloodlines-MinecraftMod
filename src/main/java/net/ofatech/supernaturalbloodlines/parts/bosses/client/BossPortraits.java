@@ -41,5 +41,5 @@ public final class BossPortraits {
     }
 
     /** The x (of 24) where the seam of a shift runs. */
-    public static final int SEAM_X = 12;
+    public static final int SEAM_X = BossBarLayout.ART / 2;
 }

@@ -6,8 +6,11 @@ package net.ofatech.supernaturalbloodlines.shared.hub.kit;
  * "+N more" that is itself given room. Pure.
  */
 public final class DetailRows {
-    /** {@code shown} rows are drawn, the first {@code shown}, each {@code compact} (one line of label) or at its own height; {@code more} are left out (0 when all fit). */
-    public record Plan(int shown, boolean compact, int more) {
+    /**
+     * {@code shown} rows are drawn, the first {@code shown}, each {@code compact} (one line of label) or at its own height; {@code more} are left out (0 when all fit);
+     * {@code moreLine}: the "+N more" line has room (a pane with no room even for it says nothing rather than draw it over the buttons).
+     */
+    public record Plan(int shown, boolean compact, int more, boolean moreLine) {
     }
 
     private DetailRows() {
@@ -23,10 +26,10 @@ public final class DetailRows {
     public static Plan plan(int[] full, int[] compact, int room, int gap, int moreH) {
         int n = full.length;
         if (total(full, n, gap) <= room) {
-            return new Plan(n, false, 0);
+            return new Plan(n, false, 0, false);
         }
         if (total(compact, n, gap) <= room) {
-            return new Plan(n, true, 0);
+            return new Plan(n, true, 0, false);
         }
         int shown = 0;
         int used = 0;
@@ -37,8 +40,8 @@ public final class DetailRows {
             used += compact[i] + gap;
             shown++;
         }
-        // a pane too short for a row and the line says only the line: the player still learns how many tasks there are
-        return new Plan(shown, true, n - shown);
+        int left = n - shown;
+        return new Plan(shown, true, left, left > 0 && used + moreH <= room);
     }
 
     private static int total(int[] heights, int n, int gap) {

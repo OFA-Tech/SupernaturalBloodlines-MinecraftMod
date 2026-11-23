@@ -303,18 +303,89 @@ public final class BossReviewGameTests {
     }
 
     @GameTest(template = "empty", templateNamespace = NS)
-    public static void theBarsFactsFollowTheBossAndAShiftMovesTheChipAtOnce(GameTestHelper helper) {
-        var human = net.ofatech.supernaturalbloodlines.core.boss.BossBarForms.shifter(net.ofatech.supernaturalbloodlines.core.boss.BossForm.HUMAN);
+    public static void aViewerWithTheChannelGetsTheCardsFactsOnceAndBeforeTheVanillaBar(GameTestHelper helper) {
+        MockViewer v = MockViewer.of(helper, true);
         try (BossTestRig rig = new BossTestRig(helper)) {
             MikaelEntity m = rig.spawn();
-            BossBars.update(m, List.of());
+            v.player.setPos(m.getX() + 5, m.getY(), m.getZ());
+            BossBars.update(m, List.of(v.player));
+            var facts = v.payloads(net.ofatech.supernaturalbloodlines.parts.bosses.director.BossBarInfoPayload.class);
+            helper.assertTrue(facts.size() == 1, "one payload for one new viewer, got " + facts.size());
+            helper.assertTrue(facts.get(0).boss().orElse(null) == BossId.MIKAEL && facts.get(0).bar().equals(BossBars.barOf(m.getUUID()).getId()),
+                    "the payload names the boss and the bar: " + facts.get(0));
+            int info = v.indexOf(net.minecraft.network.protocol.common.ClientboundCustomPayloadPacket.class);
+            int vanilla = v.indexOf(net.minecraft.network.protocol.game.ClientboundBossEventPacket.class);
+            helper.assertTrue(info >= 0 && vanilla >= 0 && info < vanilla, "the facts go before the vanilla bar: " + info + " / " + vanilla);
+            BossBars.update(m, List.of(v.player));
+            helper.assertTrue(v.payloads(net.ofatech.supernaturalbloodlines.parts.bosses.director.BossBarInfoPayload.class).size() == 1, "the same facts were sent again");
+            m.setHealth(m.getHealth() - 20);
+            BossBars.update(m, List.of(v.player));
+            helper.assertTrue(v.payloads(net.ofatech.supernaturalbloodlines.parts.bosses.director.BossBarInfoPayload.class).size() == 2, "new health was not sent");
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aViewerWithoutTheChannelGetsTheVanillaBarAndNoPayloadAndNothingThrows(GameTestHelper helper) {
+        MockViewer plain = MockViewer.of(helper, false);
+        try (BossTestRig rig = new BossTestRig(helper)) {
+            MikaelEntity m = rig.spawn();
+            plain.player.setPos(m.getX() + 5, m.getY(), m.getZ());
+            BossBars.update(m, List.of(plain.player));
+            helper.assertTrue(plain.payloads(net.ofatech.supernaturalbloodlines.parts.bosses.director.BossBarInfoPayload.class).isEmpty(), "a client without the channel was sent a payload");
+            helper.assertTrue(BossBars.viewers(m) == 1 && plain.indexOf(net.minecraft.network.protocol.game.ClientboundBossEventPacket.class) >= 0, "it still gets the vanilla bar");
+            helper.assertTrue(!net.ofatech.supernaturalbloodlines.parts.bosses.director.BossNet.send(plain.player,
+                    new net.ofatech.supernaturalbloodlines.parts.bosses.deal.DealOfferPayload(1, 1, List.of())), "a deal offer was sent to a client without the channel");
+            helper.assertTrue(plain.payloads(net.ofatech.supernaturalbloodlines.parts.bosses.deal.DealOfferPayload.class).isEmpty(), "the offer reached a client without the channel");
+            MockViewer modded = MockViewer.of(helper, true);
+            helper.assertTrue(net.ofatech.supernaturalbloodlines.parts.bosses.director.BossNet.send(modded.player,
+                    new net.ofatech.supernaturalbloodlines.parts.bosses.deal.DealOfferPayload(1, 1, List.of())), "a deal offer was not sent to a client with the channel");
+            helper.assertTrue(modded.payloads(net.ofatech.supernaturalbloodlines.parts.bosses.deal.DealOfferPayload.class).size() == 1, "the offer did not arrive");
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aViewerWhoLeftTheDimensionOrTheGameIsTakenFromTheBar(GameTestHelper helper) {
+        MockViewer gone = MockViewer.of(helper, true);
+        MockViewer away = MockViewer.of(helper, true);
+        MockViewer stays = MockViewer.of(helper, true);
+        try (BossTestRig rig = new BossTestRig(helper)) {
+            MikaelEntity m = rig.spawn();
+            for (MockViewer v : List.of(gone, away, stays)) {
+                v.player.setPos(m.getX() + 5, m.getY(), m.getZ());
+            }
+            BossBars.update(m, List.of(gone.player, away.player, stays.player));
+            helper.assertTrue(BossBars.viewers(m) == 3, "control: three watch, " + BossBars.viewers(m));
+            gone.player.setRemoved(net.minecraft.world.entity.Entity.RemovalReason.DISCARDED);
+            var nether = helper.getLevel().getServer().getLevel(net.minecraft.world.level.Level.NETHER);
+            helper.assertTrue(nether != null, "control: the test server has a Nether");
+            away.player.setServerLevel(nether);
+            // neither of them is in this level's list any more, as in the game: the update is given only the player who stayed
+            BossBars.update(m, List.of(stays.player));
+            helper.assertTrue(BossBars.viewers(m) == 1, "the card stayed on a player who left: " + BossBars.viewers(m));
+            helper.assertTrue(BossBars.barOf(m.getUUID()).getPlayers().contains(stays.player), "the player who stayed lost the card");
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void theBarsFactsFollowTheBossAndAShiftMovesTheChipAtOnce(GameTestHelper helper) {
+        var human = net.ofatech.supernaturalbloodlines.core.boss.BossBarForms.shifter(net.ofatech.supernaturalbloodlines.core.boss.BossForm.HUMAN);
+        MockViewer watcher = MockViewer.of(helper, true);
+        try (BossTestRig rig = new BossTestRig(helper)) {
+            MikaelEntity m = rig.spawn();
+            watcher.player.setPos(m.getX() + 5, m.getY(), m.getZ());
+            BossBars.update(m, List.of(watcher.player)); // a real viewer: what is sent, not only what is kept
             var plain = BossBars.sentOf(m.getUUID());
+            helper.assertTrue(watcher.payloads(net.ofatech.supernaturalbloodlines.parts.bosses.director.BossBarInfoPayload.class).get(0).equals(plain), "what the viewer got is what the server kept");
             helper.assertTrue(plain.boss().orElse(null) == BossId.MIKAEL && plain.look().equals(net.ofatech.supernaturalbloodlines.core.boss.BossBarForms.Look.NONE) && !plain.fallen(),
                     "a boss without forms has no chips: " + plain);
             helper.assertTrue(plain.hp() == Math.round(m.getHealth()) && plain.max() == Math.round(m.getMaxHealth()), "the health in numbers: " + plain);
             m.desiccate();
-            BossBars.update(m, List.of());
+            BossBars.update(m, List.of(watcher.player));
             helper.assertTrue(BossBars.sentOf(m.getUUID()).fallen(), "a fallen Original is not marked fallen");
+            helper.assertTrue(watcher.payloads(net.ofatech.supernaturalbloodlines.parts.bosses.director.BossBarInfoPayload.class).get(1).fallen(), "the viewer was not told");
             var k = rig.spawnKlaus();
             BossBars.update(k, List.of());
             helper.assertTrue(BossBars.sentOf(k.getUUID()).look().equals(human), "Klaus walks as a man: " + BossBars.sentOf(k.getUUID()));

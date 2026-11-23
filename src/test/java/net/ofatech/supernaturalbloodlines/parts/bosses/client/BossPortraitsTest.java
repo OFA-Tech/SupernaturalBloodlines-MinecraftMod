@@ -99,9 +99,4 @@ class BossPortraitsTest {
         assertFalse(BossPortraits.usable(0, 0), "an unreadable picture");
         assertFalse(BossPortraits.usable(12, 12));
     }
-
-    @Test
-    void theSeamRunsDownTheMiddleOfThePortrait() {
-        assertEquals(12, BossPortraits.SEAM_X);
-    }
 }

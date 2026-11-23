@@ -70,7 +70,7 @@ class BossBarMotionTest {
             hi = Math.max(hi, p);
             assertEquals(100, BossBarMotion.shiftFillPercent(tick, true), "held at full, whatever the tick");
         }
-        assertTrue(lo < 80 && hi > 95, "it breathes: " + lo + " to " + hi);
+        assertTrue(lo < 90 && hi >= 99, "it breathes: " + lo + " to " + hi);
     }
 
     @Test

@@ -405,24 +405,11 @@ public final class TensuraHubTheme implements HubTheme, HubThemeViews {
             y = text(g, font, d.reward(), x, y, w, GOLD, limit) + 3;
         }
         // every task shows: at its own size when there is room, one line each when there is not, and what still does not fit is counted in a "+N more" line
-        int rowCount = d.rows().size();
-        int[] fullH = new int[rowCount];
-        int[] compactH = new int[rowCount];
-        for (int i = 0; i < rowCount; i++) {
-            Detail.Row asked = d.rows().get(i);
-            int tw = asked.source() == null ? 0 : KitDraw.tagWidth(font, asked.source()) + 4;
-            fullH[i] = 16 + 10 * TextCache.wrap(font, asked.label().getString(), w - tw - 12, 2, font::width).size();
-            compactH[i] = 26;
-        }
-        DetailRows.Plan plan = DetailRows.plan(fullH, compactH, limit - y + 1, 4, 10);
-        int rowIndex = -1;
-        for (Detail.Row row : d.rows()) {
-            if (++rowIndex >= plan.shown()) {
-                break;
-            }
-            int tagW = row.source() == null ? 0 : KitDraw.tagWidth(font, row.source()) + 4;
-            // two lines at most; a task that does not fit ends its second line with an ellipsis
-            var lines = TextCache.wrap(font, row.label().getString(), w - tagW - 12, plan.compact() ? 1 : 2, font::width);
+        TensuraRowLayout.Laid laid = TensuraRowLayout.of(font, d.rows(), w, limit - y + 1, font::width, tag -> KitDraw.tagWidth(font, tag));
+        for (int i = 0; i < laid.plan().shown(); i++) {
+            Detail.Row row = d.rows().get(i);
+            int tagW = laid.tagW()[i];
+            var lines = laid.lines().get(i); // two lines at most; a task that does not fit ends its second line with an ellipsis
             int n = lines.size();
             int h = 16 + 10 * n;
             Rect card = new Rect(x, y, w, h);
@@ -433,18 +420,18 @@ public final class TensuraHubTheme implements HubTheme, HubThemeViews {
             if (row.source() != null) {
                 KitDraw.sourceTag(g, font, this, row.source(), card.x() + 4, card.y() + 4);
             }
-            for (int i = 0; i < n && i < lines.size(); i++) {
-                g.drawString(font, lines.get(i), card.x() + 6 + tagW, card.y() + 5 + 10 * i, row.complete() ? MUTED : TEXT, false);
+            for (int k = 0; k < n; k++) {
+                g.drawString(font, lines.get(k), card.x() + 6 + tagW, card.y() + 5 + 10 * k, row.complete() ? MUTED : TEXT, false);
             }
-            String count = row.total() > 1 ? row.done() + "/" + row.total() : row.complete() ? "\u2713" : "";
+            String count = laid.counts().get(i);
             int cw = font.width(count);
             int by2 = card.y() + 7 + 10 * n;
             drawBar(g, new Rect(card.x() + 6, by2 + 2, card.w() - 16 - cw, 4), row.total() <= 0 ? 0f : Math.min(1f, row.done() / (float) row.total()));
             g.drawString(font, count, card.right() - cw - 4, by2, row.complete() ? GREEN : MUTED, false);
-            y += h + 4;
+            y += h + TensuraRowLayout.GAP;
         }
-        if (plan.more() > 0) {
-            g.drawString(font, Component.translatable("supernaturalbloodlines.hub.detail.more_tasks", plan.more()), x, y, MUTED, false);
+        if (laid.more() != null) {
+            g.drawString(font, laid.more(), x, y, MUTED, false);
         }
         KitDraw.detailActions(ctx, this, buttons, d);
     }

@@ -15,6 +15,14 @@ public final class BossBarForms {
             return this == NONE ? 0 : 3;
         }
 
+        /**
+         * How many chips a bar draws. The Beast's row (HOST, BEAST, SPIRIT) stays hidden until its Host and its Spirit have bars of their own: today only its Beast stage has
+         * one, and a row with one lit chip and two that can never light says nothing. Its portrait still follows the stage.
+         */
+        public int shownChips() {
+            return this == SHIFTER ? chips() : 0;
+        }
+
         /** The lang key of chip {@code i}: {@code supernaturalbloodlines.boss.bar.form.<human|shifting|beast|host|spirit>}. */
         public String chipKey(int i) {
             String form = switch (this) {

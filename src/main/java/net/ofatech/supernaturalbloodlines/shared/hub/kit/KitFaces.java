@@ -43,9 +43,12 @@ public final class KitFaces {
         throw new IllegalArgumentException(button + " is not a button or a surface");
     }
 
+    /** The parts the tables name, in a set built once: asked for every label of every frame. */
+    private static final java.util.Set<Part> KNOWN = java.util.EnumSet.copyOf(java.util.stream.Stream.concat(java.util.Arrays.stream(BUTTONS), java.util.Arrays.stream(SURFACES)).toList());
+
     /** Whether the table above has a face for {@code part} (a button or a surface); a label on any other part is not checked against a face. */
     public static boolean knows(Part part) {
-        return java.util.Arrays.asList(BUTTONS).contains(part) || java.util.Arrays.asList(SURFACES).contains(part);
+        return KNOWN.contains(part);
     }
 
     /**

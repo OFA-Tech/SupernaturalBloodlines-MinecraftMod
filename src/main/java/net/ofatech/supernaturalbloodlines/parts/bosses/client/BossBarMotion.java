@@ -8,9 +8,9 @@ import net.ofatech.supernaturalbloodlines.shared.hub.kit.Motion;
  * and the seam do not move, and a chip is lit in one frame. The form, the colours and the numbers change either way: they are information. Pure.
  */
 public final class BossBarMotion {
-    /** The shifting fill breathes between this share of full and full. */
-    private static final int PULSE_FLOOR = 70;
-    private static final int PULSE_SPAN = 30;
+    /** The shifting fill breathes between this share of full and full: not lower, or the Grimoire's gold would wash into its parchment track (3:1 is held at this floor, {@code BossFacesTest}). */
+    private static final int PULSE_FLOOR = 85;
+    private static final int PULSE_SPAN = 15;
     /** The seam of a shift flashes between this and full (percent alpha). */
     private static final int SEAM_FLOOR = 40;
     private static final int SEAM_SPAN = 60;

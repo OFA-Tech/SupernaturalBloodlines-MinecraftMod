@@ -104,8 +104,9 @@ public final class DevShots {
             String[] parts = item.trim().split(":");
             if (parts[0].equalsIgnoreCase("boss")) {
                 // boss:<look>:<bar>, for example boss:grimoire:klaus_shifting or boss:tensura:stack3 (see the bosses part's BossBarDemo)
+                DevShotsSpec.Boss boss = DevShotsSpec.boss(parts);
                 for (int scale : scales) {
-                    shots.add(new Shot(parts[1].toLowerCase(Locale.ROOT), HubPage.PATH, scale, false, null, "boss_" + parts[2].toLowerCase(Locale.ROOT)));
+                    shots.add(new Shot(boss.look(), HubPage.PATH, scale, false, null, "boss_" + boss.bar()));
                 }
                 continue;
             }

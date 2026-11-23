@@ -13,13 +13,13 @@ class DetailRowsTest {
 
     @Test
     void everyRowIsDrawnAtItsOwnSizeWhenThereIsRoom() {
-        assertEquals(new Plan(4, false, 0), DetailRows.plan(FULL, COMPACT, 200, 4, 10));
+        assertEquals(new Plan(4, false, 0, false), DetailRows.plan(FULL, COMPACT, 200, 4, 10));
     }
 
     @Test
     void whenTheyDoNotFitTheyAllShrinkToOneLineBeforeAnyIsDropped() {
         // 4 x (26 + 4) = 120 fits in 125; at their own size they need 148
-        assertEquals(new Plan(4, true, 0), DetailRows.plan(FULL, COMPACT, 125, 4, 10));
+        assertEquals(new Plan(4, true, 0, false), DetailRows.plan(FULL, COMPACT, 125, 4, 10));
     }
 
     @Test
@@ -51,8 +51,23 @@ class DetailRowsTest {
     }
 
     @Test
+    void theMoreLineIsDrawnOnlyWhereItHasRoomNeverOverTheButtons() {
+        assertTrue(!DetailRows.plan(FULL, COMPACT, 5, 4, 10).moreLine(), "no room for a row and none for the line either");
+        assertTrue(!DetailRows.plan(FULL, COMPACT, 9, 4, 10).moreLine());
+        assertTrue(DetailRows.plan(FULL, COMPACT, 10, 4, 10).moreLine(), "room for the line alone: it says how many there are");
+        assertTrue(DetailRows.plan(FULL, COMPACT, 80, 4, 10).moreLine());
+        assertTrue(!DetailRows.plan(FULL, COMPACT, 200, 4, 10).moreLine(), "everything fits: no line");
+        for (int room = 0; room <= 130; room++) {
+            Plan p = DetailRows.plan(FULL, COMPACT, room, 4, 10);
+            if (p.moreLine()) {
+                assertTrue(p.shown() * 30 + 10 <= room, "room " + room + ": the line is inside it");
+            }
+        }
+    }
+
+    @Test
     void noRowsIsNothingToPlan() {
-        assertEquals(new Plan(0, false, 0), DetailRows.plan(new int[0], new int[0], 50, 4, 10));
+        assertEquals(new Plan(0, false, 0, false), DetailRows.plan(new int[0], new int[0], 50, 4, 10));
         assertFalse(DetailRows.plan(new int[0], new int[0], 0, 4, 10).compact());
     }
 }

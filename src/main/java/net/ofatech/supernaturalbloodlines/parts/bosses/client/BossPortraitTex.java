@@ -10,7 +10,6 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.resources.ResourceLocation;
 import net.ofatech.supernaturalbloodlines.SupernaturalBloodlines;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * The portraits ({@code textures/gui/boss/<name>.png}) as plain textures: each one's size is read once (a resource pack may draw them larger), and a picture that
@@ -69,10 +68,5 @@ final class BossPortraitTex {
         g.enableScissor(x + seamX, y, x + BossBarLayout.ART, y + BossBarLayout.ART);
         draw(g, wolf, x, y);
         g.disableScissor();
-    }
-
-    @Nullable
-    static ResourceLocation idOf(String name) {
-        return tex(name).id();
     }
 }
