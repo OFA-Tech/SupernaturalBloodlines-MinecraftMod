@@ -50,6 +50,11 @@ public final class ExtraActions {
             return trigger(p);
         }
 
+        /** True when the action waits for the player to aim at a creature and confirm (the wheel shows an aim hint); the default is an action that fires at once. */
+        default boolean aimed() {
+            return false;
+        }
+
         /** The cooldown the action just started, in ticks, for the slot's sweep. */
         int cooldownTicks(ServerPlayer p);
 

@@ -1,5 +1,23 @@
 # Changelog
 
+## Unreleased (skill wheel, phase W1: catalogue and server path)
+
+Nothing is drawn yet: this phase is the server half of the skill wheel (`docs/superpowers/specs/2026-11-22-skill-wheel-design.md`). The wheel screen comes in a later phase.
+
+### Added
+- **A catalogue of every power a player has**, built on the server when the wheel opens and again only when it changes: ours (Bite and our actions), Vampirism's and Werewolves' unlocked actions, Vampirism's Vision, and Tensura's skills, spells, battlewill arts, passive switches and race ability. Each entry has a kind (instant, toggle, aimed, held), its state (on, cooldown, mode) and, when it cannot be used now, a reason.
+- **Four payloads** on the hud channel: `WheelViewPayload` (the wheel opened or closed), `WheelCataloguePayload` (the list, at most 512 entries), `UsePowerPayload` (use a power, or end it) and `SetPowerModePayload` (next or previous mode). The server looks every power up in what the player really has, re-checks it, and gives the same refusal the slot or key would.
+- **Using a Tensura skill that is in no slot.** A small scope on the existing next-preset hook lets the server start (and keep running) the one skill the wheel is using; nothing is parked in a hidden slot. Held skills, arts and spells with a cast time run past Tensura's one-second limit for a skill that is not slotted. Toggles are flipped through Tensura's own toggle, so they never need a slot.
+- **Modes from the wheel.** A Tensura skill in a slot changes mode through Tensura's own slot mode (every slot holding it); a skill in no slot keeps its mode in a new saved value (`wheel_modes`).
+- **Covered-key ids for the wheel** (Vampirism's action wheel and vision key, Tensura's race-ability key, Great Sage's menu, assess, scan, magic sense and thought acceleration keys, Infinity's wheel and soul control keys). They are **not covered yet**: nothing is covered until a build has a wheel screen, so no player is left with a hidden key and no way to use it.
+- Config (all with Admin rows): `wheel_enabled`, `wheel_catalogue_interval_ticks`, `wheel_unslotted_tensura`.
+
+### Changed
+- **The hud network version is 2. Update the server and every client together.** An older client has no wheel channel: nothing is sent to it, and its keys are not covered for the wheel.
+- The "cannot act" rule (a player who is downed, snapped, dying, asleep, dead or a spectator) is one shared function for the slots and the wheel; the slots behave as before.
+
+### Rolling back
+- Remove the build: the saved `wheel_modes` value is ignored by an older build, no other save changes. With `wheel_enabled = false` the wheel's server side answers an empty list and refuses every use, and the six slots are untouched.
 ## Unreleased (plan 18d: Rip Heart and Neck Snap)
 
 ### Added
