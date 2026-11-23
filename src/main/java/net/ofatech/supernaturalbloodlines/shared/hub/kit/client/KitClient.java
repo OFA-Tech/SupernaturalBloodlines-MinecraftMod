@@ -10,7 +10,14 @@ import net.ofatech.supernaturalbloodlines.shared.hud.ClientIcons;
  * constructor on the client, so it runs whichever parts are on (the hub and the HUD are both optional). Client only: load it behind a {@code Dist.CLIENT} check.
  */
 public final class KitClient {
+    private static final java.util.List<Runnable> ON_RELOAD = new java.util.concurrent.CopyOnWriteArrayList<>();
+
     private KitClient() {
+    }
+
+    /** Another part of the client adds what it keeps until the resource packs change (the boss bars' portraits and cut texts). */
+    public static void onReload(Runnable forget) {
+        ON_RELOAD.add(forget);
     }
 
     public static void register(IEventBus modBus) {
@@ -18,6 +25,8 @@ public final class KitClient {
             ClientIcons.reload();
             BakedTexture.clear();
             UiKit.reload();
+            net.ofatech.supernaturalbloodlines.shared.hub.kit.TextCache.clear();
+            ON_RELOAD.forEach(Runnable::run);
         }));
     }
 }

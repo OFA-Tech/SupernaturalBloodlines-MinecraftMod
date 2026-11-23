@@ -54,6 +54,11 @@ public final class GevaudanHostEntity extends BossNpc {
     }
 
     @Override
+    public net.ofatech.supernaturalbloodlines.core.boss.BossBarForms.Look barLook() {
+        return net.ofatech.supernaturalbloodlines.core.boss.BossBarForms.host(0);
+    }
+
+    @Override
     public String skin() {
         return "sebastien_valet";
     }

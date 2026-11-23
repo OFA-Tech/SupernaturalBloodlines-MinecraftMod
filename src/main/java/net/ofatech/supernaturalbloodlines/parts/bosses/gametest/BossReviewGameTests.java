@@ -303,6 +303,32 @@ public final class BossReviewGameTests {
     }
 
     @GameTest(template = "empty", templateNamespace = NS)
+    public static void theBarsFactsFollowTheBossAndAShiftMovesTheChipAtOnce(GameTestHelper helper) {
+        var human = net.ofatech.supernaturalbloodlines.core.boss.BossBarForms.shifter(net.ofatech.supernaturalbloodlines.core.boss.BossForm.HUMAN);
+        try (BossTestRig rig = new BossTestRig(helper)) {
+            MikaelEntity m = rig.spawn();
+            BossBars.update(m, List.of());
+            var plain = BossBars.sentOf(m.getUUID());
+            helper.assertTrue(plain.boss().orElse(null) == BossId.MIKAEL && plain.look().equals(net.ofatech.supernaturalbloodlines.core.boss.BossBarForms.Look.NONE) && !plain.fallen(),
+                    "a boss without forms has no chips: " + plain);
+            helper.assertTrue(plain.hp() == Math.round(m.getHealth()) && plain.max() == Math.round(m.getMaxHealth()), "the health in numbers: " + plain);
+            m.desiccate();
+            BossBars.update(m, List.of());
+            helper.assertTrue(BossBars.sentOf(m.getUUID()).fallen(), "a fallen Original is not marked fallen");
+            var k = rig.spawnKlaus();
+            BossBars.update(k, List.of());
+            helper.assertTrue(BossBars.sentOf(k.getUUID()).look().equals(human), "Klaus walks as a man: " + BossBars.sentOf(k.getUUID()));
+            while (k.tickCount % 10 != 4) {
+                k.tick();
+            }
+            k.setForm(net.ofatech.supernaturalbloodlines.core.boss.BossForm.SHIFTING);
+            k.tick(); // the tick after, one that is not a pass of ten: the chip must not wait for the next pass
+            helper.assertTrue(k.tickCount % 10 != 0 && BossBars.sentOf(k.getUUID()).look().shifting(), "the chip did not move with the shift: " + BossBars.sentOf(k.getUUID()));
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
     public static void theLineIsToldWhenHeRisesAndOnlyIfTheyWereWarned(GameTestHelper helper) {
         LineTestPlayer known = player(helper, Species.HYBRID);
         LineTestPlayer unknown = player(helper, Species.HYBRID);

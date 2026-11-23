@@ -12,6 +12,7 @@ import net.minecraft.world.entity.Entity;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.entity.EntityLeaveLevelEvent;
 import net.neoforged.neoforge.event.server.ServerStoppedEvent;
+import net.neoforged.neoforge.network.PacketDistributor;
 import net.ofatech.supernaturalbloodlines.parts.bosses.BossesConfig;
 import net.ofatech.supernaturalbloodlines.parts.bosses.entity.BossNpc;
 import net.ofatech.supernaturalbloodlines.parts.bosses.entity.NpcOriginalBoss;
@@ -21,6 +22,8 @@ import org.jetbrains.annotations.VisibleForTesting;
 public final class BossBars {
     public static final double RANGE = 64.0;
     private static final Map<UUID, ServerBossEvent> BARS = new ConcurrentHashMap<>();
+    /** What each bar last told its viewers, so nothing is sent twice. */
+    private static final Map<UUID, BossBarInfoPayload> SENT = new ConcurrentHashMap<>();
 
     private BossBars() {
     }
@@ -57,13 +60,37 @@ public final class BossBars {
         bar.setName(title(boss, fallen));
         bar.setColor(fallen ? BossEvent.BossBarColor.YELLOW : BossEvent.BossBarColor.PURPLE);
         bar.setProgress(Math.max(0f, Math.min(1f, boss.getHealth() / boss.getMaxHealth())));
+        BossBarInfoPayload info = info(boss, bar.getId(), fallen);
+        boolean changed = !info.equals(SENT.put(boss.getUUID(), info));
         for (ServerPlayer p : players) {
-            if (p.distanceToSqr(boss) <= RANGE * RANGE) {
-                bar.addPlayer(p);
-            } else {
+            if (p.distanceToSqr(boss) > RANGE * RANGE) {
                 bar.removePlayer(p);
+                continue;
+            }
+            boolean viewing = bar.getPlayers().contains(p);
+            if (mustSend(viewing, changed)) {
+                // the card's facts go first, so the client never draws a vanilla bar for a boss it knows nothing about
+                PacketDistributor.sendToPlayer(p, info);
+            }
+            if (!viewing) {
+                bar.addPlayer(p);
             }
         }
+    }
+
+    /** A viewer who is just coming into range always gets the facts; one who is already watching only when they changed. */
+    static boolean mustSend(boolean alreadyViewing, boolean changed) {
+        return !alreadyViewing || changed;
+    }
+
+    @VisibleForTesting
+    public static BossBarInfoPayload sentOf(UUID boss) {
+        return SENT.get(boss);
+    }
+
+    /** What a card shows that the vanilla packet cannot say: the boss, the chips, the health in numbers. */
+    public static BossBarInfoPayload info(BossNpc boss, UUID bar, boolean fallen) {
+        return BossBarInfoPayload.of(bar, boss.boss(), boss.barLook(), fallen, Math.round(boss.getHealth()), Math.round(boss.getMaxHealth()));
     }
 
     /** The bar's name: the boss's own, and "(desiccated)" while an Original lies open to white oak. */
@@ -77,6 +104,7 @@ public final class BossBars {
     }
 
     public static void remove(UUID boss) {
+        SENT.remove(boss);
         ServerBossEvent bar = BARS.remove(boss);
         if (bar != null) {
             bar.removeAllPlayers();
@@ -86,6 +114,7 @@ public final class BossBars {
     public static void reset() {
         BARS.values().forEach(ServerBossEvent::removeAllPlayers);
         BARS.clear();
+        SENT.clear();
     }
 
     @VisibleForTesting

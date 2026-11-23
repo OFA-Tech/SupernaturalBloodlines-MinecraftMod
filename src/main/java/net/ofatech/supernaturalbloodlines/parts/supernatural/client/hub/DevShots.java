@@ -102,6 +102,13 @@ public final class DevShots {
         for (String item : spec.split(",")) {
             boolean menuShots = false;
             String[] parts = item.trim().split(":");
+            if (parts[0].equalsIgnoreCase("boss")) {
+                // boss:<look>:<bar>, for example boss:grimoire:klaus_shifting or boss:tensura:stack3 (see the bosses part's BossBarDemo)
+                for (int scale : scales) {
+                    shots.add(new Shot(parts[1].toLowerCase(Locale.ROOT), HubPage.PATH, scale, false, null, "boss_" + parts[2].toLowerCase(Locale.ROOT)));
+                }
+                continue;
+            }
             if (parts[0].equalsIgnoreCase("hud")) {
                 // hud:<look>[:alt|idle], for example hud:blood_moon:alt
                 for (int scale : scales) {
@@ -206,7 +213,7 @@ public final class DevShots {
         }
         mc.options.tutorialStep = TutorialSteps.NONE;
         mc.getTutorial().setStep(TutorialSteps.NONE);
-        if (shots.stream().anyMatch(sh -> sh.hud() != null)) {
+        if (shots.stream().anyMatch(sh -> sh.hud() != null || sh.variant() != null && sh.variant().startsWith("boss_"))) {
             // the HUD shots are of the HUD: the demo player's aura (big yellow squares of particles) would cover it
             mc.options.particles().set(net.minecraft.client.ParticleStatus.MINIMAL);
             mc.particleEngine.setLevel(mc.level); // clears the live particles
@@ -223,6 +230,7 @@ public final class DevShots {
             net.ofatech.supernaturalbloodlines.shared.hud.DevHud.toast = false;
             net.ofatech.supernaturalbloodlines.shared.hud.DevHud.glow = false;
             net.ofatech.supernaturalbloodlines.shared.hud.DevHud.detail = false;
+            net.ofatech.supernaturalbloodlines.shared.hud.DevBossBars.demo = null;
             SupernaturalBloodlines.LOGGER.warn("DEVSHOTS done");
             if (quit) {
                 mc.stop();
@@ -247,6 +255,14 @@ public final class DevShots {
             net.ofatech.supernaturalbloodlines.shared.hud.DevHud.switched = "switched".equals(s.hud());
             net.ofatech.supernaturalbloodlines.shared.hud.DevHud.human = s.hud() != null && (s.hud().startsWith("human") || "cooldown".equals(s.hud()));
             net.ofatech.supernaturalbloodlines.shared.hud.DevHud.cooldown = "cooldown".equals(s.hud());
+            boolean bossShot = s.variant() != null && s.variant().startsWith("boss_");
+            net.ofatech.supernaturalbloodlines.shared.hud.DevBossBars.demo = bossShot ? s.variant().substring(5) : null;
+            if (bossShot) {
+                mc.gui.getChat().clearMessages(false);
+                parkCursor(mc, 1, 1);
+                wait = 1;
+                return;
+            }
             if (s.hud() != null) {
                 mc.gui.getChat().clearMessages(false); // the world's welcome messages would sit over the slots
                 parkCursor(mc, 1, 1);
