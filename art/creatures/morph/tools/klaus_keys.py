@@ -86,7 +86,7 @@ M_HIND = {'hl': -5.0, 'hr': 0.0}                                     # the left 
 M = {'neck': (57.0, -2.0, 0.0), 'head': (-26.0, -4.0, -3.0), 'jaw': (20.0, 0.0, 0.0), 'ear_l': (-30.0, 0.0, 0.0), 'ear_r': (-26.0, 0.0, -4.0),
      'tail1': (76.0, 6.0, 0.0), 'tail2': (34.0, 8.0, 0.0), 'tail3': (16.0, 10.0, 0.0), 'chest_ruff': (-14.0, 0.0, 0.0)}
 M_RUFF = 0.5                                                         # the neck ruff half flat: fully bristled it made the first frame 11.64 px wide
-# yaw, roll. Kept small: a yaw on the body, the neck and the head adds up and pushed the muzzle 8.7 px off centre (0.96 blocks wide), and any roll
+# yaw, roll. None: a yaw on the body, the neck and the head adds up and pushed the muzzle 8.7 px off centre (0.96 blocks wide), and any roll
 # sinks one hind foot. The claws and the hind step carry the asymmetry instead.
 M_BODY_TWIST = (0.0, 0.0)
 
@@ -130,7 +130,7 @@ def bristle(k):
 
 # ------------------------------------------------------------------ shift_in: the wolf arrives
 def shift_in(t):
-    """0 the match pose; 0 to 0.2 it swells out of the man's size and rears back (the dip before the drop); 0.2 to 0.6 it falls onto its forepaws, the
+    """0 the match pose; a two-degree rock back and a snap of the head in the first two ticks; then it grows out of the man's size while it falls onto its forepaws, the
     left at 0.60 and the right a tick later; 0.6 to 0.72 the chest soaks the landing up, the rump a beat after it; then one small rebound into idle."""
     st = {
         # the root grows while the body pitches forward, and the hind legs push late: grown upright first, it stood 3.5 blocks tall for three ticks
