@@ -142,7 +142,8 @@ public final class CompassHearingGameTests {
         vamp.setPos(helper.absoluteVec(new Vec3(1.5, 1, 1.5)));
         ItemStack compass = new ItemStack(ArtifactItems.VAMPIRE_COMPASS.get());
         net.ofatech.supernaturalbloodlines.parts.artifacts.item.VampireCompassItem.update(compass, helper.getLevel(), vamp);
-        helper.assertTrue(target(compass) != null && target(compass).isEmpty(), "a vampire holder points at themself: " + target(compass));
+        // another vampire of a test running beside this one may be in range: only the holder themself must not be the target
+        helper.assertTrue(target(compass) != null && target(compass).filter(t -> t.pos().distSqr(vamp.blockPosition()) < 4).isEmpty(), "a vampire holder points at themself: " + target(compass));
 
         // inventoryTick: only on the second
         ServerPlayer p = holder(helper);

@@ -110,7 +110,7 @@ public final class TweaksGameTests {
         level.setDayTime(dayTime);
         level.setWeatherParameters(6000, 0, false, false);
         Vec3 at = helper.absoluteVec(new Vec3(2.5, 1.0, 2.5));
-        p.teleportTo(level, at.x, at.y, at.z, java.util.Set.of(), 0f, 0f);
+        p.setPos(at); // not teleportTo: that would leave a vampire in the level's player list, where the next test's compass finds it
         p.clearFire();
         p.removeAllEffects();
         return () -> {
