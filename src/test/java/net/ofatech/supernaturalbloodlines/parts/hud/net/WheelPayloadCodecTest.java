@@ -28,7 +28,7 @@ class WheelPayloadCodecTest {
     private static WheelEntry entry(int i) {
         return new WheelEntry(new PowerRef(PowerSource.TENSURA, ResourceLocation.parse("tensura:skill_" + i)), PowerGroup.MAGIC, PowerKind.HELD,
                 Component.literal("Name " + i), Component.literal("Mode"), List.of(Component.literal("A"), Component.literal("B")),
-                ResourceLocation.parse("tensura:textures/skill/x.png"), new PowerState(true, 5_000_000_000L, 100, LockReason.NEEDS_SLOT, 1, 2), true, 0.5f);
+                ResourceLocation.parse("tensura:textures/skill/x.png"), new PowerState(true, 5_000_000_000L, 100, LockReason.GROUP_ACTIVE, 1, 2), true, 0.5f, "bat_form");
     }
 
     @Test
@@ -39,6 +39,8 @@ class WheelPayloadCodecTest {
         WheelEntry out = WheelEntry.STREAM_CODEC.decode(b);
         assertEquals(in.ref(), out.ref());
         assertEquals(in.group(), out.group());
+        assertEquals("bat_form", out.groupId());
+        assertEquals(LockReason.GROUP_ACTIVE, out.state().lock());
         assertEquals(in.kind(), out.kind());
         assertEquals(in.name().getString(), out.name().getString());
         assertEquals(in.modeName().getString(), out.modeName().getString());
