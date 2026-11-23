@@ -55,7 +55,12 @@ public final class BossShots {
         if (spec == null || spec.isBlank()) {
             return;
         }
-        NeoForge.EVENT_BUS.addListener(new BossShots(spec.trim().toLowerCase(java.util.Locale.ROOT))::tick);
+        String name = spec.trim().toLowerCase(java.util.Locale.ROOT);
+        if (name.startsWith("morph:")) {
+            MorphShots.register(name.substring("morph:".length()));
+            return;
+        }
+        NeoForge.EVENT_BUS.addListener(new BossShots(name)::tick);
         SupernaturalBloodlines.LOGGER.warn("BOSSSHOTS on: {} (development only)", spec);
     }
 
