@@ -267,3 +267,20 @@ All data a part ships (rites, recipes, loot, tags, EP, altar blocks) is loaded o
 | `npc_bonus_share` | `0.4` | 0 to 1 | The most of the bonus the wolves may give, as a share of its cap. |
 | `tensura_subordinates_join`, `max_tensura_members_per_pack` | `true`, `6` | 0 to 24 | In `supernaturalbloodlines-species_tensura.toml`: the subordinates of pack members join the pack, up to the cap. |
 | `delayed_awakening_nights` | `1` | 0 to 3 | A human's werewolf gene awakens at the next dusk (N dusks later) after the kill, not at once. 0 = at once. Admin > Species. |
+
+## Wards, the locator and the plague curses (plan 21)
+
+| Key | Default | Range | What it does |
+|---|---|---|---|
+| `ward_enabled`, `ward_door_enabled` | `true` | | The Rites of the Ward and the door form. Off: every ward stands down at once (none is deleted). In `supernaturalbloodlines-artifacts.toml`. |
+| `ward_radius` | `10` | 1 to 24 | An area ward's half-size in blocks. |
+| `ward_max_per_owner`, `ward_max_invites` | `3`, `16` | 1 to 16, 1 to 64 | Standing wards one owner may have; names on a list (the owner counts). |
+| `ward_falls_on_owner_death` | `true` | | A ward falls when its owner dies or becomes a vampire. |
+| `ward_affects_mobs`, `ward_blocks_werewolves` | `true`, `false` | | Vampire mobs are turned away too; werewolves need an invitation too. |
+| `ward_expel_on_revoke`, `ward_expel_seconds` | `true`, `5` | 1 to 300 | Withdrawing an invitation throws a vampire out; how long one may stay inside before it is moved out. |
+| `ward_spoken_invites`, `ward_alert_owner`, `ward_use_claims` | `true`, `false`, `true` | | "Come in" and "get out" in chat; tell the owner "your ward was tested" (never who); ask Open Parties and Claims whether the ground may be built on. |
+| `locator_enabled`, `locator_tell_target` | `true` | | The Rites of the Locator and the compass's third mode; tell the one looked for. In `supernaturalbloodlines-species.toml`. |
+| `locator_minutes`, `locator_range`, `locator_blur` | `30`, `2000`, `32` | 1 to 1440, 0 to 30000000, 8 to 512 | How long a compass stays attuned; how far it finds (0 = the dimension); the width of the square the needle points at. |
+| `insanity_enabled`, `insanity_interval_seconds` | `true`, `30` | 1 to 3600 | In `supernaturalbloodlines-vampirism_enchanted.toml`: the Curse of Insanity, and the base time between hallucinations. |
+| `susceptibility_enabled`, `susceptibility_extra_percent`, `susceptibility_max_percent` | `true`, `25`, `200` | 0 to 100, 100 to 1000 | The Curse of Susceptibility: extra damage per strength level plus one, and the most damage taken in percent of normal. |
+
