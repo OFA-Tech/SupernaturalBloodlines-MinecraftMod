@@ -17,7 +17,7 @@ class GuideChaptersTest {
     @Test
     void whatYouAreComesFirstThenHowTheHubWorks() {
         List<String> c = GuideChapters.forRaces(SupernaturalRace.HYBRID, Optional.of(SupernaturalRace.WITCH), true, true, true);
-        assertEquals(List.of("race_hybrid", "race_witch", "hub", "path", "skills", "quests", "rites", "bloodline", "pack", "trial", "loadout", "moon"), c);
+        assertEquals(List.of("race_hybrid", "race_witch", "hub", "path", "skills", "quests", "rites", "bloodline", "pack", "trial", "loadout", "out_cold", "moon"), c);
     }
 
     @Test

@@ -82,7 +82,7 @@ public final class AlphaBite {
 
     private static void onHurt(LivingIncomingDamageEvent e) {
         Entity biter = e.getSource().getEntity();
-        if (!(e.getEntity() instanceof ServerPlayer victim) || biter == null || !VampirismSupernatural.isWerewolf(biter)) {
+        if (!(e.getEntity() instanceof ServerPlayer victim) || biter == null || !VampirismSupernatural.isWerewolf(biter) || net.ofatech.supernaturalbloodlines.core.death.DamageProbe.active()) {
             return;
         }
         boolean mob = !(biter instanceof Player);

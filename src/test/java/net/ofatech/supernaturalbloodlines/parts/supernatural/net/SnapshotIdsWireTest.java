@@ -53,7 +53,7 @@ class SnapshotIdsWireTest {
      * misread each other's bytes). This pins the bytes of an empty snapshot with both flags set, and the protocol they belong to. If you change
      * the snapshot, this fails: raise {@code LadderNet.PROTOCOL} and update both constants here, in the same commit.
      */
-    private static final String GOLDEN_PROTOCOL = "9";
+    private static final String GOLDEN_PROTOCOL = "10";
     private static final String GOLDEN_HEX = "00000000000b4e4f545f56414d504952450000044e4f4e450000000000010100000000";
 
     @Test

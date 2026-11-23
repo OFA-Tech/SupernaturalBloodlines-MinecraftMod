@@ -5,11 +5,11 @@
             { "id": "L-TRI-1a", "detector": "rite", "rite": "any", "role": "performer", "n": 3 },
             { "id": "L-TRI-1b", "detector": "level", "faction": "werewolves:werewolf", "n": 4, "mod": "werewolves" }
         ] },
-        { "id": "L-TRI-2", "name": "Venom and Craft", "sp": 3, "ep": 20000, "tasks": [
+        { "id": "L-TRI-2", "name": "Venom and Craft", "sp": 4, "ep": 20000, "tasks": [
             { "id": "L-TRI-2a", "detector": "signal", "signal": "venom_hit", "n": 3, "mod": "werewolves" },
             { "id": "L-TRI-2b", "detector": "rite", "rite": "supernaturalbloodlines:hybrid_blood", "role": "target" }
         ] },
-        { "id": "L-TRI-3", "name": "Emissary of Three", "sp": 4, "ep": 40000, "tasks": [
+        { "id": "L-TRI-3", "name": "Emissary of Three", "sp": 5, "ep": 40000, "tasks": [
             { "id": "L-TRI-3a", "any_of": [
                 { "id": "L-TRI-3a.1", "detector": "state", "predicate": "emissary", "mod": "werewolves" },
                 { "id": "L-TRI-3a.2", "detector": "state", "predicate": "rank_alpha", "mod": "werewolves" }

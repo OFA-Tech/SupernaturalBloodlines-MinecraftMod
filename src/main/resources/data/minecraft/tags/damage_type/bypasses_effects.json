@@ -1,6 +1,8 @@
 {
     "replace": false,
     "values": [
-        { "id": "supernaturalbloodlines:sireline", "required": false }
+        { "id": "supernaturalbloodlines:sireline", "required": false },
+        { "id": "supernaturalbloodlines:rip_heart", "required": false },
+        { "id": "supernaturalbloodlines:neck_snap", "required": false }
     ]
 }
