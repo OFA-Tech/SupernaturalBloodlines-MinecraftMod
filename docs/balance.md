@@ -12,7 +12,7 @@ Every number the supernatural system pays or asks for, with the reason for it. T
 | Longest wait | 60 game days (20 hours of play at 20 minutes a day) | Reachable in a week or two on a normal server; every apex rung asks 60 or less. |
 | Skill cost | 1 to 5 SP; only a granted skill (S-WOL-8) is free | Nothing is free, nothing costs a whole ladder rung. |
 | Skill cost by rung | a rung-1 skill costs at most 2, a rung-5 skill at least 4 | Costs rise with the rungs. |
-| A tree costs | 80% to 110% of what its ladder pays (125% for the Hybrid and the Original hybrid, who hold the skills of both lines, R212) | A player who climbs the whole ladder can buy nearly the whole tree and carries little spare. |
+| A tree costs | 80% to 110% of what its ladder pays | A player who climbs the whole ladder can buy nearly the whole tree and carries little spare. |
 | EP boost | x1.25 (config `ep_boost`), True Alpha x1.5 on `alpha_primeval` | Owner rules, unchanged. |
 
 ## Ladders
@@ -24,8 +24,8 @@ Every number the supernatural system pays or asks for, with the reason for it. T
 | heretic | 6 | 21 | 210,000 | 60 |
 | human | 3 | 5 | 4,000 | - |
 | hunter | 6 | 18 | 171,000 | - |
-| hybrid | 6 | 21 | 175,000 | 7 |
-| original_hybrid | 6 | 24 | 220,000 | 60 |
+| hybrid | 6 | 22 | 175,000 | 7 |
+| original_hybrid | 6 | 25 | 220,000 | 60 |
 | original | 6 | 23 | 210,000 | 60 |
 | siphoner | 6 | 19 | 175,000 | 60 |
 | tribrid | 6 | 22 | 230,000 | 60 |
@@ -167,8 +167,8 @@ The five ladders of the vampire-like types that were short pay 1 to 3 SP more ov
 
 | Key | Default | Why |
 |---|---|---|
-| `hybrid_leap_range` | 12 blocks | A leap, not a teleport: far enough to close a gap, short enough that a wall or a drop on the way still matters. |
+| `hybrid_leap_range` | 12 blocks (2 to 16) | A leap, not a teleport: far enough to close a gap, short enough that a wall or a drop on the way still matters. 16 is the most a leap can carry (the speed is bounded); a longer range could be asked for and never land. |
 | `hybrid_leap_damage` | 6 (3 hearts) | Less than Rip Heart's threshold and a weapon's swing; the Weakness is the real effect. |
 | `hybrid_leap_weakness_ticks` | 100 (5 s) | Long enough to turn a fight, short enough to be a reply, not a lock. |
 | `hybrid_leap_cooldown_seconds` | 20 | Twice Surge's pace of nothing: a skill you can use every fight, not every swing. |
-| `S-HYB-3` cost | 3 SP | A rung-3 skill, as S-HYB-2. The plan said 4; at 4 the Original hybrid's tree would be 130% of its ladder. |
+| `S-HYB-3` cost | 1 SP | The plan said 4. A ladder can pay at most 25 SP (five rungs of 5, the apex always 5), and the Original hybrid's tree is 26 SP without it: at 1 SP it is 27 of 25 (108%), at 2 it is 28 of 25 (112%, over the 110% rule). The Hybrid's and the Original hybrid's first rungs pay 1 SP more (L-HYB-1 3, L-OHY-1 5), so the Hybrid's tree is 24 of 22 (109%). |

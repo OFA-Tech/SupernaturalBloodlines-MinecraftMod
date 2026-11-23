@@ -1520,7 +1520,10 @@ public final class TargetedSkillGameTests {
         if (skipped(helper)) {
             return;
         }
-        TestPlayers.TalkingDuelist user = vampire(helper, "S-VAM-9");
+        // a user whose canHarmPlayer follows the server's PvP switch, as a real player's does
+        ServerPlayer user = TestPlayers.createPvpAware(helper);
+        helper.assertTrue(VampirismAPI.factionPlayerHandler(user).setFactionAndLevel(VReference.VAMPIRE_FACTION, 1), "could not make a vampire");
+        SupernaturalAccess.set(user, SupernaturalAccess.get(user).toBuilder().skills(Set.of("S-VAM-9")).build());
         ServerPlayer other = target(helper, Species.NONE, true);
         Zombie z = zombie(helper, 20.0f);
         boolean pvp = helper.getLevel().getServer().isPvpAllowed();

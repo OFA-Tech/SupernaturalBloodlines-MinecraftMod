@@ -18,7 +18,7 @@ import net.minecraft.world.phys.Vec3;
  */
 public final class LeapAim {
     /** The farthest the ray goes: the config range of the leap tops out here. */
-    public static final double MAX_RANGE = 32.0;
+    public static final double MAX_RANGE = net.ofatech.supernaturalbloodlines.core.hud.LeapMath.MAX_RANGE;
 
     private LeapAim() {
     }

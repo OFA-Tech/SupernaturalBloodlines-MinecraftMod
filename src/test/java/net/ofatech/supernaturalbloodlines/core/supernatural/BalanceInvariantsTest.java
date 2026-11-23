@@ -18,9 +18,6 @@ class BalanceInvariantsTest {
     /** A game day is 20 minutes, so 60 days is 20 hours of play: the longest wait a ladder may ask for. */
     private static final long MAX_DAYS = 60;
 
-    /** How far a hybrid's tree may run past its ladder (R212): 1.25 times. Every other tree stays within 1.1. */
-    private static final double HYBRID_CEILING = 1.25;
-
     private static LadderTable ladders() {
         return ShippedLadders.all();
     }
@@ -129,9 +126,7 @@ class BalanceInvariantsTest {
             int tree = t.tree(race).entries().stream().mapToInt(e -> t.skill(e.skill()).orElseThrow().cost()).sum();
             int paid = ladders().get(race).rungs().stream().mapToInt(Rung::sp).sum();
             double ratio = tree / (double) paid;
-            // the two hybrids hold the skills of both their lines (and Hybrid Leap), so they can never buy all of their tree: the ceiling is looser for them
-            double ceiling = race == SupernaturalRace.HYBRID || race == SupernaturalRace.ORIGINAL_HYBRID ? HYBRID_CEILING : 1.1;
-            if (ratio < 0.8 || ratio > ceiling) {
+            if (ratio < 0.8 || ratio > 1.1) {
                 bad.add(race + ": the tree costs " + tree + " SP and its ladder pays " + paid);
             }
         }

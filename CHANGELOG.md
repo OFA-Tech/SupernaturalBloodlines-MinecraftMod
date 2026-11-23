@@ -3,15 +3,15 @@
 ## Unreleased (plan 18e: Hybrid Leap)
 
 ### Added
-- **Hybrid Leap (R212, skill S-HYB-3, 3 SP).** A HUD action for the Hybrid and the Original hybrid (rung 3 of their trees): throw yourself at the creature you are looking at, up to `hybrid_leap_range` (12) blocks away. If you reach it (and still see it) you strike it for `hybrid_leap_damage` (6, half hearts) and weaken it for `hybrid_leap_weakness_ticks` (100). It is an ordinary attack, so PvP, claims, duels, armour and totems apply, and an Original is hurt like anyone. It needs no werewolf form. The fall of the landing is eased for a moment (the first 8 blocks only). A refusal says only that it cannot be done, whoever the target is, and costs nothing; the cooldown is `hybrid_leap_cooldown_seconds` (20). Config (all with Admin rows): `hybrid_leap_range`, `hybrid_leap_damage`, `hybrid_leap_weakness_ticks`, `hybrid_leap_cooldown_seconds`.
+- **Hybrid Leap (R212, skill S-HYB-3, 1 SP).** A HUD action for the Hybrid and the Original hybrid (rung 3 of their trees): throw yourself at the creature you are looking at, up to `hybrid_leap_range` (12, at most 16) blocks away, from the ground only. If you reach it (and still see it) you strike it for `hybrid_leap_damage` (6, half hearts) and weaken it for `hybrid_leap_weakness_ticks` (100). It is an ordinary attack, so PvP, claims, duels, armour and totems apply, and an Original is hurt like anyone. It needs no werewolf form. The fall of the landing is eased for a moment (the first 8 blocks only). A refusal about the target says only that it cannot be done, whoever the target is, and costs nothing; a refusal about the leaper (riding, in the water, already leaping, not on the ground) says so; the cooldown is `hybrid_leap_cooldown_seconds` (20). Config (all with Admin rows): `hybrid_leap_range`, `hybrid_leap_damage`, `hybrid_leap_weakness_ticks`, `hybrid_leap_cooldown_seconds`.
 - **The leap and the sprint-leap share one guard.** Jump while sprinting (Werewolves' own leap, R212) does not arm for 20 ticks after a Hybrid Leap is asked for. The Settings note for it says the two are separate.
 - Slot actions can name a target farther than the bite reach (`ExtraActions.Action.targetReach`, `HudTargets.resolve(player, id, reach)`); every older action is untouched.
 
-### Fixed
-- **Neck Snap worked on a player with PvP off.** The check that asks claim and PvP mods whether a hit is allowed is an event, which the server's own PvP switch never answers; the switch is now asked directly (`TargetChecks.mayAttack`), for Neck Snap, Rip Heart and Hybrid Leap alike. A mob is still a fair target.
+### Hardened
+- **The server's PvP switch is asked directly** by every targeted skill (`TargetChecks.mayAttack`: Neck Snap, Rip Heart, Hybrid Leap). A real player's own `canHarmPlayer` already refuses with PvP off, so this is defence in depth for a player type that does not (the damage probe is an event, which never asks the switch). Nothing was exploitable before.
 
 ### Changed
-- **The Hybrid's and Original hybrid's trees now cost 26 and 29 SP** (their ladders pay 21 and 24). The balance rule that a tree costs 80% to 110% of its ladder is 125% for those two (they hold the skills of both their lines), see `docs/balance.md`. No ladder changed, so nothing already earned moves.
+- **The Hybrid's and the Original hybrid's first ladder rungs pay 1 SP more** (L-HYB-1 3, L-OHY-1 5), so that their trees, with the new skill, stay within 80% to 110% of what their ladders pay (24 of 22 and 27 of 25). Hybrid Leap costs 1 SP because no ladder can pay more than 25 SP and the Original hybrid's tree was already 26. Nothing already earned moves; a rung not yet claimed pays the new amount.
 
 ### Network
 - No payload changed (the trigger carries the same target id), so no network version is bumped. The longer aim is a client choice: an old client keeps naming the 3-block target, and the server answers it with `no_target` or `too_far`, never a wrong blow.

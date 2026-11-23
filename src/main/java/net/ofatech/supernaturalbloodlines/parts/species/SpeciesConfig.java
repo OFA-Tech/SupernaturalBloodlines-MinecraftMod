@@ -412,7 +412,7 @@ public final class SpeciesConfig {
         NECK_SNAP_GRACE_SECONDS = b.comment("R214: seconds after a snap ends in which the same player or creature cannot be snapped again (a refusal like any other, so it says nothing about the target). Kept through a logout. 0 turns it off.")
                 .defineInRange("neck_snap_grace_seconds", DEFAULT_NECK_SNAP_GRACE_SECONDS, 0, 3600);
         HYBRID_LEAP_RANGE = b.comment("R212: how far (blocks) Hybrid Leap reaches. Further than this is refused as too far; the leap itself is a push, so a wall or a drop on the way still counts.")
-                .defineInRange("hybrid_leap_range", DEFAULT_HYBRID_LEAP_RANGE, 2.0, 32.0);
+                .defineInRange("hybrid_leap_range", DEFAULT_HYBRID_LEAP_RANGE, 2.0, net.ofatech.supernaturalbloodlines.core.hud.LeapMath.MAX_RANGE);
         HYBRID_LEAP_DAMAGE = b.comment("R212: the damage Hybrid Leap deals when it lands (half hearts), as an ordinary attack: PvP, claims, armour and totems apply. 0 deals none and keeps the Weakness.")
                 .defineInRange("hybrid_leap_damage", DEFAULT_HYBRID_LEAP_DAMAGE, 0.0, 40.0);
         HYBRID_LEAP_WEAKNESS_TICKS = b.comment("R212: how long the Weakness lasts that a landed Hybrid Leap gives (ticks). Only when the blow landed.")

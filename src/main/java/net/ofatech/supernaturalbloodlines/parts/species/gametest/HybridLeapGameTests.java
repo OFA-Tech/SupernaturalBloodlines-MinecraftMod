@@ -58,6 +58,7 @@ public final class HybridLeapGameTests {
     private static TestPlayers.TalkingDuelist hybrid(GameTestHelper helper, Species species, String... skills) {
         TestPlayers.TalkingDuelist p = TestPlayers.createTalkingDuelist(helper);
         p.setPos(helper.absoluteVec(new Vec3(1.5, 2, 0.5)));
+        p.setOnGround(true); // a fake player never lands by itself, and the leap starts from the ground
         BloodlineAccess.set(p, BloodlineState.NONE.toBuilder().species(species).build());
         SupernaturalAccess.set(p, SupernaturalAccess.get(p).toBuilder().skills(Set.of(skills)).build());
         return p;
@@ -209,7 +210,7 @@ public final class HybridLeapGameTests {
             helper.assertTrue(HybridLeapAction.NO_TARGET.equals(key(HybridLeapAction.INSTANCE.trigger(p, null))), "no target gave another answer");
             look(p, z);
             helper.assertTrue(HybridLeapAction.INSTANCE.trigger(p, z) == null, "the leap was refused");
-            helper.assertTrue(HybridLeapAction.CANNOT_ACT.equals(key(HybridLeapAction.INSTANCE.trigger(p, z))), "a second leap in the air was not refused");
+            helper.assertTrue(HybridLeapAction.CANNOT_BUSY.equals(key(HybridLeapAction.INSTANCE.trigger(p, z))), "a second leap in the air was not refused as busy");
             net.ofatech.supernaturalbloodlines.shared.hud.ExtraActions.stop(p);
             helper.assertTrue(!HybridLeapAction.inFlight(p), "the flight was not ended");
             helper.assertTrue(HybridLeapAction.COOLDOWN.equals(key(HybridLeapAction.INSTANCE.trigger(p, z))), "the cooldown did not hold");
@@ -235,7 +236,7 @@ public final class HybridLeapGameTests {
             helper.assertTrue(HybridLeapAction.CANNOT_ACT.equals(key(HybridLeapAction.INSTANCE.trigger(p, z))), "a snapped player leapt");
             Downed.clearForTest(p);
             p.getAbilities().flying = true;
-            helper.assertTrue(HybridLeapAction.CANNOT_ACT.equals(key(HybridLeapAction.INSTANCE.trigger(p, z))), "a flying player leapt");
+            helper.assertTrue(HybridLeapAction.CANNOT_AIR.equals(key(HybridLeapAction.INSTANCE.trigger(p, z))), "a flying player leapt, or was told something else");
             p.getAbilities().flying = false;
             helper.assertTrue(HybridLeapAction.INSTANCE.trigger(p, z) == null, "control: a player who can act was refused");
         } finally {
@@ -376,51 +377,72 @@ public final class HybridLeapGameTests {
         helper.succeed();
     }
 
+    private static ServerPlayer playerTarget(GameTestHelper helper, Species species) {
+        ServerPlayer t = TestPlayers.createDuelist(helper);
+        t.setPos(helper.absoluteVec(new Vec3(1.5, 2, 6.5)));
+        BloodlineAccess.set(t, BloodlineState.NONE.toBuilder().species(species).build());
+        return t;
+    }
+
+    /**
+     * What the leaper hears when a claim refuses must not depend on what the target is: an Original, a hybrid, a plain player and a mob all get the one
+     * refusal. This can fail: if the code answered an Original, or a vampire-kind, differently, the answers would differ.
+     */
     @GameTest(template = "empty", templateNamespace = NS)
-    public static void everyRefusalIsTheSameWhateverTheTargetIs(GameTestHelper helper) {
+    public static void aRefusalIsTheSameForEveryKindOfTarget(GameTestHelper helper) {
         if (skipped(helper)) {
             return;
         }
-        ServerPlayer original = TestPlayers.createDuelist(helper);
-        ServerPlayer creativeVampire = TestPlayers.createDuelist(helper);
-        ServerPlayer snapped = TestPlayers.createDuelist(helper);
-        Zombie weak = zombieAt(helper, 6.5);
-        java.util.List<LivingEntity> targets = java.util.List.of(original, creativeVampire, snapped, weak);
+        ServerPlayer original = playerTarget(helper, Species.ORIGINAL);
+        ServerPlayer originalHybrid = playerTarget(helper, Species.ORIGINAL_HYBRID);
+        ServerPlayer hybrid = playerTarget(helper, Species.HYBRID);
+        ServerPlayer human = playerTarget(helper, Species.NONE);
+        Zombie mob = zombieAt(helper, 6.5);
+        java.util.function.Consumer<LivingIncomingDamageEvent> claim = e -> e.setCanceled(true);
+        NeoForge.EVENT_BUS.addListener(EventPriority.HIGH, claim);
         try {
-            for (ServerPlayer t : new ServerPlayer[] {original, creativeVampire, snapped}) {
-                t.setPos(helper.absoluteVec(new Vec3(1.5, 2, 6.5)));
-            }
-            BloodlineAccess.set(original, BloodlineState.NONE.toBuilder().species(Species.ORIGINAL).build());
-            creativeVampire.setGameMode(net.minecraft.world.level.GameType.CREATIVE);
-            Downed.startSnapped(snapped, 600);
-            weak.setHealth(1.0f);
-            java.util.function.Consumer<LivingIncomingDamageEvent> claim = e -> e.setCanceled(true);
-            for (LivingEntity t : targets) {
+            java.util.Set<String> answers = new java.util.HashSet<>();
+            for (LivingEntity t : java.util.List.of(original, originalHybrid, hybrid, human, mob)) {
                 TestPlayers.TalkingDuelist p = hybrid(helper);
                 look(p, t);
-                String answer;
-                if (t == original || t == weak) {
-                    // control: these are fair targets, and a claim refuses them like anyone
-                    NeoForge.EVENT_BUS.addListener(EventPriority.HIGH, claim);
-                    try {
-                        answer = key(HybridLeapAction.INSTANCE.trigger(p, t));
-                    } finally {
-                        NeoForge.EVENT_BUS.unregister(claim);
-                    }
-                } else {
-                    answer = key(HybridLeapAction.INSTANCE.trigger(p, t));
-                }
-                helper.assertTrue(HybridLeapAction.REFUSED.equals(answer), t + " got " + answer + " instead of the one refusal");
+                String answer = key(HybridLeapAction.INSTANCE.trigger(p, t));
+                answers.add(answer);
                 helper.assertTrue(ActionClock.left(p, LEAP) == 0 && !HybridLeapAction.inFlight(p), t + ": a refusal had an effect");
                 clean(p);
             }
+            helper.assertTrue(answers.equals(java.util.Set.of(HybridLeapAction.REFUSED)), "the refusal depends on the target: " + answers);
         } finally {
-            weak.discard();
-            clean(original, creativeVampire, snapped);
+            NeoForge.EVENT_BUS.unregister(claim);
+            mob.discard();
+            clean(original, originalHybrid, hybrid, human);
         }
         helper.succeed();
     }
 
+    /** Every reason that is not the leaper's own gives the same one line: creative, already snapped, a claim (see above) and spawn protection. */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void everyReasonThatIsNotTheLeapersOwnIsTheSameRefusal(GameTestHelper helper) {
+        if (skipped(helper)) {
+            return;
+        }
+        ServerPlayer creative = playerTarget(helper, Species.NONE);
+        ServerPlayer snapped = playerTarget(helper, Species.NONE);
+        try {
+            creative.setGameMode(net.minecraft.world.level.GameType.CREATIVE);
+            Downed.startSnapped(snapped, 600);
+            for (ServerPlayer t : new ServerPlayer[] {creative, snapped}) {
+                TestPlayers.TalkingDuelist p = hybrid(helper);
+                look(p, t);
+                String answer = key(HybridLeapAction.INSTANCE.trigger(p, t));
+                helper.assertTrue(HybridLeapAction.REFUSED.equals(answer), t.gameMode.getGameModeForPlayer() + " target: " + answer);
+                helper.assertTrue(ActionClock.left(p, LEAP) == 0 && !HybridLeapAction.inFlight(p), "a refusal had an effect");
+                clean(p);
+            }
+        } finally {
+            clean(creative, snapped);
+        }
+        helper.succeed();
+    }
     @GameTest(template = "empty", templateNamespace = NS)
     public static void anOriginalIsHurtLikeAnyoneAndTheGraceOfASnapDoesNotProtect(GameTestHelper helper) {
         if (skipped(helper)) {
@@ -488,7 +510,11 @@ public final class HybridLeapGameTests {
         if (skipped(helper)) {
             return;
         }
-        TestPlayers.TalkingDuelist p = hybrid(helper);
+        ServerPlayer p = TestPlayers.createPvpAware(helper); // canHarmPlayer follows the server's PvP switch, as a real player's does
+        p.setPos(helper.absoluteVec(new Vec3(1.5, 2, 0.5)));
+        p.setOnGround(true);
+        BloodlineAccess.set(p, BloodlineState.NONE.toBuilder().species(Species.HYBRID).build());
+        SupernaturalAccess.set(p, SupernaturalAccess.get(p).toBuilder().skills(Set.of("S-HYB-3")).build());
         ServerPlayer other = TestPlayers.createDuelist(helper);
         other.setPos(helper.absoluteVec(new Vec3(1.5, 2, 6.5)));
         Zombie z = zombieAt(helper, 6.5);
@@ -505,6 +531,85 @@ public final class HybridLeapGameTests {
             helper.getLevel().getServer().setPvpAllowed(pvp);
             z.discard();
             clean(p, other);
+        }
+        helper.succeed();
+    }
+
+    // ---- review round 2 ----
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aLeapInMidAirIsRefusedAndTheFallIsNeverTouched(GameTestHelper helper) {
+        if (skipped(helper)) {
+            return;
+        }
+        TestPlayers.TalkingDuelist p = hybrid(helper);
+        Zombie z = zombieAt(helper, 6.5);
+        try {
+            look(p, z);
+            p.setOnGround(false);
+            p.fallDistance = 30.0F;
+            helper.assertTrue(HybridLeapAction.CANNOT_AIR.equals(key(HybridLeapAction.INSTANCE.trigger(p, z))), "a leap from mid-air was not refused");
+            helper.assertTrue(p.fallDistance == 30.0F, "a refused leap touched the fall: " + p.fallDistance);
+            helper.assertTrue(!HybridLeapAction.inFlight(p) && ActionClock.left(p, LEAP) == 0, "the refusal had an effect");
+            // on the ground the leap does not reset a fall either: whatever the player had fallen, the game decides it
+            p.setOnGround(true);
+            p.fallDistance = 7.0F;
+            helper.assertTrue(HybridLeapAction.INSTANCE.trigger(p, z) == null, "the leap from the ground was refused");
+            helper.assertTrue(p.fallDistance == 7.0F, "the leap reset the fall distance: " + p.fallDistance);
+        } finally {
+            z.discard();
+            clean(p);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void theLeapersOwnReasonIsNamedAndOnlyDownedOrSnappedStaysVague(GameTestHelper helper) {
+        if (skipped(helper)) {
+            return;
+        }
+        TestPlayers.TalkingDuelist p = hybrid(helper);
+        Zombie z = zombieAt(helper, 6.5);
+        try {
+            look(p, z);
+            p.getAbilities().flying = true;
+            helper.assertTrue(HybridLeapAction.CANNOT_AIR.equals(key(HybridLeapAction.INSTANCE.trigger(p, z))), "flying");
+            p.getAbilities().flying = false;
+            p.setOnGround(false);
+            helper.assertTrue(HybridLeapAction.CANNOT_AIR.equals(key(HybridLeapAction.INSTANCE.trigger(p, z))), "in the air");
+            p.setOnGround(true);
+            helper.assertTrue(HybridLeapAction.INSTANCE.trigger(p, z) == null, "control: on the ground");
+            helper.assertTrue(HybridLeapAction.CANNOT_BUSY.equals(key(HybridLeapAction.INSTANCE.trigger(p, z))), "already leaping");
+            net.ofatech.supernaturalbloodlines.shared.hud.ExtraActions.stop(p);
+            Downed.startSnapped(p, 200);
+            helper.assertTrue(HybridLeapAction.CANNOT_ACT.equals(key(HybridLeapAction.INSTANCE.trigger(p, z))), "snapped keeps the vague line");
+            Downed.clearForTest(p);
+            helper.assertTrue(HybridLeapAction.CANNOT_RIDING.equals(HybridLeapAction.cannotLeapBecauseForTest(p, true)), "riding");
+        } finally {
+            z.discard();
+            clean(p);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aClaimThatClosesWhileTheyAreInTheAirStopsTheBlow(GameTestHelper helper) {
+        if (skipped(helper)) {
+            return;
+        }
+        TestPlayers.TalkingDuelist p = hybrid(helper);
+        Zombie z = zombieAt(helper, 6.5);
+        java.util.function.Consumer<net.neoforged.neoforge.event.entity.player.AttackEntityEvent> claim = e -> e.setCanceled(true);
+        try {
+            look(p, z);
+            helper.assertTrue(HybridLeapAction.INSTANCE.trigger(p, z) == null, "the leap was refused");
+            NeoForge.EVENT_BUS.addListener(claim);
+            arriveAt(p, z);
+            helper.assertTrue(z.getHealth() == 20.0f && !z.hasEffect(MobEffects.WEAKNESS), "a claim that closed in the air did not stop the blow");
+        } finally {
+            NeoForge.EVENT_BUS.unregister(claim);
+            z.discard();
+            clean(p);
         }
         helper.succeed();
     }

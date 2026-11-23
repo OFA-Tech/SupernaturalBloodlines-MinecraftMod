@@ -27,7 +27,7 @@ class SkillDataTest {
             Map.entry("S-VAM-1", 1), Map.entry("S-VAM-2", 2), Map.entry("S-VAM-3", 2), Map.entry("S-VAM-4", 3), Map.entry("S-VAM-5", 3),
             Map.entry("S-VAM-6", 4), Map.entry("S-VAM-7", 4), Map.entry("S-VAM-8", 2), Map.entry("S-VAM-9", 2),
             Map.entry("S-ORI-1", 3), Map.entry("S-ORI-2", 1), Map.entry("S-ORI-3", 3), Map.entry("S-ORI-4", 4),
-            Map.entry("S-HYB-1", 2), Map.entry("S-HYB-2", 3), Map.entry("S-HYB-3", 3),
+            Map.entry("S-HYB-1", 2), Map.entry("S-HYB-2", 3), Map.entry("S-HYB-3", 1),
             Map.entry("S-WOL-1", 1), Map.entry("S-WOL-2", 2), Map.entry("S-WOL-3", 2), Map.entry("S-WOL-4", 2), Map.entry("S-WOL-5", 4),
             Map.entry("S-WOL-6", 3), Map.entry("S-WOL-7", 4),
             Map.entry("S-WIT-1", 2), Map.entry("S-WIT-2", 2), Map.entry("S-WIT-3", 2), Map.entry("S-WIT-4", 3), Map.entry("S-WIT-5", 3),
@@ -68,7 +68,7 @@ class SkillDataTest {
     // race -> SP total of its tree, as the spec states it
     private static final Map<SupernaturalRace, Integer> SP = Map.ofEntries(
             Map.entry(SupernaturalRace.HUMAN, 5), Map.entry(SupernaturalRace.VAMPIRE, 23), Map.entry(SupernaturalRace.ORIGINAL, 25),
-            Map.entry(SupernaturalRace.ORIGINAL_HYBRID, 29), Map.entry(SupernaturalRace.HYBRID, 26), Map.entry(SupernaturalRace.TRIBRID, 24),
+            Map.entry(SupernaturalRace.ORIGINAL_HYBRID, 27), Map.entry(SupernaturalRace.HYBRID, 24), Map.entry(SupernaturalRace.TRIBRID, 24),
             Map.entry(SupernaturalRace.WITCH, 20), Map.entry(SupernaturalRace.SIPHONER, 17), Map.entry(SupernaturalRace.HERETIC, 23),
             Map.entry(SupernaturalRace.HUNTER, 18), Map.entry(SupernaturalRace.WEREWOLF, 18), Map.entry(SupernaturalRace.AUGUSTINE, 25));
 

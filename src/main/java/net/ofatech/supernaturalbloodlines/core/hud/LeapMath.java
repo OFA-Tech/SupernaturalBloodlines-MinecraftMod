@@ -2,6 +2,11 @@ package net.ofatech.supernaturalbloodlines.core.hud;
 
 /** Hybrid Leap (R212): where the leap throws the player, how far it reaches, when it hits and what a landing costs. Pure. */
 public final class LeapMath {
+    /**
+     * The longest range the config may give (blocks): with vanilla's air drag and gravity the fastest leap carries about 18 blocks, so a longer range
+     * could be asked for but never land (the player would be told "go" and fall short). {@code LeapMathTest} flies every distance up to this.
+     */
+    public static final double MAX_RANGE = 16.0;
     /** The leap lands a blow within this many blocks of the target (centre to centre). */
     public static final double HIT_RADIUS = 2.5;
     /** The least upward push, so a leap always leaves the ground (a flat one would be eaten by friction). */

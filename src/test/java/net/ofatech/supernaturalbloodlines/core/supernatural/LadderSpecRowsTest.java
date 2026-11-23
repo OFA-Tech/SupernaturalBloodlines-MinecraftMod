@@ -76,7 +76,7 @@ class LadderSpecRowsTest {
             R L-ORI-5 5 100000
             T L-ORI-5a tensura_tier - 1
             T L-ORI-5b days_as original 60
-            R L-OHY-1 4 10000
+            R L-OHY-1 5 10000
             T L-OHY-1a.1 rite %S%rite_of_the_moon/target 1
             T L-OHY-1a.2 state moon_unbound 1
             T L-OHY-1b level %W% 4
@@ -92,7 +92,7 @@ class LadderSpecRowsTest {
             R L-OHY-5 5 100000
             T L-OHY-5a tensura_tier - 1
             T L-OHY-5b days_as original_hybrid 60
-            R L-HYB-1 2 5000
+            R L-HYB-1 3 5000
             T L-HYB-1a.1 rite %S%rite_of_the_moon/target 1
             T L-HYB-1a.2 state moon_unbound 1
             T L-HYB-1b level %W% 3

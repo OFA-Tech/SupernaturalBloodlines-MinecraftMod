@@ -46,11 +46,16 @@ public final class HybridLeapAction implements ExtraActions.Action {
     public static final String TOO_FAR = KEY + "too_far";
     public static final String COOLDOWN = KEY + "cooldown";
     public static final String CANNOT_ACT = KEY + "cannot_act";
+    /** The leaper's own reasons: they say nothing about the target, so they may be named. Downed or snapped keeps the vague {@link #CANNOT_ACT}. */
+    public static final String CANNOT_RIDING = KEY + "cannot_act.riding";
+    public static final String CANNOT_SWIMMING = KEY + "cannot_act.swimming";
+    public static final String CANNOT_AIR = KEY + "cannot_act.air";
+    public static final String CANNOT_BUSY = KEY + "cannot_act.busy";
     public static final String REFUSED = KEY + "refused";
     public static final String DONE = KEY + "done";
     private static final ResourceLocation ICON = ResourceLocation.fromNamespaceAndPath(SupernaturalBloodlines.MODID, "textures/gui/hud/hybrid_leap.png");
     /** The farthest a client may name a target from (the config range tops out here); the action says "too far" itself. */
-    public static final double MAX_REACH = 32.0;
+    public static final double MAX_REACH = LeapMath.MAX_RANGE;
 
     /** A leap in the air. */
     private static final class Flight {
@@ -154,10 +159,37 @@ public final class HybridLeapAction implements ExtraActions.Action {
         return trigger(p, null);
     }
 
-    /** The player cannot throw themselves: downed, snapped, riding, in a fluid, gliding, flying, asleep, or already in a flight. */
-    static boolean cannotLeap(ServerPlayer p) {
-        return Downed.cannotAct(p) || p.isSleeping() || p.isPassenger() || p.isFallFlying() || p.getAbilities().flying || p.isInWater() || p.isInLava()
-                || p.isEyeInFluid(FluidTags.WATER) || p.isEyeInFluid(FluidTags.LAVA) || inFlight(p);
+    /**
+     * Why the player cannot throw themselves, as the lang key to show, or null when they can: downed, snapped or asleep (the vague line), riding, in a fluid,
+     * already in a flight, or not standing on the ground (in the air, gliding, flying, spinning with a trident). The leap starts from the ground: a leap in
+     * mid-air would be a free way to stop a fall.
+     */
+    static String cannotLeapBecause(ServerPlayer p) {
+        return because(p, p.isPassenger());
+    }
+
+    /** For tests: the same, with riding given (a fake player cannot board a vehicle). */
+    public static String cannotLeapBecauseForTest(ServerPlayer p, boolean riding) {
+        return because(p, riding);
+    }
+
+    private static String because(ServerPlayer p, boolean riding) {
+        if (Downed.cannotAct(p) || p.isSleeping()) {
+            return CANNOT_ACT;
+        }
+        if (riding) {
+            return CANNOT_RIDING;
+        }
+        if (p.isInWater() || p.isInLava() || p.isEyeInFluid(FluidTags.WATER) || p.isEyeInFluid(FluidTags.LAVA)) {
+            return CANNOT_SWIMMING;
+        }
+        if (inFlight(p)) {
+            return CANNOT_BUSY;
+        }
+        if (!p.onGround() || p.isFallFlying() || p.getAbilities().flying || p.isAutoSpinAttack()) {
+            return CANNOT_AIR;
+        }
+        return null;
     }
 
     @Nullable
@@ -166,8 +198,9 @@ public final class HybridLeapAction implements ExtraActions.Action {
         if (target == null || !TargetChecks.inView(p, target)) {
             return Component.translatable(NO_TARGET);
         }
-        if (cannotLeap(p)) {
-            return Component.translatable(CANNOT_ACT);
+        String because = cannotLeapBecause(p);
+        if (because != null) {
+            return Component.translatable(because);
         }
         if (!ActionClock.ready(p, id())) {
             return Component.translatable(COOLDOWN);
@@ -187,7 +220,6 @@ public final class HybridLeapAction implements ExtraActions.Action {
         p.setDeltaMovement(v[0], v[1], v[2]);
         p.hurtMarked = true;
         p.hasImpulse = true;
-        p.fallDistance = 0.0F;
         FLIGHTS.put(p.getUUID(), new Flight(target));
         p.level().playSound(null, p.blockPosition(), SoundEvents.PLAYER_ATTACK_SWEEP, SoundSource.PLAYERS, 0.8f, 0.7f);
         p.displayClientMessage(Component.translatable(DONE, target.getDisplayName()), true);
@@ -226,7 +258,8 @@ public final class HybridLeapAction implements ExtraActions.Action {
 
     /** The blow: an ordinary attack, so PvP, claims, armour, shields and totems answer it; the Weakness only when it landed. */
     private static void land(ServerPlayer p, LivingEntity target) {
-        if (TargetChecks.untouchable(target) || TargetChecks.lyingDown(target)) {
+        // a claim or a duel that began while they were in the air answers here, as it would to a swing
+        if (TargetChecks.untouchable(target) || TargetChecks.lyingDown(target) || !TargetChecks.mayAttack(p, target)) {
             return;
         }
         float damage = (float) SpeciesConfig.hybridLeapDamage();
