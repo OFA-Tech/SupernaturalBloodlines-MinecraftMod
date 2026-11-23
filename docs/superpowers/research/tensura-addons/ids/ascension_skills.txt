@@ -1,0 +1,57 @@
+ascension:all_seeing_truth | 「Eye Beyond the Veil of Fate, Truth Seeker」 |  | Ultimate of Eye of Mind. Always-on perfect appraisal. Toggle: everything masters far faster, and you dodge a lot of hits outright. Modes: read a target, brief i
+ascension:angel_wings | Angel Wings | extra_skills | Toggle: glide like an elytra, without one.
+ascension:apocalypse_bird | 「Requiem of the Black Forest, Apocalypse Bird」 |  | Toggle: Twilight (darkness aura; everything within 30 blocks glows, weaker foes are blinded by Darkness, you see through all darkness and fog), Absolute Dominio
+ascension:big_bird | Big Bird | unique_skills | Toggle, All-Seeing Eyes: see every creature within 100 blocks outlined in yellow, even invisible ones. Guiding Lantern: 200 MP a second; everything within 20 bl
+ascension:blockade | Blockade |  | Press: stop your target healing for a while, shutting off their regeneration skills.
+ascension:blood_blade | Blood Blade | extra_skills | Press: fire a crimson blade. Costs HP instead of magicule.
+ascension:blood_curdle | Blood Curdle |  | Lift your target and curdle their blood, dealing damage over time and then a final burst. Mastery makes it stronger.
+ascension:blood_domination | Blood Domination | extra_skills | Toggle: your blood damage hits 3 times as hard (replaces Blood Manipulation). Press: send out a Blood Wave. Once mastered, with at least 800,000 Max EP, your bl
+ascension:blood_frenzy | Blood Frenzy | extra_skills | Toggle: hit harder and faster while your own HP bleeds away. Kills give HP back.
+ascension:blood_manipulation | Blood Manipulation | extra_skills | Toggle: your blood damage hits harder.
+ascension:blood_nullification | Blood Nullification | resistance_skills | Immune to blood damage.
+ascension:blood_resistance | Blood Resistance | resistance_skills | Takes less blood damage. Becomes Blood Nullification with use.
+ascension:blood_sovereign | 「Crimson Crown of the Eternal Night, Blood Sovereign」 |  | Ultimate of Deus Sanguis. Always strong, and far stronger at night. Toggle: melee causes heavy bleeding and heals you for everything you deal. Modes: a draining
+ascension:blood_tendril | Blood Tendril |  | A blood tendril bursts from the ground and strikes your target. Mastered: four tendrils surround them.
+ascension:blood_wave | Blood Wave |  | Send a wall of blood rolling forward. Hits everything in its lane once. Mastery makes it stronger, longer and wider.
+ascension:blood_zone | Blood Zone |  | Surround yourself with a sphere of blood. Enemies inside take blood damage and you heal from it. Mastery makes it stronger, bigger and longer.
+ascension:bubble_majin | Bubble Majin | unique_skills | Passive: faster magicule refill. Toggle: bounce projectiles back at whoever fired them. Modes: pocket storage, turn a much weaker mob into candy that passes on 
+ascension:deus_sanguis | Deus Sanguis |  | Toggle: far stronger at night, and your melee causes bleeding. Modes: a crippling bite, shrink down for flight at half HP, or drain the life out of everything n
+ascension:disintegration | Disintegration |  | The strongest holy magic. Look at a creature and cast: it is frozen inside a tower of rising seals until the column of light detonates. Uses 90% of your magicul
+ascension:dragon_slayer | Dragon Slayer | unique_skills | Toggle: dragons ignore you and your breath pierces resistances. Comes with the dragon breath and body skills. Eating dragon essence permanently raises your HP. 
+ascension:energy_charge | Energy Charge | battlewill | Hold: burn aura to refill magicule fast.
+ascension:evil_majin | 「Sweet Calamity of the Candied Abyss, Evil Majin」 |  | Ultimate of Bubble Majin. Toggle: heal to full and cleanse yourself on a timer, and bounce projectiles. Modes: pocket storage, candy every weaker thing around y
+ascension:eye_of_mind | Eye of Mind | unique_skills | Toggle: learn and master everything much faster. Modes: read the battlefield, steal a skill, cripple a target, or fire a draining black beam.
+ascension:god_of_fortune | 「Jackpot of the Thousand Fates, Fortune Gamer」 |  | Ultimate of Trash Gamer. Everything masters much faster. Toggle: no single hit can take more than a fifth of your HP. Modes: gamble damage on a target, roll ran
+ascension:great_mage | Great Mage | unique_skills | Toggle: learn and master everything far faster, and skip chant times. Modes: buy new magic with XP, copy magic off any spell circle, or bind a magic into a tome
+ascension:hell_passage | Hell Passage |  | Press: open a portal to Hell.
+ascension:hyperbolic_passage | Hyperbolic Passage |  | Press: open a portal to the Hyperbolic Chamber.
+ascension:image_training | Image Training | battlewill | Press: summon a training clone. It ignores every resistance, and beating it gives a little Max EP. Expensive, 15 minute cooldown.
+ascension:imprisoned_jester | Imprisoned Jester | unique_skills | Equipped: more damage and crit. Toggle: reflect part of the damage you take. Forces Chaos alignment. Modes: a soul-burning white breath, or blow yourself up to 
+ascension:intimidating_roar | Intimidating Roar | extra_skills | Press: terrify and weaken nearby enemies.
+ascension:judgement_bird | Judgement Bird | unique_skills | Toggle, Scales of Sin: analyze whatever you look at. Absolute Justice: your attacks treat nullifications as resistances, weaken resistances and inflict Guilt. F
+ascension:judgement_pulse | Judgement Pulse | extra_skills | Press: gather holy light for a moment, then fire a beam at the targeted creature that bursts around it.
+ascension:judgement_ray | Judgement Ray | extra_skills | Press: open an eye of light above the targeted creature. A ray slams down on that spot a moment later.
+ascension:king_of_curses | King of Curses | unique_skills | Toggle: hit harder and slowly heal, paying aura. Modes: a ranged slash, a slash ring around you, a huge flame blast, or a domain that shreds everything inside.
+ascension:light_beam | Light Beam | common_skills | Press: fire a thin beam of light at the targeted creature.
+ascension:magic_scribe | Magic Scribe |  | Press: write a random spell scroll.
+ascension:magicule_attunement | Magicule Attunement | extra_skills | Toggle: magicule refills faster.
+ascension:magicule_dominion | Magicule Dominion | extra_skills | Toggle: magicule refills dramatically faster. Upgrade of Magicule Resonance.
+ascension:magicule_nourishment | Magicule Nourishment | common_skills | Press: spend magicule to fill your hunger bar.
+ascension:magicule_resonance | Magicule Resonance | extra_skills | Toggle: magicule refills much faster. Upgrade of Magicule Attunement.
+ascension:magnetized_vacuum | Magnetized Vacuum | common_skills | Press: vacuum up nearby items and XP for a few seconds. Costs magicule.
+ascension:maximum_charge | Maximum Charge | battlewill | Hold: burn aura to refill magicule even faster. Upgrade of Energy Charge.
+ascension:one_who_seals | 「Warden of the Silent Vault, Sealing One」 |  | Ultimate of Sealer. Every kill permanently raises your spiritual HP. Modes: trap a weaker mob, bank EP, or steal a skill. Each one goes into a stone you keep.
+ascension:prickly_hands | Prickly Hands | common_skills | Toggle: your melee hits cause bleeding.
+ascension:punishing_bird | Punishing Bird | unique_skills | Toggle, Retribution: reflect 5% of all damage taken (10% mastered). Peck: dash 10 blocks, 20 damage (40 mastered), doubled if you were hurt in the last second. 
+ascension:purple_lightning | Purple Lightning | aspectual_magic | Press: call down corrupted lightning that pierces darkness immunity.
+ascension:ruler_of_death | 「Requiem of the Heian Era, Cursed King」 |  | Ultimate of King of Curses. Always Chaos-aligned. Toggle: more damage, and nearby enemies rot away on their own. Modes: the Domain of Death (a black dome reachi
+ascension:sealer | Sealer | unique_skills | Toggle: bonus spiritual HP. Modes: trap a weaker mob in a stone, bank some of your EP in a stone, or stack a permanent attack bonus.
+ascension:shadow_monarch | 「Sovereign of the Eternal Legion, Shadow Monarch」 |  | Awakened from Shadow Necromancer. Your whole Shadow Army comes with you, every flame turns purple, and your level has no cap. Arise raises every soul flame arou
+ascension:shadow_necromancer | Shadow Necromancer |  | What The System becomes at level 40. Creatures you kill leave a blue soul flame. Right-click one to absorb 5% of its Max EP, or use Arise on it for a chance to 
+ascension:sharpened_claws | Sharpened Claws | intrinsic_skills | Your bare hands hit as hard as a weapon.
+ascension:slayer_of_dragons | 「Scourge of the Wyrm Throne, Slayer of Dragons」 |  | Ultimate of Dragon Slayer. Toggle: dragons ignore you, your breath pierces resistance, eating dragon flesh permanently raises HP, and every dragon kill permanen
+ascension:the_system | The System |  | You have been chosen as a Player. Kills give System EXP, and every level gives stat points, a full heal and refill, and mastery. The Menu shows your status and 
+ascension:timeless_mage | 「Eternal Grimoire of the Frozen Hour, Timeless Mage」 |  | Ultimate of Great Mage. Knows every magic from the start and never chants. Toggle: everything masters far faster, perfect appraisal, magic ignores resistance, a
+ascension:toxic_skin | Toxic Skin | extra_skills | Toggle: anyone who melees you gets poisoned.
+ascension:trash_gamer | Trash Gamer |  | Equipped: everything masters faster. Modes: duplicate a held item, roll a random buff, or go Prodigy: nearly untouchable and hitting like a truck, then complete
+ascension:unbound_jester | 「Curtain Call of the Endless Carnival, Unbound Jester」 |  | Ultimate of Imprisoned Jester. Big damage and crit bonus. Toggle: reflect every kind of damage, and cheat death once in a while. Modes: a pulsing arena around y

@@ -1,0 +1,13 @@
+ASCENSION ULTIMATES (Unique -> Ultimate via Awakening Altar + Ultimate Catalyst; needs 5,000,000 Max EP, True Demon Lord or True Hero, mastered Unique, 2h cooldown; gamerule doAscensionUltimate)
+ascension:great_mage -> ascension:timeless_mage (needs all aspectual magics mastered)
+ascension:sealer -> ascension:one_who_seals (Suppression Stone holding 400k Max EP)
+ascension:dragon_slayer -> ascension:slayer_of_dragons (30 Dragon Essences)
+ascension:bubble_majin -> ascension:evil_majin (ate 50 Majin Candies)
+ascension:imprisoned_jester -> ascension:unbound_jester (1M spirit damage while shackled)
+ascension:deus_sanguis -> ascension:blood_sovereign  (VAMPIRE-FLAVOURED)
+ascension:eye_of_mind -> ascension:all_seeing_truth
+ascension:king_of_curses -> ascension:ruler_of_death
+ascension:trash_gamer -> ascension:god_of_fortune
+ascension:punishing_bird + judgement_bird + big_bird (all 3 mastered) -> ascension:apocalypse_bird
+ascension:shadow_necromancer -> ascension:shadow_monarch (The System, level 40 job)
+OTHER ULTIMATES: greatsage:raphael (tensura:great_sage + tensura:degenerate sacrificed; Max EP>=500000, MaxMagicule>=50000, True Hero/Demon Lord, all Sage growth-tree nodes), mysticism:embryo (tag tensura:ultimate_skills; acquisition unknown)

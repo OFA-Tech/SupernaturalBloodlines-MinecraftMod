@@ -1,0 +1,57 @@
+mysticism:bullet_punch | Bullet Punch | intrinsic_skills | You can only be fast, and go even faster. On the next attack, you speed up and deliver four quick attacks.
+mysticism:butcher | Butcher | unique_skills | Slice, dice, and feel your hunger. Your thirst for the hunt is unquenching, so grab a plate and have a taste.
+mysticism:captivator | Captivator | unique_skills | Your previous life, you were the brightest, shining star. Your ability to turn lies into truths… Perhaps it’s the other way around? Whatever it may be, your eye
+mysticism:clangorous_soul | Clangorous Soul | intrinsic_skills | Your soul, your beats. Your shell is hard, and makes wonderful noises when it is banged against. Maybe it can help you.
+mysticism:coalescence | Coalescence | unique_skills,virtue_skills | Freeze, stop and stagnate. Prevent hindering effects from applying to you and cause others to halt and solidify.
+mysticism:constant | Constant | unique_skills | Use magicules to force differing stats to remain the same. Become nigh invincible for a short period of time while 
+mysticism:corroder | Corroder | unique_skills | Apply powerful Corrosion to your physical attacks. Turn into Corrosion and sear your enemies. Deal massive armor-ignoring damage with a Corrosion slash.
+mysticism:corrosion_transform | Corrosion Transform | intrinsic_skills | Channel your inner corrosion to burn and bleed the flesh off your enemies.
+mysticism:crasher | Crasher | unique_skills | The essence of "deletion". Completely and utterly erase your foes from the plane of existence with the power of your sheer will alone.
+mysticism:cryogenic_cessation | Cryogenic Cessation | extra_skills,ice_skills | Command your absolute authority over Deceleration, allowing you to freeze all enemies with ice and spew superchilled ice. Additionally, freeze the surroundings 
+mysticism:cultivator | Cultivator | unique_skills | Embody the relentless pursuit of ascension, gathering and refining energy to reach unparalleled heights. A Cultivator walks the path of self-perfection and domi
+mysticism:darkness_domination | Darkness Domination | darkness_skills,elemental_domination,extra_skills | Boosts the power of Dark abilities by a large amount.
+mysticism:darkness_manipulation | Darkness Manipulation | darkness_skills,elemental_manipulation,extra_skills | Boosts the power of Dark abilities by a decent amount.
+mysticism:discharge | Discharge | intrinsic_skills | Strike a bolt of lightning using your inner bio-electricity generated from a sac within you. Can be used without thundering weather.
+mysticism:dissonance | Dissonance | intrinsic_skills | You are the calamity. You are the storm, and you are approaching. Strike lightning in all cardinal directions that deal massive Electricity Damage to all those 
+mysticism:dreamer | Dreamer | unique_skills | Dream a dream so grand it becomes a nightmare... Gain control over the forces of life and death, allowing you to cheat death and restore yourself back to a "sav
+mysticism:embryo | Embryo | ultimate_skills | 
+mysticism:engineer | Engineer |  | Tinkering and tinkering. No one understood the machines as much as you did. In fact, no one understood you either. Perhaps it was always meant to be.
+mysticism:exoskeleton | Exoskeleton | intrinsic_skills | The Insects of the other world all possess this tough Exoskeleton. It grows together with the user, and even allows them to wear armor on top of it.
+mysticism:gardener | Gardener | unique_skills | The crops, the wild, everything was there for you. You sow the seeds and wish only for a bountiful harvest. And in turn, the crops bless you.
+mysticism:gatekeeper | Gatekeeper | unique_skills | Wield the authority of kings and command treasures beyond mortal reach. Summon divine armaments from the vault, binding foes in chains of judgment while asserti
+mysticism:gravitational_void | Gravitational Void |  | A black hole sucking everything into a singularity
+mysticism:gravity_flux | Gravity Flux | extra_skills | Utilise the power of gravity to disrupt the target's movement and hamper their ability to move.
+mysticism:hell_hall | Hell Hall | intrinsic_skills | Rupture the floor, raising your natural body temperature to liquefy all surfaces around you to molten levels.
+mysticism:hidden_ruler | Hidden Ruler | unique_skills | Inspire your allies. Conscript allies in the dark. Copy abilities from your foes and Paste them onto allies.
+mysticism:ice_domination | Ice Domination | elemental_domination,extra_skills,ice_skills | Boosts the power of ice abilities by a large amount.
+mysticism:ice_manipulation | Ice Manipulation | elemental_manipulation,extra_skills,ice_skills | Boosts the power of ice abilities by a decent amount.
+mysticism:jinchuriki | Jinchuriki | unique_skills | That voice... It's familiar, yet something so distant. Another side of you, perhaps. But it's something that can be controlled. Provided you have the right tena
+mysticism:kyurem | Kyurem | unique_skills | A husk of what you formally were. The leftovers, discarded without a second thought when the split happened. Coldness seeps through your skin as you freeze ever
+mysticism:lethal_poison | Lethal Poison | intrinsic_skills | As the King of Scorpions, your poison is highly dangerous. An upgrade to the Poison skill. Can only be used by King Scorpions and their evolutionary line.
+mysticism:light_domination | Light Domination | elemental_domination,extra_skills,light_skills | Boosts the power of Light abilities by a large amount.
+mysticism:light_manipulation | Light Manipulation | elemental_manipulation,extra_skills,light_skills | Boosts the power of light abilities by a decent amount.
+mysticism:lightning_mode | Lightning Mode | intrinsic_skills | Burst forth with an incredible speed boost, gaining doubled EP temporarily on top of higher damage. Beware of the terrible drawbacks.
+mysticism:magisteel_body | Magisteel Body | intrinsic_skills,no_plundering | Have a body made of magisteel, making it much harder and gaining progressively stronger armor depending on your EP.
+mysticism:malleable | Malleable | unique_skills | Malleable like clay, the tides of fate are yours to mold to your desire. Your body seems to work like the metal of a forge, hardening and relaxing under pressur
+mysticism:melancholy | Melancholy | sin_skills,unique_skills | Summon an aura of sorrow that slows and weakens nearby enemies, filling them with despair. The skill also throws objects or air, amplifying the feeling of hopel
+mysticism:mithril_strength | Mithril Strength | extra_skills | Turn your muscles as hard as Mithril and gain an increase in damage, toggleable when mastered.
+mysticism:output_percentage | Current Percentage: %s%% |  | 
+mysticism:paralysis_transform | Paralysis Transform | intrinsic_skills | Channel your inner paralysis to emit paralysing enzymes that make your target go numb just from your presence.
+mysticism:phaser | Phaser | unique_skills | Your eyes shift. They become able to see things you normally weren't able to see before... And you become able to do things you weren't able to do before.
+mysticism:poison_transform | Poison Transform | intrinsic_skills | Channel your inner poison to inject deadly venom's into your target through their every pore.
+mysticism:profaned_prominence | Profaned Prominence | extra_skills | Command your absolute authority over Acceleration, allowing you to inflict all enemies with fire and spew superheated flames. Additionally, melt the surrounding
+mysticism:provider | Provider | unique_skills,virtue_skills | The more you give away, the more you feel closer to yourself. Perhaps it even strengthens you along the way.
+mysticism:reducer | Reducer | unique_skills,virtue_skills | Manipulate and wield the power of energy itself, being able to channel the power of the holy element into super strong attacks.
+mysticism:relapse | Relapse | intrinsic_skills | Collapse back into whence you came. Your memory is fleeting and the people you once knew start to forget you as well. Relapse and claim what belongs to you.
+mysticism:repeater | Repeater | unique_skills | Through the lens, you trap light. You do something special, and you feel like you’ve already done it in millions of realities. Like the things you’ve done and l
+mysticism:reshiram | Reshiram | unique_skills | You seek to build a world of truths. Are you prepared to scorch and burn everything in your path to make the truthful world you seek so badly?
+mysticism:restricted | Restricted | unique_skills | You were cursed from birth. Your raw, unfiltered potential, blocked by a curse gifted by the heavens. Your skill... It's stopping you from learning other skills
+mysticism:scholar | Scholar | unique_skills | Learn and master skills quicker. Study your targets when they attack. Learn enchantments and apply them to weaponry.
+mysticism:schrodinger | Schrödinger | unique_skills | Is it alive, or is it dead? The only way to find out is to open the box. But since it's a cat, maybe it'll grant you some of its properties.
+mysticism:spark | Spark | intrinsic_skills | Light your weapon and fists aflame, igniting your next target on fire for a short period of time.
+mysticism:spiritualist | Spiritualist | unique_skills | The souls of the world flock to you, the one who can both see and commune with the dead. Through your knowledge of the occult, harvest souls and use them to emp
+mysticism:stagnator | Stagnator | unique_skills | Cease all change. The times call for it. Prevent targets from moving or regenerating, and stop all things from harming you.
+mysticism:subjugator | Subjugator | unique_skills,virtue_skills | You've always been a powerful manipulator. Capable of bringing anyone and anything under your control. ...But, something is strange...
+mysticism:tenacity | Tenacity | intrinsic_skills,restricted_learnable | Become tenacious and repair your body. Since magic and mana itself has rejected you, utilise your pure aura alone.
+mysticism:victorious_harbinger | Victorious Harbinger | unique_skills | You are the forerunner of victory, your presence declares near fated victory, shatter the morale of your enemies and have no doubt in your abilities.
+mysticism:zekrom | Zekrom | unique_skills | You seek to build a world of ideals. Be warned as not everyone shares the same ideals. Raze anything in your path with a clap of lightning.

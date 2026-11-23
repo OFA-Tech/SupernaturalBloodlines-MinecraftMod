@@ -1,0 +1,22 @@
+tensura_kumodesu:arachne | Arachne
+tensura_kumodesu:arch_taratect | Arch Taratect
+tensura_kumodesu:ede_saine | Ede Saine
+tensura_kumodesu:great_poison_taratect | Great Poison Taratect
+tensura_kumodesu:great_taratect | Great Taratect
+tensura_kumodesu:greater_taratect | Greater Taratect
+tensura_kumodesu:high_ogre | High Ogre
+tensura_kumodesu:lesser_poison_taratect | Lesser Poison Taratect
+tensura_kumodesu:lesser_taratect | Lesser Taratect
+tensura_kumodesu:ogre_general | Ogre General
+tensura_kumodesu:ogre_king | Ogre King
+tensura_kumodesu:ogre_shaman | Ogre Shaman
+tensura_kumodesu:orthocadinaht | Orthocadinaht
+tensura_kumodesu:poison_taratect | Poison Taratect
+tensura_kumodesu:queen_taratect | Queen Taratect
+tensura_kumodesu:small_lesser_taratect | Small Lesser Taratect
+tensura_kumodesu:small_poison_taratect | Small Poison Taratect
+tensura_kumodesu:small_taratect | Small Taratect
+tensura_kumodesu:taratect | Taratect
+tensura_kumodesu:wrath_oni | Wrath Oni
+tensura_kumodesu:zana_horowa | Zana Horowa
+tensura_kumodesu:zoa_ele | Zoa Ele
