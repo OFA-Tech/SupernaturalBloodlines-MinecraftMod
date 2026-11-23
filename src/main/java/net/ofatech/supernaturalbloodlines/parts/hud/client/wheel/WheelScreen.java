@@ -37,6 +37,7 @@ import net.ofatech.supernaturalbloodlines.core.wheel.WheelPanelText;
 import net.ofatech.supernaturalbloodlines.core.wheel.WheelRules;
 import net.ofatech.supernaturalbloodlines.parts.hud.client.HudClientConfig;
 import net.ofatech.supernaturalbloodlines.parts.hud.client.HudKeys;
+import net.ofatech.supernaturalbloodlines.parts.hud.client.wheel.infinity.InfinityCompat;
 import net.ofatech.supernaturalbloodlines.parts.hud.net.WheelEntry;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.Radial.Dir;
 import net.ofatech.supernaturalbloodlines.shared.hud.ClientIcons;
@@ -325,7 +326,7 @@ public final class WheelScreen extends Screen {
             minecraft.getNarrator().sayNow(Component.literal(WheelRenderer.reason(e.state().lock())));
             return false;
         }
-        boolean started = WheelActions.use(e, modeOf(e));
+        boolean started = WheelActions.use(e, modeOf(e), secondOption);
         if (started && HoldPlan.releaseAtOnce(e.kind(), trigger)) {
             WheelActions.release(); // nothing to hold it with: a G that was let go of, a tap
         } else if (started && HoldPlan.heldUntilInputUp(e.kind(), trigger)) {
@@ -344,6 +345,8 @@ public final class WheelScreen extends Screen {
     }
 
     private int lastKey = -1;
+    /** Shift + left click: the second option of a power that has one. Set only while that one click is being handled. */
+    private boolean secondOption;
 
     private void feed(Input in, boolean overPower) {
         GestureMachine.Step s = machine.step(in, Util.getMillis(), HudClientConfig.wheelTapMs(), overPower);
@@ -555,7 +558,9 @@ public final class WheelScreen extends Screen {
         switch (ClickPlan.of(button, hasAltDown(), hasShiftDown())) {
             case USE, USE_SECOND_OPTION -> {
                 cursor.mouseMoved(h);
+                secondOption = hasShiftDown();
                 feed(Input.CLICK_LEFT, true);
+                secondOption = false;
             }
             case SLOT_PICKER -> {
                 pickerRef = e.ref();
@@ -590,8 +595,11 @@ public final class WheelScreen extends Screen {
         Hit h = layout.hit((int) mx, (int) my).orElse(null);
         WheelEntry e = entryAt(h);
         boolean outer = h == null ? isOnOuterBand((int) mx, (int) my) : h.ring() == Ring.OUTER;
-        var target = new ClickPlan.ScrollTarget(outer, e != null, false, e != null && e.modeNames().size() > 1, layout.pageCount() > 1);
+        var target = new ClickPlan.ScrollTarget(outer, e != null, e != null && InfinityCompat.owns(e) && InfinityCompat.hasLevels(e), e != null && e.modeNames().size() > 1,
+                layout.pageCount() > 1);
         switch (ClickPlan.scroll(sy, hasAltDown(), target)) {
+            case LEVEL_UP -> WheelActions.changeLevel(e, 1);
+            case LEVEL_DOWN -> WheelActions.changeLevel(e, -1);
             case PAGE_NEXT -> {
                 page(1);
                 mouseMoved((int) mx, (int) my);

@@ -4,6 +4,8 @@ Things that **don't work the way you may expect**, or are **not finished or not 
 
 ## Not possible
 
+- **Infinity Stones: turning off `soul.regen` clears every effect.** The Reality/Soul power `soul.regen` ends with `effect clear @s`, which also removes Vampirism's and Werewolves' rage, our buffs and any potion the player had. It is Infinity Stones' own power: our no-stacking rule cannot prevent it and the wheel shows no warning. A bug report for his mod is in `docs/superpowers/research/infinity-soul-regen-bug-report.md`; we do not change his mod.
+
 - **Switching the species part off and on again keeps every rite known.** With the `species` part off, every learnable rite counts as known (nothing could teach them), and turning the part back on does not take that away: knowledge is only ever added. `/bloodline rites forget <player> all` puts a player back to what their kind, their lore and their performed rites give.
 
 - **The rites are sealed in the book, not hidden from the files.** Every rite's name and text is in the mod's client files (the same jar every client has), so a player who unpacks it can read the rite entries and circles. The lock is for play, not secrecy. Lore items (grimoires, Torn Pages) can be handed from one player to another, and JEI lists Enchanted's rites as Enchanted does; both are left alone.

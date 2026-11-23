@@ -22,6 +22,10 @@ public final class CoveredKeyIds {
             "key.infinity.wheel", "key.infinity.soul_control",
             "tensura.keybinding.race_ability");
 
+    /** Infinity's possession key; see {@link #all(boolean, boolean, boolean)}. */
+    public static final String SOUL_CONTROL_KEY = "key.infinity.soul_control";
+    public static final String INFINITY_WHEEL_KEY = "key.infinity.wheel";
+
     private CoveredKeyIds() {
     }
 
@@ -39,6 +43,16 @@ public final class CoveredKeyIds {
      *                   key must work again, so it is left out of the list and {@code CoverRun} restores a recorded bind of an id no longer listed.
      */
     public static List<String> all(boolean sprintLeap, boolean wheelReady) {
+        return all(sprintLeap, wheelReady, true, true);
+    }
+
+    /**
+     * @param infinityWheel Infinity's own wheel key is covered only while the compat shows the stones on our wheel: with the compat off (the setting, his mod changed) his wheel
+     *                      is the only way to use a stone, so its key must work
+     * @param soulControl   Infinity's soul-control key is covered only when its wheel entry can do the job (the compat works and reaches his soul classes): with a key covered
+     *                      and no entry a player who is possessing something could not release it
+     */
+    public static List<String> all(boolean sprintLeap, boolean wheelReady, boolean infinityWheel, boolean soulControl) {
         List<String> ids = new ArrayList<>();
         for (int i = 1; i <= 3; i++) {
             ids.add("tensura.keybinding.ability.slot_" + i);
@@ -57,6 +71,12 @@ public final class CoveredKeyIds {
         }
         if (wheelReady) {
             ids.addAll(WHEEL_IDS);
+            if (!infinityWheel) {
+                ids.remove(INFINITY_WHEEL_KEY);
+            }
+            if (!soulControl) {
+                ids.remove(SOUL_CONTROL_KEY);
+            }
         }
         return List.copyOf(ids);
     }

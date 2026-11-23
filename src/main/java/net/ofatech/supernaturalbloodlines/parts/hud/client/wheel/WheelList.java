@@ -5,6 +5,7 @@ import java.util.List;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.neoforged.fml.ModList;
+import net.ofatech.supernaturalbloodlines.parts.hud.client.wheel.infinity.InfinityCompat;
 import net.ofatech.supernaturalbloodlines.core.wheel.PowerSource;
 import net.ofatech.supernaturalbloodlines.core.wheel.ReplacedPowers;
 import net.ofatech.supernaturalbloodlines.parts.hud.client.HudClientConfig;
@@ -50,7 +51,7 @@ public final class WheelList {
             leapSeen = leap;
             List<WheelEntry> out = new ArrayList<>();
             for (WheelEntry e : raw) {
-                if (!ReplacedPowers.hidden(e.ref(), leap)) {
+                if (!ReplacedPowers.hidden(e.ref(), leap) && !InfinityCompat.hidesTensura(e.ref().id().getNamespace())) {
                     out.add(e);
                 }
             }
@@ -59,10 +60,12 @@ public final class WheelList {
         builtAt = now;
         LocalPlayer p = mc.player;
         List<WheelEntry> gs = p == null ? List.of() : GreatSageProvider.entries(p);
-        if (gs.isEmpty()) {
+        List<WheelEntry> stones = InfinityCompat.entries();
+        if (gs.isEmpty() && stones.isEmpty()) {
             cached = kept;
         } else {
             List<WheelEntry> all = new ArrayList<>(kept);
+            all.addAll(stones);
             all.addAll(gs);
             cached = all;
         }

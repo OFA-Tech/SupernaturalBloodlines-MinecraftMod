@@ -402,12 +402,14 @@ final class WheelRenderer {
             Cell a = f.layout().modeListAnchor(c.index());
             UiKit.draw(g, f.kit(), Part.TOOLTIP, a.x(), a.y(), a.w(), a.h());
             int ink = UiKit.labelOver(f.kit(), Part.TOOLTIP, f.pal().hintInk());
-            for (int i = 0; i < Math.min(3, e.modeNames().size()); i++) {
+            // a power with many modes (a stone has up to a few dozen) shows the three round the current one
+            int first = Math.max(0, Math.min(e.state().mode() - 1, e.modeNames().size() - 3));
+            for (int i = first; i < Math.min(first + 3, e.modeNames().size()); i++) {
                 boolean current = i == e.state().mode();
                 if (current) {
-                    UiKit.shared(g, KitSprites.MODE_MARK, a.x() + 5, a.y() + 7 + i * 12, 7, 7, 1f);
+                    UiKit.shared(g, KitSprites.MODE_MARK, a.x() + 5, a.y() + 7 + (i - first) * 12, 7, 7, 1f);
                 }
-                g.drawString(font, cut(font, WheelStrings.of(e.modeNames().get(i)), a.w() - 20), a.x() + 15, a.y() + 6 + i * 12, ink, false);
+                g.drawString(font, cut(font, WheelStrings.of(e.modeNames().get(i)), a.w() - 20), a.x() + 15, a.y() + 6 + (i - first) * 12, ink, false);
             }
         }
     }
