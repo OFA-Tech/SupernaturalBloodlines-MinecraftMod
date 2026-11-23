@@ -80,9 +80,11 @@ def tr(keys, t):
 
 # ------------------------------------------------------------------ the match pose (shift_in's first frame, shift_out's last)
 # The wolf reared on folded haunches inside the man's outline: root 0.75, spine 60 degrees up, the nape the highest point, the muzzle thrown back.
-M_SCALE, M_PITCH, M_HIP = 0.75, -60.0, (6.0, 10.5)
+# It stands where the man stood: the root is 4.6 px forward (0.3 blocks is the most the contract allows) and the stance carries the other 2.9, so the
+# hips are over z = 3 and both hind feet are well forward of their rest spots. They step back to them, one after the other, while the body falls.
+M_SCALE, M_PITCH, M_HIP, M_ROOT_Z = 0.75, -60.0, (6.0, 3.0), -4.6
 M_HOOK = {'fl': (-7.6, -4.2), 'fr': (-4.6, -7.2)}                    # paw joint from the shoulder (down, forward) in world px: his right is the higher claw
-M_HIND = {'hl': -5.0, 'hr': 0.0}                                     # the left hind foot stands a short step forward, as the man's left leg does
+M_HIND = {'hl': -12.5, 'hr': -7.5}                                   # world px from the rest spots; the left is a short step ahead, as the man's left leg is
 M = {'neck': (57.0, -2.0, 0.0), 'head': (-26.0, -4.0, -3.0), 'jaw': (20.0, 0.0, 0.0), 'ear_l': (-30.0, 0.0, 0.0), 'ear_r': (-26.0, 0.0, -4.0),
      'tail1': (76.0, 6.0, 0.0), 'tail2': (34.0, 8.0, 0.0), 'tail3': (16.0, 10.0, 0.0), 'chest_ruff': (-14.0, 0.0, 0.0)}
 M_RUFF = 0.5                                                         # the neck ruff half flat: fully bristled it made the first frame 11.64 px wide
@@ -91,21 +93,26 @@ M_RUFF = 0.5                                                         # the neck 
 M_BODY_TWIST = (0.0, 0.0)
 
 
-def shoulder_world(s, bp, hip):
-    """Where the shoulder is, in world px, for a root scale, a body pitch and a hip (world)."""
-    hm = (hip[0] / s, PIVOT_Z + (hip[1] - PIVOT_Z) / s)
+def to_model(s, rz, wz):
+    """A world z as the model has it under a root scaled s about its pivot and moved rz."""
+    return PIVOT_Z + (wz - rz - PIVOT_Z) / s
+
+
+def shoulder_world(s, bp, hip, rz=0.0):
+    """Where the shoulder is, in world px, for a root scale, a body pitch, a hip (world) and a root offset."""
+    hm = (hip[0] / s, to_model(s, rz, hip[1]))
     d = R((FORE[0][0] - HIND[0][0], FORE[0][1] - HIND[0][1]), bp)
-    return (s * (hm[0] + d[0]), PIVOT_Z + s * (hm[1] + d[1] - PIVOT_Z))
+    return (s * (hm[0] + d[0]), PIVOT_Z + s * (hm[1] + d[1] - PIVOT_Z) + rz)
 
 
 def solve(st):
     """One sampled state -> {bone: {channel: vector}} for root, body and the twelve leg bones."""
-    s, bp, hip = st['s'], st['bp'], st['hip']
-    hm = (hip[0] / s, PIVOT_Z + (hip[1] - PIVOT_Z) / s)
+    s, bp, hip, rz = st['s'], st['bp'], st['hip'], st.get('root_z', 0.0)
+    hm = (hip[0] / s, to_model(s, rz, hip[1]))
     top = R((HIND[0][0] - B[0], HIND[0][1] - B[1]), bp)
     by, bz = hm[0] - B[0] - top[0], hm[1] - B[1] - top[1]
-    out = {'root': {'scale': (s, s, s)}, 'body': {'rotation': (bp, st.get('yaw', 0.0), st.get('roll', 0.0)), 'position': (0.0, by, bz)}}
-    sh = shoulder_world(s, bp, hip)
+    out = {'root': {'scale': (s, s, s), 'position': (0.0, 0.0, rz)}, 'body': {'rotation': (bp, st.get('yaw', 0.0), st.get('roll', 0.0)), 'position': (0.0, by, bz)}}
+    sh = shoulder_world(s, bp, hip, rz)
     for name in ('fl', 'fr', 'hl', 'hr'):
         ch = FORE if name[0] == 'f' else HIND
         leg = st['legs'][name]
@@ -113,10 +120,10 @@ def solve(st):
             u, hook = leg['u'], leg['hook']
             wy = (sh[0] + hook[0]) * (1 - u) + ch[2][0] * u
             wz = (sh[1] + hook[1]) * (1 - u) + ch[2][1] * u
-            my, mz = wy / s, PIVOT_Z + (wz - PIVOT_Z) / s
+            my, mz = wy / s, to_model(s, rz, wz)
         else:                                                        # a planted or stepping paw: lift is world px above the ground, z a world offset
             my = ch[2][0] + leg.get('lift', 0.0) / s
-            mz = PIVOT_Z + (ch[2][1] + leg.get('z', 0.0) - PIVOT_Z) / s
+            mz = to_model(s, rz, ch[2][1] + leg.get('z', 0.0))
         bones, rs = ik(name, my - ch[2][0], mz - ch[2][1], bp, by, bz, leg.get('paw', 0.0))
         for b, r in zip(bones, rs):
             out[b] = {'rotation': (r, 0.0, 0.0)}
@@ -140,9 +147,11 @@ def shift_in(t):
         # (the fall starts at 0.06 and is 20 degrees along by 0.30: on a square from 0.14 it sat on its haunches until 0.3 and only grew, and on a
         # nearly straight u^1.2 from 0.10 it turned at one speed all the way down)
         'bp': tr([(0, M_PITCH, 'lin'), (0.06, -62.0, 'io'), (0.60, 1.0, 'in15'), (0.68, 8.5, 'out3'), (0.80, 2.0, 'io'), (0.90, 2.8, 'io'), (1, 0.0, 'io')], t),
-        'hip': tr([(0, M_HIP, 'lin'), (0.12, (6.0, 10.9), 'out'), (0.60, (20.2, 11.0), 'in15'), (0.74, (18.7, 11.4), 'out'), (0.88, (20.15, 11.0), 'io'),
+        'root_z': tr([(0, M_ROOT_Z, 'lin'), (0.50, 0.0, 'io')], t),
+        'hip': tr([(0, M_HIP, 'lin'), (0.12, (6.0, 3.4), 'out'), (0.60, (20.2, 11.0), 'in15'), (0.74, (18.7, 11.4), 'out'), (0.88, (20.15, 11.0), 'io'),
                    (1, (20.0, 11.0), 'io')], t),
-        'yaw': tr([(0, M_BODY_TWIST[0], 'lin'), (0.18, 2.0, 'io'), (0.55, 0.0, 'io')], t),
+        # ticks 20 to 24 were close to a held pose: a shudder through the shoulders, the hackles jumping, and the left hind foot already stepping
+        'yaw': tr([(0, M_BODY_TWIST[0], 'lin'), (0.05, 4.0, 'out'), (0.12, -3.0, 'io'), (0.22, 1.5, 'io'), (0.50, 0.0, 'io')], t),
         'roll': 0.0,
     }
     grow = st['s'] / M_SCALE
@@ -152,9 +161,10 @@ def shift_in(t):
                'paw': tr([(0, 52.0, 'lin'), (0.16, 18.0, 'out'), (0.45, -14.0, 'io'), (0.60, 0.0, 'in')], t)},
         'fr': {'u': tr([(0.20, 0.0, 'lin'), (0.65, 1.0, 'in')], t), 'hook': (M_HOOK['fr'][0] * grow + 2.5 * flare, M_HOOK['fr'][1] * grow - 4.0 * flare),
                'paw': tr([(0, 40.0, 'lin'), (0.18, 6.0, 'out'), (0.5, -16.0, 'io'), (0.65, 0.0, 'in')], t)},
-        'hl': {'z': tr([(0.26, M_HIND['hl'], 'lin'), (0.42, 0.0, 'io')], t), 'lift': tr([(0.26, 0.0, 'lin'), (0.33, 1.8, 'out'), (0.42, 0.0, 'in')], t),
-               'paw': tr([(0.26, 0.0, 'lin'), (0.33, 9.0, 'out'), (0.42, 0.0, 'in')], t)},
-        'hr': {'z': M_HIND['hr']},
+        'hl': {'z': tr([(0.10, M_HIND['hl'], 'lin'), (0.32, 0.0, 'io')], t), 'lift': tr([(0.10, 0.0, 'lin'), (0.20, 2.4, 'out'), (0.32, 0.0, 'in')], t),
+               'paw': tr([(0.10, 0.0, 'lin'), (0.20, 11.0, 'out'), (0.32, 0.0, 'in')], t)},
+        'hr': {'z': tr([(0.32, M_HIND['hr'], 'lin'), (0.50, 0.0, 'io')], t), 'lift': tr([(0.32, 0.0, 'lin'), (0.40, 1.8, 'out'), (0.50, 0.0, 'in')], t),
+               'paw': tr([(0.32, 0.0, 'lin'), (0.40, 8.0, 'out'), (0.50, 0.0, 'in')], t)},
     }
     out = solve(st)
     I = IDLE0
@@ -187,7 +197,7 @@ def shift_in(t):
     }
     for b, keys in rot.items():
         out[b] = {'rotation': tr(keys, t)}
-    out.update(bristle(tr([(0, 1.0, 'lin'), (0.18, 1.2, 'out'), (0.56, 0.85, 'io'), (0.66, 1.3, 'out3'), (0.86, 0.45, 'io'), (1, IDLE0_BRISTLE, 'io')], t)))
+    out.update(bristle(tr([(0, 1.0, 'lin'), (0.07, 1.45, 'out'), (0.18, 1.1, 'io'), (0.56, 0.85, 'io'), (0.66, 1.3, 'out3'), (0.86, 0.45, 'io'), (1, IDLE0_BRISTLE, 'io')], t)))
     out['ruff']['scale'] = bristle(tr([(0, M_RUFF, 'lin'), (0.56, 0.6, 'io'), (0.66, 1.25, 'out3'), (1, 0.0, 'io')], t))['ruff']['scale']
     return out
 
@@ -202,7 +212,9 @@ def shift_out(t):
         'bp': tr([(0, 0.0, 'lin'), (0.22, 5.0, 'io'), (0.34, -17.0, 'in'), (0.64, -63.0, 'out'), (1, M_PITCH, 'io')], t),
         # (the hips are down to 11 by 0.40: at 13.5 there the ear tips stood 41.8 px high, 3.7 px more than shift_in at the same pitch)
         'hip': tr([(0, (20.0, 11.0), 'lin'), (0.22, (17.0, 12.8), 'io'), (0.40, (11.0, 11.8), 'io'), (0.66, (8.0, 10.7), 'io'), (1, M_HIP, 'io')], t),
-        'yaw': tr([(0.40, 0.0, 'lin'), (0.70, 2.5, 'io'), (1, M_BODY_TWIST[0], 'io')], t),
+        # the last third was a held pose that shrank: now it walks its hind feet under itself to the man's spot, the right then the left, and shudders
+        'root_z': tr([(0.50, 0.0, 'lin'), (1, M_ROOT_Z, 'io')], t),
+        'yaw': tr([(0.40, 0.0, 'lin'), (0.70, 2.5, 'io'), (0.84, -3.5, 'io'), (0.93, 2.0, 'io'), (1, M_BODY_TWIST[0], 'io')], t),
         'roll': 0.0,
     }
     grow = st['s'] / M_SCALE
@@ -212,9 +224,10 @@ def shift_out(t):
                'paw': tr([(0.25, 0.0, 'lin'), (0.30, 3.0, 'in'), (0.42, 34.0, 'out'), (0.72, 20.0, 'io'), (1, 40.0, 'io')], t)},
         'fl': {'u': tr([(0.30, 1.0, 'lin'), (0.80, 0.0, 'out3')], t), 'hook': (M_HOOK['fl'][0] * grow, M_HOOK['fl'][1] * grow),
                'paw': tr([(0.30, 0.0, 'lin'), (0.35, 3.0, 'in'), (0.47, 38.0, 'out'), (0.80, 30.0, 'io'), (1, 52.0, 'io')], t)},
-        'hl': {'z': tr([(0.56, 0.0, 'lin'), (0.72, M_HIND['hl'], 'io')], t), 'lift': tr([(0.56, 0.0, 'lin'), (0.63, 1.6, 'out'), (0.72, 0.0, 'in')], t),
-               'paw': tr([(0.56, 0.0, 'lin'), (0.63, 8.0, 'out'), (0.72, 0.0, 'in')], t)},
-        'hr': {'z': M_HIND['hr']},
+        'hr': {'z': tr([(0.56, 0.0, 'lin'), (0.74, M_HIND['hr'], 'io')], t), 'lift': tr([(0.56, 0.0, 'lin'), (0.64, 1.8, 'out'), (0.74, 0.0, 'in')], t),
+               'paw': tr([(0.56, 0.0, 'lin'), (0.64, 8.0, 'out'), (0.74, 0.0, 'in')], t)},
+        'hl': {'z': tr([(0.72, 0.0, 'lin'), (0.92, M_HIND['hl'], 'io')], t), 'lift': tr([(0.72, 0.0, 'lin'), (0.81, 2.4, 'out'), (0.92, 0.0, 'in')], t),
+               'paw': tr([(0.72, 0.0, 'lin'), (0.81, 11.0, 'out'), (0.92, 0.0, 'in')], t)},
     }
     out = solve(st)
     I = IDLE0
@@ -236,7 +249,7 @@ def shift_out(t):
     }
     for b, keys in rot.items():
         out[b] = {'rotation': tr(keys, t)}
-    out.update(bristle(tr([(0, IDLE0_BRISTLE, 'lin'), (0.22, 0.0, 'io'), (0.60, 1.25, 'out'), (1, 1.0, 'io')], t)))
+    out.update(bristle(tr([(0, IDLE0_BRISTLE, 'lin'), (0.22, 0.0, 'io'), (0.60, 1.25, 'out'), (0.82, 0.85, 'io'), (0.92, 1.4, 'out'), (1, 1.0, 'io')], t)))
     out['ruff']['scale'] = bristle(tr([(0, 0.0, 'lin'), (0.30, 0.0, 'lin'), (0.66, 0.9, 'out'), (1, M_RUFF, 'io')], t))['ruff']['scale']
     return out
 
