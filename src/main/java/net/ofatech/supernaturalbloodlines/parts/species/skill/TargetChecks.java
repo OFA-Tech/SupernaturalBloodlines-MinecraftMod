@@ -24,9 +24,9 @@ import net.ofatech.supernaturalbloodlines.parts.species.pack.PackIndex;
  * never says what the target is: a creative or spectating player, a player under respawn protection, a target already down (or still in the grace after a snap),
  * a claim or PvP rule, a duel, a pack-mate or an allied pack.
  */
-final class TargetChecks {
+public final class TargetChecks {
     /** The tiny amount a claim or PvP mod is asked about; nothing of it is ever dealt. */
-    static final float PROBE = 0.01F;
+    public static final float PROBE = 0.01F;
     /** How far (blocks) outside the target's box the crosshair may be: lag, and a creature that moved a little. */
     static final double AIM_SLACK = 0.4;
 
@@ -46,7 +46,7 @@ final class TargetChecks {
     }
 
     /** Creative and spectating players are never a target, nor is a player under respawn protection (nothing would land, which would tell an Original from anyone else). */
-    static boolean untouchable(LivingEntity target) {
+    public static boolean untouchable(LivingEntity target) {
         if (target instanceof Player p && (p.isCreative() || p.isSpectator())) {
             return true;
         }
@@ -65,7 +65,7 @@ final class TargetChecks {
      * {@link #AIM_SLACK}. The client names the target, the server checks the crosshair really was on it, so a target behind the user, or off to the side,
      * is no target; a big creature seen from close up and a small one far away are judged by the box they really fill.
      */
-    static boolean inView(ServerPlayer user, LivingEntity target) {
+    public static boolean inView(ServerPlayer user, LivingEntity target) {
         Vec3 eye = user.getEyePosition();
         double reach = Math.sqrt(target.distanceToSqr(eye)) + 1.0;
         Vec3 end = eye.add(user.getLookAngle().scale(reach));
@@ -94,7 +94,7 @@ final class TargetChecks {
     }
 
     /** Whether Vampirism's own dying state holds this player: no damage reaches it, so a heart-rip finishes it by the Original rules' kill. */
-    static boolean inVampirismDying(LivingEntity target) {
+    public static boolean inVampirismDying(LivingEntity target) {
         return target instanceof ServerPlayer sp && VampirismAPI.vampirePlayer(sp).isDBNO();
     }
 
@@ -102,7 +102,7 @@ final class TargetChecks {
      * PvP, friendly fire, a pack-mate, and the attack event claim and PvP mods answer to. False is the one refusal. (A pack-mate and a party are allies: an
      * Open Parties and Claims party is protected by its own claim mod through the same event; this mod has no ally list of its own for it.)
      */
-    static boolean mayAttack(ServerPlayer user, LivingEntity target) {
+    public static boolean mayAttack(ServerPlayer user, LivingEntity target) {
         if (target instanceof ServerPlayer other) {
             // defence in depth: a real player's own canHarmPlayer already says no with PvP off (a test double that always says yes, or a modded player type, might not), and the damage probe is an event that never asks the server's switch
             if (!user.server.isPvpAllowed() || !user.canHarmPlayer(other) || packMates(user, other)) {
@@ -125,7 +125,7 @@ final class TargetChecks {
      * {@link DamageProbe} is active so none of our own listeners counts it. A target that something protects (a duel, an invulnerability) is a refusal; so
      * is one the damage cannot reach. Other mods see a pre-damage event of {@code amount} that never lands.
      */
-    static boolean damageWouldLand(LivingEntity target, DamageSource source, float amount) {
+    public static boolean damageWouldLand(LivingEntity target, DamageSource source, float amount) {
         if (target.isInvulnerableTo(source)) {
             return false;
         }

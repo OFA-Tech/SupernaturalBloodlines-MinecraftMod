@@ -67,16 +67,19 @@ final class RitesBook {
                     List.of("rite_of_the_broken_line", "rite_of_the_imprisoned_original", "rite_of_the_cure")),
             new Cat("artifacts", "Wards and Tools", "minecraft:compass",
                     "Rites that make rings and tools.",
-                    List.of("ward_of_daylight", "ward_of_the_moon", "ward_of_return", "vampire_compass", "hearing_device")),
+                    List.of("ward_of_daylight", "ward_of_the_moon", "ward_of_return", "vampire_compass", "hearing_device", "cursed_dagger")),
             new Cat("tensura", "Tensura", "minecraft:soul_sand",
                     "Rites that need Tensura.",
-                    List.of("curse_magicule_drain", "curse_skill_seal", "magicule_offering", "purification", "purification_holy_water")));
+                    List.of("curse_magicule_drain", "curse_skill_seal", "magicule_offering", "purification", "purification_holy_water")),
+            new Cat("evolutions", "Evolution Rites", "minecraft:nether_star",
+                    "Rites that open a road to a skill that already exists, and bring one to mastery.",
+                    List.of("evolve_great_sage", "evolve_deus_sanguis", "mastery_common", "mastery_extra", "mastery_unique", "mastery_ultimate")));
 
     /** The book entry's icon. Only {@code minecraft:} items: an icon from a mod that is not there would drop the whole entry. */
     static final Map<String, String> ICON = Map.ofEntries(
             Map.entry("alpha_trial", "minecraft:bone"), Map.entry("ancestral_calling", "minecraft:amethyst_shard"), Map.entry("augustine", "minecraft:golden_apple"),
             Map.entry("blood_offering", "minecraft:glass_bottle"), Map.entry("cleansing_blood", "minecraft:golden_apple"),
-            Map.entry("curse_magicule_drain", "minecraft:soul_sand"), Map.entry("curse_skill_seal", "minecraft:soul_sand"),
+            Map.entry("curse_magicule_drain", "minecraft:soul_sand"), Map.entry("curse_skill_seal", "minecraft:soul_sand"), Map.entry("cursed_dagger", "minecraft:iron_sword"),
             Map.entry("doppelganger_blood", "minecraft:diamond"), Map.entry("hearing_device", "minecraft:note_block"),
             Map.entry("hybrid_blood", "minecraft:glass_bottle"), Map.entry("immortality", "minecraft:golden_apple"),
             Map.entry("magicule_offering", "minecraft:amethyst_shard"), Map.entry("original_blood", "minecraft:glass_bottle"),
@@ -89,7 +92,9 @@ final class RitesBook {
             Map.entry("rite_of_the_moon", "minecraft:clock"), Map.entry("silver_moon", "minecraft:iron_ingot"),
             Map.entry("vampire_compass", "minecraft:compass"), Map.entry("ward_of_daylight", "minecraft:sunflower"),
             Map.entry("ward_of_return", "minecraft:totem_of_undying"), Map.entry("ward_of_the_moon", "minecraft:amethyst_shard"),
-            Map.entry("werewolf_brother", "minecraft:beef"));
+            Map.entry("werewolf_brother", "minecraft:beef"), Map.entry("evolve_great_sage", "minecraft:ender_eye"), Map.entry("evolve_deus_sanguis", "minecraft:redstone_block"),
+            Map.entry("mastery_common", "minecraft:diamond_block"), Map.entry("mastery_extra", "minecraft:echo_shard"), Map.entry("mastery_unique", "minecraft:nether_star"),
+            Map.entry("mastery_ultimate", "minecraft:dragon_breath"));
 
     /** The items a rite makes: looking one up in the book opens the rite. */
     static final Map<String, String> MAKES = Map.of(
@@ -122,7 +127,7 @@ final class RitesBook {
 
     /** A shorter header for the rites whose name does not fit; the entry's title (in the lists) is always the whole name. */
     static final Map<String, String> SHORT = Map.ofEntries(
-            Map.entry("purification_holy_water", "Holy Purification"), Map.entry("rite_of_the_imprisoned_original", "Imprisoned Original"),
+            Map.entry("cursed_dagger", "Cursed Dagger"), Map.entry("purification_holy_water", "Holy Purification"), Map.entry("rite_of_the_imprisoned_original", "Imprisoned Original"),
             Map.entry("vampire_compass", "Vampire Compass"), Map.entry("doppelganger_blood", "Doppelg\u00e4nger"),
             Map.entry("hearing_device", "Hearing Device"), Map.entry("rite_of_lineage_awaken", "Lineage: Awaken"),
             Map.entry("rite_of_lineage_reveal", "Lineage: Reveal"), Map.entry("magicule_offering", "Magicule Offering"),
@@ -130,7 +135,9 @@ final class RitesBook {
             Map.entry("rite_of_the_broken_line", "The Broken Line"), Map.entry("cleansing_blood", "Cleansing Blood"),
             Map.entry("silver_moon", "The Silver Moon"), Map.entry("original_blood", "Original's Blood"),
             Map.entry("blood_offering", "Blood Offering"), Map.entry("hybrid_blood", "Hybrid's Blood"),
-            Map.entry("rite_of_the_frequency", "The Frequency"), Map.entry("rite_of_the_valet_pike", "The Valet Pike"));
+            Map.entry("rite_of_the_frequency", "The Frequency"), Map.entry("rite_of_the_valet_pike", "The Valet Pike"),
+            Map.entry("evolve_great_sage", "The Great Sage"), Map.entry("evolve_deus_sanguis", "Deus Sanguis"), Map.entry("mastery_common", "Mastery: Common"),
+            Map.entry("mastery_extra", "Mastery: Extra"), Map.entry("mastery_unique", "Mastery: Unique"), Map.entry("mastery_ultimate", "Mastery: Ultimate"));
 
     static String header(String path, String name) {
         return width(name) <= HEADER_WIDTH ? name : SHORT.getOrDefault(path, name);
@@ -279,10 +286,12 @@ final class RitesBook {
         RiteUnlockTable.Gate gate = RiteUnlockTable.GATED.get(rite);
         List<String> parts = new ArrayList<>();
         List<String> kinds = gate.kinds().stream().sorted().map(k -> lang.get(KIND_SHORT + k.name().toLowerCase()).getAsString()).toList();
-        // three kinds and a lore source do not fit one line: the lore, which is what a player can go and find, and the page says the rest
+        // three kinds and a lore source do not fit one line: the lore, which is what a player can go and find, and the page says the rest.
+        // Three kinds alone fit ("witch, siphoner or tribrid"), so they are named.
         if (kinds.size() > 2 && !gate.lore().isEmpty()) {
             kinds = List.of();
-        } else if (kinds.size() > 2) {
+        } else if (kinds.size() > 3) {
+            // four kinds (Deus Sanguis: a vampire, or the three witch types) are longer than the line: the page names them
             kinds = List.of(lang.get(KIND_SHORT + "several").getAsString());
         }
         parts.addAll(kinds);
@@ -309,7 +318,12 @@ final class RitesBook {
             if (RiteUnlockTable.isGated(rite)) {
                 String base = label(lang, rite);
                 int n = seen.merge(base, 1, Integer::sum);
-                out.put(rite, total.get(base) > 1 ? base + " (" + NUMERALS[n - 1] + ")" : base);
+                String numbered = base + " (" + NUMERALS[n - 1] + ")";
+                if (total.get(base) > 1 && numbered.length() > LABEL_CHARS) {
+                    // the three witch kinds and a numeral do not fit one line (plan 19's four masteries): "witch types" is the short name of the three
+                    numbered = base.replace("witch, siphoner or tribrid", "witch types") + " (" + NUMERALS[n - 1] + ")";
+                }
+                out.put(rite, total.get(base) > 1 ? numbered : base);
             }
         }
         return out;
@@ -329,7 +343,13 @@ final class RitesBook {
         entry.add("pages", pages);
         return entry;
     }
-    static String advancementJson() {
+    /** Rites that exist only with a part or an addon: their unlock advancements carry the same load conditions as the rite file, so nothing is known or sealed for a rite that is not there. */
+    static JsonArray conditions(Path root, String path) throws IOException {
+        JsonObject rite = rite(root, path);
+        return rite.has("neoforge:conditions") ? rite.getAsJsonArray("neoforge:conditions") : null;
+    }
+
+    static String advancementJson(JsonArray conditions) {
         JsonObject criterion = new JsonObject();
         criterion.addProperty("trigger", "minecraft:impossible");
         JsonObject criteria = new JsonObject();
@@ -342,6 +362,9 @@ final class RitesBook {
         all.add(RiteAdvancements.CRITERION);
         requirements.add(all);
         adv.add("requirements", requirements);
+        if (conditions != null) {
+            adv.add("neoforge:conditions", conditions);
+        }
         return GSON.toJson(adv) + "\n";
     }
 
@@ -420,8 +443,9 @@ final class RitesBook {
             out.put(BOOK + "/entries/" + TOP + "/" + path + ".json", GSON.toJson(entry(root, lang, path)) + "\n");
             if (RiteUnlockTable.isGated(path)) {
                 out.put(BOOK + "/entries/" + RiteAdvancements.sealedEntry(path) + ".json", GSON.toJson(sealedEntry(lang, path, titles.get(path))) + "\n");
-                out.put(ADV + "/known/" + path + ".json", advancementJson());
-                out.put(ADV + "/sealed/" + path + ".json", advancementJson());
+                JsonArray conds = path.startsWith("evolve_") || path.startsWith("mastery_") ? conditions(root, path) : null;
+                out.put(ADV + "/known/" + path + ".json", advancementJson(conds));
+                out.put(ADV + "/sealed/" + path + ".json", advancementJson(conds));
             }
         }
         return out;

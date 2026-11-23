@@ -1,0 +1,24 @@
+{
+    "neoforge:conditions": [
+        { "type": "supernaturalbloodlines:part_enabled", "part": "evolutionRites" }
+    ],
+    "items": [
+        { "id": "minecraft:amethyst_shard", "count": 4 },
+        { "id": "minecraft:ender_eye", "count": 2 },
+        { "id": "enchanted:spirit_of_otherwhere", "count": 1 }
+    ],
+    "shapes": {
+        "enchanted:medium_circle": "enchanted:nether_chalk"
+    },
+    "power": 9000,
+    "factory": {
+        "type": "supernaturalbloodlines:evolution",
+        "recipe": "great_sage",
+        "tier": "unique",
+        "grants": "tensura:great_sage",
+        "needs": [ { "skill": "tensura:sage", "mastered": true } ],
+        "requires_mod": "tensura",
+        "probe": "own.sage_great_sage",
+        "ep_cost": 100000.0
+    }
+}

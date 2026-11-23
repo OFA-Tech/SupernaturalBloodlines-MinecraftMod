@@ -32,7 +32,7 @@ public final class LadderNet {
      * Optional, so a client or server without this part still connects; but the channel only exists between two sides on the same version, so a
      * server and its clients on different protocol numbers cannot talk (the hub shows nothing from the server). Raise it with any payload change.
      */
-    static final String PROTOCOL = "10";
+    static final String PROTOCOL = "13";
 
     private LadderNet() {
     }
@@ -96,6 +96,9 @@ public final class LadderNet {
         registrar.playToClient(HubRequestsPayload.TYPE, HubRequestsPayload.STREAM_CODEC, FMLEnvironment.dist.isClient()
                 ? net.ofatech.supernaturalbloodlines.parts.supernatural.client.RequestsClient::receive
                 : (payload, ctx) -> { });
+        registrar.playToClient(net.ofatech.supernaturalbloodlines.parts.supernatural.tweaks.TweakSync.Payload.TYPE,
+                net.ofatech.supernaturalbloodlines.parts.supernatural.tweaks.TweakSync.Payload.STREAM_CODEC,
+                net.ofatech.supernaturalbloodlines.parts.supernatural.tweaks.TweakSync::onClient);
         registrar.playToServer(ProfileRequestPayload.TYPE, ProfileRequestPayload.STREAM_CODEC, ProfileNet::onRequest);
         registrar.playToServer(AdminProfileRequestPayload.TYPE, AdminProfileRequestPayload.STREAM_CODEC, ProfileNet::onAdminRequest);
         registrar.playToClient(ProfilePayload.TYPE, ProfilePayload.STREAM_CODEC, FMLEnvironment.dist.isClient()

@@ -42,7 +42,7 @@ Config `supernaturalbloodlines.hud.mixins.json`, plugin `HudMixinPlugin`, packag
 
 | Part | Mixin | Target | Why | Config switch |
 |---|---|---|---|---|
-| hud | (1) `AbilityStorageNextPresetMixin` (13b Task 2) **used** | RETURN of the four `AbilityStorage.isAbilityInActivePreset(...)` overloads (Tensura) | A right-column skill (preset N+1) is refused by Tensura's server without it (shown by `TensuraPresetGameTests`). Needs Tensura. With Tensura Slots installed both mixins run (each only turns false into true at RETURN, so the result is the union) | `next_preset_active` |
+| hud | (1) `AbilityStorageNextPresetMixin` (13b Task 2) **used** | RETURN of the four `AbilityStorage.isAbilityInActivePreset(...)` overloads (Tensura) | A right-column skill (preset N+1) is refused by Tensura's server without it (shown by `TensuraPresetGameTests`). Needs Tensura. With Tensura Slots installed both mixins run (each only turns false into true at RETURN, so the result is the union). **Skill wheel (W1):** NextPreset.matches is also true inside WheelActivation.scope (one skill, only while the wheel starts or holds it); no new mixin, budget unchanged. | `next_preset_active` |
 | hud | (2) `VampireRaceFeedMixin` (13c Task 2) **used** | the one `FoodData.needsFood()` call inside `VampireRace.onActivateAbility` (`@Redirect`, plus HEAD and RETURN injections to remember the player) | Tensura's race ability feeds only when hurt or `needsFood()`, and a Vampirism vampire's food is never short: `TensuraFeedGameTests.aThirstyHealthyVampireFeeds` was red without it. The credit itself needs no mixin (events). Needs Tensura and Vampirism | `tensura_feed_fills_blood` |
 | hud | (3) `KeyBindsListHideMixin` (13a Task 4) | Controls list entry build | Only if hiding covered keys on `ScreenEvent.Init.Post` fails. **Not needed:** `KeyHiding` also clears Controlling's `allEntries`, which its search rebuilds from (checked in a running client with Controlling 19.0.5: its search no longer finds a covered key) | `hide_in_controls_mixin` |
 
@@ -63,6 +63,14 @@ No mixin. The Blue Moon rite cost is one more factor in the species part's exist
 ## bosses (0 of 3)
 
 No mixin. The entities are plain PathfinderMobs; what a blow does to an NPC Original is a LivingIncomingDamageEvent and a LivingDamageEvent.Post listener, the line glue is the species part's own classes, and the hub reads the boss through the existing WorldNowHook.
+
+## evolution_rites (0 of 3)
+
+No mixin. The rites are Enchanted rite factories, the addons are reached by reflection (`Hooks`), the Rite of Mastery goes through `addMasteryPoint` so Tensura's own events fire, and the hub's Mastery tab uses the existing command rows. Plan 19b's Raphael merge is a ManasCore `UNLOCK_SKILL` listener, not a mixin.
+
+## Plan 18
+
+Plan 18 adds no mixin: species stays at 3 of 3 and supernatural at 1 of 3. The four Vampirism tweaks (R213) use events only (`LivingDamageEvent.Post`, `PlayerInteractEvent.RightClickBlock`, `PlayerFactionEvent.FactionLevelChangePre`, `EntityJoinLevelEvent`).
 
 ## Access transformers
 

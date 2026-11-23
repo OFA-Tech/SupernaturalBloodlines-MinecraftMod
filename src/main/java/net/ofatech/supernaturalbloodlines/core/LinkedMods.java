@@ -20,6 +20,7 @@ public final class LinkedMods {
     private static Map<String, String> tested() {
         Map<String, String> m = new LinkedHashMap<>();
         m.put("tensura", "2.0.1");
+        m.put("ascension", "1.0"); // the jar is named ascension-3.1.0 but its mods.toml declares 1.0.0; Deus Sanguis is its Unique, the rite reads one config switch of it (plan 19)
         m.put("manascore_race", "4.0");
         m.put("vampirism", "1.10.13");
         m.put("werewolves", "2.0.3");

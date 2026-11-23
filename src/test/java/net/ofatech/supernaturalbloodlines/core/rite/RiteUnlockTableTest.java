@@ -14,8 +14,8 @@ class RiteUnlockTableTest {
     @Test
     void theNumbersOfThePlan() {
         assertEquals(8, RiteUnlockTable.OPEN.size());
-        assertEquals(26, RiteUnlockTable.GATED.size());
-        assertEquals(15, RiteUnlockTable.GATED.values().stream().filter(g -> g.lore().isEmpty()).count(), "kind only");
+        assertEquals(33, RiteUnlockTable.GATED.size()); // 27 and the six rites of plan 19 (two evolutions, four masteries)
+        assertEquals(22, RiteUnlockTable.GATED.values().stream().filter(g -> g.lore().isEmpty()).count(), "kind only");
         assertEquals(7, RiteUnlockTable.GATED.values().stream().filter(g -> g.kinds().isEmpty()).count(), "lore only");
         assertEquals(4, RiteUnlockTable.GATED.values().stream().filter(g -> !g.kinds().isEmpty() && !g.lore().isEmpty()).count(), "kind or lore");
     }
@@ -108,6 +108,15 @@ class RiteUnlockTableTest {
         assertTrue(choices.containsAll(RiteUnlockTable.loreIds()), "a lore id is not offered");
         assertEquals(1 + RiteUnlockTable.GATED.size() + RiteUnlockTable.loreIds().size(), choices.size());
         assertFalse(choices.contains("purification"), "an open rite is not a choice: it cannot be learned or forgotten");
+    }
+
+    @Test
+    void cursedDaggerRiteIsKnownToWitches() {
+        for (RiteKind k : List.of(RiteKind.WITCH, RiteKind.SIPHONER, RiteKind.TRIBRID)) {
+            assertTrue(RiteUnlockTable.knows("cursed_dagger", Set.of(k), Set.of()), k.toString());
+        }
+        assertFalse(RiteUnlockTable.knows("cursed_dagger", Set.of(RiteKind.VAMPIRE, RiteKind.WEREWOLF, RiteKind.HUNTER, RiteKind.ORIGINAL, RiteKind.HYBRID), Set.of()));
+        assertTrue(RiteUnlockTable.GATED.get("cursed_dagger").lore().isEmpty(), "no lore teaches it: a sealed entry says only the kinds");
     }
 
     @Test

@@ -24,7 +24,9 @@ public enum Part {
     // no required mods: Enhanced Celestials 2 is found at runtime, and without it the part does nothing
     CELESTIALS("celestials", "net.ofatech.supernaturalbloodlines.parts.celestials.CelestialsPart", List.of()),
     // the first entity types of ours: Enchanted already requires GeckoLib, so naming it costs nobody anything (plan 17)
-    BOSSES("bosses", "net.ofatech.supernaturalbloodlines.parts.bosses.BossesPart", List.of("vampirism", "enchanted", "geckolib"));
+    BOSSES("bosses", "net.ofatech.supernaturalbloodlines.parts.bosses.BossesPart", List.of("vampirism", "enchanted", "geckolib")),
+    // plan 19: a witch-type performer opens a road to a skill that already exists (Tensura and its addons), and the Rite of Mastery
+    EVOLUTION_RITES("evolutionRites", "net.ofatech.supernaturalbloodlines.parts.evolutionrites.EvolutionRitesPart", List.of("vampirism", "enchanted", "tensura"));
 
     private final String configKey;
     private final String initClass;
@@ -52,6 +54,7 @@ public enum Part {
         return switch (this) {
             case SPECIES -> Set.of(VAMPIRISM_ENCHANTED); // reuses its FactionRiteFactory
             case SPECIES_TENSURA -> Set.of(SPECIES);
+            case EVOLUTION_RITES -> Set.of(SPECIES_TENSURA); // the witch types, RiteTargets, the eclipse and the rite unlocks
             case BOSSES -> Set.of(SPECIES); // NPC Originals are the roots of the lines the species part keeps
             case ARTIFACTS -> Set.of(VAMPIRISM_ENCHANTED); // reuses its RiteTargets and FactionRiteHooks
             case SUPERNATURAL_TENSURA -> Set.of(SUPERNATURAL);

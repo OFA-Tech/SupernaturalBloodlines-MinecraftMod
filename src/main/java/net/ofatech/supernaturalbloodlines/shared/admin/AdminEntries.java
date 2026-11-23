@@ -29,9 +29,10 @@ public final class AdminEntries {
     public static final String SPECIES_TENSURA_FILE = MOD + "-species_tensura.toml";
     public static final String CELESTIALS_FILE = MOD + "-celestials.toml";
     public static final String BOSSES_FILE = MOD + "-bosses.toml";
+    public static final String EVOLUTION_RITES_FILE = MOD + "-evolution_rites.toml";
 
     /** The section ids, in the order the page lists them. */
-    public static final List<String> SECTIONS = List.of("core", "vampirismTensura", "supernatural", "hud", "artifacts", "species", "speciesTensura", "celestials", "bosses");
+    public static final List<String> SECTIONS = List.of("core", "vampirismTensura", "supernatural", "hud", "artifacts", "species", "speciesTensura", "celestials", "bosses", "evolutionRites");
 
     public static final String RESERVED = "reserved: the key does nothing";
 
@@ -55,9 +56,18 @@ public final class AdminEntries {
 
         all.add(SettingEntry.of(SUPERNATURAL_FILE, "supernatural", "rite_complete_signal", BOOL));
         all.add(SettingEntry.of(SUPERNATURAL_FILE, "supernatural", "vampire_feed_blood", INT));
+        all.add(SettingEntry.of(SUPERNATURAL_FILE, "supernatural", "tweak_sunlight_ignites_vampires", BOOL));
+        all.add(SettingEntry.of(SUPERNATURAL_FILE, "supernatural", "tweak_cleansing_altar_disabled", BOOL).withClientCopy());
+        all.add(SettingEntry.of(SUPERNATURAL_FILE, "supernatural", "tweak_hostile_mobs_attack_vampires", BOOL));
+        all.add(SettingEntry.of(SUPERNATURAL_FILE, "supernatural", "tweak_skeletons_attack_werewolves", BOOL));
 
         all.add(SettingEntry.of(HUD_FILE, "hud", "rate_limit_per_second", INT));
         all.add(SettingEntry.of(HUD_FILE, "hud", "bite_reach", DOUBLE));
+        all.add(SettingEntry.of(HUD_FILE, "hud", "wheel_enabled", BOOL));
+        all.add(SettingEntry.of(HUD_FILE, "hud", "wheel_catalogue_interval_ticks", INT));
+        all.add(SettingEntry.of(HUD_FILE, "hud", "wheel_unslotted_tensura", BOOL));
+        all.add(SettingEntry.of(HUD_FILE, "hud", "wheel_dedup_enabled", BOOL));
+        all.add(SettingEntry.of(HUD_FILE, "hud", "wheel_stack_guard_enabled", BOOL));
         all.add(SettingEntry.of(HUD_FILE, "hud", "mixins.next_preset_active", BOOL));
         all.add(SettingEntry.of(HUD_FILE, "hud", "mixins.tensura_feed_fills_blood", BOOL));
         all.add(SettingEntry.of(HUD_FILE, "hud", "mixins.hide_in_controls_mixin", BOOL).hide(RESERVED));
@@ -108,6 +118,10 @@ public final class AdminEntries {
         species(all, "bottle_blood_cooldown_seconds", INT);
         species(all, "bottle_blood_health_cost", DOUBLE);
         species(all, "bottle_blood_daily_limit", INT);
+        species(all, "give_blood_cooldown_seconds", INT);
+        species(all, "force_feed_health_limit", DOUBLE);
+        species(all, "vampire_blood_buff_enabled", BOOL);
+        species(all, "vampire_blood_regen_cooldown_seconds", INT);
         species(all, "rip_heart_health", DOUBLE);
         species(all, "rip_heart_cooldown_seconds", INT);
         species(all, "neck_snap_cooldown_seconds", INT);
@@ -122,10 +136,12 @@ public final class AdminEntries {
         species(all, "neck_snap_augustine_seconds", INT);
         species(all, "neck_snap_hybrid_seconds", INT);
         species(all, "neck_snap_original_seconds", INT);
+        species(all, "venom_sick_after_ticks", INT);
         species(all, "augustine_attack_bonus", DOUBLE);
         species(all, "augustine_extra_health", DOUBLE);
         species(all, "augustine_blood_from_vampire_factor", DOUBLE);
         species(all, "augustine_blood_from_other_factor", DOUBLE);
+        species(all, "hybrid_pack_moon_control", BOOL);
         species(all, "alpha_trial_enabled", BOOL);
         species(all, "alpha_trial_min_level", INT);
         species(all, "alpha_trial_hp_factor", DOUBLE);
@@ -200,6 +216,19 @@ public final class AdminEntries {
         all.add(SettingEntry.of(BOSSES_FILE, bo, "beast_roar_range", INT));
         all.add(SettingEntry.of(BOSSES_FILE, bo, "beast_roar_seconds", INT));
         all.add(SettingEntry.of(BOSSES_FILE, bo, "beast_roar_cooldown_seconds", INT));
+        String er = "evolutionRites";
+        for (String key : List.of("rites_enabled", "ultimate_rites_enabled", "announce_ultimates", "mastery_enabled")) {
+            all.add(SettingEntry.of(EVOLUTION_RITES_FILE, er, key, BOOL));
+        }
+        all.add(SettingEntry.of(EVOLUTION_RITES_FILE, er, "disabled_recipes", LIST));
+        for (String key : List.of("mastery_ep_common", "mastery_ep_extra", "mastery_ep_unique", "mastery_ep_ultimate")) {
+            all.add(SettingEntry.of(EVOLUTION_RITES_FILE, er, key, DOUBLE));
+        }
+        all.add(SettingEntry.of(EVOLUTION_RITES_FILE, er, "mastery_cooldown_days", INT));
+        all.add(SettingEntry.of(EVOLUTION_RITES_FILE, er, "mastery_refused_skills", LIST));
+        for (String tier : List.of("common", "extra", "unique", "ultimate")) {
+            all.add(SettingEntry.of(EVOLUTION_RITES_FILE, er, "mastery_sacrifice_" + tier, LIST));
+        }
         ALL = List.copyOf(all);
     }
 

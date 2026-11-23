@@ -54,6 +54,13 @@ public final class RiteUnlockTable {
         kind(m, "hybrid_blood", RiteKind.HYBRID);
         kind(m, "original_blood", RiteKind.ORIGINAL);
         kind(m, "rite_of_the_moon", RiteKind.ORIGINAL);
+        // plan 19: the evolution rites and the Rite of Mastery, sealed in the book and known by kind (D5, D15): a witch type works them, a vampire learns that Deus Sanguis exists
+        kind(m, "evolve_great_sage", RiteKind.WITCH, RiteKind.SIPHONER, RiteKind.TRIBRID);
+        kind(m, "evolve_deus_sanguis", RiteKind.WITCH, RiteKind.SIPHONER, RiteKind.TRIBRID, RiteKind.VAMPIRE);
+        for (String tier : List.of("common", "extra", "unique", "ultimate")) {
+            kind(m, "mastery_" + tier, RiteKind.WITCH, RiteKind.SIPHONER, RiteKind.TRIBRID);
+        }
+        kind(m, "cursed_dagger", RiteKind.WITCH, RiteKind.SIPHONER, RiteKind.TRIBRID);
         lore(m, "rite_of_cloaking", KOL);
         lore(m, "rite_of_linking", ESTHER);
         both(m, "rite_of_severance", Set.of(RiteKind.WITCH, RiteKind.SIPHONER, RiteKind.TRIBRID), ESTHER);

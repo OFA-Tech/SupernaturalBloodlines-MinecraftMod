@@ -1,0 +1,47 @@
+{
+  "title": "Rite of the Cursed Dagger",
+  "icon": {
+    "count": 1,
+    "id": "minecraft:iron_sword"
+  },
+  "assigned_items": [],
+  "advancement": "supernaturalbloodlines:rites/known/cursed_dagger",
+  "pages": [
+    {
+      "components": [
+        {
+          "template": "modopedia:page/headered_text",
+          "text": "Curses a White Oak Ash Dagger into a Cursed one. Only the Cursed Dagger lodges in an Original hybrid as well as an Original; the plain one lodges only in an Original. Needs the dagger, 2 white oak ash and an echo shard.",
+          "header": "Cursed Dagger"
+        }
+      ]
+    },
+    {
+      "components": [
+        {
+          "template": "modopedia:page/headered_text",
+          "text": "Anyone can work it. A witch, a siphoner or a tribrid knows it from the start; the book keeps it sealed for the rest. It makes an item and acts on nobody, so there is no one to ask for consent.",
+          "header": "Cursed Dagger"
+        }
+      ]
+    },
+    {
+      "components": [
+        {
+          "template": "modopedia:page/headered_text",
+          "text": "Both daggers hurt a supernatural wielder alike. A miss looks the same for everyone the dagger does not lodge in; a lodge tells only what the rules make public.",
+          "header": "Cursed Dagger"
+        }
+      ]
+    },
+    {
+      "components": [
+        {
+          "template": "supernaturalbloodlines:page/rite",
+          "rite": "supernaturalbloodlines:cursed_dagger",
+          "header": "Cursed Dagger"
+        }
+      ]
+    }
+  ]
+}

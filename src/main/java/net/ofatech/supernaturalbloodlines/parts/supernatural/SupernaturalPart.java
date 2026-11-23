@@ -59,7 +59,10 @@ public final class SupernaturalPart {
         });
         Detectors.register();
         LadderNet.register(modBus);
+        net.ofatech.supernaturalbloodlines.parts.supernatural.tweaks.TweakSync.register();
+        net.ofatech.supernaturalbloodlines.parts.supernatural.tweaks.VampirismTweaks.register();
         if (FMLEnvironment.dist == Dist.CLIENT) {
+            net.ofatech.supernaturalbloodlines.parts.supernatural.tweaks.TweakClient.register();
             container.registerConfig(ModConfig.Type.CLIENT, HubClientConfig.SPEC, HubClientConfig.FILE);
             AdminSpecs.registerClient(HubClientConfig.FILE, HubClientConfig.SPEC);
             HubKeybinds.register(modBus);
@@ -119,6 +122,10 @@ public final class SupernaturalPart {
             e.register(ModSkillGameTests.class);
             e.register(net.ofatech.supernaturalbloodlines.parts.supernatural.gametest.HubGameTests.class);
             e.register(net.ofatech.supernaturalbloodlines.parts.supernatural.gametest.AdminGameTests.class);
+            e.register(net.ofatech.supernaturalbloodlines.parts.supernatural.gametest.TweaksGameTests.class);
+            if (ModList.get().isLoaded("werewolves")) {
+                e.register(net.ofatech.supernaturalbloodlines.parts.supernatural.gametest.TweaksWerewolfGameTests.class);
+            }
             if (ModList.get().isLoaded("tensura") && EnabledParts.isEnabled("supernaturalTensura")) {
                 e.register(TensuraEpGameTests.class);
             }

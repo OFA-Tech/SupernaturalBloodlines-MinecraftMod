@@ -12,6 +12,11 @@ public final class HudConfig {
 
     private static final ModConfigSpec.IntValue RATE_LIMIT_PER_SECOND;
     private static final ModConfigSpec.DoubleValue BITE_REACH;
+    public static final ModConfigSpec.BooleanValue WHEEL_ENABLED;
+    private static final ModConfigSpec.IntValue WHEEL_CATALOGUE_INTERVAL_TICKS;
+    public static final ModConfigSpec.BooleanValue WHEEL_UNSLOTTED_TENSURA;
+    public static final ModConfigSpec.BooleanValue WHEEL_DEDUP_ENABLED;
+    public static final ModConfigSpec.BooleanValue WHEEL_STACK_GUARD_ENABLED;
     public static final ModConfigSpec.BooleanValue NEXT_PRESET_ACTIVE;
     public static final ModConfigSpec.BooleanValue TENSURA_FEED_FILLS_BLOOD;
     public static final ModConfigSpec.BooleanValue HIDE_IN_CONTROLS_MIXIN;
@@ -22,6 +27,16 @@ public final class HudConfig {
                 .defineInRange("rate_limit_per_second", DEFAULT_RATE_LIMIT, 1, 100);
         BITE_REACH = b.comment("How far (blocks) a Bite action may reach its target, 1 to 16. Vampirism's own drinking is also limited to the player's interaction range (3), so a higher value only helps the other bites.")
                 .defineInRange("bite_reach", DEFAULT_BITE_REACH, 1.0, 16.0);
+        WHEEL_ENABLED = b.comment("The skill wheel's server side: with it off the wheel is sent an empty list and every use from it is refused (the six slots are unaffected).")
+                .define("wheel_enabled", true);
+        WHEEL_CATALOGUE_INTERVAL_TICKS = b.comment("How often (ticks) the server checks whether the list of an open wheel changed, 1 to 40. Only a player with the wheel open is checked.")
+                .defineInRange("wheel_catalogue_interval_ticks", 5, 1, 40);
+        WHEEL_UNSLOTTED_TENSURA = b.comment("Let the wheel use a Tensura skill, spell or art that is in no preset slot (through the next-preset hook, only while it runs). Off: such powers are listed locked, put it in a slot first.")
+                .define("wheel_unslotted_tensura", true);
+        WHEEL_DEDUP_ENABLED = b.comment("Rule C: a power that several mods give (Vampirism's and Werewolves' rage, invisibility and so on) is one entry on the wheel, the main side's. Off: every side is listed. The approved list is data/supernaturalbloodlines/wheel/overlaps.json.")
+                .define("wheel_dedup_enabled", true);
+        WHEEL_STACK_GUARD_ENABLED = b.comment("Rule C: while one side of such a power is on, the others cannot be turned on (from any key), and using one puts every side on the main side's cooldown. Off: no key is stopped and the shared clock is not read.")
+                .define("wheel_stack_guard_enabled", true);
         b.comment("Switches of the hud part's mixins (each is applied only with the mods it targets). next_preset_active and tensura_feed_fills_blood guard a mixin each; hide_in_controls_mixin is reserved and does nothing.").push("mixins");
         NEXT_PRESET_ACTIVE = b.define("next_preset_active", true);
         TENSURA_FEED_FILLS_BLOOD = b.define("tensura_feed_fills_blood", true);
@@ -52,6 +67,46 @@ public final class HudConfig {
     public static boolean tensuraFeedFillsBlood() {
         try {
             return TENSURA_FEED_FILLS_BLOOD.get();
+        } catch (IllegalStateException notLoaded) {
+            return true;
+        }
+    }
+
+    public static boolean wheelEnabled() {
+        try {
+            return WHEEL_ENABLED.get();
+        } catch (IllegalStateException notLoaded) {
+            return true;
+        }
+    }
+
+    public static int wheelCatalogueIntervalTicks() {
+        try {
+            return WHEEL_CATALOGUE_INTERVAL_TICKS.get();
+        } catch (IllegalStateException notLoaded) {
+            return 5;
+        }
+    }
+
+    public static boolean wheelDedupEnabled() {
+        try {
+            return WHEEL_DEDUP_ENABLED.get();
+        } catch (IllegalStateException notLoaded) {
+            return true;
+        }
+    }
+
+    public static boolean wheelStackGuardEnabled() {
+        try {
+            return WHEEL_STACK_GUARD_ENABLED.get();
+        } catch (IllegalStateException notLoaded) {
+            return true;
+        }
+    }
+
+    public static boolean wheelUnslottedTensura() {
+        try {
+            return WHEEL_UNSLOTTED_TENSURA.get();
         } catch (IllegalStateException notLoaded) {
             return true;
         }

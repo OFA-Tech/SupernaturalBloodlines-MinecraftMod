@@ -41,6 +41,24 @@ public final class HudPart {
             BiteService.release(p);
             net.ofatech.supernaturalbloodlines.parts.hud.action.ActionService.forget(p);
         });
+        // the skill wheel: the catalogue of what the player has, and its server path (ends everything it started when a player is put out of action)
+        net.ofatech.supernaturalbloodlines.shared.hud.ExtraActions.addStopper(net.ofatech.supernaturalbloodlines.parts.hud.wheel.WheelService::forget);
+        net.ofatech.supernaturalbloodlines.parts.hud.wheel.WheelCatalogue.install(new net.ofatech.supernaturalbloodlines.parts.hud.wheel.OursProvider());
+        if (ModList.get().isLoaded("vampirism")) {
+            net.ofatech.supernaturalbloodlines.parts.hud.wheel.WheelCatalogue.install(new net.ofatech.supernaturalbloodlines.parts.hud.wheel.FactionProvider());
+        }
+        if (ModList.get().isLoaded("tensura")) {
+            net.ofatech.supernaturalbloodlines.parts.hud.wheel.WheelCatalogue.install(new net.ofatech.supernaturalbloodlines.parts.hud.wheel.TensuraProvider());
+            net.ofatech.supernaturalbloodlines.parts.hud.tensura.WheelActivation.register();
+        }
+        net.ofatech.supernaturalbloodlines.parts.hud.wheel.WheelSync.register();
+        net.ofatech.supernaturalbloodlines.parts.hud.wheel.WheelGate.register();
+        if (ModList.get().isLoaded("vampirism")) {
+            net.ofatech.supernaturalbloodlines.parts.hud.wheel.WheelGate.installVampirism();
+        }
+        if (ModList.get().isLoaded("tensura")) {
+            net.ofatech.supernaturalbloodlines.parts.hud.wheel.WheelGate.installTensura();
+        }
         net.ofatech.supernaturalbloodlines.parts.hud.action.LoadoutService.register();
         if (ModList.get().isLoaded("tensura") && ModList.get().isLoaded("vampirism")) {
             net.ofatech.supernaturalbloodlines.parts.hud.bite.TensuraFeed.register();
@@ -50,8 +68,24 @@ public final class HudPart {
             e.register(LoadoutGameTests.class);
             if (ModList.get().isLoaded("tensura")) {
                 e.register(net.ofatech.supernaturalbloodlines.parts.hud.gametest.TensuraPresetGameTests.class);
+                if (System.getenv("WHEEL_PROBE") != null) {
+                    e.register(net.ofatech.supernaturalbloodlines.parts.hud.gametest.TensuraKindProbe.class);
+                }
+            }
+            if (ModList.get().isLoaded("tensura")) {
+                e.register(net.ofatech.supernaturalbloodlines.parts.hud.gametest.WheelTensuraGameTests.class);
+                e.register(net.ofatech.supernaturalbloodlines.parts.hud.gametest.WheelTensuraUseGameTests.class);
+                e.register(net.ofatech.supernaturalbloodlines.parts.hud.gametest.WheelModeGameTests.class);
             }
             if (ModList.get().isLoaded("vampirism")) {
+                e.register(net.ofatech.supernaturalbloodlines.parts.hud.gametest.WheelCatalogueGameTests.class);
+                e.register(net.ofatech.supernaturalbloodlines.parts.hud.gametest.WheelUseGameTests.class);
+                if (ModList.get().isLoaded("tensura")) {
+                    e.register(net.ofatech.supernaturalbloodlines.parts.hud.gametest.WheelOverlapGameTests.class);
+                }
+                if (ModList.get().isLoaded("werewolves")) {
+                    e.register(net.ofatech.supernaturalbloodlines.parts.hud.gametest.WheelWerewolfGameTests.class);
+                }
                 e.register(LoadoutVampirismGameTests.class);
                 e.register(ActionGameTests.class);
                 e.register(net.ofatech.supernaturalbloodlines.parts.hud.gametest.ActionTargetGameTests.class);

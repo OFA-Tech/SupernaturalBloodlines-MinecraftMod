@@ -106,6 +106,19 @@ public final class RiteUnlocks {
         return p.server.getAdvancements().get(ResourceLocation.parse(id));
     }
 
+    /**
+     * Whether a gated rite exists in the loaded datapacks: its {@code known} advancement is there. A rite of a part that is off, or of an addon that is not
+     * installed (plan 19), ships no advancements, so nothing is known or sealed for it and the book shows neither entry.
+     */
+    public static boolean present(ServerPlayer p, String rite) {
+        return RiteUnlockTable.isGated(rite) && holder(p, RiteAdvancements.known(rite)) != null;
+    }
+
+    /** The gated rites that exist in the loaded datapacks, in table order. */
+    public static List<String> presentRites(ServerPlayer p) {
+        return RiteUnlockTable.GATED.keySet().stream().filter(r -> present(p, r)).toList();
+    }
+
     /** Whether an advancement of the unlock (by id) is done for the player: what the book reads on the client. */
     public static boolean done(ServerPlayer p, String id) {
         AdvancementHolder h = holder(p, id);
@@ -155,7 +168,7 @@ public final class RiteUnlocks {
     public static int reconcile(ServerPlayer p, boolean notify) {
         Set<String> byKind = RiteUnlockTable.knownByKinds(kindsOf(p));
         int fresh = 0;
-        for (String rite : RiteUnlockTable.GATED.keySet()) {
+        for (String rite : presentRites(p)) {
             if (byKind.contains(rite) && !done(p, RiteAdvancements.known(rite))) {
                 award(p, RiteAdvancements.known(rite));
                 fresh++;
@@ -174,7 +187,7 @@ public final class RiteUnlocks {
 
     /** Teaches one rite. Returns whether it was new. An open rite or an unknown one teaches nothing. Says nothing: {@link #learnAll} says it once. */
     public static boolean learn(ServerPlayer p, String rite, boolean say) {
-        if (!RiteUnlockTable.isGated(rite) || done(p, RiteAdvancements.known(rite))) {
+        if (!present(p, rite) || done(p, RiteAdvancements.known(rite))) {
             return false;
         }
         award(p, RiteAdvancements.known(rite));

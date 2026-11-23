@@ -14,4 +14,13 @@ class ThemeContrastTest {
     void bloodMoonTextIsReadable() {
         ThemeContrast.assertReadable("blood moon", new BloodMoonTheme());
     }
+
+    @Test
+    void thePackPerkLineIsReadableOnEveryTheme() {
+        for (var theme : java.util.List.<net.ofatech.supernaturalbloodlines.shared.hub.HubTheme>of(new GrimoireTheme(), new BloodMoonTheme())) {
+            double ratio = net.ofatech.supernaturalbloodlines.shared.hub.Contrast.ratio(
+                    net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page.BookPackPage.perkColor(theme), theme.paper());
+            org.junit.jupiter.api.Assertions.assertTrue(ratio >= 4.5, theme.getClass().getSimpleName() + " perk line is " + ratio + ":1 on its paper");
+        }
+    }
 }
