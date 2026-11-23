@@ -21,7 +21,7 @@
 Delete `supernaturalbloodlines_groups.dat`. The pack file `supernaturalbloodlines_packs.dat` is never rewritten by this plan, so every pack, member and alliance stays exactly as it was; groups would be seeded again as packs. The hub channel number changed (13 to 14), so update client and server together when going back.
 
 ### Verified
-- Unit tests and the 12-run GameTest matrix: see the PR. 16 mutants of the groups rules, all caught.
+- Unit tests 2,499 pass. The 12-run GameTest matrix passes in every run (1,994 with everything on; 1,456 with `-PnoWerewolves -PnoCurios`; 30 with `-PnoLinkedMods`; 494, 1,871, 1,826, 1,844, 1,984, 1,825, 1,978, 1,667 and 382 for the part-off runs). 16 mutants of the groups rules, all caught.
 ## Unreleased (plan 19a: the evolution rites engine and the Rite of Mastery)
 
 ### Added
