@@ -412,6 +412,16 @@
    "use": "motifs icon, 16 px"
   },
   {
+   "path": "sprites/icons/16/great_sage.png",
+   "sprite": "icons/16/great_sage",
+   "w": 16,
+   "h": 16,
+   "scaling": "stretch",
+   "slice": null,
+   "glow": false,
+   "use": "mod icon of the inner ring, 16 px"
+  },
+  {
    "path": "sprites/icons/16/guide.png",
    "sprite": "icons/16/guide",
    "w": 16,
@@ -450,6 +460,16 @@
    "slice": null,
    "glow": false,
    "use": "actions icon, 16 px"
+  },
+  {
+   "path": "sprites/icons/16/infinity_stones.png",
+   "sprite": "icons/16/infinity_stones",
+   "w": 16,
+   "h": 16,
+   "scaling": "stretch",
+   "slice": null,
+   "glow": false,
+   "use": "mod icon of the inner ring, 16 px"
   },
   {
    "path": "sprites/icons/16/info.png",
@@ -3057,6 +3077,16 @@
    "use": "primary button, pressed"
   },
   {
+   "path": "sprites/kit/bloodmoon/cell_glow_52.png",
+   "sprite": "kit/bloodmoon/cell_glow_52",
+   "w": 52,
+   "h": 52,
+   "scaling": "stretch",
+   "slice": null,
+   "glow": true,
+   "use": "skill wheel: the halo behind a power that is on (the cell at 8, 8)"
+  },
+  {
    "path": "sprites/kit/bloodmoon/chip.png",
    "sprite": "kit/bloodmoon/chip",
    "w": 16,
@@ -3802,6 +3832,46 @@
    "use": "tooltips and the detail popover"
   },
   {
+   "path": "sprites/kit/bloodmoon/wheel_caret.png",
+   "sprite": "kit/bloodmoon/wheel_caret",
+   "w": 7,
+   "h": 5,
+   "scaling": "stretch",
+   "slice": null,
+   "glow": false,
+   "use": "skill wheel: the caret of the open path, pointing up"
+  },
+  {
+   "path": "sprites/kit/bloodmoon/wheel_cell_36.png",
+   "sprite": "kit/bloodmoon/wheel_cell_36",
+   "w": 36,
+   "h": 36,
+   "scaling": "stretch",
+   "slice": null,
+   "glow": false,
+   "use": "skill wheel: the frame of a 32 px power on the outer ring"
+  },
+  {
+   "path": "sprites/kit/bloodmoon/wheel_cell_36_active.png",
+   "sprite": "kit/bloodmoon/wheel_cell_36_active",
+   "w": 36,
+   "h": 36,
+   "scaling": "stretch",
+   "slice": null,
+   "glow": false,
+   "use": "skill wheel: the frame of a power that is on"
+  },
+  {
+   "path": "sprites/kit/bloodmoon/wheel_edge.png",
+   "sprite": "kit/bloodmoon/wheel_edge",
+   "w": 8,
+   "h": 1,
+   "scaling": "tile",
+   "slice": null,
+   "glow": false,
+   "use": "skill wheel: ring edge piece (rivet, rim hairline, vertex tick)"
+  },
+  {
    "path": "sprites/kit/grimoire/bar_fill.png",
    "sprite": "kit/grimoire/bar_fill",
    "w": 8,
@@ -4075,6 +4145,16 @@
    ],
    "glow": false,
    "use": "primary button, pressed"
+  },
+  {
+   "path": "sprites/kit/grimoire/cell_glow_52.png",
+   "sprite": "kit/grimoire/cell_glow_52",
+   "w": 52,
+   "h": 52,
+   "scaling": "stretch",
+   "slice": null,
+   "glow": true,
+   "use": "skill wheel: the halo behind a power that is on (the cell at 8, 8)"
   },
   {
    "path": "sprites/kit/grimoire/chip.png",
@@ -4827,6 +4907,46 @@
    "use": "tooltips and the detail popover"
   },
   {
+   "path": "sprites/kit/grimoire/wheel_caret.png",
+   "sprite": "kit/grimoire/wheel_caret",
+   "w": 7,
+   "h": 5,
+   "scaling": "stretch",
+   "slice": null,
+   "glow": false,
+   "use": "skill wheel: the caret of the open path, pointing up"
+  },
+  {
+   "path": "sprites/kit/grimoire/wheel_cell_36.png",
+   "sprite": "kit/grimoire/wheel_cell_36",
+   "w": 36,
+   "h": 36,
+   "scaling": "stretch",
+   "slice": null,
+   "glow": false,
+   "use": "skill wheel: the frame of a 32 px power on the outer ring"
+  },
+  {
+   "path": "sprites/kit/grimoire/wheel_cell_36_active.png",
+   "sprite": "kit/grimoire/wheel_cell_36_active",
+   "w": 36,
+   "h": 36,
+   "scaling": "stretch",
+   "slice": null,
+   "glow": false,
+   "use": "skill wheel: the frame of a power that is on"
+  },
+  {
+   "path": "sprites/kit/grimoire/wheel_edge.png",
+   "sprite": "kit/grimoire/wheel_edge",
+   "w": 3,
+   "h": 3,
+   "scaling": "stretch",
+   "slice": null,
+   "glow": false,
+   "use": "skill wheel: ring edge piece (rivet, rim hairline, vertex tick)"
+  },
+  {
    "path": "sprites/kit/shared/blood_empty.png",
    "sprite": "kit/shared/blood_empty",
    "w": 9,
@@ -4865,6 +4985,31 @@
    "slice": null,
    "glow": true,
    "use": "cooldown pie, 33 frames of 16 x 16 (frame 0 empty)"
+  },
+  {
+   "path": "sprites/kit/shared/cooldown_sweep_32.png",
+   "sprite": "kit/shared/cooldown_sweep_32",
+   "w": 32,
+   "h": 1056,
+   "scaling": "stretch",
+   "slice": null,
+   "glow": true,
+   "use": "cooldown pie of a 32 px icon, 33 frames of 32 x 32 (frame 0 empty)"
+  },
+  {
+   "path": "sprites/kit/shared/lock_outline_42.png",
+   "sprite": "kit/shared/lock_outline_42",
+   "w": 42,
+   "h": 42,
+   "scaling": "nine_slice",
+   "slice": [
+    5,
+    5,
+    5,
+    5
+   ],
+   "glow": false,
+   "use": "skill wheel: the dashed outline of a locked cell"
   },
   {
    "path": "sprites/kit/shared/logo_128.png",
@@ -5185,6 +5330,16 @@
    ],
    "glow": false,
    "use": "primary button, pressed"
+  },
+  {
+   "path": "sprites/kit/tensura/cell_glow_52.png",
+   "sprite": "kit/tensura/cell_glow_52",
+   "w": 52,
+   "h": 52,
+   "scaling": "stretch",
+   "slice": null,
+   "glow": true,
+   "use": "skill wheel: the halo behind a power that is on (the cell at 8, 8)"
   },
   {
    "path": "sprites/kit/tensura/chip.png",
@@ -5940,6 +6095,46 @@
    ],
    "glow": false,
    "use": "tooltips and the detail popover"
+  },
+  {
+   "path": "sprites/kit/tensura/wheel_caret.png",
+   "sprite": "kit/tensura/wheel_caret",
+   "w": 7,
+   "h": 5,
+   "scaling": "stretch",
+   "slice": null,
+   "glow": false,
+   "use": "skill wheel: the caret of the open path, pointing up"
+  },
+  {
+   "path": "sprites/kit/tensura/wheel_cell_36.png",
+   "sprite": "kit/tensura/wheel_cell_36",
+   "w": 36,
+   "h": 36,
+   "scaling": "stretch",
+   "slice": null,
+   "glow": false,
+   "use": "skill wheel: the frame of a 32 px power on the outer ring"
+  },
+  {
+   "path": "sprites/kit/tensura/wheel_cell_36_active.png",
+   "sprite": "kit/tensura/wheel_cell_36_active",
+   "w": 36,
+   "h": 36,
+   "scaling": "stretch",
+   "slice": null,
+   "glow": false,
+   "use": "skill wheel: the frame of a power that is on"
+  },
+  {
+   "path": "sprites/kit/tensura/wheel_edge.png",
+   "sprite": "kit/tensura/wheel_edge",
+   "w": 2,
+   "h": 2,
+   "scaling": "stretch",
+   "slice": null,
+   "glow": false,
+   "use": "skill wheel: ring edge piece (rivet, rim hairline, vertex tick)"
   }
  ]
 }
