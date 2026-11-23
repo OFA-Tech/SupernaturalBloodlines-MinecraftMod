@@ -9,6 +9,25 @@
 - Tensura's Path pane lists every task of the next step: one line each when the pane is short, and "+N more tasks" for the rest. A label on a kit button or surface reads on the pack's own picture, so a recoloured pack keeps its 4.5:1.
 - The Grimoire's boss name plate has seven rows of leather for its text (the brass lines inside it were removed). The health on a card is rounded up (a boss that is alive never reads 0) and grouped by the player's language. A boss's card is taken from a player who changes dimension or logs out.
 ## Unreleased (art: the plan 18 icons)
+## Unreleased (plan 18e: Hybrid Leap)
+
+### Added
+- **Hybrid Leap (R212, skill S-HYB-3, 1 SP).** A HUD action for the Hybrid and the Original hybrid (rung 3 of their trees): throw yourself at the creature you are looking at, up to `hybrid_leap_range` (12, at most 16) blocks away, from the ground only. If you reach it (and still see it) you strike it for `hybrid_leap_damage` (6, half hearts) and weaken it for `hybrid_leap_weakness_ticks` (100). It is an ordinary attack, so PvP, claims, duels, armour and totems apply, and an Original is hurt like anyone. It needs no werewolf form. The fall of the landing is eased for a moment (the first 8 blocks only). A refusal about the target says only that it cannot be done, whoever the target is, and costs nothing; a refusal about the leaper (riding, in the water, already leaping, not on the ground) says so; the cooldown is `hybrid_leap_cooldown_seconds` (20). Config (all with Admin rows): `hybrid_leap_range`, `hybrid_leap_damage`, `hybrid_leap_weakness_ticks`, `hybrid_leap_cooldown_seconds`.
+- **The leap and the sprint-leap share one guard.** Jump while sprinting (Werewolves' own leap, R212) does not arm for 20 ticks after a Hybrid Leap is asked for. The Settings note for it says the two are separate.
+- Slot actions can name a target farther than the bite reach (`ExtraActions.Action.targetReach`, `HudTargets.resolve(player, id, reach)`); every older action is untouched.
+
+### Hardened
+- **The server's PvP switch is asked directly** by every targeted skill (`TargetChecks.mayAttack`: Neck Snap, Rip Heart, Hybrid Leap). A real player's own `canHarmPlayer` already refuses with PvP off, so this is defence in depth for a player type that does not (the damage probe is an event, which never asks the switch). Nothing was exploitable before.
+
+### Changed
+- **The Hybrid's and the Original hybrid's first ladder rungs pay 1 SP more** (L-HYB-1 3, L-OHY-1 5), so that their trees, with the new skill, stay within 80% to 110% of what their ladders pay (24 of 22 and 27 of 25). Hybrid Leap costs 1 SP because no ladder can pay more than 25 SP and the Original hybrid's tree was already 26. Nothing already earned moves; a rung not yet claimed pays the new amount.
+
+### Network
+- No payload changed (the trigger carries the same target id), so no network version is bumped. The longer aim is a client choice: an old client keeps naming the 3-block target, and the server answers it with `no_target` or `too_far`, never a wrong blow.
+
+### Migration
+- No existing player changes. Rolled back to an older build the skill stays in the skills list, dormant.
+`n## Unreleased (art: the plan 18 icons)
 
 ### Changed
 - **Rip Heart, Neck Snap, Bottle my blood, Garlic Ward and Blessed Skin have their own pictures** (the heart in a clawed hand, a head knocked off its neck, an open bottle filling with blood, a garlic bulb behind a shield, holy water under a halo) instead of a letter on a tile, the unknown rune or another skill's icon. One picture for a skill and its HUD action, drawn at 32 px for the hub and at 16 px for the slots (with the pale outline of the other slot icons). Hybrid Leap's picture (`s-hyb-3`, `hybrid_leap`) is in the kit for plan 18e.

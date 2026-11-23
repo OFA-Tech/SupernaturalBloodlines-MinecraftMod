@@ -1,7 +1,7 @@
 {
     "rungs": [
         { "id": "L-OHY-0", "name": "Bound", "sp": 0, "ep": 0 },
-        { "id": "L-OHY-1", "name": "Unbound", "sp": 4, "ep": 10000, "tasks": [
+        { "id": "L-OHY-1", "name": "Unbound", "sp": 5, "ep": 10000, "tasks": [
             { "id": "L-OHY-1a", "any_of": [
                 { "id": "L-OHY-1a.1", "detector": "rite", "rite": "supernaturalbloodlines:rite_of_the_moon", "role": "target", "part": "vampirismEnchanted" },
                 { "id": "L-OHY-1a.2", "detector": "state", "predicate": "moon_unbound" }

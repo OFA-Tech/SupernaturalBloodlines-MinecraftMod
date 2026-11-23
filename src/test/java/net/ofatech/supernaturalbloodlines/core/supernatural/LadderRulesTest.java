@@ -85,14 +85,14 @@ class LadderRulesTest {
 
     @Test
     void anAnyOfGroupIsOneTaskAndPaysOnce() {
-        // L-HYB-1: 2 SP over a) an any-of group and b) a level step
+        // L-HYB-1: 3 SP over a) an any-of group and b) a level step (the last task takes the remainder)
         SupernaturalState s = done(FRESH, "L-HYB-1a.1", "L-HYB-1a.2", "L-HYB-1b");
         ClaimResult a = claim(s, HYBRID, null, "L-HYB-1a");
         assertEquals(1, a.sp());
         ClaimResult b = claim(a.state(), HYBRID, null, "L-HYB-1b");
-        assertEquals(1, b.sp());
+        assertEquals(2, b.sp());
         assertEquals(1, b.state().rung(HYBRID));
-        assertEquals(2, b.state().sp());
+        assertEquals(3, b.state().sp());
     }
 
     @Test
