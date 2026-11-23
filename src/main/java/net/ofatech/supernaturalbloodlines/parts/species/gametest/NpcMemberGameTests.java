@@ -587,7 +587,9 @@ public final class NpcMemberGameTests {
             deny = helper.absolutePos(deniedAt);
             NpcBond hunting = bond(b).withOrder(NpcBond.Order.GUARD, helper.absolutePos(new BlockPos(4, 1, 4)).asLong()).withHunt(true).withSort(true);
             b.setData(SpeciesRegistries.NPC_BOND, hunting);
-            helper.assertTrue(NpcHunt.go(b, hunting, true, true) == 2, "the two cows were not hunted");
+            int hunted = NpcHunt.go(b, hunting, true, true);
+            helper.assertTrue(hunted == 2, "the two cows were not hunted: " + hunted + ", cows found by id " + cows.stream().filter(c -> helper.getLevel().getEntity(c.getUUID()) == c).count() + ", alive " + cows.stream().filter(Entity::isAlive).count()
+                    + ", " + net.ofatech.supernaturalbloodlines.gametest.Diag.chunk(helper.getLevel(), cows.get(0).blockPosition()) + ", owner known to the server " + (net.ofatech.supernaturalbloodlines.parts.species.sireline.SireCall.player(helper.getLevel().getServer(), bond(b).owner()) != null));
             helper.assertTrue(furnace.getItem(0).getCount() == 5 && furnace.getItem(1).isEmpty() && furnace.getItem(2).isEmpty(), "a furnace was used as a store");
             helper.assertTrue(denied.getItem(0).getCount() == 20 && denied.getItem(3).is(Items.DIAMOND_SWORD) && denied.getItem(5).getCount() == 20 && count(denied, Items.BEEF) == 0,
                     "a chest the owner may not open was sorted or filled");
