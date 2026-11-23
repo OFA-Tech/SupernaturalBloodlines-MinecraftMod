@@ -420,6 +420,7 @@ public final class HubScreen extends Screen {
                 openProfile(DevDemo.id("Derek|lead"), "Derek");
             }
             case "profile_op" -> openProfile(DevDemo.id("Derek|op"), "Derek", true);
+            case "profile_group" -> openProfile(DevDemo.id("Group|mate"), "Rowan");
             case "true_alpha_dialog" -> warnTrueAlpha(() -> { });
             // the real flow: the server's warning packet fires this hook, which opens Home and the dialog (the answer packet goes nowhere in a screenshot run)
             case "trial_warn" -> net.ofatech.supernaturalbloodlines.shared.hub.TrialWarnHook.fire();

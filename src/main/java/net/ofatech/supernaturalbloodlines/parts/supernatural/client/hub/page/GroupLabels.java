@@ -28,6 +28,16 @@ public final class GroupLabels {
         return v.type() != GroupType.PACK;
     }
 
+    /** The viewer is in no group and could not found one: the page says "Groups" and what a leader is, with no rank and no type. */
+    public static boolean neutral(GroupView v) {
+        return active(v) && !v.hasGroup() && v.viewerRank() != GroupView.LEADER;
+    }
+
+    /** The type's word in a lang key, or {@code none} for a viewer with no group who could found none. */
+    public static String slot(GroupView v) {
+        return neutral(v) ? "none" : v.type().id();
+    }
+
     /** The command root the page types: the pack's own tree for a pack (it needs Werewolves), the shared one for the rest. */
     public static String root(GroupView v) {
         return active(v) ? "group" : "pack";
@@ -47,7 +57,7 @@ public final class GroupLabels {
 
     /** {@code packKey} for a pack (exactly as before), {@code hub.group.<name>.<type>} for the other types. */
     public static Component t(GroupView v, String packKey, String name, Object... args) {
-        return active(v) ? Component.translatable(HUB + "group." + name + "." + v.type().id(), args) : Component.translatable(packKey, args);
+        return active(v) ? Component.translatable(HUB + "group." + name + "." + slot(v), args) : Component.translatable(packKey, args);
     }
 
     /** The members the way the pack page keeps them, so the ledger, the ring and the detail pane draw them unchanged. */
@@ -72,12 +82,12 @@ public final class GroupLabels {
 
     /** The one line of the ledger when nobody is there yet. */
     public static Component alone(GroupView v) {
-        return Component.translatable(HUB + "group.alone." + (v.viewerRank() == GroupView.LEADER ? v.type().id() : "none"));
+        return Component.translatable(HUB + "group.alone." + slot(v));
     }
 
     /** What the empty page says: how to found a group of the viewer's kind, or that they wait to be invited. */
     public static String emptyName(GroupView v) {
-        return v.viewerRank() == GroupView.LEADER ? "group_" + v.type().id() : "group_none";
+        return "group_" + slot(v);
     }
 
     /** The ring's colours for a group (placeholder art until the ring sprites of 20b to 20d): leader red, the next rank gold, members blue or brown. */

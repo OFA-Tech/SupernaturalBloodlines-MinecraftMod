@@ -2237,5 +2237,11 @@
   "supernaturalbloodlines.hub.group.btn.ally_invite": "Ally",
   "supernaturalbloodlines.hub.group.btn.ally_accept": "Accept alliance",
   "supernaturalbloodlines.hub.group.btn.ally_remove": "End the alliance",
-  "supernaturalbloodlines.hub.group.btn.challenge": "Challenge"
+  "supernaturalbloodlines.hub.group.btn.challenge": "Challenge",
+  "supernaturalbloodlines.hub.group.title.none": "Groups",
+  "supernaturalbloodlines.hub.group.subtitle.none": "Those you run with",
+  "supernaturalbloodlines.hub.group.accept.none": "Accept an invitation",
+  "supernaturalbloodlines.hub.group.invite_why.none": "Only a leader of a pack, a clan, a coven or a brotherhood, or someone who can found one, can invite or ally.",
+  "supernaturalbloodlines.hub.group.leave.none": "Leave the group",
+  "supernaturalbloodlines.hub.group.leave_confirm.none": "Press again to leave the group"
 }

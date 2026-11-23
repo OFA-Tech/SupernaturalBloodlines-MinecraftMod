@@ -37,8 +37,10 @@ public final class PackPage implements HubPageView {
         int y = f.begin(HubLayout.MAIN);
         y = PageKit.title(f, GroupLabels.t(gv, KEY + "title", "title"), r.x(), y, r.w(), t.accent());
         t.drawRule(f.g, r.x(), y + 2, r.w());
-        y = PageKit.wrapped(f, Component.translatable(KEY + "rank", grp ? GroupLabels.myRank(gv) : BookPackPage.rankLabel(f, wolf)),
-                r.x(), y + 6, r.w(), t.ink()) + 3;
+        if (!GroupLabels.neutral(gv)) {
+            y = PageKit.wrapped(f, Component.translatable(KEY + "rank", grp ? GroupLabels.myRank(gv) : BookPackPage.rankLabel(f, wolf)),
+                    r.x(), y + 6, r.w(), t.ink()) + 3;
+        }
         if (!grp && BookPackPage.weakLine(wolf).isPresent()) {
             y = PageKit.wrapped(f, BookPackPage.weakLine(wolf).get(), r.x(), y, r.w(), t.muted()) + 3;
         }

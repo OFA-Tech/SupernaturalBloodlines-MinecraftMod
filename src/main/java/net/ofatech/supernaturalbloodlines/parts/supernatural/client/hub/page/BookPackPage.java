@@ -240,7 +240,9 @@ public final class BookPackPage implements HubPageView {
             f.reserve(ledgerRegion, BookKit.sealReserve()); // the ACCEPT seal and the line that says what it accepts are pinned at the foot of the page
         }
         int y = BookKit.head(f, ledgerRegion, t(KEY + "title", "title"), t(BOOK + "subtitle", "subtitle"));
-        y = PageKit.title(f, Component.translatable(KEY + "rank", grp ? GroupLabels.myRank(gv) : rankLabel(f, wolf)), r.x(), y, r.w(), t.accent());
+        if (!GroupLabels.neutral(gv)) {
+            y = PageKit.title(f, Component.translatable(KEY + "rank", grp ? GroupLabels.myRank(gv) : rankLabel(f, wolf)), r.x(), y, r.w(), t.accent());
+        }
         if (!grp && weakLine(wolf).isPresent()) {
             y = PageKit.wrapped(f, weakLine(wolf).get(), r.x(), y, r.w(), t.muted()) + 2;
         }
@@ -378,7 +380,9 @@ public final class BookPackPage implements HubPageView {
         Component body = chosen != null ? Component.translatable(KEY + (chosen.online() ? "online" : "offline")) : t(BOOK + "subtitle", "subtitle");
         Detail.Builder d = Detail.of(title).body(body);
         if (style == Style.TENSURA) {
-            d.field(Component.translatable(KEY + "rank", grp ? GroupLabels.myRank(gv) : rankLabel(f, wolf)), Component.empty());
+            if (!GroupLabels.neutral(gv)) {
+                d.field(Component.translatable(KEY + "rank", grp ? GroupLabels.myRank(gv) : rankLabel(f, wolf)), Component.empty());
+            }
             if (chosen != null && !pack.isEmpty() && chosen == pack.get(0) && !chosen.base().equals("ally")) {
                 d.field(Component.translatable(KEY + "role"), t(KEY + "leader", "leader"));
             }
