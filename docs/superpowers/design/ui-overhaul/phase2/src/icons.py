@@ -6,7 +6,7 @@ icon may branch on `I.big` where the small one needs its own shapes. Materials s
 import math
 import os
 
-from px import BLACK, PHASE2, WHITE, Cv, emit, mix, ramp, rgba, sheet, with_a
+from px import BLACK, GUI, PHASE2, WHITE, Cv, emit, mix, ramp, rgba, sheet, with_a
 
 IR = dict(
     bone=ramp('#4A3A2A', '#FFFFF2', '#E9E0C8', '#B5A98A', '#FFFFFF', '#9A8E70'), blood=ramp('#3A0A10', '#FF6A60', '#C01830', '#7A0E1E', '#FF8F85', '#5E0A16'),
@@ -951,6 +951,116 @@ def _(I):  # Demon Wolf Roar
     wolf(I, 16, 15.5, 1.0, 'demon', '#FF3A2A', mouth=True)
 
 
+# ================================ plan 18: the Augustine skills and the skills that are HUD actions ================================
+@icon('s-aug-1')
+def _(I):  # Garlic Ward: the bulb, and the shield that keeps it off
+    cx = 13 if I.big else 12
+    bulb = [('d', cx, 17.5, 9, 8), ('p', [(cx, 3.5), (cx + 5.5, 12.5), (cx - 5.5, 12.5)])]
+    I.shape('bone', bulb)
+    if I.big:
+        I.paint([('l', 11, 9, 9, 25, 1.3), ('l', 15, 9, 17, 25, 1.3)], IR['bone'].sh, bulb)
+        I.paint([('r', 11, 25.6, 4, 1.4)], IR['wood'].b)
+        I.shape('steel', shield(23, 21.5, 0.56))
+        I.shape('sky', shield(23, 21.2, 0.3), False)
+    else:
+        I.tx(4, 6, IR['bone'].sh, 1, 6).tx(7, 6, IR['bone'].sh, 1, 6)
+        I.bits('steel', ['######', '######', '######', '######', '.####.', '..##..'], 9, 8)
+        I.tx(11, 10, IR['sky'].b, 2, 2).tx(11, 10, IR['sky'].hi)
+
+
+@icon('s-aug-2')
+def _(I):  # Blessed Skin: holy water that no longer burns, under a halo
+    if I.big:
+        I.shape('gold', [('d', 16, 6.5, 8, 3.2), ('-d', 16, 6.5, 5.2, 1.4)], False)
+        I.shape('sky', drop(16, 18.5, 0.78))
+        I.paint([('r', 15, 15, 2, 10), ('r', 12, 18, 8, 2)], '#FFF6DC')
+    else:
+        I.bits('gold', ['.####.', '#....#'], 5, 1)
+        I.shape('sky', drop(16, 19.5, 0.72))
+        I.tx(7, 8, '#FFF6DC', 2, 5).tx(6, 9, '#FFF6DC', 4, 1)
+
+
+RIP16 = ['....ooo..ooo....', '...oHHHooHHHo...', '..oHpHrrHrrrdo..', '..oHrrrrrrrrdo..', '..oHrrrrrrrrdo..', '..koHrrrrrrdok..', '.kWWorWrrWroWWk.', '.kWWkWWrrWWkWWk.',
+         '.kStkWWrrWWkStk.', '.kStkStrrStkStk.', '.kStkStddStkStk.', '.kStkStkkStkStk.', '.kSskSskkSskstk.', '..kssssssssstk..', '...kttttttttk...', '....kkkkkkkk....']
+
+
+def rip_heart(I):  # Rip Heart: the heart, in the clawed hand that took it
+    if I.big:
+        I.shape('blood', heart(16, 12, 0.96))
+        I.paint([('d', 10.8, 7.4, 1.8, 1.4)], '#FFC8C2')
+        I.shape('skin', [('p', [(5, 24), (3.5, 19), (4.5, 15.5), (7.5, 15.5), (8.5, 24)]), ('r', 10.5, 17.5, 3.5, 7.5), ('r', 18, 17.5, 3.5, 7.5),
+                         ('p', [(23.5, 24), (24.5, 15.5), (27.5, 15.5), (28.5, 19), (27, 24)]),
+                         ('p', [(5, 23), (27, 23), (25.5, 27), (21.5, 28.5), (21.5, 30.5), (10.5, 30.5), (10.5, 28.5), (6.5, 27)])])
+        for tip in ([(4.3, 16.5), (7.7, 16.5), (7.4, 11)], [(10.5, 18.5), (14, 18.5), (12.8, 13)], [(18, 18.5), (21.5, 18.5), (19.2, 13)], [(24.3, 16.5), (27.7, 16.5), (24.6, 11)]):
+            I.shape('bone', [('p', tip)], False)
+        I.paint([('r', 15.2, 22, 1.6, 4.5), ('d', 16, 27, 1.5)], '#C01830')
+    else:  # typed texel by texel: at 16 an outline round each finger would leave no heart
+        B, S = IR['blood'], IR['skin']
+        I.cv.bmp(RIP16, {'o': B.o, 'H': B.hi, 'r': B.b, 'd': B.sh, 'p': '#FFC8C2', 'k': S.o, 'S': S.hi, 's': S.b, 't': S.sh, 'W': '#FFFFF2'})
+
+
+def neck_snap(I):  # Neck Snap: a head knocked off the line of its neck, and the crack of it
+    th, bx, by = math.radians(45), 14, 20  # the angle of the head, and where the neck breaks
+    ux, uy, vx, vy = math.sin(th), -math.cos(th), math.cos(th), math.sin(th)  # u: to the crown of the head, v: across its face
+    cx, cy = bx + ux * 7.5, by + uy * 7.5
+    I.shape('skin', [('r', 11.5, 17, 5, 6.5)])
+    I.shape('steel', [('d', 14, 30.5, 10.5, 8.5), ('-r', 0, 29.5, 32, 4)])
+    I.shape('skin', [('d', cx, cy, 6.5)])
+    a, b = (cx + ux * 1.4 - vx * 12, cy + uy * 1.4 - vy * 12), (cx + ux * 1.4 + vx * 12, cy + uy * 1.4 + vy * 12)
+    I.paint([('p', [a, b, (b[0] + ux * 12, b[1] + uy * 12), (a[0] + ux * 12, a[1] + uy * 12)])], '#6A4426', [('d', cx, cy, 5.5)])
+    for s in (-2.4, 2.4):  # the eyes: shut to crosses, a dot each at 16
+        ex, ey = int((cx + vx * s - ux * 1.7) * I.k), int((cy + vy * s - uy * 1.7) * I.k)
+        for dx, dy in ((-1, -1), (1, -1), (0, 0), (-1, 1), (1, 1)) if I.big else ((0, 0),):
+            I.tx(ex + dx, ey + dy, INK)
+    if I.big:
+        I.paint([('p', [(11.5, 23), (16.5, 23), (14, 26.5)])], IR['skin'].sh)
+        for x0, y0, x1, y1 in ((8.5, 5, 10.5, 11), (4.5, 9, 8.5, 13.5), (2.5, 16.5, 8, 17.5)):
+            I.shape('gold', [('l', x0, y0, x1, y1, 1.8)], False)
+    else:
+        I.bits('gold', ['.#.', '###', '.#.'], 2, 4)
+
+
+@icon('bottle_blood')
+def _(I):  # Bottle my blood: an open bottle, half full, and the drop that fills it
+    if I.big:
+        body = [('r', 11.5, 13, 9, 2.5), ('r', 13, 15, 6, 3.5), ('p', [(12.5, 18), (19.5, 18), (24, 21), (24, 28), (22, 30), (10, 30), (8, 28), (8, 21)])]
+        inner = [('p', [(13, 19.2), (19, 19.2), (22.7, 21.6), (22.7, 27.6), (21.5, 28.8), (10.5, 28.8), (9.3, 27.6), (9.3, 21.6)])]
+        I.shape('ice', body)
+        I.paint([('r', 5, 23.5, 22, 10)], '#C01830', inner)
+        I.paint([('r', 5, 23.5, 22, 1.4)], '#FF6A60', inner)
+        I.paint([('r', 5, 27, 22, 3)], '#7A0E1E', inner)
+        I.shape('blood', drop(16, 5.6, 0.25), False)
+    else:
+        I.bits('ice', ['..######..', '...####...', '..######..', '.########.', '##########', '##########', '##########', '.########.'], 3, 7)
+        I.tx(4, 12, '#FF6A60', 8, 1).tx(4, 13, '#C01830', 8, 1).tx(5, 14, '#7A0E1E', 6, 1)
+        I.bits('blood', ['#', '#'], 8, 2)
+        I.tx(8, 2, '#FF6A60').tx(8, 3, '#C01830')
+
+
+def hybrid_leap(I):  # Hybrid Leap: the wolf-man thrown at its prey
+    if I.big:
+        I.shape('fur', [('d', 21.5, 9, 4.3), ('p', [(23, 6), (30, 9.2), (30, 11.2), (25, 12.2)]), ('p', [(24, 11.5), (28.5, 13.6), (27.5, 15), (22.5, 13.5)]),
+                        ('p', [(18.2, 7.5), (17.4, 2.2), (22, 5.2)]), ('l', 19, 14, 10.5, 21, 7.5), ('d', 18.5, 14.5, 4.6),
+                        ('l', 19.5, 16, 27.5, 19.5, 3), ('l', 16.5, 18, 23, 24.5, 3),
+                        ('l', 10.5, 21, 4.5, 25, 4), ('l', 4.5, 25, 3.5, 28, 2.8), ('l', 11.5, 22, 12, 27.5, 3.8), ('l', 12, 27.5, 8.5, 29.3, 2.8)])
+        I.shape('bone', [('p', [(27, 18), (30.4, 19.6), (27.6, 21.2)])], False)
+        I.shape('bone', [('p', [(22.3, 23.2), (25.6, 26.2), (22.6, 26.4)])], False)
+        I.tx(23, 8, '#FF4A3A', 2, 1)
+        for y, x, w in ((3.5, 4, 9), (7.5, 2, 10), (11.5, 5, 6)):
+            I.shape('gold', [('r', x, y, w, 1.8)], False)
+    else:
+        I.bits('fur', ['..........#.....', '.........###....', '........######..', '........#######.', '.......#####....', '.....#######....', '...##########...',
+                       '..#######.####..', '.#######..##....', '.#####....###...', '.###.##.........', '.##...##........', '......#.........'], 0, 1)
+        I.tx(12, 3, '#FF4A3A').tx(13, 8, '#FFFFF2').tx(12, 10, '#FFFFF2')
+        I.bits('gold', ['####'], 2, 2)
+        I.bits('gold', ['####'], 1, 4)
+
+
+ICONS['s-vam-8'] = ICONS['rip_heart'] = rip_heart  # one picture for the skill and for its HUD action
+ICONS['s-vam-9'] = ICONS['neck_snap'] = neck_snap
+ICONS['s-hyb-3'] = ICONS['hybrid_leap'] = hybrid_leap
+
+
 # ================================ bloodlines ================================
 @icon('species_human')
 def _(I):
@@ -1123,7 +1233,7 @@ GROUPS = [('pages', ['home', 'path', 'skills', 'quests', 'rites', 'bloodline', '
           ('controls', ['check', 'lock', 'crown', 'dot', 'close', 'theme', 'launch', 'question', 'info', 'plus', 'arrow_left', 'arrow_right', 'bell', 'key', 'unknown']),
           ('sky', ['moon_new', 'moon_waxing_crescent', 'moon_first_quarter', 'moon_waxing_gibbous', 'moon_full', 'moon_waning_gibbous', 'moon_last_quarter', 'moon_waning_crescent', 'sun']),
           ('motifs', ['drop', 'shield', 'fang', 'vial', 'claw', 'heart', 'boot', 'eye', 'voice', 'spark', 'bolt']),
-          ('actions', ['bite', 'alpha_roar', 'thirst', 'moonblood_surge', 'wolf_spirits', 'leap']),
+          ('actions', ['bite', 'alpha_roar', 'thirst', 'moonblood_surge', 'wolf_spirits', 'leap', 'rip_heart', 'neck_snap', 'bottle_blood', 'hybrid_leap']),
           ('skills', [n for n in ICONS if n.startswith('s-')]),
           ('bloodlines', [n for n in ICONS if n.startswith('species_')]),
           ('ranks', [n for n in ICONS if n.startswith('rank_')]),
@@ -1142,6 +1252,21 @@ def silhouette(cv, c):
     return o
 
 
+HUD = ['bite', 'alpha_roar', 'unknown', 'rip_heart', 'neck_snap', 'bottle_blood', 'hybrid_leap']  # the slot icons: the same names as HudIcons.OURS
+HUD_RAW = HUD[3:]  # textures/gui/hud/<name>.png of these is the 16 px icon itself (the Loadout tab draws it); the first three keep the pictures they had before the kit
+PALE = rgba('#E6DCC8')
+
+
+def hud_twin(cv):
+    """The 16 px icon as a HUD slot draws it: its outer line pale, so an icon with a dark outline is not lost on the dark face of a slot."""
+    o = cv.copy()
+    for y in range(cv.h):
+        for x in range(cv.w):
+            if cv.get(x, y) and not (cv.get(x - 1, y) and cv.get(x + 1, y) and cv.get(x, y - 1) and cv.get(x, y + 1)):
+                o.d[y * cv.w + x] = PALE
+    return o
+
+
 def build():
     names = [n for _, g in GROUPS for n in g]
     assert sorted(names) == sorted(ICONS), set(names) ^ set(ICONS)
@@ -1151,7 +1276,13 @@ def build():
             for name in members:
                 cv = emit(draw(name, n), 'sprites/icons/%d/%s.png' % (n, name), '%s icon, %d px' % (g, n))
                 cells.append((name, cv))
+                if n == 16 and name in HUD:
+                    emit(hud_twin(cv), 'sprites/icons/hud/%s.png' % name, 'HUD slot icon (pale outline), 16 px')
+                    if name in HUD_RAW:
+                        emit(cv, 'hud/%s.png' % name, 'HUD action texture (the Loadout tab), 16 px')
         sheet(os.path.join(PHASE2, 'icons-%d.png' % n), cells, rgba('#17171C'), zoom=3 if n == 32 else 4, bg2=rgba('#E9DDB8'), max_w=1500)
         sil = [(name, silhouette(cv, rgba('#101014'))) for name, cv in cells]
         sheet(os.path.join(PHASE2, 'icons-%d-silhouettes.png' % n), sil, rgba('#E8E8EC'), zoom=1, label=False, max_w=900 if n == 32 else 600, pad=4)
+    # the mob effect of a snapped neck: the Neck Snap picture on the 18 x 18 of an effect icon
+    emit(Cv(18, 18).blit(draw('neck_snap', 16), 1, 1), 'mob_effect/snapped.png', 'mob effect icon, 18 px', root=os.path.dirname(GUI))
     print('icons', len(names), 'x 2 sizes')
