@@ -69,6 +69,18 @@ public final class ArtifactItems {
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<CompassMode>> COMPASS_MODE =
             COMPONENTS.registerComponentType("compass_mode", b -> b.persistent(CompassMode.CODEC).networkSynchronized(CompassMode.STREAM_CODEC));
 
+    /**
+     * Who a compass is attuned to (R316): sealed, so the client sees only a string it cannot open ({@code LocatorTargets}). Absent: not attuned.
+     */
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<String>> LOCATOR_SEAL =
+            COMPONENTS.registerComponentType("locator_seal", b -> b.persistent(com.mojang.serialization.Codec.STRING).networkSynchronized(ByteBufCodecs.STRING_UTF8));
+    /** The game time an attunement ends. */
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<Long>> LOCATOR_UNTIL =
+            COMPONENTS.registerComponentType("locator_until", b -> b.persistent(com.mojang.serialization.Codec.LONG).networkSynchronized(ByteBufCodecs.VAR_LONG));
+    /** How far the needle says the one looked for is: -1 nothing, 0 very near, else blocks to the nearest hundred (never an exact number). */
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<Integer>> LOCATOR_NEAR =
+            COMPONENTS.registerComponentType("locator_near", b -> b.persistent(com.mojang.serialization.Codec.INT).networkSynchronized(ByteBufCodecs.VAR_INT));
+
     public static final DeferredItem<BoundRingItem> SUN_RING = ITEMS.register("sun_ring", BoundRingItem::new);
 
     /** Null without Werewolves: the item is not registered then. */

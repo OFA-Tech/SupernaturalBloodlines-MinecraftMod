@@ -98,6 +98,12 @@ public final class SpeciesConfig {
     private static final ModConfigSpec.IntValue WEAK_SPARK_COOLDOWN_DAYS;
     private static final ModConfigSpec.BooleanValue MOONBLOOD_SURGE_ENABLED;
     private static final ModConfigSpec.BooleanValue HYBRID_PACK_MOON_CONTROL;
+    private static final ModConfigSpec.BooleanValue LOCATOR_ENABLED;
+    private static final ModConfigSpec.IntValue LOCATOR_MINUTES;
+    private static final ModConfigSpec.IntValue LOCATOR_RANGE;
+    private static final ModConfigSpec.IntValue LOCATOR_BLUR;
+    private static final ModConfigSpec.BooleanValue LOCATOR_TELL_TARGET;
+    private static final java.util.Map<String, Object> LOCATOR_OVERRIDES = new java.util.concurrent.ConcurrentHashMap<>();
     private static volatile Boolean hybridPackMoonOverride;
     private static final ModConfigSpec.BooleanValue WOLF_SPIRITS_ENABLED;
     private static final ModConfigSpec.BooleanValue NPC_RECRUIT_ENABLED;
@@ -304,6 +310,58 @@ public final class SpeciesConfig {
         }
     }
 
+    /** For tests: pins one locator setting by its key ({@code locator_range}, ...); null clears it. */
+    @VisibleForTesting
+    public static void overrideLocator(String key, Object value) {
+        if (value == null) {
+            LOCATOR_OVERRIDES.remove(key);
+        } else {
+            LOCATOR_OVERRIDES.put(key, value);
+        }
+    }
+
+    private static boolean locatorBool(String key, ModConfigSpec.BooleanValue value, boolean fallback) {
+        if (LOCATOR_OVERRIDES.get(key) instanceof Boolean pinned) {
+            return pinned;
+        }
+        try {
+            return value.get();
+        } catch (IllegalStateException notLoaded) {
+            return fallback;
+        }
+    }
+
+    private static int locatorInt(String key, ModConfigSpec.IntValue value, int fallback) {
+        if (LOCATOR_OVERRIDES.get(key) instanceof Integer pinned) {
+            return pinned;
+        }
+        try {
+            return value.get();
+        } catch (IllegalStateException notLoaded) {
+            return fallback;
+        }
+    }
+
+    public static boolean locatorEnabled() {
+        return locatorBool("locator_enabled", LOCATOR_ENABLED, true);
+    }
+
+    public static int locatorMinutes() {
+        return locatorInt("locator_minutes", LOCATOR_MINUTES, 30);
+    }
+
+    public static int locatorRange() {
+        return locatorInt("locator_range", LOCATOR_RANGE, 2000);
+    }
+
+    public static int locatorBlur() {
+        return locatorInt("locator_blur", LOCATOR_BLUR, 32);
+    }
+
+    public static boolean locatorTellTarget() {
+        return locatorBool("locator_tell_target", LOCATOR_TELL_TARGET, true);
+    }
+
     /** For tests: pins {@link #hybridPackMoonControl()}; null clears it. */
     @VisibleForTesting
     public static void overrideHybridPackMoon(Boolean value) {
@@ -417,6 +475,16 @@ public final class SpeciesConfig {
                 .define("wolf_spirits_enabled", true);
         HYBRID_PACK_MOON_CONTROL = b.comment("R96: while the pack's current leader is a hybrid, an Original hybrid or a tribrid, every werewolf member of the pack has moon control (as with a Moon Ring). Lost on leaving the pack or when the lead passes to someone else. Off: no pack gift.")
                 .define("hybrid_pack_moon_control", true);
+        LOCATOR_ENABLED = b.comment("R315: the Rites of the Locator (a witch finds somebody by their taglock or blood) and the Vampire Compass's third mode. Off: the rites are refused and an attuned compass spins.")
+                .define("locator_enabled", true);
+        LOCATOR_MINUTES = b.comment("R316: how long a compass stays attuned to somebody, in real minutes.")
+                .defineInRange("locator_minutes", 30, 1, 1440);
+        LOCATOR_RANGE = b.comment("R316: how far away, in blocks, the locator can find somebody (same dimension). 0: the whole dimension.")
+                .defineInRange("locator_range", 2000, 0, 30_000_000);
+        LOCATOR_BLUR = b.comment("R316: the needle points at the middle of a square this many blocks wide, never at the exact spot.")
+                .defineInRange("locator_blur", 32, 8, 512);
+        LOCATOR_TELL_TARGET = b.comment("R317: the person being looked for is told once ('Somebody is looking for you.', no name, no place) and again when it ends.")
+                .define("locator_tell_target", true);
         ALPHA_TRIAL_ENABLED = b.comment("R147: the Alpha Trial rite (a full-moon night, a transformed Beta or Omega) calls a boss; winning gives a new Alpha spark. Off: the rite refuses.")
                 .define("alpha_trial_enabled", true);
         ALPHA_TRIAL_MIN_LEVEL = b.comment("Lowest werewolf level that may try the Alpha Trial.")

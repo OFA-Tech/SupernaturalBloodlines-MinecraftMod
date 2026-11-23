@@ -158,6 +158,7 @@ public final class SpeciesPart {
         SpeciesRegistries.register(modBus);
         net.ofatech.supernaturalbloodlines.parts.species.unlock.RiteUnlocks.register();
         SpeciesSupernatural.register();
+        net.ofatech.supernaturalbloodlines.parts.species.locator.LocatorBridge.register(); // for the Vampire Compass's third mode
         // what the supernatural part's tasks need from here, through shared hooks
         net.ofatech.supernaturalbloodlines.shared.supernatural.HumanLikeBlood.set(TurningHandler::isHumanLikeBlood);
         net.ofatech.supernaturalbloodlines.shared.supernatural.TurningFeed.set(

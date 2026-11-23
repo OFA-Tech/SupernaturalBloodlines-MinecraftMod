@@ -48,6 +48,8 @@ public final class ArtifactsPart {
         RiteFactoryRegistry.get().register(BindItemRiteFactory.ID, BindItemRiteFactory.CODEC);
         RiteFactoryRegistry.get().register(RequiresDesiccatedRiteFactory.ID, RequiresDesiccatedRiteFactory.CODEC);
         RiteFactoryRegistry.get().register(WardRiteFactory.ID, WardRiteFactory.CODEC);
+        RiteFactoryRegistry.get().register(net.ofatech.supernaturalbloodlines.parts.artifacts.rite.LocatorRiteFactory.ID, net.ofatech.supernaturalbloodlines.parts.artifacts.rite.LocatorRiteFactory.CODEC);
+        net.ofatech.supernaturalbloodlines.parts.artifacts.rite.LocatorNotices.register();
         ArtifactItems.register(modBus);
         MountainAsh.register(modBus);
         if (FMLEnvironment.dist == Dist.CLIENT) {
@@ -83,6 +85,7 @@ public final class ArtifactsPart {
             e.register(MountainAshGameTests.class);
             e.register(net.ofatech.supernaturalbloodlines.parts.artifacts.gametest.WardGameTests.class);
             e.register(net.ofatech.supernaturalbloodlines.parts.artifacts.gametest.WardHomeGameTests.class);
+            e.register(net.ofatech.supernaturalbloodlines.parts.artifacts.gametest.LocatorGameTests.class);
             if (curios) {
                 e.register(CuriosSlotsGameTests.class);
             }

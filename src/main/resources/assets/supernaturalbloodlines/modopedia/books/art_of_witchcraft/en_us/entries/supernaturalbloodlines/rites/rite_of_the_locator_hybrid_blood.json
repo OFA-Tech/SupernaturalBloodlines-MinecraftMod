@@ -1,0 +1,37 @@
+{
+  "title": "Rite of the Locator: Hybrid's Blood",
+  "icon": {
+    "count": 1,
+    "id": "minecraft:compass"
+  },
+  "assigned_items": [],
+  "pages": [
+    {
+      "components": [
+        {
+          "template": "modopedia:page/headered_text",
+          "text": "Circle: small circle, ritual chalk.\n\nThe same, from a bottle of Hybrid's Blood in place of a taglock: it finds whoever the blood was taken from.",
+          "header": "Hybrid Locator"
+        }
+      ]
+    },
+    {
+      "components": [
+        {
+          "template": "modopedia:page/headered_text",
+          "text": "A bottle that holds no one's blood is refused like any other failure: the same words, the same cost.",
+          "header": "Hybrid Locator"
+        }
+      ]
+    },
+    {
+      "components": [
+        {
+          "template": "supernaturalbloodlines:page/rite",
+          "rite": "supernaturalbloodlines:rite_of_the_locator_hybrid_blood",
+          "header": "Hybrid Locator"
+        }
+      ]
+    }
+  ]
+}

@@ -33,7 +33,7 @@ public final class RiteUnlockTable {
 
     /** Known to everyone from the start: no advancement, no sealed entry. */
     public static final List<String> OPEN = List.of("ancestral_calling", "blood_offering", "hearing_device", "magicule_offering", "purification",
-            "purification_holy_water", "rite_of_revelation", "vampire_compass");
+            "purification_holy_water", "rite_of_revelation", "vampire_compass", "rite_of_the_locator", "rite_of_the_locator_original_blood", "rite_of_the_locator_hybrid_blood");
 
     public static final Map<String, Gate> GATED;
 

@@ -13,7 +13,7 @@ import org.junit.jupiter.api.Test;
 class RiteUnlockTableTest {
     @Test
     void theNumbersOfThePlan() {
-        assertEquals(8, RiteUnlockTable.OPEN.size());
+        assertEquals(11, RiteUnlockTable.OPEN.size());
         assertEquals(31, RiteUnlockTable.GATED.size());
         assertEquals(18, RiteUnlockTable.GATED.values().stream().filter(g -> g.lore().isEmpty()).count(), "kind only");
         assertEquals(9, RiteUnlockTable.GATED.values().stream().filter(g -> g.kinds().isEmpty()).count(), "lore only");
