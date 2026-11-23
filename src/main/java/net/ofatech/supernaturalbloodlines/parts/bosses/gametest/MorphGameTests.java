@@ -93,22 +93,26 @@ public final class MorphGameTests {
             return;
         }
         List<Shifter> all = List.of();
+        ServerPlayer watcher = TestPlayers.createDuelist(helper);
+        helper.getLevel().addNewPlayer(watcher); // someone to send the particles to: sendParticles says how many it reached
         try (BossTestRig rig = new BossTestRig(helper)) {
             all = shifters(helper, rig);
+            watcher.setPos(helper.absoluteVec(new Vec3(2.5, 1, 6.5)));
             for (Shifter s : all) {
                 List<String> seen = new ArrayList<>();
                 MorphCues.observe(played -> {
                     if (played.boss() == s.mob()) {
-                        seen.add(played.shiftTick() + ":" + played.cues() + ":" + played.sounds() + ":" + played.particles());
+                        seen.add(played.shiftTick() + ":" + played.cues() + ":" + played.sounds() + ":" + played.particles() + ":" + played.viewers());
                     }
                 });
                 s.start().run();
                 run(s.mob(), ShiftRules.END_TICK);
-                // tick:cue bit:sounds:particles, what was really made: the growl, four puffs of smoke that climb, a bone crack, the landing (a step and twelve puffs)
-                helper.assertTrue(seen.equals(List.of("0:1:1:0", "4:2:0:4", "7:4:1:0", "8:2:0:4", "12:2:0:4", "14:4:1:0", "16:2:0:4", "32:8:1:12")), s.name() + " played " + seen);
+                // tick:cue bit:sounds:particles:players they reached, what was really made: the growl, four puffs of smoke that climb (sent to the one player watching), a bone crack, the landing (a step and twelve puffs)
+                helper.assertTrue(seen.equals(List.of("0:1:1:0:0", "4:2:0:4:1", "7:4:1:0:0", "8:2:0:4:1", "12:2:0:4:1", "14:4:1:0:0", "16:2:0:4:1", "32:8:1:12:1")), s.name() + " played " + seen);
                 helper.assertTrue(s.body().form() == BossForm.BEAST, s.name() + " did not finish the shift");
             }
         } finally {
+            helper.getLevel().removePlayerImmediately(watcher, net.minecraft.world.entity.Entity.RemovalReason.DISCARDED);
             clear(all);
         }
         helper.succeed();
@@ -586,12 +590,15 @@ public final class MorphGameTests {
         if (skipped(helper)) {
             return;
         }
+        ServerPlayer watcher = TestPlayers.createDuelist(helper);
+        helper.getLevel().addNewPlayer(watcher);
         try (BossTestRig rig = new BossTestRig(helper)) {
             BeastEntity b = changed(helper, rig);
+            watcher.setPos(b.getX() + 3.0, b.getY(), b.getZ());
             List<String> seen = new ArrayList<>();
             MorphCues.observe(played -> {
                 if (played.boss() == b) {
-                    seen.add(played.shiftTick() + ":" + played.cues() + ":" + played.sounds() + ":" + played.particles());
+                    seen.add(played.shiftTick() + ":" + played.cues() + ":" + played.sounds() + ":" + played.particles() + ":" + played.viewers());
                 }
             });
             BeastEntity twin = BeastEntity.create(helper.getLevel());
@@ -606,8 +613,9 @@ public final class MorphGameTests {
                 helper.assertTrue(twin.getBbWidth() == b.getBbWidth() && twin.getBbHeight() == b.getBbHeight(), "tick " + t + ": a different box");
                 run(b, 1);
             }
-            helper.assertTrue(seen.equals(List.of("0:1:1:0", "4:2:0:4", "7:4:1:0", "8:2:0:4", "12:2:0:4", "14:4:1:0", "16:2:0:4", "32:8:1:12")), "the Beast played " + seen);
+            helper.assertTrue(seen.equals(List.of("0:1:1:0:0", "4:2:0:4:1", "7:4:1:0:0", "8:2:0:4:1", "12:2:0:4:1", "14:4:1:0:0", "16:2:0:4:1", "32:8:1:12:1")), "the Beast played " + seen);
         } finally {
+            helper.getLevel().removePlayerImmediately(watcher, net.minecraft.world.entity.Entity.RemovalReason.DISCARDED);
             MorphCues.observe(null);
             BeastEntity.observeSwap(null);
         }

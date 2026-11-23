@@ -97,6 +97,22 @@ public final class ManPoseTable {
         return Float.isNaN(v) || Float.isInfinite(v) ? fallback : v;
     }
 
+    /** How far the hips hang below the pivot of the body (the shoulder line) in the player model, in model units (16 to a block). */
+    public static final float HIP_DROP = 12.0F;
+
+    /**
+     * How far the hips move back (model z, toward the back of the body) when the body leans by {@code bodyXDegrees} about its pivot: the legs are fixed to the hips,
+     * so they have to go with them or a lean tears the body in two at the waist. A lean of 45 degrees moves them 8.5 units, about half a block. Positive is a lean forward.
+     */
+    public static float hipShiftZ(float bodyXDegrees) {
+        return HIP_DROP * (float) Math.sin(Math.toRadians(bodyXDegrees));
+    }
+
+    /** How far the hips come up (a negative change of model y, which grows downward) for the same lean: 12 * (1 - cos). Never negative. */
+    public static float hipLift(float bodyXDegrees) {
+        return HIP_DROP * (1.0F - (float) Math.cos(Math.toRadians(bodyXDegrees)));
+    }
+
     public int keyCount() {
         return keys.length;
     }

@@ -108,6 +108,41 @@ class ManPoseTest {
     }
 
     @Test
+    void aLeanCarriesTheHipsBackAndUpAndNotAtAllWhenThereIsNone() {
+        assertEquals(0.0F, ManPoseTable.hipShiftZ(0.0F), 1e-6);
+        assertEquals(0.0F, ManPoseTable.hipLift(0.0F), 1e-6);
+        assertEquals(2.90F, ManPoseTable.hipShiftZ(14.0F), 0.01F, "14 degrees is the old limit: just under 3 units back");
+        assertEquals(0.36F, ManPoseTable.hipLift(14.0F), 0.01F);
+        assertEquals(8.49F, ManPoseTable.hipShiftZ(45.0F), 0.01F, "45 degrees, the new limit: half a block back");
+        assertEquals(3.51F, ManPoseTable.hipLift(45.0F), 0.01F);
+        assertEquals(-ManPoseTable.hipShiftZ(30.0F), ManPoseTable.hipShiftZ(-30.0F), 1e-5, "a lean back moves the hips the other way");
+        assertEquals(ManPoseTable.hipLift(30.0F), ManPoseTable.hipLift(-30.0F), 1e-5, "and lifts them just as much");
+        // the hips stay a hip's drop from the pivot: the leg is carried, not stretched
+        for (float a = -60.0F; a <= 60.0F; a += 7.5F) {
+            double z = ManPoseTable.hipShiftZ(a);
+            double y = ManPoseTable.HIP_DROP - ManPoseTable.hipLift(a);
+            assertEquals(ManPoseTable.HIP_DROP, Math.hypot(z, y), 1e-4, "at " + a + " degrees");
+        }
+    }
+
+    @Test
+    void theModelCarriesTheLegsWithTheHipsFromTheBodyChannel() throws IOException {
+        String model = Files.readString(MorphClipsTest.root().resolve("src/main/java/net/ofatech/supernaturalbloodlines/parts/bosses/client/MorphPlayerModel.java"), StandardCharsets.UTF_8);
+        for (String must : new String[] {"ManPoseTable.hipShiftZ(p[3])", "ManPoseTable.hipLift(p[3])", "rightLeg.z += back", "leftLeg.z += back", "rightLeg.y -= up", "leftLeg.y -= up"}) {
+            assertTrue(model.contains(must), "MorphPlayerModel no longer does: " + must);
+        }
+        assertTrue(model.indexOf("rightLeg.y -= up") < model.indexOf("rightPants.copyFrom(rightLeg)"), "the pants are copied before the legs are carried: the second layer would stay behind");
+    }
+
+    @Test
+    void aBodyLeanOfFortyFiveDegreesIsInsideWhatATableMayAsk() throws IOException {
+        float[] out = new float[ManPoseTable.SIZE];
+        ManPoseTable t = ManPoseTable.parse("{\"keys\":[{\"tick\":0},{\"tick\":19,\"body_x\":45}]}");
+        t.sample(1.0F, out);
+        assertEquals(45.0F, out[3], 1e-6);
+    }
+
+    @Test
     void neutralIsOneSharedTableAndDoesNothing() {
         assertSame(ManPoseTable.neutral(), ManPoseTable.neutral());
     }

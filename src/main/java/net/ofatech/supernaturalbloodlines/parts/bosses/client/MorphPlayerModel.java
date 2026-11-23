@@ -35,6 +35,13 @@ public final class MorphPlayerModel<T extends LivingEntity> extends PlayerModel<
         leftArm.zRot += rad(p[7]);
         rightLeg.xRot += rad(p[8]);
         leftLeg.xRot += rad(p[9]);
+        // the legs are fixed to the hips, which swing back and up when the body leans about the shoulder: carry them (a lean past about 14 degrees would otherwise show the waist torn)
+        float back = ManPoseTable.hipShiftZ(p[3]);
+        float up = ManPoseTable.hipLift(p[3]);
+        rightLeg.z += back;
+        leftLeg.z += back;
+        rightLeg.y -= up;
+        leftLeg.y -= up;
         // the second skin layer is copied from the parts at the end of the vanilla setup, so it has to be copied again
         hat.copyFrom(head);
         jacket.copyFrom(body);

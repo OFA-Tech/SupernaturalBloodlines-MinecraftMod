@@ -126,7 +126,7 @@ Nothing is drawn yet: this phase is the server half of the skill wheel (`docs/su
 - Deucalion's `drop_to_fours` and Peter's `rise_up` clips are gone: `shift_in` replaces them. Reduce motion is not read by any of this (it is for the interface only), and player werewolf forms are the Werewolves mod's and are not drawn by us.
 
 ### Network
-- No payload changed and no network version was bumped. The three men already synced `FORM` and `SHIFT_TICKS`; the Beast has those two entity data entries now. A client of an older build does not know them and would draw the Beast as a wolf all the time, even in its first second as a man: update the server and the clients together.
+- **The network protocol is bumped from "1" to "2"** (`ModNetwork.PROTOCOL`), so a client of an older build is refused at login by NeoForge's version check, with its own screen. No payload changed, but the Beast has two more synced entity data entries (`FORM` and `SHIFT_TICKS`), and entity data ids are positional: an old client that is given an id it does not have reads past the end of its table and is kicked with an error nobody can read. **Update the server and every client together.**
 
 ### Rolling back
 - Reverting the PR restores the old shift. Saves are fine: the Beast''s `form` and `shift_ticks` tags are optional and ignored by the old build, and a Beast saved mid-change comes back a whole Beast.
