@@ -13,7 +13,16 @@
     "supernaturalbloodlines/sealed/rite_of_linking",
     "supernaturalbloodlines/rites/rite_of_linking",
     "supernaturalbloodlines/sealed/rite_of_the_valet_pike",
-    "supernaturalbloodlines/rites/rite_of_the_valet_pike"
+    "supernaturalbloodlines/rites/rite_of_the_valet_pike",
+    "supernaturalbloodlines/sealed/rite_of_the_ward",
+    "supernaturalbloodlines/rites/rite_of_the_ward",
+    "supernaturalbloodlines/rites/rite_of_the_locator",
+    "supernaturalbloodlines/rites/rite_of_the_locator_original_blood",
+    "supernaturalbloodlines/rites/rite_of_the_locator_hybrid_blood",
+    "supernaturalbloodlines/sealed/curse_insanity",
+    "supernaturalbloodlines/rites/curse_insanity",
+    "supernaturalbloodlines/sealed/curse_susceptibility",
+    "supernaturalbloodlines/rites/curse_susceptibility"
   ],
   "icon": {
     "count": 1,

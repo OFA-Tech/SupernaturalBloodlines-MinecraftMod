@@ -74,6 +74,13 @@ final class DevDemo {
                 new net.ofatech.supernaturalbloodlines.shared.supernatural.HubRequests.Request(net.ofatech.supernaturalbloodlines.shared.supernatural.HubRequests.Kind.SIRE_CALL, id("Klaus"), "Klaus", "ab12cd34", 5000),
                 new net.ofatech.supernaturalbloodlines.shared.supernatural.HubRequests.Request(net.ofatech.supernaturalbloodlines.shared.supernatural.HubRequests.Kind.PACK_INVITE, id("Derek"), "Derek", "0f0f0f0f", 4000),
                 new net.ofatech.supernaturalbloodlines.shared.supernatural.HubRequests.Request(net.ofatech.supernaturalbloodlines.shared.supernatural.HubRequests.Kind.COMPULSION, net.ofatech.supernaturalbloodlines.shared.supernatural.HubRequests.NOBODY, "", "11223344", 3000)));
+        if ("true".equals(System.getProperty("supernaturalbloodlines.devshots.demo.ward"))) { // demo.ward=true: the Path page's Your ward card
+            net.ofatech.supernaturalbloodlines.parts.supernatural.client.WardClient.demo(new net.ofatech.supernaturalbloodlines.shared.hub.WardHub.View(List.of(
+                    new net.ofatech.supernaturalbloodlines.shared.hub.WardHub.Own("0a1b2c3d", false, false, "minecraft:overworld", -120, 64, 305,
+                            List.of(new net.ofatech.supernaturalbloodlines.shared.hub.WardHub.Member(id("Bonnie"), "Bonnie"), new net.ofatech.supernaturalbloodlines.shared.hub.WardHub.Member(id("Elena"), "Elena"))),
+                    new net.ofatech.supernaturalbloodlines.shared.hub.WardHub.Own("4e5f6a7b", true, false, "minecraft:overworld", -118, 65, 301, List.of())),
+                    List.of("Jeremy")));
+        }
         net.ofatech.supernaturalbloodlines.parts.supernatural.client.AdminClient.demo(net.ofatech.supernaturalbloodlines.parts.supernatural.net.AdminNet.snapshot(Optional.empty()),
                 new net.ofatech.supernaturalbloodlines.parts.supernatural.net.HubCommandReplyPayload("D1", true, List.of(net.minecraft.network.chat.Component.literal(me + ": BloodlineState[species=HYBRID, sire=Klaus]"))));
     }

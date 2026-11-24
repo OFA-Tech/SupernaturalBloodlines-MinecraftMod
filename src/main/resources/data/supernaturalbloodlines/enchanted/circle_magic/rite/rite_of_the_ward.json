@@ -1,0 +1,18 @@
+{
+    "neoforge:conditions": [
+        { "type": "supernaturalbloodlines:part_enabled", "part": "artifacts" }
+    ],
+    "items": [
+        { "id": "supernaturalbloodlines:mountain_ash_dust", "count": 4 },
+        { "id": "minecraft:iron_ingot", "count": 1 },
+        { "id": "minecraft:amethyst_shard", "count": 2 }
+    ],
+    "shapes": {
+        "enchanted:medium_circle": "enchanted:ritual_chalk"
+    },
+    "power": 5000,
+    "factory": {
+        "type": "supernaturalbloodlines:ward",
+        "mode": "area"
+    }
+}

@@ -17,8 +17,11 @@ public final class VampirismEnchantedPart {
     private VampirismEnchantedPart() {}
 
     public static void init(IEventBus modBus, ModContainer container) {
+        container.registerConfig(net.neoforged.fml.config.ModConfig.Type.COMMON, VampirismEnchantedConfig.SPEC, VampirismEnchantedConfig.FILE);
+        net.ofatech.supernaturalbloodlines.shared.admin.AdminSpecs.register(VampirismEnchantedConfig.FILE, VampirismEnchantedConfig.SPEC);
         // before the datapacks load, so the rite JSONs can name this factory
         RiteFactoryRegistry.get().register(FactionRiteFactory.ID, FactionRiteFactory.CODEC);
+        net.ofatech.supernaturalbloodlines.parts.vampirismenchanted.curse.PlagueCurses.register();
         PartBlocks.register(modBus);
         PartItems.register(modBus);
         VampirismSupernatural.register(); // vampires and werewolves are prey and supernatural whichever other parts are on
@@ -29,6 +32,7 @@ public final class VampirismEnchantedPart {
             e.register(VampirismEnchantedDataGameTests.class);
             e.register(VampirismEnchantedGameTests.class);
             e.register(VampirismEnchantedPoppetGameTests.class);
+            e.register(net.ofatech.supernaturalbloodlines.parts.vampirismenchanted.gametest.PlagueCurseGameTests.class);
             if (werewolves) {
                 e.register(VampirismEnchantedSilverPoppetGameTests.class);
                 e.register(VampirismEnchantedWerewolfGameTests.class);

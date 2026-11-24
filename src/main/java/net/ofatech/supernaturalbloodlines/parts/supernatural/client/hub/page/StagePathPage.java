@@ -144,6 +144,7 @@ public final class StagePathPage implements HubPageView {
             d.row(PageKit.text(row.text()), SourceTag.of(row.source()), row.counted() ? row.progress() : row.state() == TaskState.OPEN ? 0 : 1, row.counted() ? row.target() : 1);
         }
         PathActions.addActions(d, f, ladder, Component.translatable(KEY + "claim_reward"));
+        WardCard.detail(d);
         f.detail(d.build());
     }
 }

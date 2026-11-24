@@ -25,6 +25,7 @@ public final class AdminEntries {
     public static final String SUPERNATURAL_FILE = MOD + "-supernatural.toml";
     public static final String HUD_FILE = MOD + "-hud.toml";
     public static final String ARTIFACTS_FILE = MOD + "-artifacts.toml";
+    public static final String VAMPIRISM_ENCHANTED_FILE = MOD + "-vampirism_enchanted.toml";
     public static final String SPECIES_FILE = MOD + "-species.toml";
     public static final String SPECIES_TENSURA_FILE = MOD + "-species_tensura.toml";
     public static final String CELESTIALS_FILE = MOD + "-celestials.toml";
@@ -33,7 +34,8 @@ public final class AdminEntries {
     public static final String GROUPS_FILE = MOD + "-groups.toml";
 
     /** The section ids, in the order the page lists them. */
-    public static final List<String> SECTIONS = List.of("core", "vampirismTensura", "supernatural", "hud", "artifacts", "species", "speciesTensura", "celestials", "bosses", "evolutionRites", "groups");
+    public static final List<String> SECTIONS = List.of("core", "vampirismTensura", "supernatural", "hud", "artifacts", "vampirismEnchanted", "species", "speciesTensura", "celestials", "bosses",
+            "evolutionRites", "groups");
 
     public static final String RESERVED = "reserved: the key does nothing";
 
@@ -74,6 +76,19 @@ public final class AdminEntries {
         all.add(SettingEntry.of(HUD_FILE, "hud", "mixins.hide_in_controls_mixin", BOOL).hide(RESERVED));
 
         all.add(SettingEntry.of(ARTIFACTS_FILE, "artifacts", "artifacts.compass_doppelganger_range", INT));
+        for (String ward : new String[] {"ward_enabled", "ward_falls_on_owner_death", "ward_affects_mobs", "ward_blocks_werewolves", "ward_expel_on_revoke",
+                "ward_spoken_invites", "ward_door_enabled", "ward_alert_owner", "ward_use_claims"}) {
+            all.add(SettingEntry.of(ARTIFACTS_FILE, "artifacts", "artifacts." + ward, BOOL));
+        }
+        for (String ward : new String[] {"ward_radius", "ward_max_per_owner", "ward_max_invites", "ward_expel_seconds"}) {
+            all.add(SettingEntry.of(ARTIFACTS_FILE, "artifacts", "artifacts." + ward, INT));
+        }
+        for (String curse : new String[] {"insanity_enabled", "susceptibility_enabled"}) {
+            all.add(SettingEntry.of(VAMPIRISM_ENCHANTED_FILE, "vampirismEnchanted", "vampirism_enchanted." + curse, BOOL));
+        }
+        for (String curse : new String[] {"insanity_interval_seconds", "susceptibility_extra_percent", "susceptibility_max_percent"}) {
+            all.add(SettingEntry.of(VAMPIRISM_ENCHANTED_FILE, "vampirismEnchanted", "vampirism_enchanted." + curse, INT));
+        }
 
         species(all, "max_originals_per_world", INT);
         species(all, "transition_ticks", INT);
@@ -143,6 +158,11 @@ public final class AdminEntries {
         species(all, "augustine_blood_from_vampire_factor", DOUBLE);
         species(all, "augustine_blood_from_other_factor", DOUBLE);
         species(all, "hybrid_pack_moon_control", BOOL);
+        species(all, "locator_enabled", BOOL);
+        species(all, "locator_tell_target", BOOL);
+        species(all, "locator_minutes", INT);
+        species(all, "locator_range", INT);
+        species(all, "locator_blur", INT);
         species(all, "alpha_trial_enabled", BOOL);
         species(all, "alpha_trial_min_level", INT);
         species(all, "alpha_trial_hp_factor", DOUBLE);

@@ -1,5 +1,22 @@
 # Changelog
 
+## Unreleased (plan 21: TVD rites)
+
+### Added
+- **Rites of the Ward (R300 to R314, R325).** *Rite of the Ward* raises an **area ward** on the altar (`ward_radius`, default 10 blocks each way) and *Rite of the Door Ward* a ward of one **door, trapdoor or gate** within four blocks. A vampire of any kind who is not invited is pushed out with Ashwarden's push and, after `ward_expel_seconds` (5) inside, moved out; a closed door stays shut for them. Werewolves are not blocked (`ward_blocks_werewolves` turns that on). Witch-type casters; whoever sneaks on the circle's centre owns it (a standing player cancels it and everything comes back); **only a non-vampiric owner** can have one. It **falls when its owner dies or becomes a vampire**. Invite with the Path page's *Your ward* card, `/ward invite|uninvite|drop|info`, or by saying **"come in"** / **"get out"** near the ward; withdrawing an invitation throws the vampire out (`ward_expel_on_revoke`). Open Parties and Claims is only asked whether the ground may be built on.
+- **Rites of the Locator (R315 to R319, R325).** A witch attunes a **Vampire Compass** to the owner of a taglock, or to whoever a bottle of Original's or Hybrid's Blood was taken from. Its new **third mode** points at the middle of a square around them (`locator_blur`, 32), the tooltip says how far in hundreds of blocks, and the needle spins the same way for every reason they cannot be found. The one looked for is told "Somebody is looking for you." once (`locator_tell_target`), and when it ends. 30 minutes, 2000 blocks, the same dimension.
+- **Curse of Insanity and Curse of Susceptibility (R320 to R324).** Built like the two Tensura curses, for **Vampirism and Enchanted** (no Tensura). Insanity: a hallucination every half minute or so (shortens with strength). Susceptibility: 25% more damage per strength level plus one, never more than double; never raises a kill command or the void. Both end at death and sit with the other curses in the book.
+- **Settings:** 13 `ward_*` keys in `supernaturalbloodlines-artifacts.toml`, 5 `locator_*` keys in the species file, and a new `supernaturalbloodlines-vampirism_enchanted.toml` (Admin > Vampirism x Enchanted); every one has an Admin row. Four `ward` rows (`W1` to `W4`) in the command table.
+- **Book:** *Rite of the Ward*, *Rite of the Locator* (three forms) and the two curses are in the Art of Witchcraft; the *Rite of the Door Ward* has a new category, *Homes*.
+
+### Changed
+- `Species.hybridType()` and `Species.witchType()` are the one definition of those groups (the hybrid check in `StatePredicates` left out tribrids; no ladder read it for a tribrid, so nothing changed in play).
+
+### Network
+`LadderNet.PROTOCOL` is now `"15"` (main was on 14 after the groups payload; a new optional payload, `ward_view`, carries the viewer's own wards to the Path page). **Update the server and every client together**; a client on 12 and a server on 13 cannot talk, so the hub shows nothing from the server.
+
+### Rolling back
+A ward is kept in the world's `supernaturalbloodlines_wards` data and does nothing without the mod; the compass's new components are ignored by 12. **Protocol 15 to 14:** update all sides together.
 ## Unreleased (plan 20a: the groups base)
 
 ### Added

@@ -32,7 +32,7 @@ public final class LadderNet {
      * Optional, so a client or server without this part still connects; but the channel only exists between two sides on the same version, so a
      * server and its clients on different protocol numbers cannot talk (the hub shows nothing from the server). Raise it with any payload change.
      */
-    static final String PROTOCOL = "14";
+    static final String PROTOCOL = "15";
 
     private LadderNet() {
     }
@@ -46,6 +46,7 @@ public final class LadderNet {
         });
         // a request opened or answered reaches the player now (the toast needs it with the hub closed), not at the next hub open
         HubRequests.onChanged(LadderNet::sendRequests);
+        net.ofatech.supernaturalbloodlines.shared.hub.WardHub.onChanged(LadderNet::sendWard);
     }
 
     private static void onRegister(RegisterPayloadHandlersEvent event) {
@@ -76,6 +77,7 @@ public final class LadderNet {
                     if (ctx.player() instanceof ServerPlayer p && snapshotDue(p)) {
                         PacketDistributor.sendToPlayer(p, HubSnapshotPayload.of(p));
                         sendRequests(p);
+                        sendWard(p);
                     }
                 }));
         // the client handler is only named on a client, so a dedicated server never links the client class
@@ -95,6 +97,9 @@ public final class LadderNet {
                 : (payload, ctx) -> { });
         registrar.playToClient(HubRequestsPayload.TYPE, HubRequestsPayload.STREAM_CODEC, FMLEnvironment.dist.isClient()
                 ? net.ofatech.supernaturalbloodlines.parts.supernatural.client.RequestsClient::receive
+                : (payload, ctx) -> { });
+        registrar.playToClient(WardViewPayload.TYPE, WardViewPayload.STREAM_CODEC, FMLEnvironment.dist.isClient()
+                ? net.ofatech.supernaturalbloodlines.parts.supernatural.client.WardClient::receive
                 : (payload, ctx) -> { });
         registrar.playToClient(GroupViewPayload.TYPE, GroupViewPayload.STREAM_CODEC, FMLEnvironment.dist.isClient()
                 ? net.ofatech.supernaturalbloodlines.parts.supernatural.client.GroupClient::receive
@@ -133,6 +138,13 @@ public final class LadderNet {
         }
         LAST_SNAPSHOT.put(p, now);
         return true;
+    }
+
+    /** Sends the player their wards (R310), if their client has the channel (a fake player's connection has none). */
+    public static void sendWard(ServerPlayer p) {
+        if (p.connection != null && p.connection.getConnection().isConnected() && p.connection.hasChannel(WardViewPayload.TYPE)) {
+            PacketDistributor.sendToPlayer(p, WardViewPayload.of(p));
+        }
     }
 
     /** Sends the player their open requests, if their client has the channel (a fake player's connection has none). */
