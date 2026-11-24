@@ -23,17 +23,17 @@ import net.ofatech.supernaturalbloodlines.parts.species.pack.PackIndex;
 import net.ofatech.supernaturalbloodlines.parts.species.sireline.SireCall;
 
 /** The players and the clean-up the group GameTests share. A fake player is told through translation keys a test can read. */
-final class GroupTestKit {
+public final class GroupTestKit {
     private GroupTestKit() {
     }
 
-    static TalkingDuelist human(GameTestHelper helper, double x) {
+    public static TalkingDuelist human(GameTestHelper helper, double x) {
         TalkingDuelist p = TestPlayers.createTalkingDuelist(helper);
         p.setPos(helper.absoluteVec(new Vec3(x, 1, 1.5)));
         return p;
     }
 
-    static TalkingDuelist witch(GameTestHelper helper, double x) {
+    public static TalkingDuelist witch(GameTestHelper helper, double x) {
         TalkingDuelist p = human(helper, x);
         BloodlineAccess.set(p, BloodlineState.NONE.toBuilder().species(Species.WITCH).witchLayer(true).build());
         return p;
@@ -51,7 +51,7 @@ final class GroupTestKit {
         return p;
     }
 
-    static void online(ServerPlayer... players) {
+    public static void online(ServerPlayer... players) {
         Map<UUID, ServerPlayer> map = new HashMap<>();
         for (ServerPlayer p : players) {
             map.put(p.getUUID(), p);
@@ -60,7 +60,7 @@ final class GroupTestKit {
     }
 
     /** Invite and accept; false when either was refused. */
-    static boolean join(ServerPlayer leader, ServerPlayer target) {
+    public static boolean join(ServerPlayer leader, ServerPlayer target) {
         if (PackCommand.invite(leader, target) != null) {
             return false;
         }
@@ -72,7 +72,7 @@ final class GroupTestKit {
         return c == null ? "" : c.getContents() instanceof TranslatableContents t ? t.getKey() : c.getString();
     }
 
-    static void clean(GameTestHelper helper, ServerPlayer... players) {
+    public static void clean(GameTestHelper helper, ServerPlayer... players) {
         PackIndex index = PackIndex.get(helper.getLevel());
         GroupIndex groups = GroupIndex.get(helper.getLevel());
         SireCall.overridePlayerLookup(null);

@@ -31,6 +31,7 @@ public final class EvolutionRitesPart {
         container.registerConfig(ModConfig.Type.COMMON, EvolutionRitesConfig.SPEC, EvolutionRitesConfig.FILE);
         AdminSpecs.register(EvolutionRitesConfig.FILE, EvolutionRitesConfig.SPEC);
         // before the datapacks load, so the rite JSONs can name these factories
+        RiteEp.install();
         RiteFactoryRegistry.get().register(EvolutionRiteFactory.ID, EvolutionRiteFactory.CODEC);
         RiteFactoryRegistry.get().register(MasteryRiteFactory.ID, MasteryRiteFactory.CODEC);
         // last, so the species part's /sb bloodline redirect exists when the node is added to its target
@@ -46,6 +47,7 @@ public final class EvolutionRitesPart {
             e.register(net.ofatech.supernaturalbloodlines.parts.evolutionrites.gametest.RaphaelMergeGameTests.class);
             e.register(net.ofatech.supernaturalbloodlines.parts.evolutionrites.gametest.RaphaelMergeAddonGameTests.class);
             e.register(EvolutionRiteGameTests.class);
+            e.register(net.ofatech.supernaturalbloodlines.parts.evolutionrites.gametest.CovenEpGameTests.class);
             e.register(EvolutionUnlockGameTests.class);
             e.register(net.ofatech.supernaturalbloodlines.parts.evolutionrites.gametest.EvolutionAscensionGameTests.class);
             e.register(net.ofatech.supernaturalbloodlines.parts.evolutionrites.gametest.EvolutionOthersGameTests.class);

@@ -52,7 +52,7 @@ public final class CovenHookGameTests {
     }
 
     /** A rite type whose rite writes {@code onStart} and {@code onTick} into {@code log}; {@code persistent} keeps it in the manager. */
-    private record Probe(List<String> log, AtomicReference<Rite> made, boolean persistent) implements RiteFactory {
+    record Probe(List<String> log, AtomicReference<Rite> made, boolean persistent) implements RiteFactory {
         @Override
         public Rite create(Rite.BaseRiteParams base, Rite.RiteParams params) {
             Rite rite = new ProbeRite(base, params, log, persistent);
@@ -65,7 +65,7 @@ public final class CovenHookGameTests {
             return ResourceLocation.fromNamespaceAndPath(NS, "coven_probe");
         }
 
-        RiteType type(int power, int tickPower) {
+        public RiteType type(int power, int tickPower) {
             return new RiteType(List.of(), Map.of(), List.of(), power, tickPower, RiteWeatherRequirement.NONE, List.of(0, Level.TICKS_PER_DAY), List.of(), this);
         }
     }
@@ -113,7 +113,7 @@ public final class CovenHookGameTests {
     }
 
     /** Sets the chalk up as if a player had laid the offering and clicked, then runs its real tick. */
-    private static void startThroughChalk(GameTestHelper helper, BlockPos pos, GoldChalkBlockEntity chalk, RiteType type) {
+    static void startThroughChalk(GameTestHelper helper, BlockPos pos, GoldChalkBlockEntity chalk, RiteType type) {
         ServerLevel level = helper.getLevel();
         set(chalk, "type", type);
         set(chalk, "itemsToConsume", new ArrayList<ItemStack>());
@@ -123,7 +123,7 @@ public final class CovenHookGameTests {
     }
 
     /** Runs {@code body} once, on the first tick divisible by 20; a failure inside it is rethrown on every later tick, so it cannot pass by being retried. */
-    private static void onAlignedTick(GameTestHelper helper, Runnable body) {
+    static void onAlignedTick(GameTestHelper helper, Runnable body) {
         boolean[] ran = {false};
         RuntimeException[] failure = {null};
         helper.succeedWhen(() -> {
@@ -143,7 +143,7 @@ public final class CovenHookGameTests {
         });
     }
 
-    private static List<String> traced(Runnable run) {
+    static List<String> traced(Runnable run) {
         List<String> seen = new ArrayList<>();
         Consumer<String> before = RiteCost.trace;
         RiteCost.trace = seen::add;

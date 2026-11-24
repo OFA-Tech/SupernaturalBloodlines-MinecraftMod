@@ -106,7 +106,7 @@ public record MasteryRiteFactory(Tier tier) implements RiteFactory {
                     target.isShiftKeyDown(), choice.isPresent(), inst.isPresent(), inst.map(ManasSkillInstance::isTemporarySkill).orElse(false),
                     inst.map(i -> MasteryApply.done(target, i)).orElse(false), skillTier, riteTier,
                     choice.map(id -> EvolutionRitesConfig.masteryRefusedSkills().contains(id.toString())).orElse(false),
-                    inst.map(i -> EvoSkills.retired(target.server, i.getSkill())).orElse(false), MasteryRules.enoughEp(EnergyHelper.getBaseMaxEP(target), cost),
+                    inst.map(i -> EvoSkills.retired(target.server, i.getSkill())).orElse(false), MasteryRules.enoughEp(EnergyHelper.getBaseMaxEP(target), RiteEp.owedBy(target, cost)),
                     MasteryChoice.onCooldown(target));
             Optional<MasteryRules.Reason> reason = MasteryRules.check(facts);
             if (reason.isPresent()) {
