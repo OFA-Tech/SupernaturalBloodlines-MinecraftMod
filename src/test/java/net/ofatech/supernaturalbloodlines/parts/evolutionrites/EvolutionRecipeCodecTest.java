@@ -63,6 +63,14 @@ class EvolutionRecipeCodecTest {
     }
 
     @Test
+    void grantFormPermanentDecodesAndEncodesBack() {
+        var r = decode("{ \"recipe\": \"x\", \"tier\": \"ultimate\", \"grants\": \"a:b\", \"grant_form\": \"permanent\", \"requires_mod\": \"a\", \"probe\": \"p\" }").getOrThrow();
+        assertEquals(GrantForm.PERMANENT, r.grantForm());
+        var json = EvolutionRecipeCodec.RECIPE.codec().encodeStart(JsonOps.INSTANCE, r).getOrThrow().getAsJsonObject();
+        assertEquals("permanent", json.get("grant_form").getAsString());
+    }
+
+    @Test
     void theMasteryBlockTakesAKnownTier() {
         for (Tier t : Tier.values()) {
             var r = EvolutionRecipeCodec.MASTERY_TIER.codec().parse(JsonOps.INSTANCE, JsonParser.parseString("{ \"tier\": \"" + t.id() + "\" }"));
