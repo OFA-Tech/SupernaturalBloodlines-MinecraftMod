@@ -332,6 +332,16 @@
    "use": "actions icon, 16 px"
   },
   {
+   "path": "sprites/icons/16/brotherhood.png",
+   "sprite": "icons/16/brotherhood",
+   "w": 16,
+   "h": 16,
+   "scaling": "stretch",
+   "slice": null,
+   "glow": false,
+   "use": "group types icon, 16 px"
+  },
+  {
    "path": "sprites/icons/16/check.png",
    "sprite": "icons/16/check",
    "w": 16,
@@ -340,6 +350,16 @@
    "slice": null,
    "glow": false,
    "use": "controls icon, 16 px"
+  },
+  {
+   "path": "sprites/icons/16/clan.png",
+   "sprite": "icons/16/clan",
+   "w": 16,
+   "h": 16,
+   "scaling": "stretch",
+   "slice": null,
+   "glow": false,
+   "use": "group types icon, 16 px"
   },
   {
    "path": "sprites/icons/16/claw.png",
@@ -360,6 +380,16 @@
    "slice": null,
    "glow": false,
    "use": "controls icon, 16 px"
+  },
+  {
+   "path": "sprites/icons/16/coven.png",
+   "sprite": "icons/16/coven",
+   "w": 16,
+   "h": 16,
+   "scaling": "stretch",
+   "slice": null,
+   "glow": false,
+   "use": "group types icon, 16 px"
   },
   {
    "path": "sprites/icons/16/crown.png",
@@ -1592,6 +1622,16 @@
    "use": "actions icon, 32 px"
   },
   {
+   "path": "sprites/icons/32/brotherhood.png",
+   "sprite": "icons/32/brotherhood",
+   "w": 32,
+   "h": 32,
+   "scaling": "stretch",
+   "slice": null,
+   "glow": false,
+   "use": "group types icon, 32 px"
+  },
+  {
    "path": "sprites/icons/32/check.png",
    "sprite": "icons/32/check",
    "w": 32,
@@ -1600,6 +1640,16 @@
    "slice": null,
    "glow": false,
    "use": "controls icon, 32 px"
+  },
+  {
+   "path": "sprites/icons/32/clan.png",
+   "sprite": "icons/32/clan",
+   "w": 32,
+   "h": 32,
+   "scaling": "stretch",
+   "slice": null,
+   "glow": false,
+   "use": "group types icon, 32 px"
   },
   {
    "path": "sprites/icons/32/claw.png",
@@ -1620,6 +1670,16 @@
    "slice": null,
    "glow": false,
    "use": "controls icon, 32 px"
+  },
+  {
+   "path": "sprites/icons/32/coven.png",
+   "sprite": "icons/32/coven",
+   "w": 32,
+   "h": 32,
+   "scaling": "stretch",
+   "slice": null,
+   "glow": false,
+   "use": "group types icon, 32 px"
   },
   {
    "path": "sprites/icons/32/crown.png",
