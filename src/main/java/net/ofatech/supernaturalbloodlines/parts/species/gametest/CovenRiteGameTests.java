@@ -257,6 +257,29 @@ public final class CovenRiteGameTests {
     }
 
     @GameTest(template = "empty", templateNamespace = NS)
+    public static void aSavedNightWatchExpiresEvenWhenItsChalkIsStillUnloaded(GameTestHelper helper) {
+        Circle c = circleAt(helper, new BlockPos(8, 1, 8), 7);
+        ServerLevel level = helper.getLevel();
+        long before = level.getDayTime();
+        try {
+            atNight(helper, () -> {
+                var saved = cast(helper, c, "night_watch", nightItems()).save();
+                BlockPos unloaded = c.chalk().offset(4096, 0, 0);
+                helper.assertTrue(!level.hasChunkAt(unloaded), "setup: the chalk chunk is loaded");
+                var loaded = type(helper, "night_watch").create(level, unloaded);
+                loaded.load(saved);
+                helper.assertTrue(loaded.tick(), "the watch did not survive a reload on the same night");
+                level.setDayTime(level.getDayTime() + 24_000);
+                helper.assertTrue(!loaded.tick() && !level.hasChunkAt(unloaded), "the watch missed dawn or loaded the chalk to expire");
+            });
+        } finally {
+            level.setDayTime(before);
+            done(helper, c);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
     public static void nightWatchByDayIsRefusedBeforeAnythingIsPaidOrStamped(GameTestHelper helper) {
         Circle c = circleAt(helper, new BlockPos(8, 1, 8), 7);
         ServerLevel level = helper.getLevel();

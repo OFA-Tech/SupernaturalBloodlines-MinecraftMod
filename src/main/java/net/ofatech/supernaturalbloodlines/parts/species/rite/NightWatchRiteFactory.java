@@ -59,6 +59,7 @@ public record NightWatchRiteFactory(int minCircle) implements RiteFactory {
     public static final class NightWatchRite extends Rite {
         private final int minCircle;
         private int radius;
+        private long dawn;
 
         NightWatchRite(BaseRiteParams base, RiteParams params, int minCircle) {
             super(base, params);
@@ -71,7 +72,8 @@ public record NightWatchRiteFactory(int minCircle) implements RiteFactory {
 
         @Override
         protected boolean onStart(RiteParams params) {
-            if (!isNight(level.getDayTime())) {
+            long now = level.getDayTime();
+            if (!isNight(now)) {
                 // nothing is paid and no cooldown is stamped: the rite cancels itself
                 if (level.getPlayerByUUID(params.caster) instanceof ServerPlayer caster) {
                     caster.displayClientMessage(Component.translatable(DAY), true);
@@ -87,11 +89,21 @@ public record NightWatchRiteFactory(int minCircle) implements RiteFactory {
                 return cancel();
             }
             radius = FeteRiteFactory.radius();
+            dawn = now - Math.floorMod(now, 24_000L) + NIGHT_END;
             GrandGate.stamp(level, params.caster, id);
             if (level.getPlayerByUUID(params.caster) instanceof ServerPlayer caster) {
                 caster.displayClientMessage(Component.translatable(STARTED), true);
             }
             return true;
+        }
+
+        @Override
+        public boolean tick() {
+            if (level.getDayTime() >= dawn) {
+                // Enchanted skips unloaded rites, and stop() would load the chalk to detach it.
+                return level.isLoaded(pos) && stop();
+            }
+            return super.tick();
         }
 
         @Override
@@ -112,11 +124,13 @@ public record NightWatchRiteFactory(int minCircle) implements RiteFactory {
         @Override
         protected void saveAdditional(CompoundTag tag, ServerLevel level) {
             tag.putInt("radius", radius);
+            tag.putLong("dawn", dawn);
         }
 
         @Override
         protected void loadAdditional(CompoundTag tag, ServerLevel level) {
             radius = tag.getInt("radius");
+            dawn = tag.contains("dawn") ? tag.getLong("dawn") : level.getDayTime();
         }
     }
 }
