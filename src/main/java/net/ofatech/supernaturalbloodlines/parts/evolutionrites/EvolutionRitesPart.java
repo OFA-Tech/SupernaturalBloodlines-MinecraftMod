@@ -39,6 +39,7 @@ public final class EvolutionRitesPart {
             e.register(EvolutionHookProbeGameTests.class);
             e.register(EvolutionRiteGameTests.class);
             e.register(EvolutionUnlockGameTests.class);
+            e.register(net.ofatech.supernaturalbloodlines.parts.evolutionrites.gametest.EvolutionAscensionGameTests.class);
             e.register(MasteryGameTests.class);
             e.register(net.ofatech.supernaturalbloodlines.parts.evolutionrites.gametest.CasterLeavesGameTests.class);
             e.register(net.ofatech.supernaturalbloodlines.parts.evolutionrites.gametest.EvolutionCommandGameTests.class);
