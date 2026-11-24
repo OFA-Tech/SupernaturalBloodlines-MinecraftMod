@@ -37,9 +37,29 @@ class CovenViewWireTest {
 
     @Test
     void roundTrip() {
-        CovenView v = new CovenView(2, 5, CovenView.Circle.JOINED, "Esther", names(3), 1200, 3000, 240, Consent.NOSEBLEED, 700, 285_714, true, 0,
-                Optional.of(new CovenView.Vote(VoteKind.SHUN, "Rebekah", 2, 1, 3, CovenView.Ballot.YES, 17)));
+        CovenView v = new CovenView(2, 5, CovenView.Circle.CALLED, "Esther", names(3), 1200, 3000, 240, Consent.NOSEBLEED, 700, 285_714, true, 0,
+                Optional.of(new CovenView.Vote(VoteKind.SHUN, new java.util.UUID(4, 5), "Rebekah", 2, 1, 3, CovenView.Ballot.YES, 17)), "aabbccdd");
         assertEquals(v, roundTrip(v));
+    }
+
+    @Test
+    void aHomeVoteTokenSurvivesTheWireAndTheHubCommandRow() {
+        var id = new java.util.UUID(4, 5);
+        String token = "elder_remove.00000000-0000-0004-0000-000000000005";
+        var q = new net.ofatech.supernaturalbloodlines.shared.supernatural.HubRequests.Request(
+                net.ofatech.supernaturalbloodlines.shared.supernatural.HubRequests.Kind.GROUP_VOTE, id, "Cass", token, 20);
+        var payload = new HubRequestsPayload(List.of(q));
+        ByteBuf buf = Unpooled.buffer();
+        try {
+            HubRequestsPayload.STREAM_CODEC.encode(buf, payload);
+            assertEquals(payload, HubRequestsPayload.STREAM_CODEC.decode(buf));
+            assertEquals(0, buf.readableBytes());
+        } finally {
+            buf.release();
+        }
+        var row = net.ofatech.supernaturalbloodlines.shared.admin.AdminCommands.byId("C9").orElseThrow();
+        assertEquals("group vote yes " + token,
+                net.ofatech.supernaturalbloodlines.shared.admin.AdminCommands.command(row, List.of(token)).orElseThrow());
     }
 
     @Test
@@ -51,7 +71,7 @@ class CovenViewWireTest {
 
     @Test
     void maxCircleRoundTrips() {
-        CovenView v = new CovenView(3, 13, CovenView.Circle.ANCHOR, "a".repeat(CovenWire.MAX_NAME), names(CovenWire.MAX_CIRCLE), 3000, 3000, 0, Consent.DAMAGE, 0, 0, false, 0, Optional.empty());
+        CovenView v = new CovenView(3, 13, CovenView.Circle.ANCHOR, "a".repeat(CovenWire.MAX_NAME), names(CovenWire.MAX_CIRCLE), 3000, 3000, 0, Consent.DAMAGE, 0, 0, false, 0, Optional.empty(), "");
         assertEquals(CovenWire.MAX_CIRCLE, roundTrip(v).circleNames().size());
         assertEquals(v, roundTrip(v));
     }
@@ -73,7 +93,7 @@ class CovenViewWireTest {
 
     @Test
     void aLongNameInAViewIsCutNotCarried() {
-        CovenView v = new CovenView(1, 3, CovenView.Circle.JOINED, "x".repeat(200), List.of("y".repeat(200)), 0, 0, 0, Consent.NONE, 0, 0, false, 0, Optional.empty());
+        CovenView v = new CovenView(1, 3, CovenView.Circle.JOINED, "x".repeat(200), List.of("y".repeat(200)), 0, 0, 0, Consent.NONE, 0, 0, false, 0, Optional.empty(), "");
         assertEquals(CovenWire.MAX_NAME, v.anchorName().length());
         assertEquals(CovenWire.MAX_NAME, roundTrip(v).circleNames().get(0).length());
     }
@@ -87,7 +107,7 @@ class CovenViewWireTest {
         assertThrows(DecoderException.class, () -> CovenViewPayload.STREAM_CODEC.decode(buf));
     }
 
-    /** No component of the view (or of its vote) can hold another person: no id, no map, no list of anything but the viewer's own coven's names. */
+    /** No person id or ballots by person: the vote UUID identifies the proposal, not a player. */
     @Test
     void theViewNeverCarriesAnotherMembersMeterConsentOrBallot() {
         List<String> top = new ArrayList<>();
@@ -95,12 +115,12 @@ class CovenViewWireTest {
             top.add(c.getName() + ":" + c.getType().getSimpleName());
         }
         assertEquals(List.of("tier:int", "size:int", "circle:Circle", "anchorName:String", "circleNames:List", "meter:int", "meterCap:int", "regenSeconds:int", "consent:Consent",
-                "sharePower:int", "shareEp:long", "shareKnown:boolean", "shunnedDaysLeft:int", "vote:Optional"), top);
+                "sharePower:int", "shareEp:long", "shareKnown:boolean", "shunnedDaysLeft:int", "vote:Optional", "callToken:String"), top);
         List<String> vote = new ArrayList<>();
         for (RecordComponent c : CovenView.Vote.class.getRecordComponents()) {
             vote.add(c.getName() + ":" + c.getType().getSimpleName());
         }
-        assertEquals(List.of("kind:VoteKind", "subjectName:String", "yes:int", "no:int", "electors:int", "mine:Ballot", "hoursLeft:int"), vote);
+        assertEquals(List.of("kind:VoteKind", "proposal:UUID", "subjectName:String", "yes:int", "no:int", "electors:int", "mine:Ballot", "hoursLeft:int"), vote);
         for (RecordComponent c : CovenView.class.getRecordComponents()) {
             assertTrue(!c.getType().getName().contains("UUID") && !java.util.Map.class.isAssignableFrom(c.getType()), c.getName());
         }

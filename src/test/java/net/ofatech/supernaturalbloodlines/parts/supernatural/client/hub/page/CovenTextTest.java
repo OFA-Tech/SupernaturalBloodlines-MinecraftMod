@@ -15,6 +15,7 @@ import org.junit.jupiter.api.Test;
 /** The coven's words: every key the cards draw exists, and the coven never says "pack" (it is not one). */
 class CovenTextTest {
     private static final String H = "supernaturalbloodlines.hub.coven.";
+    private static final String PAGES = "parts/supernatural/client/hub/page/";
 
     private static List<String> keys() {
         List<String> k = new ArrayList<>();
@@ -134,7 +135,7 @@ class CovenTextTest {
 
     @Test
     void aVoteButtonsTipNamesTheVoteAndTheAnswer() {
-        var vote = new net.ofatech.supernaturalbloodlines.core.group.coven.CovenView.Vote(VoteKind.SHUN, "Cass", 1, 1, 3, net.ofatech.supernaturalbloodlines.core.group.coven.CovenView.Ballot.NONE, 17);
+        var vote = new net.ofatech.supernaturalbloodlines.core.group.coven.CovenView.Vote(VoteKind.SHUN, new java.util.UUID(4, 5), "Cass", 1, 1, 3, net.ofatech.supernaturalbloodlines.core.group.coven.CovenView.Ballot.NONE, 17);
         for (boolean yes : new boolean[] {true, false}) {
             var tip = (net.minecraft.network.chat.contents.TranslatableContents) CovenCards.voteTip(vote, yes).getContents();
             assertEquals(H + "vote_tip", tip.getKey());
@@ -143,6 +144,23 @@ class CovenTextTest {
             assertEquals("Cass", about.getArgs()[0]);
             assertEquals(H + (yes ? "vote_yes" : "vote_no"), ((net.minecraft.network.chat.contents.TranslatableContents) ((net.minecraft.network.chat.Component) tip.getArgs()[1]).getContents()).getKey());
         }
+    }
+
+    @Test
+    void theGroupJoinTargetSubmitsTheDisplayedCall() throws java.io.IOException {
+        assertTrue(SourceRulesTest.source(PAGES + "CovenCards.java").contains("HubClient.runCommand(\"C3\", List.of(cv.callToken()))"),
+                "the Group Join button must answer that displayed call, not whichever is latest on the server");
+    }
+
+    @Test
+    void bothPagesInstallDescriptionsOnTheEnabledVoteTargets() throws java.io.IOException {
+        String group = SourceRulesTest.source(PAGES + "CovenCards.java");
+        String home = SourceRulesTest.source(PAGES + "HomePage.java");
+        for (String answer : List.of("yes", "no")) {
+            assertTrue(group.contains("PageWidgets.described(f, \"coven:vote_" + answer + "\""), "the enabled Group " + answer + " target dropped its description");
+        }
+        assertTrue(home.contains("vote != null ? CovenCards.voteTip("), "the enabled Home vote targets do not receive the proposal description");
+        assertTrue(home.contains("PageWidgets.described(f, id + \":\" + a.label(), b, labels.get(i), true, a.primary(), tip"), "Home does not install its description on the target");
     }
 
     @Test

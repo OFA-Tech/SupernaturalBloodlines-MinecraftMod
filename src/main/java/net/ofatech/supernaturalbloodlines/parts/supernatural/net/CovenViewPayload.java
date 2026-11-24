@@ -2,6 +2,7 @@ package net.ofatech.supernaturalbloodlines.parts.supernatural.net;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.handler.codec.DecoderException;
+import net.minecraft.core.UUIDUtil;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
@@ -23,6 +24,7 @@ public record CovenViewPayload(CovenView view) implements CustomPacketPayload {
 
     static final StreamCodec<ByteBuf, String> NAME = ByteBufCodecs.stringUtf8(CovenWire.MAX_NAME);
     static final StreamCodec<ByteBuf, java.util.List<String>> NAMES = NAME.apply(ByteBufCodecs.list(CovenWire.MAX_CIRCLE));
+    private static final StreamCodec<ByteBuf, String> CALL_TOKEN = ByteBufCodecs.stringUtf8(16);
 
     private static final StreamCodec<ByteBuf, CovenView.Circle> CIRCLE = ByteBufCodecs.VAR_INT.map(i -> at(CovenView.Circle.values(), i, "circle"), Enum::ordinal);
     private static final StreamCodec<ByteBuf, CovenView.Ballot> BALLOT = ByteBufCodecs.VAR_INT.map(i -> at(CovenView.Ballot.values(), i, "ballot"), Enum::ordinal);
@@ -40,17 +42,19 @@ public record CovenViewPayload(CovenView view) implements CustomPacketPayload {
         @Override
         public CovenView.Vote decode(ByteBuf buf) {
             VoteKind kind = KIND.decode(buf);
+            var proposal = UUIDUtil.STREAM_CODEC.decode(buf);
             String subject = NAME.decode(buf);
             int yes = ByteBufCodecs.VAR_INT.decode(buf);
             int no = ByteBufCodecs.VAR_INT.decode(buf);
             int electors = ByteBufCodecs.VAR_INT.decode(buf);
             CovenView.Ballot mine = BALLOT.decode(buf);
-            return new CovenView.Vote(kind, subject, yes, no, electors, mine, ByteBufCodecs.VAR_INT.decode(buf));
+            return new CovenView.Vote(kind, proposal, subject, yes, no, electors, mine, ByteBufCodecs.VAR_INT.decode(buf));
         }
 
         @Override
         public void encode(ByteBuf buf, CovenView.Vote v) {
             KIND.encode(buf, v.kind());
+            UUIDUtil.STREAM_CODEC.encode(buf, v.proposal());
             NAME.encode(buf, v.subjectName());
             ByteBufCodecs.VAR_INT.encode(buf, v.yes());
             ByteBufCodecs.VAR_INT.encode(buf, v.no());
@@ -77,7 +81,7 @@ public record CovenViewPayload(CovenView view) implements CustomPacketPayload {
             boolean known = ByteBufCodecs.BOOL.decode(buf);
             int shun = ByteBufCodecs.VAR_INT.decode(buf);
             java.util.Optional<CovenView.Vote> vote = ByteBufCodecs.optional(VOTE).decode(buf);
-            return new CovenView(tier, size, circle, anchor, names, meter, cap, regen, consent, power, ep, known, shun, vote);
+            return new CovenView(tier, size, circle, anchor, names, meter, cap, regen, consent, power, ep, known, shun, vote, CALL_TOKEN.decode(buf));
         }
 
         @Override
@@ -96,6 +100,7 @@ public record CovenViewPayload(CovenView view) implements CustomPacketPayload {
             ByteBufCodecs.BOOL.encode(buf, v.shareKnown());
             ByteBufCodecs.VAR_INT.encode(buf, v.shunnedDaysLeft());
             ByteBufCodecs.optional(VOTE).encode(buf, v.vote());
+            CALL_TOKEN.encode(buf, v.callToken());
         }
     };
 

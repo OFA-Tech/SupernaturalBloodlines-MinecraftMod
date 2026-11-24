@@ -2,6 +2,7 @@ package net.ofatech.supernaturalbloodlines.core.group.coven;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 import net.ofatech.supernaturalbloodlines.core.group.circle.Consent;
 
 /**
@@ -11,23 +12,27 @@ import net.ofatech.supernaturalbloodlines.core.group.circle.Consent;
  *
  * @param tier       0 to 3, from the coven's size
  * @param size       the coven's members, the Regent counted
- * @param shareKnown whether a rite's items lie on the circle (the share is that rite's); false shows the worst case
+ * @param shareKnown whether the preview is for one rite; false shows an example based on listed power and the current circle
  */
 public record CovenView(int tier, int size, Circle circle, String anchorName, List<String> circleNames, int meter, int meterCap, int regenSeconds, Consent consent,
-                        int sharePower, long shareEp, boolean shareKnown, int shunnedDaysLeft, Optional<Vote> vote) {
+                        int sharePower, long shareEp, boolean shareKnown, int shunnedDaysLeft, Optional<Vote> vote, String callToken) {
     /** The viewer's relation to a circle. */
     public enum Circle { NONE, ANCHOR, JOINED, CALLED }
 
     /** The viewer's own ballot on the open vote. */
     public enum Ballot { NONE, YES, NO }
 
-    public record Vote(VoteKind kind, String subjectName, int yes, int no, int electors, Ballot mine, int hoursLeft) {
+    public record Vote(VoteKind kind, UUID proposal, String subjectName, int yes, int no, int electors, Ballot mine, int hoursLeft) {
         public Vote {
             subjectName = clip(subjectName, CovenWire.MAX_NAME);
         }
+
+        public String token() {
+            return kind.token(proposal);
+        }
     }
 
-    public static final CovenView NONE = new CovenView(0, 0, Circle.NONE, "", List.of(), 0, 0, 0, Consent.NONE, 0, 0, false, 0, Optional.empty());
+    public static final CovenView NONE = new CovenView(0, 0, Circle.NONE, "", List.of(), 0, 0, 0, Consent.NONE, 0, 0, false, 0, Optional.empty(), "");
 
     public CovenView {
         anchorName = clip(anchorName, CovenWire.MAX_NAME);
@@ -40,6 +45,6 @@ public record CovenView(int tier, int size, Circle circle, String anchorName, Li
 
     /** The same view with only the shunning set (a player who is not in a coven can still be shunned from one). */
     public CovenView shunned(int days) {
-        return new CovenView(tier, size, circle, anchorName, circleNames, meter, meterCap, regenSeconds, consent, sharePower, shareEp, shareKnown, days, vote);
+        return new CovenView(tier, size, circle, anchorName, circleNames, meter, meterCap, regenSeconds, consent, sharePower, shareEp, shareKnown, days, vote, callToken);
     }
 }

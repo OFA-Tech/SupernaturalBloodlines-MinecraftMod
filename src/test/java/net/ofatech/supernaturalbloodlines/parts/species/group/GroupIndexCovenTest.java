@@ -10,7 +10,9 @@ import java.util.UUID;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.NbtUtils;
+import net.ofatech.supernaturalbloodlines.core.group.GroupType;
 import net.ofatech.supernaturalbloodlines.core.group.circle.Consent;
+import net.ofatech.supernaturalbloodlines.core.group.coven.VoteKind;
 import org.junit.jupiter.api.Test;
 
 /** Plan 20b: the channel meter and the consent level live in the group index, and nothing of 20a is lost. */
@@ -20,6 +22,42 @@ class GroupIndexCovenTest {
 
     private static GroupIndex roundTrip(GroupIndex i) {
         return GroupIndex.load(i.save(new CompoundTag(), null), null);
+    }
+
+    @Test
+    void aSavedProposalFromAnEarlierCovenTermCannotReopen() {
+        GroupIndex g = new GroupIndex();
+        UUID group = g.groupOf(A);
+        g.setType(group, GroupType.COVEN, 1);
+        g.openVote(group, VoteKind.SHUN, B, A, 10, 2);
+        var oldVotes = g.save(new CompoundTag(), null).getList("votes", 10);
+        assertEquals(1, oldVotes.size());
+        g.setType(group, GroupType.PACK, 20);
+        g.setType(group, GroupType.COVEN, 30);
+        CompoundTag saved = g.save(new CompoundTag(), null);
+        saved.put("votes", oldVotes);
+        assertTrue(GroupIndex.load(saved, null).openVotes(group).isEmpty());
+    }
+
+    @Test
+    void theGroupsRetiredByAMergeOrDissolutionLoseTheirGovernanceRows() {
+        GroupIndex g = new GroupIndex();
+        UUID merging = g.groupOf(A);
+        UUID survivor = g.groupOf(B);
+        g.openVote(merging, VoteKind.SHUN, B, A, 10, 2);
+        g.setCooldown(merging, "election", 100);
+        g.ban(merging.toString(), A, 100);
+        g.ban("type:coven", A, 100);
+        g.follow(A, B);
+        GroupIndex merged = roundTrip(g);
+        assertEquals(survivor, merged.existingGroupOf(B).orElseThrow());
+        assertTrue(merged.openVotes(merging).isEmpty());
+        assertEquals(0, merged.cooldownUntil(merging, "election"));
+        assertEquals(0, merged.banUntil(merging.toString(), A));
+        assertEquals(100, merged.banUntil("type:coven", A));
+        g.ban(survivor.toString(), A, 100);
+        g.drop(B);
+        assertEquals(0, roundTrip(g).banUntil(survivor.toString(), A));
     }
 
     @Test

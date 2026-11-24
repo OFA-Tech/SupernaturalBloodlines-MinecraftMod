@@ -135,7 +135,7 @@ public final class CovenCards {
             case CALLED -> {
                 id = "coven:link_join";
                 label = Component.translatable(KEY + "link_join");
-                run = () -> HubClient.runCommand("C3", List.of());
+                run = () -> HubClient.runCommand("C3", List.of(cv.callToken()));
             }
             default -> {
                 id = "coven:link_open";
@@ -145,7 +145,8 @@ public final class CovenCards {
         }
         Component why = Component.translatable(KEY + "circle_hint." + cv.circle().name().toLowerCase(java.util.Locale.ROOT));
         Rect b = new Rect(r.x(), y, Math.min(r.w(), PageWidgets.widthOf(f.font(), label)), PageWidgets.H);
-        PageWidgets.described(f, id, b, label, true, cv.circle() == CovenView.Circle.CALLED || cv.circle() == CovenView.Circle.NONE, why, run);
+        boolean enabled = cv.circle() != CovenView.Circle.CALLED || !cv.callToken().isEmpty();
+        PageWidgets.described(f, id, b, label, enabled, cv.circle() == CovenView.Circle.CALLED || cv.circle() == CovenView.Circle.NONE, why, run);
         return b.bottom() + 2;
     }
     private static int meter(HubScreen.Frame f, Rect r, int y, CovenView cv) {
@@ -196,7 +197,11 @@ public final class CovenCards {
 
     /** What a vote button reads out and shows as its tip: the vote itself and the answer ("Shun Cass? Yes"). */
     static Component voteTip(CovenView.Vote v, boolean yes) {
-        return Component.translatable(KEY + "vote_tip", Component.translatable(KEY + "vote." + v.kind().id(), v.subjectName()), Component.translatable(KEY + (yes ? "vote_yes" : "vote_no")));
+        return voteTip(v.kind(), v.subjectName(), yes);
+    }
+
+    static Component voteTip(net.ofatech.supernaturalbloodlines.core.group.coven.VoteKind kind, String subject, boolean yes) {
+        return Component.translatable(KEY + "vote_tip", Component.translatable(KEY + "vote." + kind.id(), subject), Component.translatable(KEY + (yes ? "vote_yes" : "vote_no")));
     }
 
     private static int votes(HubScreen.Frame f, Rect r, int y, GroupView gv, CovenView cv, boolean compact) {
@@ -227,8 +232,8 @@ public final class CovenCards {
         Component yes = Component.translatable(KEY + "vote_yes");
         Component no = Component.translatable(KEY + "vote_no");
         Flow.Result flow = Flow.wrap(new Rect(r.x(), y + 2, r.w(), 0), List.of(PageWidgets.widthOf(f.font(), yes), PageWidgets.widthOf(f.font(), no)), PageWidgets.H, PageWidgets.GAP);
-        PageWidgets.button(f, "coven:vote_yes", flow.rects().get(0), yes, true, true, voteTip(v, true), () -> HubClient.runCommand("C9", List.of(v.kind().id())));
-        PageWidgets.button(f, "coven:vote_no", flow.rects().get(1), no, true, false, voteTip(v, false), () -> HubClient.runCommand("C10", List.of(v.kind().id())));
+        PageWidgets.described(f, "coven:vote_yes", flow.rects().get(0), yes, true, true, voteTip(v, true), () -> HubClient.runCommand("C9", List.of(v.token())));
+        PageWidgets.described(f, "coven:vote_no", flow.rects().get(1), no, true, false, voteTip(v, false), () -> HubClient.runCommand("C10", List.of(v.token())));
         return flow.bottom() + 2;
     }
 

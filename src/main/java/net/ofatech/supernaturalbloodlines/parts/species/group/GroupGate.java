@@ -40,6 +40,9 @@ public final class GroupGate {
         if (!hasMembers && !enabled(type)) {
             return Optional.of("group_off");
         }
+        if (!hasMembers && type == GroupType.COVEN && shunned(p.server, id)) {
+            return Optional.of("not_fit");
+        }
         return GroupTypes.canFound(type, fit(p), GroupsConfig.openFounding()) ? Optional.empty() : Optional.of("not_fit");
     }
 

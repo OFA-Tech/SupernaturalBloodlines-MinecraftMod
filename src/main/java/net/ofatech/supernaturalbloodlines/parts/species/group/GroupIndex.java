@@ -75,20 +75,26 @@ public final class GroupIndex extends SavedData {
 
     /** A coven vote. Ballots are who voted what; a cancelled vote is kept and ignored. */
     public static final class Vote {
+        public final UUID id;
         public final UUID group;
         public final VoteKind kind;
         public final UUID subject;
         public final UUID caller;
         public final long opened;
+        public final long covenSince;
+        public final long subjectSince;
         public final Map<UUID, Boolean> ballots = new java.util.LinkedHashMap<>();
         public boolean cancelled;
 
-        public Vote(UUID group, VoteKind kind, UUID subject, UUID caller, long opened) {
+        private Vote(UUID id, UUID group, VoteKind kind, UUID subject, UUID caller, long opened, long covenSince, long subjectSince) {
+            this.id = id;
             this.group = group;
             this.kind = kind;
             this.subject = subject;
             this.caller = caller;
             this.opened = opened;
+            this.covenSince = covenSince;
+            this.subjectSince = subjectSince;
         }
 
         public int yes() {
@@ -283,8 +289,8 @@ public final class GroupIndex extends SavedData {
     }
 
     /** Opens a vote; one per kind per group, a cancelled row of the same kind is replaced. */
-    public Vote openVote(UUID group, VoteKind kind, UUID subject, UUID caller, long now) {
-        Vote v = new Vote(group, kind, subject, caller, now);
+    public Vote openVote(UUID group, VoteKind kind, UUID subject, UUID caller, long now, long subjectSince) {
+        Vote v = new Vote(UUID.randomUUID(), group, kind, subject, caller, now, typeSince(group), subjectSince);
         votes.put(voteKey(group, kind), v);
         setDirty();
         return v;
@@ -306,6 +312,14 @@ public final class GroupIndex extends SavedData {
     /** A ballot is stored once; asking again changes nothing. */
     public boolean ballot(Vote v, UUID elector, boolean yes) {
         if (v.ballots.putIfAbsent(elector, yes) != null) {
+            return false;
+        }
+        setDirty();
+        return true;
+    }
+
+    public boolean forgetBallot(Vote v, UUID elector) {
+        if (v.ballots.remove(elector) == null) {
             return false;
         }
         setDirty();
@@ -359,8 +373,7 @@ public final class GroupIndex extends SavedData {
             return;
         }
         if (ids.containsKey(newLeader)) {
-            types.remove(group);
-            typeSince.remove(group);
+            retire(group);
         } else {
             ids.put(newLeader, group);
         }
@@ -371,12 +384,17 @@ public final class GroupIndex extends SavedData {
     public void drop(UUID leader) {
         UUID group = ids.remove(leader);
         if (group != null) {
-            types.remove(group);
-            typeSince.remove(group);
-            votes.values().removeIf(v -> v.group.equals(group));
-            cooldowns.remove(group);
+            retire(group);
             setDirty();
         }
+    }
+
+    private void retire(UUID group) {
+        types.remove(group);
+        typeSince.remove(group);
+        votes.values().removeIf(v -> v.group.equals(group));
+        cooldowns.remove(group);
+        bans.remove(group.toString());
     }
 
     /** Forgets the ranks of people who are in no group. */
@@ -428,7 +446,21 @@ public final class GroupIndex extends SavedData {
             try {
                 CompoundTag e = (CompoundTag) t;
                 VoteKind kind = VoteKind.parse(e.getString(TYPE)).orElseThrow(() -> new IllegalArgumentException("an unknown vote kind"));
-                Vote v = new Vote(NbtUtils.loadUUID(e.get(KEY)), kind, NbtUtils.loadUUID(e.get("subject")), NbtUtils.loadUUID(e.get("caller")), e.getLong("opened"));
+                UUID id = e.contains("id") ? NbtUtils.loadUUID(e.get("id")) : UUID.randomUUID();
+                UUID group = NbtUtils.loadUUID(e.get(KEY));
+                long opened = e.getLong("opened");
+                long currentTerm = i.typeSince(group);
+                long covenSince = e.contains("coven_since") ? e.getLong("coven_since") : currentTerm;
+                if (!i.ids.containsValue(group) || i.typeOf(group) != GroupType.COVEN || covenSince != currentTerm
+                        || (!e.contains("coven_since") && opened < currentTerm)) {
+                    i.setDirty();
+                    continue;
+                }
+                long subjectSince = e.contains("subject_since") ? e.getLong("subject_since") : Long.MIN_VALUE;
+                Vote v = new Vote(id, group, kind, NbtUtils.loadUUID(e.get("subject")), NbtUtils.loadUUID(e.get("caller")), opened, covenSince, subjectSince);
+                if (!e.contains("id") || !e.contains("coven_since")) {
+                    i.setDirty();
+                }
                 v.cancelled = e.getBoolean("cancelled");
                 for (Tag b : e.getList("ballots", Tag.TAG_COMPOUND)) {
                     CompoundTag ballot = (CompoundTag) b;
@@ -537,10 +569,13 @@ public final class GroupIndex extends SavedData {
         ListTag voteList = new ListTag();
         votes.values().forEach(v -> {
             CompoundTag e = row(v.group);
+            e.put("id", NbtUtils.createUUID(v.id));
             e.putString(TYPE, v.kind.id());
             e.put("subject", NbtUtils.createUUID(v.subject));
             e.put("caller", NbtUtils.createUUID(v.caller));
             e.putLong("opened", v.opened);
+            e.putLong("coven_since", v.covenSince);
+            e.putLong("subject_since", v.subjectSince);
             e.putBoolean("cancelled", v.cancelled);
             ListTag ballots = new ListTag();
             v.ballots.forEach((elector, yes) -> {

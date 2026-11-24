@@ -184,7 +184,8 @@ public final class HomePage implements HubPageView {
     private int card(HubScreen.Frame f, Rect r, int y, HubRequests.Request q) {
         HubTheme t = f.theme();
         String id = "stage:request:" + q.kind() + ":" + q.token() + q.from();
-        Component what = q.kind() == HubRequests.Kind.GROUP_VOTE ? Component.translatable(CovenCards.KEY + "vote." + q.token(), q.fromName())
+        var vote = q.kind() == HubRequests.Kind.GROUP_VOTE ? net.ofatech.supernaturalbloodlines.core.group.coven.VoteKind.ofAnswer(q.token()).orElse(null) : null;
+        Component what = vote != null ? Component.translatable(CovenCards.KEY + "vote." + vote.id(), q.fromName())
                 : Component.translatable("supernaturalbloodlines.hub.request.kind." + q.kind().name().toLowerCase(Locale.ROOT));
         int ticks = RequestsClient.ticksLeft(q);
         int left = (ticks + 19) / 20;
@@ -233,7 +234,8 @@ public final class HomePage implements HubPageView {
             Rect b = flow.rects().get(i);
             if (i < answers.size()) {
                 Answer a = answers.get(i);
-                Component tip = q.kind() == HubRequests.Kind.COMPULSION ? Component.translatable(KEY + "answer." + a.label() + ".tip") : null;
+                Component tip = vote != null ? CovenCards.voteTip(vote, q.fromName(), a.primary())
+                        : q.kind() == HubRequests.Kind.COMPULSION ? Component.translatable(KEY + "answer." + a.label() + ".tip") : null;
                 PageWidgets.described(f, id + ":" + a.label(), b, labels.get(i), true, a.primary(), tip,
                         () -> HubClient.runCommand(a.rowId(), a.usesToken() ? List.of(q.token()) : List.of()));
             } else {

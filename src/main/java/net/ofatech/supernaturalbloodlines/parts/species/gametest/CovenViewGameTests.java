@@ -33,6 +33,25 @@ import net.ofatech.supernaturalbloodlines.parts.species.pack.PackIndex;
 /** Plan 20b Task 11: the coven view carries the viewer's own meter, consent and ballot, and the names of the viewer's own coven only. */
 @PrefixGameTestTemplate(false)
 public final class CovenViewGameTests {
+    @GameTest(template = "empty", templateNamespace = SupernaturalBloodlines.MODID)
+    public static void aPreviewDoesNotLoadTheCirclesCoordinatesInAnotherDimension(GameTestHelper helper) {
+        var c = circleAt(helper, new BlockPos(2, 140, 1), 3);
+        var member = c.others().getFirst();
+        var home = helper.getLevel();
+        var nether = home.getServer().getLevel(net.minecraft.world.level.Level.NETHER);
+        try {
+            helper.assertTrue(nether != null && !nether.isOutsideBuildHeight(c.chalk()) && !nether.hasChunkAt(c.chalk()),
+                    "setup: the other dimension's chunk must be valid and unloaded");
+            member.setServerLevel(nether);
+            var preview = CovenViews.of(member);
+            helper.assertTrue(!nether.hasChunkAt(c.chalk()) && !preview.shareKnown(), "the preview looked up the chalk in another dimension");
+        } finally {
+            member.setServerLevel(home);
+            tidy(helper, c.array());
+        }
+        helper.succeed();
+    }
+
     private static final String NS = SupernaturalBloodlines.MODID;
 
     private CovenViewGameTests() {
@@ -196,6 +215,8 @@ public final class CovenViewGameTests {
             CircleLink.calls().open(c.anchor().getUUID(), third.getUUID(), helper.getLevel().getGameTime());
             CovenView v = CovenViews.of(third);
             helper.assertTrue(v.circle() == CovenView.Circle.CALLED && v.anchorName().equals(nameOf(helper, c.anchor().getUUID())), "the call is not in the view: " + v.circle());
+            helper.assertTrue(CircleLink.calls().tokenOf(c.anchor().getUUID(), third.getUUID()).filter(v.callToken()::equals).isPresent(),
+                    "the Group view does not carry the displayed call's token");
             CovenView a = CovenViews.of(c.anchor());
             helper.assertTrue(!a.shareKnown() && a.sharePower() > 0 && a.shareEp() == 0, "share before a rite lies: " + a.sharePower() + " " + a.shareEp() + " " + a.shareKnown());
             helper.assertTrue(a.sharePower() >= CovenViews.of(c.others().get(0)).sharePower(), "the anchor takes the remainder first");

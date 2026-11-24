@@ -159,15 +159,15 @@ final class DevDemo {
         };
         boolean inside = circle == net.ofatech.supernaturalbloodlines.core.group.coven.CovenView.Circle.ANCHOR || circle == net.ofatech.supernaturalbloodlines.core.group.coven.CovenView.Circle.JOINED;
         var vote = state.equals("vote") ? Optional.of(new net.ofatech.supernaturalbloodlines.core.group.coven.CovenView.Vote(net.ofatech.supernaturalbloodlines.core.group.coven.VoteKind.SHUN,
-                "Cass", 1, 1, 3, net.ofatech.supernaturalbloodlines.core.group.coven.CovenView.Ballot.NONE, 17)) : Optional.<net.ofatech.supernaturalbloodlines.core.group.coven.CovenView.Vote>empty();
+                 id("Coven vote"), "Cass", 1, 1, 3, net.ofatech.supernaturalbloodlines.core.group.coven.CovenView.Ballot.NONE, 17)) : Optional.<net.ofatech.supernaturalbloodlines.core.group.coven.CovenView.Vote>empty();
         net.ofatech.supernaturalbloodlines.parts.supernatural.client.CovenClient.demo(new net.ofatech.supernaturalbloodlines.core.group.coven.CovenView(2, 5, circle,
                 circle == net.ofatech.supernaturalbloodlines.core.group.coven.CovenView.Circle.JOINED || circle == net.ofatech.supernaturalbloodlines.core.group.coven.CovenView.Circle.CALLED ? "Rowan" : me,
                 inside ? List.of(me, "Rowan", "Mira") : List.of(), 2000, 3000, 240, net.ofatech.supernaturalbloodlines.core.group.circle.Consent.NOSEBLEED,
-                inside ? 840 : 0, inside ? 0 : 0, false, 0, vote));
+                 inside ? 840 : 0, 0, false, 0, vote, state.equals("called") ? "aabbccdd" : ""));
         net.ofatech.supernaturalbloodlines.parts.supernatural.client.RequestsClient.demo(List.of());
         if (state.equals("called") || state.equals("vote")) {
             var kind = state.equals("called") ? net.ofatech.supernaturalbloodlines.shared.supernatural.HubRequests.Kind.CIRCLE_CALL : net.ofatech.supernaturalbloodlines.shared.supernatural.HubRequests.Kind.GROUP_VOTE;
-            net.ofatech.supernaturalbloodlines.parts.supernatural.client.RequestsClient.demo(List.of(new net.ofatech.supernaturalbloodlines.shared.supernatural.HubRequests.Request(kind, state.equals("called") ? id("Rowan") : id("Cass"), state.equals("called") ? "Rowan" : "Cass", state.equals("called") ? "aabbccdd" : "shun", state.equals("called") ? 1100 : 17 * 3600 * 20)));
+            net.ofatech.supernaturalbloodlines.parts.supernatural.client.RequestsClient.demo(List.of(new net.ofatech.supernaturalbloodlines.shared.supernatural.HubRequests.Request(kind, state.equals("called") ? id("Rowan") : id("Cass"), state.equals("called") ? "Rowan" : "Cass", vote.map(net.ofatech.supernaturalbloodlines.core.group.coven.CovenView.Vote::token).orElse("aabbccdd"), state.equals("called") ? 1100 : 17 * 3600 * 20)));
         }
     }
 

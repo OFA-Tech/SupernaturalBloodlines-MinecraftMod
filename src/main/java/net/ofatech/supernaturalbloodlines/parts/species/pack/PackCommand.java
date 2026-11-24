@@ -364,7 +364,6 @@ public final class PackCommand {
         if (index.alphaOf(p.getUUID()).isEmpty() && w.packAlpha() == null) {
             return GroupText.error(type, "no_group");
         }
-        net.ofatech.supernaturalbloodlines.parts.species.group.circle.CircleLink.dropMember(p.server, p.getUUID(), true);
         // a werewolf Beta's state change takes them out of the index by itself: the pack they leave, and the grace for it, are
         // noted first, or there would be neither
         UUID wasIn = index.leaderOf(p.getUUID());
@@ -374,9 +373,9 @@ public final class PackCommand {
         }
         // a co-Alpha or a Packmate lives in the index only
         index.leaveVoluntarily(p.getUUID());
+        PackMembers.departed(p.server, wasIn, p.getUUID(), true);
         PartyLink.sync(p.server, wasIn, true);
         p.sendSystemMessage(GroupText.of(type, "left"));
-        GroupIndex.get(p.serverLevel()).clearRanks(p.getUUID());
         return null;
     }
 
@@ -403,8 +402,6 @@ public final class PackCommand {
             return GroupText.error(type, "not_member", targetName);
         }
         PackMembers.remove(leader.server, target, GroupText.key(type, "kicked"), name(leader));
-        net.ofatech.supernaturalbloodlines.parts.species.group.circle.CircleLink.dropMember(leader.server, target, false);
-        GroupIndex.get(leader.serverLevel()).clearRanks(target);
         leader.sendSystemMessage(GroupText.of(type, "kicked_ok", targetName));
         PartyLink.sync(leader.server, leader.getUUID(), true);
         return null;

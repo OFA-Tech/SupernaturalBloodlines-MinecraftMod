@@ -17,7 +17,6 @@ import net.ofatech.supernaturalbloodlines.parts.species.group.GroupIndex;
 import net.ofatech.supernaturalbloodlines.parts.species.group.GroupsConfig;
 import net.ofatech.supernaturalbloodlines.parts.species.group.circle.CircleCost;
 import net.ofatech.supernaturalbloodlines.parts.species.group.circle.CircleLink;
-import net.ofatech.supernaturalbloodlines.parts.species.group.circle.EpPriced;
 import net.ofatech.supernaturalbloodlines.parts.species.pack.PackAbsence;
 import net.ofatech.supernaturalbloodlines.parts.species.pack.PackAccess;
 import net.ofatech.supernaturalbloodlines.parts.species.pack.PackIndex;
@@ -51,6 +50,7 @@ public final class CovenViews {
         CircleLink.Session session = CircleLink.of(me);
         CovenView.Circle circle = CovenView.Circle.NONE;
         String anchorName = "";
+        String callToken = "";
         List<String> names = List.of();
         if (session != null) {
             circle = session.anchor().equals(me) ? CovenView.Circle.ANCHOR : CovenView.Circle.JOINED;
@@ -62,6 +62,7 @@ public final class CovenViews {
                 circle = CovenView.Circle.CALLED;
                 var request = CircleLink.calls().peek(call.get(), me, level.getGameTime());
                 anchorName = request.map(r -> name(p, r.caller())).orElse("");
+                callToken = request.isPresent() ? call.get() : "";
             }
         }
 
@@ -70,22 +71,14 @@ public final class CovenViews {
         int regen = cap <= 0 ? 0 : (int) Math.ceil((double) (cap - meter) / cap * GroupsConfig.channelRegenMinutes() * 60);
 
         int sharePower = 0;
-        long shareEp = 0;
-        boolean known = false;
         if (session != null) {
             int n = Math.max(1, session.members().size());
             int index = Math.max(0, session.members().indexOf(me));
-            RiteType type = RiteType.getFirstMatching(level, session.key().chalk());
-            known = type != null;
-            int power = known ? type.getPower() : worstPower(level);
-            int pool = (int) Math.floor(power * GroupsConfig.linkMemberShare() + 1e-9);
+            // Enchanted's matcher can load chunks outside the chalk's chunk; previews use only registry data.
+            int pool = (int) Math.floor(highestListedPower(level) * GroupsConfig.linkMemberShare() + 1e-9);
             sharePower = (int) CirclePlan.split(pool, n)[index];
-            if (known) {
-                double ep = EpPriced.priceOf(type, level, session.key().chalk()).orElse(0.0);
-                shareEp = CirclePlan.split((long) Math.floor(ep), n)[index];
-            }
         }
-        return new CovenView(tier, size, circle, anchorName, names, meter, cap, regen, groups.consentOf(me), sharePower, shareEp, known, shunned, vote(p, groups, leader, now));
+        return new CovenView(tier, size, circle, anchorName, names, meter, cap, regen, groups.consentOf(me), sharePower, 0, false, shunned, vote(p, groups, leader, now), callToken);
     }
 
     private static String name(ServerPlayer viewer, UUID id) {
@@ -93,21 +86,21 @@ public final class CovenViews {
         return n != null ? n : id.toString().substring(0, 8);
     }
 
-    private static Object worstFor;
-    private static int worstCached;
+    private static Object powerRegistry;
+    private static int highestPower;
 
     /** The dearest rite's power: the registry is walked once per registry, not on every push. */
-    private static synchronized int worstPower(ServerLevel level) {
+    private static synchronized int highestListedPower(ServerLevel level) {
         var registry = level.registryAccess().registryOrThrow(EData.RITE_TYPES_REGISTRY);
-        if (worstFor != registry) {
-            int worst = 0;
+        if (powerRegistry != registry) {
+            int highest = 0;
             for (RiteType t : registry) {
-                worst = Math.max(worst, t.getPower());
+                highest = Math.max(highest, t.getPower());
             }
-            worstFor = registry;
-            worstCached = worst;
+            powerRegistry = registry;
+            highestPower = highest;
         }
-        return worstCached;
+        return highestPower;
     }
 
     private static Optional<CovenView.Vote> vote(ServerPlayer p, GroupIndex groups, UUID leader, long now) {
@@ -131,8 +124,8 @@ public final class CovenViews {
             int no = (int) electors.stream().filter(id -> Boolean.FALSE.equals(v.ballots.get(id))).count();
             Boolean mine = v.ballots.get(p.getUUID());
             CovenView.Ballot ballot = mine == null ? CovenView.Ballot.NONE : mine ? CovenView.Ballot.YES : CovenView.Ballot.NO;
-            long left = Math.max(0, v.opened + GroupsConfig.voteHours() * HOUR - now);
-            return Optional.of(new CovenView.Vote(v.kind, name(p, v.subject), yes, no, electors.size(), ballot, (int) Math.ceil(left / (double) HOUR)));
+            long left = Math.max(0, CovenGovernance.voteDeadline(v) - now);
+            return Optional.of(new CovenView.Vote(v.kind, v.id, name(p, v.subject), yes, no, electors.size(), ballot, (int) Math.ceil(left / (double) HOUR)));
         }
         return Optional.empty();
     }

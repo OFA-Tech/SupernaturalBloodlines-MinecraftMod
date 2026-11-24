@@ -133,8 +133,7 @@ public final class CovenGovernance {
         if (!CovenRules.mayBeElder(daysIn(c, target), GroupsConfig.elderMinDays())) {
             return CovenText.error("elder_days", word, GroupsConfig.elderMinDays());
         }
-        long elders = c.electors().size() - 1;
-        if (elders >= CovenRules.elderCap(c.index.betasOf(c.leader).size() + 1, GroupsConfig.membersPerElder())) {
+        if (!hasElderSeat(c)) {
             return CovenText.error("elder_cap");
         }
         return decide(c, VoteKind.ELDER_ADD, target);
@@ -228,7 +227,11 @@ public final class CovenGovernance {
         if (c.groups.openVote(c.group, kind).isPresent()) {
             return CovenText.error("vote_open");
         }
-        Vote v = c.groups.openVote(c.group, kind, subject, c.p.getUUID(), PackIndex.now());
+        long now = PackIndex.now();
+        Vote v = c.groups.openVote(c.group, kind, subject, c.p.getUUID(), now, c.index.inPackSince(subject).orElse(Long.MIN_VALUE));
+        if (kind == VoteKind.REGENT) {
+            c.groups.setCooldown(c.group, ELECTION, now + GroupsConfig.electionCooldownDays() * DAY);
+        }
         c.groups.ballot(v, c.p.getUUID(), true);
         tellElectors(c, "vote_opened", kind, subject);
         refreshCards(c);
@@ -242,9 +245,9 @@ public final class CovenGovernance {
         }
     }
 
-    /** Answers the open vote of this kind (the card's own token): one vote of a kind is open per coven, so the kind names the ballot. */
+    /** A typed kind answers the current proposal; a card names the exact proposal it displayed. */
     @Nullable
-    public static Component vote(ServerPlayer p, boolean yes, String kindId) {
+    public static Component vote(ServerPlayer p, boolean yes, String answer) {
         Ctx c = ctx(p);
         if (c == null) {
             return CircleLink.notACoven(p);
@@ -252,20 +255,35 @@ public final class CovenGovernance {
         if (!c.electors().contains(p.getUUID())) {
             return CovenText.error("not_elector");
         }
-        VoteKind kind = VoteKind.parse(kindId).orElse(null);
-        Vote open = kind == null ? null : c.groups.openVote(c.group, kind).filter(v -> !v.ballots.containsKey(p.getUUID())).orElse(null);
+        VoteKind kind = VoteKind.ofAnswer(answer).orElse(null);
+        Vote open = kind == null ? null : c.groups.openVote(c.group, kind)
+                .filter(v -> answer.equals(v.kind.id()) || answer.equals(v.kind.token(v.id)))
+                .filter(v -> !v.ballots.containsKey(p.getUUID())).orElse(null);
         if (open == null) {
+            return CovenText.error("no_vote");
+        }
+        long now = PackIndex.now();
+        if (voteDeadline(open) <= now || !stillValid(c, open)) {
+            resolve(c, open, now);
             return CovenText.error("no_vote");
         }
         c.groups.ballot(open, p.getUUID(), yes);
         p.sendSystemMessage(CovenText.of("vote_counted"));
         refreshCards(c);
-        resolve(c, open);
+        resolve(c, open, now);
         return null;
     }
 
     /** Counts a vote: it ends when it passed or failed, or is cancelled because what it is about is no longer true. */
     private static void resolve(Ctx c, Vote v) {
+        resolve(c, v, PackIndex.now());
+    }
+
+    static long voteDeadline(Vote v) {
+        return v.opened + GroupsConfig.voteHours() * HOUR;
+    }
+
+    private static void resolve(Ctx c, Vote v, long now) {
         if (v.cancelled) {
             return;
         }
@@ -276,7 +294,7 @@ public final class CovenGovernance {
         }
         List<UUID> electors = c.electors();
         boolean everyone = electors.stream().allMatch(v.ballots::containsKey);
-        boolean expired = PackIndex.now() - v.opened >= GroupsConfig.voteHours() * HOUR;
+        boolean expired = voteDeadline(v) <= now;
         int yes = (int) electors.stream().filter(id -> Boolean.TRUE.equals(v.ballots.get(id))).count();
         int no = (int) electors.stream().filter(id -> Boolean.FALSE.equals(v.ballots.get(id))).count();
         VoteTally.Result result = VoteTally.result(electors.size(), yes, no, everyone, expired);
@@ -293,16 +311,27 @@ public final class CovenGovernance {
     }
 
     private static boolean stillValid(Ctx c, Vote v) {
+        if (c.groups.typeSince(c.group) != v.covenSince) {
+            return false;
+        }
         List<UUID> members = c.index.betasOf(c.leader);
         if (!members.contains(v.subject)) {
             return false;
         }
+        long joined = c.index.inPackSince(v.subject).orElse(Long.MAX_VALUE);
+        if (v.subjectSince == Long.MIN_VALUE ? joined > v.opened : joined != v.subjectSince) {
+            return false;
+        }
         Role role = c.roleOf(v.subject);
         return switch (v.kind) {
-            case ELDER_ADD -> role == Role.MEMBER;
+            case ELDER_ADD -> role == Role.MEMBER && hasElderSeat(c);
             case ELDER_REMOVE, REGENT -> role == Role.ELDER;
             case SHUN -> role != Role.REGENT;
         };
+    }
+
+    private static boolean hasElderSeat(Ctx c) {
+        return c.electors().size() - 1 < CovenRules.elderCap(c.index.betasOf(c.leader).size() + 1, GroupsConfig.membersPerElder());
     }
 
     private static void apply(Ctx c, VoteKind kind, UUID subject, UUID caller) {
@@ -321,12 +350,9 @@ public final class CovenGovernance {
                 c.groups.ban(SHUN_SCOPE, subject, until);
                 tellAll(c, "shun_done", who);
                 PackMembers.remove(c.server, subject, CovenText.key("shunned"), name(c.server, c.leader));
-                c.groups.clearRanks(subject);
-                CircleLink.dropMember(c.server, subject, false);
                 PartyLink.sync(c.server, c.leader, true);
             }
             case REGENT -> {
-                c.groups.setCooldown(c.group, ELECTION, PackIndex.now() + GroupsConfig.electionCooldownDays() * DAY);
                 String before = name(c.server, c.leader);
                 List<UUID> everyone = c.everyone();
                 GroupLead.handOver(c.server, c.index, c.leader, subject, GroupType.COVEN);
@@ -340,6 +366,9 @@ public final class CovenGovernance {
 
     /** Every 200 ticks: counts the votes whose time is up, cancels the ones whose subject is gone, forgets what is over. */
     public static void sweep(MinecraftServer server) {
+        if (!GroupsConfig.covensEnabled()) {
+            return;
+        }
         GroupIndex groups = GroupIndex.get(server.overworld());
         long now = PackIndex.now();
         for (Vote v : groups.allVotes()) {
@@ -348,32 +377,34 @@ public final class CovenGovernance {
             if (c == null || groups.typeOf(v.group) != GroupType.COVEN) {
                 continue;
             }
-            if (!v.cancelled) {
-                resolveSwept(c, v);
-            }
+            resolve(c, v, now);
         }
         groups.prune(now, VOTE_LIFETIME);
-    }
-
-    private static void resolveSwept(Ctx c, Vote v) {
-        if (!stillValid(c, v)) {
-            c.groups.cancelVote(v);
-            refreshCards(c);
-            return;
-        }
-        List<UUID> electors = c.electors();
-        boolean everyone = electors.stream().allMatch(v.ballots::containsKey);
-        boolean expired = PackIndex.now() - v.opened >= GroupsConfig.voteHours() * HOUR;
-        int yes = (int) electors.stream().filter(id -> Boolean.TRUE.equals(v.ballots.get(id))).count();
-        if (VoteTally.result(electors.size(), yes, 0, everyone, expired) != VoteTally.Result.PENDING) {
-            resolve(c, v);
-        }
     }
 
     /** A type switch (or a dissolved group) cancels what is open; the rows stay and are ignored. */
     public static void cancelAll(MinecraftServer server, UUID group) {
         GroupIndex groups = GroupIndex.get(server.overworld());
         groups.openVotes(group).forEach(groups::cancelVote);
+    }
+
+    public static void memberDeparted(MinecraftServer server, UUID leader, UUID member) {
+        Ctx c = ctxOf(server, leader);
+        if (c == null || c.groups.typeOf(c.group) != GroupType.COVEN) {
+            return;
+        }
+        boolean changed = false;
+        for (Vote v : c.groups.openVotes(c.group)) {
+            if (member.equals(v.subject) || member.equals(v.caller)) {
+                c.groups.cancelVote(v);
+                changed = true;
+            } else {
+                changed |= c.groups.forgetBallot(v, member);
+            }
+        }
+        if (changed) {
+            refreshCards(c);
+        }
     }
 
     /** The cards for the hub's Home: the votes {@code p} may still answer. */
@@ -388,8 +419,8 @@ public final class CovenGovernance {
             if (v.ballots.containsKey(p.getUUID())) {
                 continue;
             }
-            long leftMillis = Math.max(0, v.opened + GroupsConfig.voteHours() * HOUR - now);
-            out.add(new HubRequests.Request(HubRequests.Kind.GROUP_VOTE, v.subject, name(p.server, v.subject), v.kind.id(), (int) Math.min(Integer.MAX_VALUE, leftMillis / 50)));
+            long leftMillis = Math.max(0, voteDeadline(v) - now);
+            out.add(new HubRequests.Request(HubRequests.Kind.GROUP_VOTE, v.subject, name(p.server, v.subject), v.kind.token(v.id), (int) Math.min(Integer.MAX_VALUE, leftMillis / 50)));
         }
         return out;
     }

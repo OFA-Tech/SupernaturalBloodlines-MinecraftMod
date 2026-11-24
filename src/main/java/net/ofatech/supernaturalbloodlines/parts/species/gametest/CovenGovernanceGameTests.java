@@ -161,6 +161,128 @@ public final class CovenGovernanceGameTests {
     }
 
     @GameTest(template = "empty", templateNamespace = NS)
+    public static void aBallotAtTheDeadlineDoesNotTurnAProposalIntoAMajority(GameTestHelper helper) {
+        Coven c = coven(helper, 2, 1);
+        long[] clock = {40_000_000L};
+        PackIndex.overrideClock(() -> clock[0]);
+        try {
+            TalkingDuelist subject = c.members().get(0);
+            helper.assertTrue(CovenGovernance.elderAdd(c.regent(), name(subject)) == null, "the proposal did not open");
+            clock[0] += GroupsConfig.voteHours() * 3_600_000L;
+            var late = CovenGovernance.vote(c.elders().get(0), true, "elder_add");
+            helper.assertTrue(late != null && !isElder(helper, subject), "a ballot at the deadline passed the appointment");
+            helper.assertTrue(groups(helper).openVotes(groupOf(helper, c)).isEmpty(), "the elapsed vote was not resolved");
+        } finally {
+            tidy(helper, c);
+            PackIndex.overrideClock(null);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void theSweepKeepsVotesButDoesNotApplyThemWhileCovensAreDisabled(GameTestHelper helper) {
+        Coven c = coven(helper, 2, 1);
+        long[] clock = {40_000_000L};
+        PackIndex.overrideClock(() -> clock[0]);
+        try {
+            TalkingDuelist subject = c.members().get(0);
+            helper.assertTrue(CovenGovernance.elderAdd(c.regent(), name(subject)) == null, "the proposal did not open");
+            helper.assertTrue(CovenGovernance.vote(c.elders().get(0), true, "elder_add") == null, "the second yes was refused");
+            GroupsConfig.override("covens_enabled", false);
+            clock[0] += CovenGovernance.VOTE_LIFETIME + 1;
+            CovenGovernance.sweep(helper.getLevel().getServer());
+            helper.assertTrue(!isElder(helper, subject) && groups(helper).openVotes(groupOf(helper, c)).size() == 1,
+                    "the disabled sweep applied or discarded the proposal");
+            GroupsConfig.override("covens_enabled", null);
+            CovenGovernance.sweep(helper.getLevel().getServer());
+            helper.assertTrue(isElder(helper, subject), "the elapsed majority did not take effect after re-enabling covens");
+        } finally {
+            GroupsConfig.override("covens_enabled", null);
+            tidy(helper, c);
+            PackIndex.overrideClock(null);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void theElderCapStillAppliesWhenTheVotePasses(GameTestHelper helper) {
+        Coven c = coven(helper, 2, 1);
+        try {
+            TalkingDuelist subject = c.members().get(0);
+            helper.assertTrue(CovenGovernance.elderAdd(c.regent(), name(subject)) == null, "the proposal did not open");
+            helper.assertTrue(CovenGovernance.vote(c.elders().get(0), true, "elder_add") == null, "the second yes was refused");
+            GroupsConfig.override("members_per_elder", 2);
+            CovenGovernance.vote(c.elders().get(1), true, "elder_add");
+            helper.assertTrue(!isElder(helper, subject), "the appointment exceeded the current Elder cap");
+        } finally {
+            tidy(helper, c);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aFailedElectionStillStartsTheCallCooldown(GameTestHelper helper) {
+        Coven c = coven(helper, 2, 0);
+        try {
+            TalkingDuelist caller = c.elders().get(0);
+            TalkingDuelist nominee = c.elders().get(1);
+            helper.assertTrue(CovenGovernance.callElection(caller, name(nominee)) == null, "the election did not open");
+            helper.assertTrue(CovenGovernance.vote(nominee, false, "regent") == null
+                    && CovenGovernance.vote(c.regent(), false, "regent") == null, "the no ballots were refused");
+            var again = CovenGovernance.callElection(caller, name(nominee));
+            helper.assertTrue(again != null && key(again).equals("supernaturalbloodlines.coven.err.election_cooldown"),
+                    "a failed election allowed another call within the cooldown");
+        } finally {
+            tidy(helper, c);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aShunnedWitchCannotFoundACoven(GameTestHelper helper) {
+        TalkingDuelist founder = witch(helper, 1);
+        TalkingDuelist prospective = human(helper, 3);
+        online(founder, prospective);
+        long[] clock = {40_000_000L};
+        PackIndex.overrideClock(() -> clock[0]);
+        try {
+            groups(helper).ban(CovenGovernance.SHUN_SCOPE, founder.getUUID(), clock[0] + 20);
+            var refused = PackCommand.invite(founder, prospective);
+            helper.assertTrue(refused != null && !key(refused).contains("shun"), "founding was permitted or the refusal exposed the ban");
+            clock[0] += 20;
+            helper.assertTrue(join(founder, prospective), "the expired ban still prevented founding");
+        } finally {
+            PackIndex.overrideClock(null);
+            clean(helper, founder, prospective);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aGroupCannotSwitchToCovenWhileItWouldBringAShunnedMember(GameTestHelper helper) {
+        Coven c = coven(helper, 0, 1);
+        long[] clock = {40_000_000L};
+        PackIndex.overrideClock(() -> clock[0]);
+        try {
+            GroupIndex groups = groups(helper);
+            UUID group = groupOf(helper, c);
+            UUID member = c.members().get(0).getUUID();
+            groups.setType(group, GroupType.PACK, clock[0]);
+            groups.ban(CovenGovernance.SHUN_SCOPE, member, clock[0] + 20);
+            helper.assertTrue(GroupSwitcher.refresh(c.regent()).isEmpty() && groups.typeOf(group) == GroupType.PACK,
+                    "the switch brought a shunned member into a coven");
+            clock[0] += 20;
+            helper.assertTrue(GroupSwitcher.refresh(c.regent()).isPresent() && groups.typeOf(group) == GroupType.COVEN
+                    && PackIndex.get(helper.getLevel()).betasOf(c.regent().getUUID()).contains(member),
+                    "the expired ban still blocked the switch or cost the member their group");
+        } finally {
+            PackIndex.overrideClock(null);
+            tidy(helper, c);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
     public static void anElderNeedsTheDaysInTheCoven(GameTestHelper helper) {
         long[] clock = {50_000_000L};
         PackIndex.overrideClock(() -> clock[0]);
@@ -185,6 +307,8 @@ public final class CovenGovernanceGameTests {
             CovenGovernance.elderAdd(c.regent(), name(c.members().get(0)));
             GroupIndex reloaded = GroupIndex.load(groups(helper).save(new CompoundTag(), null), null);
             var votes = reloaded.openVotes(groupOf(helper, c));
+            helper.assertTrue(votes.size() == 1 && votes.getFirst().id.equals(groups(helper).openVotes(groupOf(helper, c)).getFirst().id),
+                    "the proposal identity changed after loading");
             helper.assertTrue(votes.size() == 1 && votes.get(0).kind == VoteKind.ELDER_ADD && votes.get(0).subject.equals(c.members().get(0).getUUID()), "the vote is " + votes.size());
             helper.assertTrue(votes.get(0).ballots.get(c.regent().getUUID()) == Boolean.TRUE && votes.get(0).caller.equals(c.regent().getUUID()), "the ballots were lost");
         } finally {
@@ -208,6 +332,69 @@ public final class CovenGovernanceGameTests {
             helper.assertTrue(again2 != null && vote.yes() == 2, "the caller changed their ballot");
         } finally {
             tidy(helper, c);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void anOldHomeCardCannotAnswerAReplacementOfTheSameKind(GameTestHelper helper) {
+        Coven c = coven(helper, 2, 2);
+        PackIndex.overrideClock(() -> 40_000_000L);
+        try {
+            TalkingDuelist elector = c.elders().get(0);
+            helper.assertTrue(CovenGovernance.elderAdd(c.regent(), name(c.members().get(0))) == null, "the first proposal did not open");
+            String stale = CovenGovernance.cardsFor(elector).getFirst().token();
+            GroupIndex groups = groups(helper);
+            UUID group = groupOf(helper, c);
+            groups.cancelVote(groups.openVote(group, VoteKind.ELDER_ADD).orElseThrow());
+            helper.assertTrue(CovenGovernance.elderAdd(c.regent(), name(c.members().get(1))) == null, "the replacement did not open");
+            String fresh = CovenGovernance.cardsFor(elector).getFirst().token();
+            var replacement = groups.openVote(group, VoteKind.ELDER_ADD).orElseThrow();
+            helper.assertTrue(fresh.equals(net.ofatech.supernaturalbloodlines.parts.species.group.coven.CovenViews.of(elector).vote().orElseThrow().token()),
+                    "the Group card names a different proposal from Home");
+            helper.assertTrue(CovenGovernance.vote(elector, true, stale) != null && !replacement.ballots.containsKey(elector.getUUID()),
+                    "an old Home card voted on the replacement");
+            helper.assertTrue(CovenGovernance.vote(elector, true, fresh) == null && replacement.ballots.containsKey(elector.getUUID()),
+                    "the current card could not answer its own proposal");
+        } finally {
+            tidy(helper, c);
+            PackIndex.overrideClock(null);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void leavingAndRejoiningBeforeTheSweepVoidsTheProposal(GameTestHelper helper) {
+        Coven c = coven(helper, 2, 1);
+        try {
+            TalkingDuelist subject = c.members().get(0);
+            helper.assertTrue(CovenGovernance.elderAdd(c.regent(), name(subject)) == null, "the proposal did not open");
+            helper.assertTrue(PackCommand.leave(subject) == null && join(c.regent(), subject), "leave and rejoin failed");
+            helper.assertTrue(CovenGovernance.vote(c.elders().get(0), true, "elder_add") != null
+                    && groups(helper).openVotes(groupOf(helper, c)).isEmpty(), "the old proposal survived the departure");
+        } finally {
+            tidy(helper, c);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void resolutionRejectsAProposalFromTheSubjectsEarlierMembership(GameTestHelper helper) {
+        long[] clock = {40_000_000L};
+        PackIndex.overrideClock(() -> clock[0]);
+        Coven c = coven(helper, 2, 1);
+        try {
+            TalkingDuelist subject = c.members().get(0);
+            helper.assertTrue(CovenGovernance.elderAdd(c.regent(), name(subject)) == null, "the proposal did not open");
+            PackIndex packs = PackIndex.get(helper.getLevel());
+            packs.leave(subject.getUUID());
+            clock[0]++;
+            helper.assertTrue(packs.join(c.regent().getUUID(), subject.getUUID()), "the replacement membership failed");
+            helper.assertTrue(CovenGovernance.vote(c.elders().get(0), true, "elder_add") != null
+                    && groups(helper).openVotes(groupOf(helper, c)).isEmpty(), "the proposal did not recognize a different membership term");
+        } finally {
+            tidy(helper, c);
+            PackIndex.overrideClock(null);
         }
         helper.succeed();
     }

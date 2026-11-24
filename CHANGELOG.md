@@ -15,10 +15,10 @@
 - `AdminCommands` has ten more rows (`C1` to `C10`, 72 in all).
 
 ### Network
-**The hub channel changed: update client and server together.** `LadderNet.PROTOCOL` is "16" (a new `coven_view` payload).
+**The hub channel changed: update client and server together.** `LadderNet.PROTOCOL` is "17" (Home and Group ballots identify the exact proposal, and Group Join identifies the displayed circle call).
 
 ### Rolling back
-Set `link_enabled` to false: no new circle, every rite is a solo cast and Mastery's Ultimate needs no circle again. Shares already paid are gone (a debt is never saved). The rows `channel`, `consent`, `votes`, `bans` and `cooldowns` stay in `supernaturalbloodlines_groups.dat`, and a 20a jar keeps them as unknown keys; an Elder rank row stays dormant. The five new rite files (`fete_des_benedictions`, `night_watch`, `great_harvest`, `coven_moon_ring`, `coven_sun_ring`) vanish with their jar.
+Set `link_enabled` to false: no new circle, every rite is a solo cast and Mastery's Ultimate needs no circle again. Shares already paid are gone (a debt is never saved). Before installing 20a, end all active Night Watches on the 20b build: keep their chalks loaded through dawn and confirm the rites have ended. With the server stopped, back up the world and `supernaturalbloodlines-groups.toml`; restore the saved 20b groups TOML before starting 20b again, since the older build can rewrite it without the new settings. The rows `channel`, `consent`, `votes`, `bans` and `cooldowns` stay in `supernaturalbloodlines_groups.dat`, and a 20a jar keeps them as unknown keys; an Elder rank row stays dormant. The five new rite files (`fete_des_benedictions`, `night_watch`, `great_harvest`, `coven_moon_ring`, `coven_sun_ring`) vanish with their jar.
 ## Unreleased (skill wheel, phase W5b: Infinity's menus on our wheel)
 
 ### Added
