@@ -1,0 +1,93 @@
+{
+  "keys": [
+    {
+      "tick": 0,
+      "head_x": 0,
+      "head_y": 0,
+      "head_z": 0,
+      "body_x": 0,
+      "right_arm_x": 0,
+      "right_arm_z": 0,
+      "left_arm_x": 0,
+      "left_arm_z": 0,
+      "right_leg_x": 0,
+      "left_leg_x": 0,
+      "offset_y": 0,
+      "scale": 1
+    },
+    {
+      "tick": 6,
+      "head_x": -5,
+      "head_y": 0,
+      "head_z": 0,
+      "body_x": -2,
+      "right_arm_x": 4,
+      "right_arm_z": 0,
+      "left_arm_x": 4,
+      "left_arm_z": 0,
+      "right_leg_x": 0,
+      "left_leg_x": 0,
+      "offset_y": -0.02,
+      "scale": 1
+    },
+    {
+      "tick": 12,
+      "head_x": 28,
+      "head_y": -8,
+      "head_z": 5,
+      "body_x": 12,
+      "right_arm_x": -56,
+      "right_arm_z": -8,
+      "left_arm_x": -6,
+      "left_arm_z": -3,
+      "right_leg_x": -6,
+      "left_leg_x": 4,
+      "offset_y": -0.05,
+      "scale": 0.99
+    },
+    {
+      "tick": 16,
+      "head_x": -36,
+      "head_y": 6,
+      "head_z": -4,
+      "body_x": 10,
+      "right_arm_x": -54,
+      "right_arm_z": -6,
+      "left_arm_x": -40,
+      "left_arm_z": 5,
+      "right_leg_x": -8,
+      "left_leg_x": 6,
+      "offset_y": -0.039,
+      "scale": 0.98
+    },
+    {
+      "tick": 19,
+      "head_x": -38,
+      "head_y": 5,
+      "head_z": -4,
+      "body_x": 11,
+      "right_arm_x": -52,
+      "right_arm_z": -6,
+      "left_arm_x": -42,
+      "left_arm_z": 5,
+      "right_leg_x": -8,
+      "left_leg_x": 6,
+      "offset_y": -0.039,
+      "scale": 0.97
+    }
+  ],
+  "match": {
+    "head_x": -38,
+    "head_y": 5,
+    "head_z": -4,
+    "body_x": 11,
+    "right_arm_x": -52,
+    "right_arm_z": -6,
+    "left_arm_x": -42,
+    "left_arm_z": 5,
+    "right_leg_x": -8,
+    "left_leg_x": 6,
+    "offset_y": -0.039,
+    "scale": 0.97
+  }
+}

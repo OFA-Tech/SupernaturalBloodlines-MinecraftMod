@@ -26,6 +26,15 @@ public abstract class BossNpc extends PathfinderMob {
 
     public abstract BossId boss();
 
+    /**
+     * A boss in the middle of a shift stands where he is and does nothing: no goal runs (so no step toward a target and no blow), the way a sleeper's do not.
+     * {@code ShiftCore.hold} only zeroes the speed once a tick, which a goal that sets it again in the same tick undoes.
+     */
+    @Override
+    public boolean isImmobile() {
+        return super.isImmobile() || this instanceof ShiftBody shifter && shifter.form() == net.ofatech.supernaturalbloodlines.core.boss.BossForm.SHIFTING;
+    }
+
     /** The form indicator of this boss's bar: no chips unless the boss has forms. */
     public net.ofatech.supernaturalbloodlines.core.boss.BossBarForms.Look barLook() {
         return net.ofatech.supernaturalbloodlines.core.boss.BossBarForms.Look.NONE;
