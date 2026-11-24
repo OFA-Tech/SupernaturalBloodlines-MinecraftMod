@@ -1,0 +1,38 @@
+{
+  "title": "Rite of the Door Ward",
+  "icon": {
+    "count": 1,
+    "id": "minecraft:iron_door"
+  },
+  "assigned_items": [],
+  "advancement": "supernaturalbloodlines:rites/known/rite_of_the_door_ward",
+  "pages": [
+    {
+      "components": [
+        {
+          "template": "modopedia:page/headered_text",
+          "text": "Circle: small circle, ritual chalk.\n\nThe small form: keeps one door, trapdoor or gate (within four blocks of the altar) shut to a vampire who has not been invited.",
+          "header": "The Door Ward"
+        }
+      ]
+    },
+    {
+      "components": [
+        {
+          "template": "modopedia:page/headered_text",
+          "text": "Same owner, same invitations, same fall as the Ward. A wall or a window is not guarded.",
+          "header": "The Door Ward"
+        }
+      ]
+    },
+    {
+      "components": [
+        {
+          "template": "supernaturalbloodlines:page/rite",
+          "rite": "supernaturalbloodlines:rite_of_the_door_ward",
+          "header": "The Door Ward"
+        }
+      ]
+    }
+  ]
+}

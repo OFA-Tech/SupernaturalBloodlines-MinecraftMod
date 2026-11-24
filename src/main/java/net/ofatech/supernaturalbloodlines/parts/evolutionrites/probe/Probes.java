@@ -12,15 +12,27 @@ import org.slf4j.LoggerFactory;
 /** The probe of a recipe by its id. An id nobody knows is no probe (and one warning), so the recipe is unavailable. */
 public final class Probes {
     public static final String OWN_SAGE_GREAT_SAGE = "own.sage_great_sage";
+    public static final String ASCENSION_AWAKENING = "ascension.awakening";
+    /** A Unique whose addon has no on/off switch for it (Mysticism's Butcher, Slime Throne Extras' Imitator): the road is open whenever the addon is loaded. */
+    public static final String UNIQUE_NO_SWITCH = "unique.no_switch";
     private static final Logger LOGGER = LoggerFactory.getLogger("supernaturalbloodlines");
 
     private static final Set<String> WARNED = ConcurrentHashMap.newKeySet();
-    private static final Map<String, AddonProbe> FIXED = Map.of(OWN_SAGE_GREAT_SAGE, new OwnProbe());
+    public static final String GREAT_SAGE_RAPHAEL = "greatsage.raphael";
+    private static final Map<String, AddonProbe> FIXED = Map.of(OWN_SAGE_GREAT_SAGE, new OwnProbe(), UNIQUE_NO_SWITCH, new OwnProbe(),
+            GREAT_SAGE_RAPHAEL, new GreatSageProbe(), ASCENSION_AWAKENING, new AscensionProbe());
 
     private Probes() {
     }
 
+    /** A test seam: probes that stand in for an id (a fixture whose world switch is off, one that records what it was told). Empty in play. */
+    public static volatile Map<String, AddonProbe> overrides = Map.of();
+
     public static Optional<AddonProbe> of(String id) {
+        AddonProbe stand = overrides.get(id);
+        if (stand != null) {
+            return Optional.of(stand);
+        }
         AddonProbe fixed = FIXED.get(id);
         if (fixed != null) {
             return Optional.of(fixed);

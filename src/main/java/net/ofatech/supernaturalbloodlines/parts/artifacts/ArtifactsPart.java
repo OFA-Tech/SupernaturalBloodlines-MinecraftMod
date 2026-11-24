@@ -24,6 +24,11 @@ import net.ofatech.supernaturalbloodlines.parts.artifacts.gametest.ResurrectionV
 import net.ofatech.supernaturalbloodlines.parts.artifacts.gametest.RingGameTests;
 import net.ofatech.supernaturalbloodlines.parts.artifacts.gametest.WolfsbaneGameTests;
 import net.ofatech.supernaturalbloodlines.parts.artifacts.item.CompassPrivacy;
+import net.ofatech.supernaturalbloodlines.parts.artifacts.ward.WardChat;
+import net.ofatech.supernaturalbloodlines.parts.artifacts.ward.WardCommand;
+import net.ofatech.supernaturalbloodlines.parts.artifacts.ward.WardEnforcer;
+import net.ofatech.supernaturalbloodlines.parts.artifacts.ward.WardLifecycle;
+import net.ofatech.supernaturalbloodlines.parts.artifacts.ward.WardRiteFactory;
 import net.ofatech.supernaturalbloodlines.parts.artifacts.rite.BindItemRiteFactory;
 import net.ofatech.supernaturalbloodlines.parts.artifacts.rite.RequiresDesiccatedRiteFactory;
 import net.ofatech.supernaturalbloodlines.parts.artifacts.werewolves.MoonRing;
@@ -42,6 +47,9 @@ public final class ArtifactsPart {
         // before the datapacks load, so the rite JSONs can name this factory
         RiteFactoryRegistry.get().register(BindItemRiteFactory.ID, BindItemRiteFactory.CODEC);
         RiteFactoryRegistry.get().register(RequiresDesiccatedRiteFactory.ID, RequiresDesiccatedRiteFactory.CODEC);
+        RiteFactoryRegistry.get().register(WardRiteFactory.ID, WardRiteFactory.CODEC);
+        RiteFactoryRegistry.get().register(net.ofatech.supernaturalbloodlines.parts.artifacts.rite.LocatorRiteFactory.ID, net.ofatech.supernaturalbloodlines.parts.artifacts.rite.LocatorRiteFactory.CODEC);
+        net.ofatech.supernaturalbloodlines.parts.artifacts.rite.LocatorNotices.register();
         ArtifactItems.register(modBus);
         MountainAsh.register(modBus);
         if (FMLEnvironment.dist == Dist.CLIENT) {
@@ -51,6 +59,11 @@ public final class ArtifactsPart {
             }
         }
         CompassPrivacy.register();
+        WardEnforcer.register();
+        WardChat.register();
+        WardLifecycle.register();
+        net.ofatech.supernaturalbloodlines.shared.hub.WardHub.setSource(net.ofatech.supernaturalbloodlines.parts.artifacts.ward.WardView::of);
+        net.neoforged.neoforge.common.NeoForge.EVENT_BUS.addListener((net.neoforged.neoforge.event.RegisterCommandsEvent e) -> WardCommand.register(e.getDispatcher()));
         AshDagger.register();
         SunRing.register();
         ResurrectionRing.register();
@@ -70,6 +83,9 @@ public final class ArtifactsPart {
             e.register(CompassHearingGameTests.class);
             e.register(CompassGameTests.class);
             e.register(MountainAshGameTests.class);
+            e.register(net.ofatech.supernaturalbloodlines.parts.artifacts.gametest.WardGameTests.class);
+            e.register(net.ofatech.supernaturalbloodlines.parts.artifacts.gametest.WardHomeGameTests.class);
+            e.register(net.ofatech.supernaturalbloodlines.parts.artifacts.gametest.LocatorGameTests.class);
             if (curios) {
                 e.register(CuriosSlotsGameTests.class);
             }

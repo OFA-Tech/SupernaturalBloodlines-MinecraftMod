@@ -151,4 +151,23 @@ class RingLabelsTest {
         List<Rect> out = RingLabels.place(List.of(new Request(100, 50, 50, 18, Anchor.CENTER)), List.of(), PAGE, 12, 2);
         assertEquals(18, out.get(0).h());
         assertEquals(50, out.get(0).w());
+    }
+
+    @Test
+    void aSideNameWithNoRoomBesideItsFaceGoesUnderIt() {
+        // a face 6 px from the left edge of a small page: its name asked for on the left has no room, under the face it has
+        Rect page = new Rect(0, 0, 60, 60);
+        Rect face = new Rect(-4, 20, 20, 20);
+        Request left = new Request(-5, 27, 30, 9, Anchor.RIGHT);
+        assertNull(RingLabels.place(List.of(left), List.of(face), page, 22, 2).get(0), "the name should have no room beside its face");
+        Rect under = RingLabels.underOrOver(left, 6, 30, 16, List.of(face), page, 22, 2);
+        assertNotNull(under, "the name should go under its face");
+        assertFalse(under.overlaps(face));
+        assertTrue(under.y() > 30, "under, not over: " + under);
+    }
+
+    @Test
+    void aNameWithRoomNowhereIsStillLeftOut() {
+        Rect page = new Rect(0, 0, 60, 60);
+        assertNull(RingLabels.underOrOver(new Request(-5, 27, 30, 9, Anchor.RIGHT), 6, 30, 16, List.of(new Rect(-10, 0, 80, 60)), page, 22, 2));
     }}

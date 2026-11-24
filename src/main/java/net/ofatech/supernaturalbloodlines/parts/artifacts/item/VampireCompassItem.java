@@ -76,6 +76,9 @@ public class VampireCompassItem extends Item {
         if (tracker != null && tracker.target().isPresent()) {
             stack.set(DataComponents.LODESTONE_TRACKER, new LodestoneTracker(Optional.empty(), false));
         }
+        if (stack.getOrDefault(ArtifactItems.LOCATOR_NEAR.get(), -1) != -1) {
+            stack.set(ArtifactItems.LOCATOR_NEAR.get(), -1); // a compass put away says nothing of how far
+        }
     }
 
     /**
@@ -88,7 +91,7 @@ public class VampireCompassItem extends Item {
         if (!player.isShiftKeyDown()) {
             return InteractionResultHolder.pass(stack);
         }
-        CompassMode next = mode(stack).toggled();
+        CompassMode next = mode(stack).toggled(attuned(stack));
         stack.set(ArtifactItems.COMPASS_MODE.get(), next);
         stack.set(DataComponents.LODESTONE_TRACKER, new LodestoneTracker(Optional.empty(), false));
         if (!level.isClientSide) {
@@ -100,6 +103,11 @@ public class VampireCompassItem extends Item {
     @Override
     public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> tooltip, TooltipFlag flag) {
         tooltip.add(Component.translatable("supernaturalbloodlines.compass.mode", Component.translatable(mode(stack).langKey())).withStyle(ChatFormatting.GRAY));
+        if (mode(stack) == CompassMode.LOCATOR) {
+            int near = stack.getOrDefault(ArtifactItems.LOCATOR_NEAR.get(), -1);
+            tooltip.add(Component.translatable(near < 0 ? "supernaturalbloodlines.compass.locator.none" : near == 0 ? "supernaturalbloodlines.compass.locator.very_near"
+                    : "supernaturalbloodlines.compass.locator.about", near).withStyle(ChatFormatting.GRAY));
+        }
         tooltip.add(Component.translatable("supernaturalbloodlines.compass.hint").withStyle(ChatFormatting.DARK_GRAY));
     }
 
@@ -109,7 +117,28 @@ public class VampireCompassItem extends Item {
         return slotChanged || !oldStack.is(newStack.getItem());
     }
 
+    /** Whether a witch has attuned this compass to somebody (R316): only then is the locator in its cycle. */
+    public static boolean attuned(ItemStack stack) {
+        return stack.has(ArtifactItems.LOCATOR_SEAL.get());
+    }
+
+    private static void updateLocator(ItemStack stack, Level level, Entity holder) {
+        Optional<LocatorNeedle.Aim> aim = level instanceof ServerLevel server ? LocatorNeedle.aim(stack, server, holder) : Optional.empty();
+        LodestoneTracker tracker = new LodestoneTracker(aim.map(LocatorNeedle.Aim::pos), false);
+        if (!tracker.equals(stack.get(DataComponents.LODESTONE_TRACKER))) {
+            stack.set(DataComponents.LODESTONE_TRACKER, tracker);
+        }
+        int near = aim.map(LocatorNeedle.Aim::near).orElse(-1);
+        if (near != stack.getOrDefault(ArtifactItems.LOCATOR_NEAR.get(), -1)) {
+            stack.set(ArtifactItems.LOCATOR_NEAR.get(), near);
+        }
+    }
+
     public static void update(ItemStack stack, Level level, Entity holder) {
+        if (mode(stack) == CompassMode.LOCATOR) {
+            updateLocator(stack, level, holder);
+            return;
+        }
         Optional<GlobalPos> target = mode(stack) == CompassMode.DOPPELGANGERS
                 ? nearestDoppelganger(level, holder).map(pos -> GlobalPos.of(level.dimension(), pos))
                 : nearestVampire(level, holder).map(e -> GlobalPos.of(level.dimension(), e.blockPosition()));

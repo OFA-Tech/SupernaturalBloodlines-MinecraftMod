@@ -70,7 +70,7 @@ public final class PackInvite {
     /** The Invite and Ally buttons in a row; {@code mayInvite} is the viewer leading a pack, or being an Alpha with none yet. Returns the y under them. */
     static int buttons(HubScreen.Frame f, Rect r, int y, boolean mayInvite) {
         String key = PageKit.HUB + "pack.";
-        Component why = Component.translatable(key + "invite_why");
+        Component why = GroupLabels.t(GroupLabels.view(), key + "invite_why", "invite_why");
         Component invite = Component.translatable(key + "invite_btn");
         Component ally = Component.translatable(key + "ally_btn");
         List<Integer> widths = List.of(PageWidgets.widthOf(f.font(), invite), PageWidgets.widthOf(f.font(), ally));
@@ -120,7 +120,11 @@ public final class PackInvite {
             Pickable.Person p = people.get(i);
             Component tip = p.distance() >= 0 ? Component.translatable(key + "pick_near", Math.round(p.distance())) : Component.translatable(key + "pick_far");
             PageWidgets.button(f, "stage:pack:pick:" + p.name(), pf.rects().get(i), Component.literal(p.name()), true, false, tip, () -> {
-                HubClient.runCommand(row, List.of(p.id().toString()));
+                if (GroupLabels.active(GroupLabels.view())) {
+                    BloodlinePage.command("group " + (mode == Mode.INVITE ? "invite " : "ally invite ") + p.name());
+                } else {
+                    HubClient.runCommand(row, List.of(p.id().toString()));
+                }
                 mode = Mode.NONE;
                 offered = List.of();
             });
@@ -136,7 +140,7 @@ public final class PackInvite {
     static int render(HubScreen.Frame f, Rect r, int y, boolean mayInvite) {
         y = buttons(f, r, y, mayInvite);
         if (!mayInvite) {
-            return PageKit.wrapped(f, Component.translatable(PageKit.HUB + "pack.invite_why"), r.x(), y, r.w(), f.theme().muted());
+            return PageKit.wrapped(f, GroupLabels.t(GroupLabels.view(), PageKit.HUB + "pack.invite_why", "invite_why"), r.x(), y, r.w(), f.theme().muted());
         }
         return picker(f, r, y, false);
     }

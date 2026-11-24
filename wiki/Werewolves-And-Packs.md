@@ -307,3 +307,5 @@ He dies like any wolf, once. The **Memory Claws** lie where he fell, for anybody
 
 **Memory Claws**: right-click another player to be given a **snapshot** of their sire and genes as they know them then, shown on your hub Profile page for that player and never updated (a second use takes a new one). It never names a line and never discovers a gene. The other player must agree on purpose: they face you, sneak with a lead in their main hand, PvP is on, and you may hurt them (no teams); they are told, in chat too. Every refusal reads the same, and where PvP is off the claws say so. 12 uses, 30 seconds apart.
 
+## Other groups
+Clans, covens and brotherhoods share the pack's invite, leave, kick, ally and absence rules. See [Groups](Groups).

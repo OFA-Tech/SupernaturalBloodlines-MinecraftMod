@@ -1,0 +1,14 @@
+{
+  "children": [],
+  "display_on_front_page": false,
+  "entries": [
+    "supernaturalbloodlines/sealed/rite_of_the_door_ward",
+    "supernaturalbloodlines/rites/rite_of_the_door_ward"
+  ],
+  "icon": {
+    "count": 1,
+    "id": "minecraft:iron_door"
+  },
+  "landing_text": "Rites that keep an uninvited vampire out of a door.",
+  "title": "Homes"
+}

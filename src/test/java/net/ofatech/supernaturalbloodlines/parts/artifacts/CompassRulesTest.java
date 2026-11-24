@@ -47,6 +47,11 @@ class CompassRulesTest {
     void modeTogglesAndRoundTripsItsName() {
         assertEquals(CompassMode.DOPPELGANGERS, CompassMode.VAMPIRES.toggled());
         assertEquals(CompassMode.VAMPIRES, CompassMode.DOPPELGANGERS.toggled());
+        assertEquals(CompassMode.VAMPIRES, CompassMode.LOCATOR.toggled(), "a compass that is not attuned never shows the locator, and leaves it at once");
+        assertEquals(CompassMode.DOPPELGANGERS, CompassMode.VAMPIRES.toggled(true));
+        assertEquals(CompassMode.LOCATOR, CompassMode.DOPPELGANGERS.toggled(true), "an attuned compass has the locator after the doppelgangers");
+        assertEquals(CompassMode.VAMPIRES, CompassMode.LOCATOR.toggled(true));
+        assertEquals(CompassMode.VAMPIRES, CompassMode.DOPPELGANGERS.toggled(false), "an unattuned compass keeps its two modes");
         for (CompassMode m : CompassMode.values()) {
             assertEquals(m, CompassMode.CODEC.parse(com.mojang.serialization.JsonOps.INSTANCE,
                     CompassMode.CODEC.encodeStart(com.mojang.serialization.JsonOps.INSTANCE, m).getOrThrow()).getOrThrow());

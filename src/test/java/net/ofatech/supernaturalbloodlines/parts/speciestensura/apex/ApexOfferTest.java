@@ -17,6 +17,26 @@ class ApexOfferTest {
     }
 
     @Test
+    void theApexIsFoundWhateverTheOrderOfTheList() {
+        List<String> kitsuneFirst = List.of("ascension:kitsune", "tensura:spirit_beast");
+        List<String> kitsuneLast = List.of("tensura:spirit_beast", "ascension:kitsune");
+        List<String> kitsuneOnly = List.of("ascension:kitsune");
+        for (List<String> original : List.of(kitsuneFirst, kitsuneLast, kitsuneOnly)) {
+            List<String> merged = ApexOffer.merged(original, List.of("alpha_primeval"));
+            assertTrue(merged.containsAll(original), original.toString());
+            assertTrue(merged.contains("alpha_primeval"), original.toString());
+            assertEquals(original.size() + 1, merged.size(), original.toString());
+        }
+        assertSame(kitsuneFirst, ApexOffer.merged(kitsuneFirst, List.of("ascension:kitsune")), "nothing added: the same list comes back");
+    }
+
+    @Test
+    void aBloodNobleVampireIsOfferedTheVampireApex() {
+        assertEquals(List.of("primordial_vampire"), offer(Species.ORIGINAL, List.of(ORIGINAL), "ascension:blood_noble"));
+        assertTrue(offer(Species.ORIGINAL, List.of(ORIGINAL), "ascension:kindred_bloodfiend").isEmpty());
+    }
+
+    @Test
     void offeredFromSaintTierWithTheSpecies() {
         assertEquals(List.of("primordial_vampire"), offer(Species.ORIGINAL, List.of(ORIGINAL), "tensura:elf_saint"));
         assertEquals(List.of("void_siphon"), offer(Species.HERETIC, List.of(HERETIC), "tensura:human_saint"));

@@ -1,0 +1,22 @@
+{
+  "criteria": {
+    "unlock": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "requirements": [
+    [
+      "unlock"
+    ]
+  ],
+  "neoforge:conditions": [
+    {
+      "type": "supernaturalbloodlines:part_enabled",
+      "part": "evolutionRites"
+    },
+    {
+      "type": "neoforge:mod_loaded",
+      "modid": "greatsage"
+    }
+  ]
+}

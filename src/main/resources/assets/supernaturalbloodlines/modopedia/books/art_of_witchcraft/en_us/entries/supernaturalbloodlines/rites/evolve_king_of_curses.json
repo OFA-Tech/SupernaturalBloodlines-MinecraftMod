@@ -1,0 +1,38 @@
+{
+  "title": "Rite of the King of Curses",
+  "icon": {
+    "count": 1,
+    "id": "minecraft:wither_skeleton_skull"
+  },
+  "assigned_items": [],
+  "advancement": "supernaturalbloodlines:rites/known/evolve_king_of_curses",
+  "pages": [
+    {
+      "components": [
+        {
+          "template": "modopedia:page/headered_text",
+          "text": "Circle: medium circle, infernal chalk.\n\nOnly with Ascension. A witch-type performer opens the road to King of Curses for the one on the circle, or for herself, on a full-moon night.",
+          "header": "King of Curses"
+        }
+      ]
+    },
+    {
+      "components": [
+        {
+          "template": "modopedia:page/headered_text",
+          "text": "The one on the circle must agree by sneaking. The addon's own switch for the skill still decides whether the road is open.\n\nCosts rare items, altar power and 200,000 of their base Max EP, spent once the skill is learned.",
+          "header": "King of Curses"
+        }
+      ]
+    },
+    {
+      "components": [
+        {
+          "template": "supernaturalbloodlines:page/rite",
+          "rite": "supernaturalbloodlines:evolve_king_of_curses",
+          "header": "King of Curses"
+        }
+      ]
+    }
+  ]
+}

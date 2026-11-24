@@ -588,7 +588,8 @@ public final class NpcMemberGameTests {
             NpcBond hunting = bond(b).withOrder(NpcBond.Order.GUARD, helper.absolutePos(new BlockPos(4, 1, 4)).asLong()).withHunt(true).withSort(true);
             b.setData(SpeciesRegistries.NPC_BOND, hunting);
             int hunted = NpcHunt.go(b, hunting, true, true);
-            helper.assertTrue(hunted == 2, "the two cows were not hunted: " + hunted + ", cows found by id " + cows.stream().filter(c -> helper.getLevel().getEntity(c.getUUID()) == c).count() + ", alive " + cows.stream().filter(Entity::isAlive).count()
+            // at least: a cow of a test in the next cell can be in reach too (seen as 3 hunted with both of ours dead), so ours are checked by being dead
+            helper.assertTrue(hunted >= 2 && cows.stream().noneMatch(Entity::isAlive), "the two cows were not hunted: " + hunted + ", cows found by id " + cows.stream().filter(c -> helper.getLevel().getEntity(c.getUUID()) == c).count() + ", alive " + cows.stream().filter(Entity::isAlive).count()
                     + ", " + net.ofatech.supernaturalbloodlines.gametest.Diag.chunk(helper.getLevel(), cows.get(0).blockPosition()) + ", owner known to the server " + (net.ofatech.supernaturalbloodlines.parts.species.sireline.SireCall.player(helper.getLevel().getServer(), bond(b).owner()) != null));
             helper.assertTrue(furnace.getItem(0).getCount() == 5 && furnace.getItem(1).isEmpty() && furnace.getItem(2).isEmpty(), "a furnace was used as a store");
             helper.assertTrue(denied.getItem(0).getCount() == 20 && denied.getItem(3).is(Items.DIAMOND_SWORD) && denied.getItem(5).getCount() == 20 && count(denied, Items.BEEF) == 0,

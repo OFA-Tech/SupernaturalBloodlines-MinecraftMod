@@ -3,6 +3,13 @@ package net.ofatech.supernaturalbloodlines.parts.species.pack;
 import java.util.List;
 import java.util.UUID;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ServerPlayer;
+import net.ofatech.supernaturalbloodlines.core.BloodlineAccess;
+import net.ofatech.supernaturalbloodlines.core.group.GroupRank;
+import net.ofatech.supernaturalbloodlines.core.group.GroupSuccession;
+import net.ofatech.supernaturalbloodlines.core.group.GroupType;
+import net.ofatech.supernaturalbloodlines.parts.species.group.GroupIndex;
+import net.ofatech.supernaturalbloodlines.parts.species.group.Groups;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.event.server.ServerStartedEvent;
@@ -101,13 +108,26 @@ public final class PackAbsence {
             if (nowMillis - seen < limit) {
                 continue;
             }
-            UUID next = SparkHandler.coAlphaHeir(index, leader, id -> here(server, index, id, nowMillis, limit));
+            GroupType type = Groups.typeOfGroup(server.overworld(), leader);
+            UUID next = type == GroupType.PACK ? SparkHandler.coAlphaHeir(index, leader, id -> here(server, index, id, nowMillis, limit))
+                    : groupHeir(server, index, leader, type, nowMillis, limit);
             if (next != null) {
-                depose(server, index, leader, next);
+                depose(server, index, leader, next, type);
                 changed++;
             }
         }
         return changed;
+    }
+
+    /** The heir of a clan, a coven or a brotherhood: by rank and time in the group, or by the mark of someone online. */
+    private static UUID groupHeir(MinecraftServer server, PackIndex index, UUID leader, GroupType type, long nowMillis, long limit) {
+        GroupIndex groups = GroupIndex.get(server.overworld());
+        List<GroupSuccession.Candidate> candidates = index.betasOf(leader).stream().map(id -> {
+            ServerPlayer online = SireCall.player(server, id);
+            return new GroupSuccession.Candidate(id, groups.rankOf(id, type), index.inPackSince(id).orElse(Long.MAX_VALUE),
+                    here(server, index, id, nowMillis, limit), online == null ? -1 : BloodlineAccess.get(online).markKills());
+        }).toList();
+        return GroupSuccession.heir(type, candidates).orElse(null);
     }
 
     /** Online, or seen within the window. Somebody the index has no time for is not known to be here. */
@@ -115,13 +135,26 @@ public final class PackAbsence {
         return SireCall.player(server, id) != null || index.lastSeen(id).map(t -> nowMillis - t < limit).orElse(false);
     }
 
-    private static void depose(MinecraftServer server, PackIndex index, UUID old, UUID next) {
+    private static void depose(MinecraftServer server, PackIndex index, UUID old, UUID next, GroupType type) {
         List<UUID> members = index.betasOf(old);
         index.promote(old, next);
-        for (UUID id : members) {
-            if (!id.equals(next)) {
-                SparkHandler.repoint(server, id, next);
+        if (type == GroupType.PACK) {
+            for (UUID id : members) {
+                if (!id.equals(next)) {
+                    SparkHandler.repoint(server, id, next);
+                }
             }
+        } else {
+            // the old leader stays as the next rank down, the new one is the leader and holds no rank
+            GroupIndex groups = GroupIndex.get(server.overworld());
+            if (type == GroupType.CLAN) {
+                groups.setRank(old, GroupRank.DAY_WALKER);
+            } else if (type == GroupType.COVEN) {
+                groups.setRank(old, GroupRank.ELDER);
+            } else {
+                groups.clearRank(old, type);
+            }
+            groups.clearRank(next, type);
         }
         String name = PackAccess.nameOf(server, next);
         String shown = name != null ? name : next.toString().substring(0, 8);

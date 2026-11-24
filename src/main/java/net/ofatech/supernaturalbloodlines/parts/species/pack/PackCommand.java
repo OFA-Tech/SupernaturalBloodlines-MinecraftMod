@@ -26,6 +26,13 @@ import net.ofatech.supernaturalbloodlines.core.bloodline.PackEvent;
 import net.ofatech.supernaturalbloodlines.core.bloodline.Species;
 import net.ofatech.supernaturalbloodlines.core.bloodline.WolfState;
 import net.ofatech.supernaturalbloodlines.core.bloodline.WolfState.Lineage;
+import java.util.Optional;
+import net.ofatech.supernaturalbloodlines.core.group.GroupType;
+import net.ofatech.supernaturalbloodlines.parts.species.group.GroupGate;
+import net.ofatech.supernaturalbloodlines.parts.species.group.GroupIndex;
+import net.ofatech.supernaturalbloodlines.parts.species.group.GroupText;
+import net.ofatech.supernaturalbloodlines.parts.species.group.GroupsConfig;
+import net.ofatech.supernaturalbloodlines.parts.species.group.Groups;
 import net.ofatech.supernaturalbloodlines.parts.species.pack.party.PartyLink;
 import net.ofatech.supernaturalbloodlines.parts.species.sireline.CallRequests;
 import net.ofatech.supernaturalbloodlines.parts.species.sireline.SireCall;
@@ -166,7 +173,7 @@ public final class PackCommand {
         return out;
     }
 
-    private static CompletableFuture<Suggestions> suggest(CommandContext<CommandSourceStack> c, SuggestionsBuilder b, boolean allies) {
+    public static CompletableFuture<Suggestions> suggest(CommandContext<CommandSourceStack> c, SuggestionsBuilder b, boolean allies) {
         if (c.getSource().getEntity() instanceof ServerPlayer me) {
             named(me, allies).values().forEach(b::suggest);
         }
@@ -214,7 +221,7 @@ public final class PackCommand {
     }
 
     /** A rank outside the werewolf faction is dormant (a cured True Alpha): it cannot lead a pack until they rejoin. */
-    private static boolean isActiveAlpha(ServerPlayer p) {
+    public static boolean isActiveAlpha(ServerPlayer p) {
         return PackAccess.isAlpha(PackAccess.wolf(p).rank()) && VampirismSupernatural.isWerewolf(p);
     }
 
@@ -224,23 +231,25 @@ public final class PackCommand {
 
     @Nullable
     public static Component invite(ServerPlayer alpha, ServerPlayer target) {
-        if (!isActiveAlpha(alpha)) {
-            return error("not_alpha");
+        GroupType type = Groups.typeOf(alpha);
+        Optional<String> gate = GroupGate.canInvite(alpha);
+        if (gate.isPresent()) {
+            return GroupText.error(type, gate.get());
         }
         PackIndex index = PackIndex.get(alpha.serverLevel());
         if (!index.isLeader(alpha.getUUID())) {
-            return error("not_leader");
+            return GroupText.error(type, "not_leader");
         }
         if (target == alpha) {
-            return error("self");
+            return GroupText.error(type, "self");
         }
         // anyone can join: a werewolf as a Beta, an Alpha as a second Alpha, everyone else as a Packmate; only a player already in someone else's pack cannot
         if (index.alphaOf(target.getUUID()).isPresent() || PackAccess.wolf(target).packAlpha() != null) {
-            return error("target_has_pack", name(target));
+            return GroupText.error(type, "target_in_group", name(target));
         }
         long now = alpha.serverLevel().getGameTime();
-        target.sendSystemMessage(inviteMessage(net.ofatech.supernaturalbloodlines.shared.supernatural.ProfileLink.name(name(alpha), alpha.getUUID()), REQUESTS.open(alpha.getUUID(), target.getUUID(), now), index.betasOf(target.getUUID()).size()));
-        alpha.sendSystemMessage(Component.translatable(KEY + "invited", name(target)));
+        target.sendSystemMessage(inviteMessage(net.ofatech.supernaturalbloodlines.shared.supernatural.ProfileLink.name(name(alpha), alpha.getUUID()), REQUESTS.open(alpha.getUUID(), target.getUUID(), now), index.betasOf(target.getUUID()).size(), type));
+        alpha.sendSystemMessage(GroupText.of(type, "invited", name(target)));
         HubRequests.changed(target);
         return null;
     }
@@ -251,13 +260,18 @@ public final class PackCommand {
     }
 
     public static Component inviteMessage(Component alphaName, String token, int bringing) {
-        Component accept = Component.translatable(KEY + "accept").withStyle(s -> s.withColor(ChatFormatting.GREEN).withBold(true)
-                .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/pack accept " + token))
-                .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.translatable(KEY + "accept_hover", alphaName))));
-        MutableComponent text = Component.translatable(KEY + "invite", alphaName);
+        return inviteMessage(alphaName, token, bringing, GroupType.PACK);
+    }
+
+    public static Component inviteMessage(Component alphaName, String token, int bringing, GroupType type) {
+        String command = "/group accept "; // /pack is not there in a world without Werewolves
+        Component accept = GroupText.of(type, "accept").copy().withStyle(s -> s.withColor(ChatFormatting.GREEN).withBold(true)
+                .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, command + token))
+                .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, GroupText.of(type, "accept_hover", alphaName))));
+        MutableComponent text = GroupText.of(type, "invite", alphaName).copy();
         // a leader who joins brings their own pack along: they are told before they click
         if (bringing > 0) {
-            text.append(" ").append(Component.translatable(KEY + "invite_merge", bringing));
+            text.append(" ").append(GroupText.of(type, "invite_merge", bringing));
         }
         return text.append(" ").append(accept);
     }
@@ -279,47 +293,58 @@ public final class PackCommand {
         }
         ServerPlayer alpha = SireCall.player(p.server, r.caller());
         if (alpha == null) {
-            return error("alpha_offline"); // only offline: the invitation stays open for the rest of its minute
+            return GroupText.error(Groups.typeOfGroup(p.serverLevel(), r.caller()), "leader_offline"); // only offline: the invitation stays open for the rest of its minute
         }
+        GroupType type = Groups.typeOf(alpha);
         if (REQUESTS.take(token, p.getUUID(), now).isEmpty()) {
             HubRequests.changed(p);
             return error("expired"); // answered, or run out, between the peek and the take
         }
         HubRequests.changed(p);
-        if (!isActiveAlpha(alpha)) {
-            return error("alpha_gone");
+        Optional<String> gate = GroupGate.canLead(alpha);
+        if (gate.isPresent()) {
+            return GroupText.error(type, "leader_gone");
         }
         WolfState w = PackAccess.wolf(p);
         PackIndex index = PackIndex.get(p.serverLevel());
-        // the inviter must still lead: a pack that changed hands since the invitation is no longer the one they were asked to join
+        // the inviter must still lead: a group that changed hands since the invitation is no longer the one they were asked to join
         if (!index.isLeader(alpha.getUUID())) {
-            return error("stale_invite");
+            return GroupText.error(type, "stale_invite");
         }
         UUID leader = alpha.getUUID();
         // a Beta keeps their pack until /pack leave: a second invitation or bite never switches it
         if (w.packAlpha() != null || index.alphaOf(p.getUUID()).isPresent()) {
-            return error("has_pack");
+            return GroupText.error(type, "in_group");
         }
         if (leader.equals(p.getUUID())) {
-            return error("self");
+            return GroupText.error(type, "self");
         }
+        // the cap counts everybody who would be in the group afterwards: the joiner, and the members a joining leader brings
+        List<UUID> own = index.betasOf(p.getUUID());
+        int max = GroupsConfig.maxMembers();
+        if (max > 0 && index.betasOf(leader).size() + 1 + own.size() > max) {
+            return GroupText.error(type, "full");
+        }
+        GroupIndex groups = GroupIndex.get(p.serverLevel());
         if (w.lineage() != Lineage.NONE && !PackAccess.isAlpha(w.rank())) {
             if (PackAccess.applyPack(p, PackEvent.JOINED_PACK, context(leader, now)).refused()) {
-                return error("refused");
+                return GroupText.error(type, "refused");
             }
         } else {
             // an Alpha keeps the spark and a non-werewolf is a Packmate: the index alone holds them (a leader brings their members)
-            List<UUID> own = index.betasOf(p.getUUID());
             if (!index.join(leader, p.getUUID())) {
-                return error("refused");
+                return GroupText.error(type, "refused");
             }
             own.forEach(id -> SparkHandler.repoint(p.server, id, leader));
             PackMembers.moved(p.server, own, leader);
+            // the members who came along belong to another group's ranks no more
+            own.forEach(groups::clearRanks);
         }
+        groups.ensure(leader, type, PackIndex.now());
         PackLeader.refresh(p);
         PartyLink.sync(p.server, p.getUUID(), true);
-        p.sendSystemMessage(Component.translatable(KEY + "joined", name(alpha)));
-        alpha.sendSystemMessage(Component.translatable(KEY + "joined_alpha", name(p)));
+        p.sendSystemMessage(GroupText.of(type, "joined", name(alpha)));
+        alpha.sendSystemMessage(GroupText.of(type, "joined_leader", name(p)));
         return null;
     }
 
@@ -327,11 +352,13 @@ public final class PackCommand {
     public static Component leave(ServerPlayer p) {
         WolfState w = PackAccess.wolf(p);
         PackIndex index = PackIndex.get(p.serverLevel());
-        if (index.alphaOf(p.getUUID()).isEmpty() && PackAccess.isAlpha(w.rank())) {
-            return error("alpha_cannot_leave");
+        GroupType type = Groups.typeOf(p);
+        boolean leads = PackAccess.isAlpha(w.rank()) || (type != GroupType.PACK && !index.betasOf(p.getUUID()).isEmpty());
+        if (index.alphaOf(p.getUUID()).isEmpty() && leads) {
+            return GroupText.error(type, "leader_cannot_leave");
         }
         if (index.alphaOf(p.getUUID()).isEmpty() && w.packAlpha() == null) {
-            return error("no_pack");
+            return GroupText.error(type, "no_group");
         }
         // a werewolf Beta's state change takes them out of the index by itself: the pack they leave, and the grace for it, are
         // noted first, or there would be neither
@@ -343,15 +370,18 @@ public final class PackCommand {
         // a co-Alpha or a Packmate lives in the index only
         index.leaveVoluntarily(p.getUUID());
         PartyLink.sync(p.server, wasIn, true);
-        p.sendSystemMessage(Component.translatable(KEY + "left"));
+        p.sendSystemMessage(GroupText.of(type, "left"));
+        GroupIndex.get(p.serverLevel()).clearRanks(p.getUUID());
         return null;
     }
 
     /** The leader removes a member, online or not. A werewolf Beta becomes an Omega (now, or at their next login). */
     @Nullable
     public static Component kick(ServerPlayer leader, UUID target, String targetName) {
-        if (!isActiveAlpha(leader)) {
-            return error("not_alpha");
+        GroupType type = Groups.typeOf(leader);
+        Optional<String> gate = GroupGate.canLead(leader);
+        if (gate.isPresent()) {
+            return GroupText.error(type, gate.get());
         }
         // somebody the leader is fighting for the lead cannot be sent away in the middle of it
         if (PackDuel.board().on(leader.getUUID()).map(d -> d.other(leader.getUUID()).equals(target)).orElse(false)) {
@@ -359,16 +389,17 @@ public final class PackCommand {
         }
         PackIndex index = PackIndex.get(leader.serverLevel());
         if (!index.isLeader(leader.getUUID())) {
-            return error("not_leader");
+            return GroupText.error(type, "not_leader");
         }
         if (target.equals(leader.getUUID())) {
-            return error("self");
+            return GroupText.error(type, "self");
         }
         if (!index.betasOf(leader.getUUID()).contains(target)) {
-            return error("not_member", targetName);
+            return GroupText.error(type, "not_member", targetName);
         }
-        PackMembers.remove(leader.server, target, KEY + "kicked", name(leader));
-        leader.sendSystemMessage(Component.translatable(KEY + "kicked_ok", targetName));
+        PackMembers.remove(leader.server, target, GroupText.key(type, "kicked"), name(leader));
+        GroupIndex.get(leader.serverLevel()).clearRanks(target);
+        leader.sendSystemMessage(GroupText.of(type, "kicked_ok", targetName));
         PartyLink.sync(leader.server, leader.getUUID(), true);
         return null;
     }
@@ -377,23 +408,25 @@ public final class PackCommand {
     @Nullable
     public static Component allyInvite(ServerPlayer leader, ServerPlayer target) {
         PackIndex index = PackIndex.get(leader.serverLevel());
-        if (!isActiveAlpha(leader) || !index.isLeader(leader.getUUID())) {
-            return error("not_leader");
+        GroupType type = Groups.typeOf(leader);
+        if (GroupGate.canLead(leader).isPresent() || !index.isLeader(leader.getUUID())) {
+            return GroupText.error(type, "not_leader");
         }
         if (target == leader) {
-            return error("self");
+            return GroupText.error(type, "self");
         }
-        if (!index.isLeader(target.getUUID()) || !isActiveAlpha(target)) {
-            return error("ally_not_leader", name(target));
+        if (!index.isLeader(target.getUUID()) || GroupGate.canLead(target).isPresent()) {
+            return GroupText.error(type, "ally_not_leader", name(target));
         }
         if (index.alliesOf(leader.getUUID()).contains(target.getUUID())) {
-            return error("ally_already", name(target));
+            return GroupText.error(type, "ally_already", name(target));
         }
         String token = ALLY_REQUESTS.open(leader.getUUID(), target.getUUID(), leader.serverLevel().getGameTime());
-        Component accept = Component.translatable(KEY + "accept").withStyle(s -> s.withColor(ChatFormatting.GREEN).withBold(true)
-                .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/pack ally accept " + token)));
-        target.sendSystemMessage(Component.translatable(KEY + "ally_invite", net.ofatech.supernaturalbloodlines.shared.supernatural.ProfileLink.name(name(leader), leader.getUUID())).append(" ").append(accept));
-        leader.sendSystemMessage(Component.translatable(KEY + "ally_invited", name(target)));
+        String command = "/group ally accept ";
+        Component accept = GroupText.of(type, "accept").copy().withStyle(s -> s.withColor(ChatFormatting.GREEN).withBold(true)
+                .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, command + token)));
+        target.sendSystemMessage(GroupText.of(type, "ally_invite", net.ofatech.supernaturalbloodlines.shared.supernatural.ProfileLink.name(name(leader), leader.getUUID())).copy().append(" ").append(accept));
+        leader.sendSystemMessage(GroupText.of(type, "ally_invited", name(target)));
         HubRequests.changed(target);
         return null;
     }
@@ -416,18 +449,20 @@ public final class PackCommand {
         }
         HubRequests.changed(p);
         PackIndex index = PackIndex.get(p.serverLevel());
-        if (!isActiveAlpha(other) || !isActiveAlpha(p)) {
-            return error("alpha_gone");
+        GroupType mine = Groups.typeOf(p);
+        GroupType theirs = Groups.typeOf(other);
+        if (GroupGate.canLead(other).isPresent() || GroupGate.canLead(p).isPresent()) {
+            return GroupText.error(mine, "leader_gone");
         }
-        // both must still lead the packs the alliance was asked between
+        // both must still lead the groups the alliance was asked between
         if (!index.isLeader(other.getUUID()) || !index.isLeader(p.getUUID())) {
-            return error("stale_invite");
+            return GroupText.error(mine, "stale_invite");
         }
         if (!index.ally(p.getUUID(), other.getUUID())) {
-            return error("refused");
+            return GroupText.error(mine, "refused");
         }
-        p.sendSystemMessage(Component.translatable(KEY + "ally_made", name(other)));
-        other.sendSystemMessage(Component.translatable(KEY + "ally_made", name(p)));
+        p.sendSystemMessage(GroupText.of(mine, "ally_made", name(other)));
+        other.sendSystemMessage(GroupText.of(theirs, "ally_made", name(p)));
         return null;
     }
 
@@ -435,13 +470,14 @@ public final class PackCommand {
     @Nullable
     public static Component allyRemove(ServerPlayer leader, UUID target, String targetName) {
         PackIndex index = PackIndex.get(leader.serverLevel());
-        if (!isActiveAlpha(leader) || !index.isLeader(leader.getUUID())) {
-            return error("not_leader");
+        GroupType type = Groups.typeOf(leader);
+        if (GroupGate.canLead(leader).isPresent() || !index.isLeader(leader.getUUID())) {
+            return GroupText.error(type, "not_leader");
         }
         if (!index.unally(leader.getUUID(), index.leaderOf(target))) {
-            return error("ally_none", targetName);
+            return GroupText.error(type, "ally_none", targetName);
         }
-        leader.sendSystemMessage(Component.translatable(KEY + "ally_ended", targetName));
+        leader.sendSystemMessage(GroupText.of(type, "ally_ended", targetName));
         return null;
     }
 
@@ -543,7 +579,7 @@ public final class PackCommand {
         return null;
     }
 
-    private static int info(CommandSourceStack source, ServerPlayer p) {
+    public static int info(CommandSourceStack source, ServerPlayer p) {
         WolfState w = PackAccess.wolf(p);
         PackIndex index = PackIndex.get(p.serverLevel());
         if (w.lineage() == Lineage.NONE && !index.inPack(p.getUUID())) {

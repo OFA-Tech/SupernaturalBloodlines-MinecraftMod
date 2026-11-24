@@ -1,0 +1,37 @@
+{
+  "title": "Rite of the Locator: Original's Blood",
+  "icon": {
+    "count": 1,
+    "id": "minecraft:compass"
+  },
+  "assigned_items": [],
+  "pages": [
+    {
+      "components": [
+        {
+          "template": "modopedia:page/headered_text",
+          "text": "Circle: small circle, ritual chalk.\n\nThe same, from a bottle of Original's Blood in place of a taglock: it finds whoever the blood was taken from.",
+          "header": "Original Locator"
+        }
+      ]
+    },
+    {
+      "components": [
+        {
+          "template": "modopedia:page/headered_text",
+          "text": "A bottle that holds no one's blood is refused like any other failure: the same words, the same cost.",
+          "header": "Original Locator"
+        }
+      ]
+    },
+    {
+      "components": [
+        {
+          "template": "supernaturalbloodlines:page/rite",
+          "rite": "supernaturalbloodlines:rite_of_the_locator_original_blood",
+          "header": "Original Locator"
+        }
+      ]
+    }
+  ]
+}

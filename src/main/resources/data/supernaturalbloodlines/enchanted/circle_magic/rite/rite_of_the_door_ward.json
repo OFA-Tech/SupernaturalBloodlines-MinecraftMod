@@ -1,0 +1,17 @@
+{
+    "neoforge:conditions": [
+        { "type": "supernaturalbloodlines:part_enabled", "part": "artifacts" }
+    ],
+    "items": [
+        { "id": "supernaturalbloodlines:mountain_ash_dust", "count": 2 },
+        { "id": "minecraft:iron_nugget", "count": 4 }
+    ],
+    "shapes": {
+        "enchanted:small_circle": "enchanted:ritual_chalk"
+    },
+    "power": 2500,
+    "factory": {
+        "type": "supernaturalbloodlines:ward",
+        "mode": "door"
+    }
+}

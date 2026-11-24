@@ -33,9 +33,15 @@ public final class RiteUnlockTable {
 
     /** Known to everyone from the start: no advancement, no sealed entry. */
     public static final List<String> OPEN = List.of("ancestral_calling", "blood_offering", "hearing_device", "magicule_offering", "purification",
-            "purification_holy_water", "rite_of_revelation", "vampire_compass");
+            "purification_holy_water", "rite_of_revelation", "vampire_compass", "rite_of_the_locator", "rite_of_the_locator_original_blood", "rite_of_the_locator_hybrid_blood");
 
     public static final Map<String, Gate> GATED;
+
+    /**
+     * A rite that exists but whose road is closed (plan 19b: the Raphael rite while Great Sage's own road to Raphael is closed) is not present: nothing is
+     * taught or sealed for it, so the book shows neither entry until it opens. Set by the part that owns the rite; nothing is dormant by default.
+     */
+    public static volatile java.util.function.Predicate<String> dormant = rite -> false;
 
     static {
         Map<String, Gate> m = new LinkedHashMap<>();
@@ -57,6 +63,14 @@ public final class RiteUnlockTable {
         // plan 19: the evolution rites and the Rite of Mastery, sealed in the book and known by kind (D5, D15): a witch type works them, a vampire learns that Deus Sanguis exists
         kind(m, "evolve_great_sage", RiteKind.WITCH, RiteKind.SIPHONER, RiteKind.TRIBRID);
         kind(m, "evolve_deus_sanguis", RiteKind.WITCH, RiteKind.SIPHONER, RiteKind.TRIBRID, RiteKind.VAMPIRE);
+        // plan 19d: the other addons' Uniques; a werewolf also learns that Butcher exists
+        kind(m, "evolve_great_mage", RiteKind.WITCH, RiteKind.SIPHONER, RiteKind.TRIBRID);
+        kind(m, "evolve_king_of_curses", RiteKind.WITCH, RiteKind.SIPHONER, RiteKind.TRIBRID);
+        kind(m, "evolve_butcher", RiteKind.WITCH, RiteKind.SIPHONER, RiteKind.TRIBRID, RiteKind.WEREWOLF);
+        kind(m, "evolve_imitator", RiteKind.SIPHONER, RiteKind.WITCH, RiteKind.TRIBRID);
+        // the Ultimates: sealed until Finn's Notes, "the rites of the eclipse" (E7, Q4)
+        lore(m, "evolve_blood_sovereign", FINN);
+        lore(m, "evolve_raphael", FINN);
         for (String tier : List.of("common", "extra", "unique", "ultimate")) {
             kind(m, "mastery_" + tier, RiteKind.WITCH, RiteKind.SIPHONER, RiteKind.TRIBRID);
         }
@@ -70,8 +84,12 @@ public final class RiteUnlockTable {
         both(m, "rite_of_the_valet_pike", Set.of(RiteKind.WITCH), BEAST);
         lore(m, "immortality", OLD_RITES);
         both(m, "ward_of_return", Set.of(RiteKind.WITCH), OLD_RITES);
+        kind(m, "rite_of_the_ward", RiteKind.WITCH, RiteKind.SIPHONER, RiteKind.TRIBRID);
+        kind(m, "rite_of_the_door_ward", RiteKind.WITCH, RiteKind.SIPHONER, RiteKind.TRIBRID);
         lore(m, "curse_magicule_drain", CURSES);
         lore(m, "curse_skill_seal", CURSES);
+        lore(m, "curse_insanity", CURSES);
+        lore(m, "curse_susceptibility", CURSES);
         GATED = java.util.Collections.unmodifiableMap(m);
     }
 

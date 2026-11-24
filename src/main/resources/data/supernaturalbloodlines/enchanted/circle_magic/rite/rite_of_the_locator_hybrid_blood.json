@@ -1,0 +1,18 @@
+{
+    "neoforge:conditions": [
+        { "type": "supernaturalbloodlines:part_enabled", "part": "artifacts" },
+        { "type": "supernaturalbloodlines:part_enabled", "part": "species" }
+    ],
+    "items": [
+        { "id": "supernaturalbloodlines:vampire_compass", "count": 1 },
+        { "id": "supernaturalbloodlines:hybrid_blood", "count": 1 }
+    ],
+    "shapes": {
+        "enchanted:small_circle": "enchanted:ritual_chalk"
+    },
+    "power": 2000,
+    "factory": {
+        "type": "supernaturalbloodlines:locator",
+        "source": "blood"
+    }
+}

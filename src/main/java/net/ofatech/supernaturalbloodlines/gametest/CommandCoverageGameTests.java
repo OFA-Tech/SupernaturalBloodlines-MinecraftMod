@@ -21,7 +21,7 @@ import net.ofatech.supernaturalbloodlines.shared.admin.AdminCommands;
 @GameTestHolder(SupernaturalBloodlines.MODID)
 @PrefixGameTestTemplate(false)
 public final class CommandCoverageGameTests {
-    private static final List<String> ROOTS = List.of("bloodline", "pack", SupernaturalBloodlines.MODID);
+    private static final List<String> ROOTS = List.of("bloodline", "pack", "ward", SupernaturalBloodlines.MODID);
 
     private CommandCoverageGameTests() {}
 

@@ -13,6 +13,73 @@ No payload changed (hud network version 4).
 
 ### Rolling back
 Nothing is saved or migrated; reverting the build restores the old panel.
+## Unreleased (plan 21: TVD rites)
+
+### Added
+- **Rites of the Ward (R300 to R314, R325).** *Rite of the Ward* raises an **area ward** on the altar (`ward_radius`, default 10 blocks each way) and *Rite of the Door Ward* a ward of one **door, trapdoor or gate** within four blocks. A vampire of any kind who is not invited is pushed out with Ashwarden's push and, after `ward_expel_seconds` (5) inside, moved out; a closed door stays shut for them. Werewolves are not blocked (`ward_blocks_werewolves` turns that on). Witch-type casters; whoever sneaks on the circle's centre owns it (a standing player cancels it and everything comes back); **only a non-vampiric owner** can have one. It **falls when its owner dies or becomes a vampire**. Invite with the Path page's *Your ward* card, `/ward invite|uninvite|drop|info`, or by saying **"come in"** / **"get out"** near the ward; withdrawing an invitation throws the vampire out (`ward_expel_on_revoke`). Open Parties and Claims is only asked whether the ground may be built on.
+- **Rites of the Locator (R315 to R319, R325).** A witch attunes a **Vampire Compass** to the owner of a taglock, or to whoever a bottle of Original's or Hybrid's Blood was taken from. Its new **third mode** points at the middle of a square around them (`locator_blur`, 32), the tooltip says how far in hundreds of blocks, and the needle spins the same way for every reason they cannot be found. The one looked for is told "Somebody is looking for you." once (`locator_tell_target`), and when it ends. 30 minutes, 2000 blocks, the same dimension.
+- **Curse of Insanity and Curse of Susceptibility (R320 to R324).** Built like the two Tensura curses, for **Vampirism and Enchanted** (no Tensura). Insanity: a hallucination every half minute or so (shortens with strength). Susceptibility: 25% more damage per strength level plus one, never more than double; never raises a kill command or the void. Both end at death and sit with the other curses in the book.
+- **Settings:** 13 `ward_*` keys in `supernaturalbloodlines-artifacts.toml`, 5 `locator_*` keys in the species file, and a new `supernaturalbloodlines-vampirism_enchanted.toml` (Admin > Vampirism x Enchanted); every one has an Admin row. Four `ward` rows (`W1` to `W4`) in the command table.
+- **Book:** *Rite of the Ward*, *Rite of the Locator* (three forms) and the two curses are in the Art of Witchcraft; the *Rite of the Door Ward* has a new category, *Homes*.
+
+### Changed
+- `Species.hybridType()` and `Species.witchType()` are the one definition of those groups (the hybrid check in `StatePredicates` left out tribrids; no ladder read it for a tribrid, so nothing changed in play).
+
+### Network
+`LadderNet.PROTOCOL` is now `"15"` (main was on 14 after the groups payload; a new optional payload, `ward_view`, carries the viewer's own wards to the Path page). **Update the server and every client together**; a client on 12 and a server on 13 cannot talk, so the hub shows nothing from the server.
+
+### Rolling back
+A ward is kept in the world's `supernaturalbloodlines_wards` data and does nothing without the mod; the compass's new components are ignored by 12. **Protocol 15 to 14:** update all sides together.
+## Unreleased (plan 20a: the groups base)
+
+### Added
+- **Groups.** The pack system is now one system for four kinds of group, with the kind taken from the leader: a werewolf or hybrid-type leader leads a **pack**, a vampire a **clan**, a witch, siphoner, heretic or human a **coven**, a hunter a **brotherhood** (first match wins). Clan, coven and brotherhood have **no perks yet** (plans 20b to 20d): here they are a name, a founding gate, a leader title, ranks and a way to pass the lead on.
+- **A leader who changes kind changes the type**, and nobody is removed and nothing deleted: what belongs to the old type stays, hidden, and returns if the leader goes back. Every member is told once.
+- **Founding gate:** a pack needs an active Alpha (as before), a clan a vampire, a coven a witch, siphoner or heretic, a brotherhood a hunter. `open_founding` lifts it.
+- **Commands:** `/group invite|accept|leave|kick|ally ...|info|challenge`, with `/clan`, `/coven`, `/brotherhood` and `/sb group` as the same tree. `/pack` is unchanged. A challenge in anything but a pack answers `wrong_type` until its own plan.
+- **Leader absence by type** (7 days): a clan passes to its longest Day Walker who is here, a coven to its longest Elder, a brotherhood to the online member with the highest mark; the old leader stays one rank down.
+- **Hub:** the Pack page is the **Group** page: its tab, title, ranks, legend and buttons say the group's own word in all three themes; the wolf-only parts (wolves, Roar, duels, anchor) show only for a pack. The Profile's pack fact is "Group" and names the type. The shared buttons run `/group` when the group is not a pack.
+- **Admin page:** section "Groups", 5 settings (`supernaturalbloodlines-groups.toml`: `groups_enabled`, `clans_enabled`, `covens_enabled`, `open_founding`, `max_members`). `AdminEntries` is 206.
+- Rules **R240 to R249** in `SPECIES-RULES.md`; wiki page "Groups".
+
+### Changed
+- **Without Werewolves** the parts of the pack stack that are not wolf-only now run: last-seen and login notices, the absence rule, the Open Parties and Claims link, alliance protection and the hub's group rows. Before, a coven (or any group) in such a world never noticed its leader was away.
+- The hub's shared pack rows (P1 to P10) run as `/group` in a world that has no `/pack`.
+- **Hub protocol 14** (was 13): a new server-to-client payload, `group_view` (the viewer's own group only). Update client and server together.
+
+### Fixed (review of this plan)
+- `max_members` is checked when somebody joins, not only when invited: two invitations sent at the last seat no longer both get in, and a leader who joins counts the members they bring.
+- Without Werewolves a pack is still run: the shared hub buttons always send `/group` (there is no `/pack` there), and a pack's leader is fit when their kind derives a pack, since nobody can be an Alpha.
+- Ranks are kept per member and per type: a switch and a switch back restores a Day Walker even if the member was made an Elder meanwhile. Members who come along when two groups merge no longer keep a rank of the group they left.
+- The Profile names the person's own group type and shows the pack bonus only for a pack; the empty-state title wraps instead of being cut; every ring name finds a place at GUI scale 4; the leader is not offered Leave; a faction change (joining or leaving the vampires or hunters) switches the group at once.
+
+### Rolling back
+Delete `supernaturalbloodlines_groups.dat`. The pack file `supernaturalbloodlines_packs.dat` is never rewritten by this plan, so every pack, member and alliance stays exactly as it was; groups would be seeded again as packs, and the ranks and types of clans, covens and brotherhoods are lost with it (a clan or a coven that had members would come back as a pack of their leader). The hub channel number changed (13 to 14), so update client and server together when going back.
+
+**Open Parties and Claims:** a group is mirrored into its party whenever the link is on. A world that once ran with Werewolves and now runs without it keeps the party records the pack link wrote in `supernaturalbloodlines_packs.dat`; the link now runs without Werewolves and carries on from those records (it was not run at all in such a world before, so a party may have drifted from its group meanwhile and is brought back in step at the next sync).
+
+### Verified
+- Unit tests 2,499 pass. The 12-run GameTest matrix passes in every run (1,994 with everything on; 1,456 with `-PnoWerewolves -PnoCurios`; 30 with `-PnoLinkedMods`; 494, 1,871, 1,826, 1,844, 1,984, 1,825, 1,978, 1,667 and 382 for the part-off runs). 16 mutants of the groups rules, all caught.
+## Unreleased (plan 19d: the other Tensura addons and the race links)
+
+- **Four more evolution rites.** Each is a Unique and needs a full moon. A witch-type performer works it for a consenting target, and it costs 200,000 base Max EP, taken after the learn:
+  - **Great Mage** and **King of Curses**, with Ascension installed. Ascension's own switch for each skill still decides.
+  - **Butcher**, with Mysticism installed, for a werewolf.
+  - **Imitator**, with Slime Throne Extras installed.
+
+  Each rite exists only when its addon is installed. With Mysticism installed, its Soul Energy price still applies to the learn.
+- **Race links for the rites.** Ascension's five Bloodfiend races count as vampires, and Mysticism's direwolf and its twelve spirit wolves count as werewolves. This covers who a rite accepts and which rites a player learns, but leaves faction and species alone. A Blood Noble (Ascension's third Bloodfiend tier) or higher is at the vampire apex tier, like a Vampire Lord.
+- **Addon undead.** Ascension's lich, elder lich, lich king and undead skeleton follow our undead rules through our own race tag `supernaturalbloodlines:addon_undead`. Tensura's own undead tag is not changed. No other addon puts a race in `tensura:undead`.
+- Mysticism 2.2, Slime Throne Extras 2.1, Tensura Horizons 0.31 and Kumo Desu ga 2.0.3 are now tested versions. Other versions load with a warning.
+- No network protocol change and no new setting: the rites use the part's existing per-recipe switches.
+- **Rolling back:** a granted skill is an ordinary Tensura skill and stays. The rite files and their unlock advancements go away.
+
+## Unreleased (plan 19b: Raphael)
+
+- With FoxAblaze installed, learning Great Sage's Raphael redirects to FoxAblaze's, subject to its single-owner rule. The Rite of Raphael stays dormant until Great Sage opens its own road.
+- A refused Great Sage evolution can reset the mastery of Great Sage and Degenerate: the redirect attempts to restore missing skills at default mastery.
+- Disabling `evolutionRites` removes the redirect and rite. It does not undo prior login conversions. No network protocol change.
+
 ## Unreleased (skill wheel, phase W4: the wheel screen)
 
 ### Added
@@ -55,6 +122,23 @@ Turn `hide_covered_keys` or `hud_enabled` off in the hub (Settings) and every co
 ### Rolling back
 - **Roll the server and every client back together** (the network version goes back to 2). The saved `wheel_clock` is dropped by an older build, which is harmless: it only held a cooldown of at most a few minutes. With both settings off the wheel lists every side and no key is stopped.
 
+## Unreleased (plan 19c: the Rite of the Blood Sovereign)
+
+### Added
+- **Rite of the Blood Sovereign** (`evolve_blood_sovereign`, only with Ascension installed): on a night of the lunar eclipse a witch-type performer opens the road from **Deus Sanguis to Blood Sovereign** for the consenting target on the circle (or for herself). **Ascension's own requirements stand**, read live from the addon: the game rule `doAscensionUltimate`, Max EP at or above its threshold (5,000,000 by default), a true Hero or true Demon Lord, Deus Sanguis held and mastered, and the wait since the last awakening. It costs an Ultimate Catalyst, a nether star, a spirit of otherwhere and altar power; Deus Sanguis is given up, as the altar does. **It gives no bonus Max EP and no witness share**: those stay the altar's. Learned permanently (`GrantForm.PERMANENT`, remove time -1). Sealed in the book until the player has read Finn's Notes.
+- **The rite and the Awakening Altar share one cooldown**: a completed rite writes the altar's own tag, so an awakening by either road makes the other wait.
+- **`GrantForm.PERMANENT`** for the recipe data and two probe seams (`enabledIn` for a world switch such as a game rule, `onGranted` for what the addon's own road writes).
+- A refusal says nothing about the target to the performer (a human, a hybrid, a vampire with no Deus Sanguis, a target short of EP all read the same); the game rule off closes the rite to the performer only.
+
+### Changed
+- Finn's Notes teach the Blood Sovereign too where Ascension is installed (two older tests counted two and four rites; they now follow the rite being there).
+- No network version, payload or setting changed (the existing `ultimate_rites_enabled` and `disabled_recipes` govern it).
+
+### Rolling back
+- A granted Blood Sovereign is an ordinary Tensura skill and stays; the rite file and its two unlock advancements go away, so nothing is known or sealed. The awakening tag a rite wrote stays on the player and keeps the altar waiting for at most its own cooldown. Nothing to migrate.
+
+### Not verified
+- A real eclipse rite with a real Ascension altar next to it on a client (the book entry and the circle look), and Skill Books' price hooks on `ascension:blood_sovereign`.
 ## Unreleased (plan 19a: the evolution rites engine and the Rite of Mastery)
 
 ### Added
