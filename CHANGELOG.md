@@ -17,8 +17,16 @@
 - The hub's shared pack rows (P1 to P10) run as `/group` in a world that has no `/pack`.
 - **Hub protocol 14** (was 13): a new server-to-client payload, `group_view` (the viewer's own group only). Update client and server together.
 
+### Fixed (review of this plan)
+- `max_members` is checked when somebody joins, not only when invited: two invitations sent at the last seat no longer both get in, and a leader who joins counts the members they bring.
+- Without Werewolves a pack is still run: the shared hub buttons always send `/group` (there is no `/pack` there), and a pack's leader is fit when their kind derives a pack, since nobody can be an Alpha.
+- Ranks are kept per member and per type: a switch and a switch back restores a Day Walker even if the member was made an Elder meanwhile. Members who come along when two groups merge no longer keep a rank of the group they left.
+- The Profile names the person's own group type and shows the pack bonus only for a pack; the empty-state title wraps instead of being cut; every ring name finds a place at GUI scale 4; the leader is not offered Leave; a faction change (joining or leaving the vampires or hunters) switches the group at once.
+
 ### Rolling back
-Delete `supernaturalbloodlines_groups.dat`. The pack file `supernaturalbloodlines_packs.dat` is never rewritten by this plan, so every pack, member and alliance stays exactly as it was; groups would be seeded again as packs. The hub channel number changed (13 to 14), so update client and server together when going back.
+Delete `supernaturalbloodlines_groups.dat`. The pack file `supernaturalbloodlines_packs.dat` is never rewritten by this plan, so every pack, member and alliance stays exactly as it was; groups would be seeded again as packs, and the ranks and types of clans, covens and brotherhoods are lost with it (a clan or a coven that had members would come back as a pack of their leader). The hub channel number changed (13 to 14), so update client and server together when going back.
+
+**Open Parties and Claims:** a group is mirrored into its party whenever the link is on. A world that once ran with Werewolves and now runs without it keeps the party records the pack link wrote in `supernaturalbloodlines_packs.dat`; the link now runs without Werewolves and carries on from those records (it was not run at all in such a world before, so a party may have drifted from its group meanwhile and is brought back in step at the next sync).
 
 ### Verified
 - Unit tests 2,499 pass. The 12-run GameTest matrix passes in every run (1,994 with everything on; 1,456 with `-PnoWerewolves -PnoCurios`; 30 with `-PnoLinkedMods`; 494, 1,871, 1,826, 1,844, 1,984, 1,825, 1,978, 1,667 and 382 for the part-off runs). 16 mutants of the groups rules, all caught.
