@@ -243,6 +243,9 @@ public final class PackCommand {
         if (target == alpha) {
             return GroupText.error(type, "self");
         }
+        if (type == GroupType.COVEN && GroupGate.shunned(alpha.server, target.getUUID())) {
+            return GroupText.error(type, "target_shunned", name(target));
+        }
         // anyone can join: a werewolf as a Beta, an Alpha as a second Alpha, everyone else as a Packmate; only a player already in someone else's pack cannot
         if (index.alphaOf(target.getUUID()).isPresent() || PackAccess.wolf(target).packAlpha() != null) {
             return GroupText.error(type, "target_in_group", name(target));
@@ -318,6 +321,9 @@ public final class PackCommand {
         }
         if (leader.equals(p.getUUID())) {
             return GroupText.error(type, "self");
+        }
+        if (type == GroupType.COVEN && GroupGate.shunned(p.server, p.getUUID())) {
+            return GroupText.error(type, "shunned");
         }
         // the cap counts everybody who would be in the group afterwards: the joiner, and the members a joining leader brings
         List<UUID> own = index.betasOf(p.getUUID());

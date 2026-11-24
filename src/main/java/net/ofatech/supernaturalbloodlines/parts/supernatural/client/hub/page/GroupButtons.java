@@ -25,7 +25,12 @@ public final class GroupButtons {
             Map.entry("link close", "coven:link_close"),
             Map.entry("link join", "coven:link_join"),
             Map.entry("link leave", "coven:link_leave"),
-            Map.entry("link consent", "coven:consent"));
+            Map.entry("link consent", "coven:consent"),
+            Map.entry("elder add", "coven:elder_add"),
+            Map.entry("elder remove", "coven:elder_remove"),
+            Map.entry("shun", "coven:shun"),
+            Map.entry("vote yes", "coven:vote_yes"),
+            Map.entry("vote no", "coven:vote_no"));
 
     /** The lang key of what each control says. */
     public static final Map<String, String> LABELS = Map.ofEntries(
@@ -43,10 +48,16 @@ public final class GroupButtons {
             Map.entry("coven:link_close", GroupLabels.HUB + "coven.link_close"),
             Map.entry("coven:link_join", GroupLabels.HUB + "coven.link_join"),
             Map.entry("coven:link_leave", GroupLabels.HUB + "coven.link_leave"),
-            Map.entry("coven:consent", GroupLabels.HUB + "coven.consent"));
+            Map.entry("coven:consent", GroupLabels.HUB + "coven.consent"),
+            Map.entry("coven:elder_add", GroupLabels.HUB + "coven.elder_add"),
+            Map.entry("coven:elder_remove", GroupLabels.HUB + "coven.elder_remove"),
+            Map.entry("coven:shun", GroupLabels.HUB + "coven.shun"),
+            Map.entry("coven:vote_yes", GroupLabels.HUB + "coven.vote_yes"),
+            Map.entry("coven:vote_no", GroupLabels.HUB + "coven.vote_no"));
 
     /** The coven controls whose card is drawn by plan 20b Task 12; until then they are registered and not yet on a page. */
-    public static final Set<String> NOT_DRAWN_YET = Set.of("coven:link_open", "coven:link_close", "coven:link_join", "coven:link_leave", "coven:consent");
+    public static final Set<String> NOT_DRAWN_YET = Set.of("coven:link_open", "coven:link_close", "coven:link_join", "coven:link_leave", "coven:consent",
+            "coven:elder_add", "coven:elder_remove", "coven:shun", "coven:vote_yes", "coven:vote_no");
 
     /** Literals the page shows by itself and needs no control for. */
     public static final Set<String> NO_BUTTON = Set.of("info");

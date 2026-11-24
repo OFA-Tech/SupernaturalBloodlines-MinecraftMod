@@ -64,18 +64,24 @@ public final class GroupCommand {
                                         .suggests((c, b) -> PackCommand.suggest(c, b, true))
                                         .executes(c -> run(c, PackCommand.allyRemoveNamed(self(c), StringArgumentType.getString(c, "player")))))))
                 .then(net.ofatech.supernaturalbloodlines.parts.species.group.coven.CovenCommand.link())
+                .then(net.ofatech.supernaturalbloodlines.parts.species.group.coven.CovenCommand.elder())
+                .then(net.ofatech.supernaturalbloodlines.parts.species.group.coven.CovenCommand.shun())
+                .then(net.ofatech.supernaturalbloodlines.parts.species.group.coven.CovenCommand.vote())
                 .then(Commands.literal("info").executes(c -> info(c.getSource(), self(c))))
                 .then(Commands.literal("challenge")
-                        .then(Commands.literal("accept").executes(c -> run(c, challenge(self(c), p -> PackDuel.accept(p)))))
-                        .then(Commands.literal("decline").executes(c -> run(c, challenge(self(c), p -> PackDuel.decline(p)))))
+                        .then(Commands.literal("accept").executes(c -> run(c, challenge(self(c), null, p -> PackDuel.accept(p)))))
+                        .then(Commands.literal("decline").executes(c -> run(c, challenge(self(c), null, p -> PackDuel.decline(p)))))
                         .then(Commands.argument("leader", StringArgumentType.word())
-                                .executes(c -> run(c, challenge(self(c), p -> PackDuel.challenge(p, StringArgumentType.getString(c, "leader")))))));
+                                .executes(c -> run(c, challenge(self(c), StringArgumentType.getString(c, "leader"), p -> PackDuel.challenge(p, StringArgumentType.getString(c, "leader")))))));
     }
 
-    /** The one challenge command routes by type: a pack's is the duel; the others have theirs in later plans. */
+    /** The one challenge command routes by type: a pack's is the duel, a coven's is the call for a new Regent; the others have theirs in later plans. */
     @Nullable
-    private static Component challenge(ServerPlayer p, java.util.function.Function<ServerPlayer, Component> duel) {
+    private static Component challenge(ServerPlayer p, @Nullable String word, java.util.function.Function<ServerPlayer, Component> duel) {
         GroupType type = Groups.typeOf(p);
+        if (type == GroupType.COVEN && word != null) {
+            return net.ofatech.supernaturalbloodlines.parts.species.group.coven.CovenGovernance.callElection(p, word);
+        }
         if (type != GroupType.PACK || !ModList.get().isLoaded("werewolves")) {
             return GroupText.error(type, "wrong_type");
         }

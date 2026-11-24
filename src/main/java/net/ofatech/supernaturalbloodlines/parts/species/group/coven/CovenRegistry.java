@@ -37,7 +37,10 @@ public final class CovenRegistry {
             }
         });
         net.ofatech.supernaturalbloodlines.parts.species.group.circle.LinkWindow.register();
-        GroupSwitcher.onSwitched(e -> CircleLink.closeGroup(e.server(), e.leader()));
+        GroupSwitcher.onSwitched(e -> {
+            CircleLink.closeGroup(e.server(), e.leader());
+            CovenGovernance.cancelAll(e.server(), e.group());
+        });
         NeoForge.EVENT_BUS.addListener((PlayerEvent.PlayerLoggedOutEvent e) -> {
             if (e.getEntity() instanceof ServerPlayer p) {
                 CircleLink.dropMember(p.server, p.getUUID(), true);
@@ -52,6 +55,7 @@ public final class CovenRegistry {
         NeoForge.EVENT_BUS.addListener((ServerTickEvent.Post e) -> {
             if (e.getServer().getTickCount() % 200 == 0) {
                 CircleLink.sweep(e.getServer());
+                CovenGovernance.sweep(e.getServer());
             }
         });
         NeoForge.EVENT_BUS.addListener((ServerStoppedEvent e) -> CircleLink.reset());

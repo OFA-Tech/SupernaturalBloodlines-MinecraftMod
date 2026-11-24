@@ -20,6 +20,7 @@ import net.ofatech.supernaturalbloodlines.core.group.GroupRank;
 import net.ofatech.supernaturalbloodlines.core.group.GroupType;
 import net.ofatech.supernaturalbloodlines.core.group.GroupSwitch;
 import net.ofatech.supernaturalbloodlines.core.group.circle.Consent;
+import net.ofatech.supernaturalbloodlines.core.group.coven.VoteKind;
 import net.ofatech.supernaturalbloodlines.parts.species.pack.PackIndex;
 
 /**
@@ -37,7 +38,10 @@ public final class GroupIndex extends SavedData {
     private static final String CHANNEL = "channel";
     private static final String CONSENT = "consent";
     private static final String AT = "at";
-    private static final Set<String> KNOWN = Set.of(VERSION, IDS, TYPES, TYPE_SINCE, RANKS, CHANNEL, CONSENT);
+    private static final String VOTES = "votes";
+    private static final String BANS = "bans";
+    private static final String COOLDOWNS = "cooldowns";
+    private static final Set<String> KNOWN = Set.of(VERSION, IDS, TYPES, TYPE_SINCE, RANKS, CHANNEL, CONSENT, VOTES, BANS, COOLDOWNS);
     private static final String KEY = "key";
     private static final String VALUE = "value";
     private static final String TYPE = "type";
@@ -52,6 +56,12 @@ public final class GroupIndex extends SavedData {
     private final Map<UUID, ChannelRow> channel = new HashMap<>();
     // member -> consent id; only a level that is not the default
     private final Map<UUID, String> consent = new HashMap<>();
+    // one open vote per kind per group (the group id, never the leader: the id follows the lead)
+    private final Map<String, Vote> votes = new java.util.LinkedHashMap<>();
+    // scope ("type:coven", or a group id for an exile) -> player -> until (wall-clock millis)
+    private final Map<String, Map<UUID, Long>> bans = new HashMap<>();
+    // group -> key ("election", a grand rite) -> until
+    private final Map<UUID, Map<String, Long>> cooldowns = new HashMap<>();
     private CompoundTag extras = new CompoundTag();
     private int dataVersion;
 
@@ -61,6 +71,33 @@ public final class GroupIndex extends SavedData {
 
     /** What the channel meter held at {@code at} (wall-clock millis); it refills lazily from there ({@code ChannelMeter.valueAt}). */
     public record ChannelRow(int value, long at) {
+    }
+
+    /** A coven vote. Ballots are who voted what; a cancelled vote is kept and ignored. */
+    public static final class Vote {
+        public final UUID group;
+        public final VoteKind kind;
+        public final UUID subject;
+        public final UUID caller;
+        public final long opened;
+        public final Map<UUID, Boolean> ballots = new java.util.LinkedHashMap<>();
+        public boolean cancelled;
+
+        public Vote(UUID group, VoteKind kind, UUID subject, UUID caller, long opened) {
+            this.group = group;
+            this.kind = kind;
+            this.subject = subject;
+            this.caller = caller;
+            this.opened = opened;
+        }
+
+        public int yes() {
+            return (int) ballots.values().stream().filter(b -> b).count();
+        }
+
+        public int no() {
+            return (int) ballots.values().stream().filter(b -> !b).count();
+        }
     }
 
     public GroupIndex() {
@@ -227,6 +264,94 @@ public final class GroupIndex extends SavedData {
         }
     }
 
+    private static String voteKey(UUID group, VoteKind kind) {
+        return group + ":" + kind.id();
+    }
+
+    /** The open vote of this kind in the group, if any (a cancelled one is not open). */
+    public Optional<Vote> openVote(UUID group, VoteKind kind) {
+        return Optional.ofNullable(votes.get(voteKey(group, kind))).filter(v -> !v.cancelled);
+    }
+
+    /** Every open vote of the group, oldest first. */
+    public List<Vote> openVotes(UUID group) {
+        return votes.values().stream().filter(v -> v.group.equals(group) && !v.cancelled).sorted(java.util.Comparator.comparingLong((Vote v) -> v.opened)).toList();
+    }
+
+    public List<Vote> allVotes() {
+        return List.copyOf(votes.values());
+    }
+
+    /** Opens a vote; one per kind per group, a cancelled row of the same kind is replaced. */
+    public Vote openVote(UUID group, VoteKind kind, UUID subject, UUID caller, long now) {
+        Vote v = new Vote(group, kind, subject, caller, now);
+        votes.put(voteKey(group, kind), v);
+        setDirty();
+        return v;
+    }
+
+    public void closeVote(Vote v) {
+        if (votes.remove(voteKey(v.group, v.kind), v)) {
+            setDirty();
+        }
+    }
+
+    public void cancelVote(Vote v) {
+        if (!v.cancelled) {
+            v.cancelled = true;
+            setDirty();
+        }
+    }
+
+    /** A ballot is stored once; asking again changes nothing. */
+    public boolean ballot(Vote v, UUID elector, boolean yes) {
+        if (v.ballots.putIfAbsent(elector, yes) != null) {
+            return false;
+        }
+        setDirty();
+        return true;
+    }
+
+    /** The leader of the group with this id, if it has one. */
+    public Optional<UUID> leaderOfGroup(UUID group) {
+        return ids.entrySet().stream().filter(e -> e.getValue().equals(group)).map(Map.Entry::getKey).findFirst();
+    }
+
+    public void ban(String scope, UUID player, long until) {
+        bans.computeIfAbsent(scope, k -> new HashMap<>()).put(player, until);
+        setDirty();
+    }
+
+    /** 0 when there is no ban. */
+    public long banUntil(String scope, UUID player) {
+        Map<UUID, Long> m = bans.get(scope);
+        return m == null ? 0 : m.getOrDefault(player, 0L);
+    }
+
+    public void setCooldown(UUID group, String key, long until) {
+        cooldowns.computeIfAbsent(group, k -> new HashMap<>()).put(key, until);
+        setDirty();
+    }
+
+    /** 0 when there is none. */
+    public long cooldownUntil(UUID group, String key) {
+        Map<String, Long> m = cooldowns.get(group);
+        return m == null ? 0 : m.getOrDefault(key, 0L);
+    }
+
+    /** Forgets what is over: bans that ended, votes older than {@code maxAgeMillis}. */
+    public void prune(long now, long maxAgeMillis) {
+        boolean changed = false;
+        for (Map<UUID, Long> m : bans.values()) {
+            changed |= m.values().removeIf(until -> until <= now);
+        }
+        changed |= bans.values().removeIf(Map::isEmpty);
+        changed |= votes.values().removeIf(v -> now - v.opened > maxAgeMillis);
+        if (changed) {
+            setDirty();
+        }
+    }
+
     /** The id goes to the new leader; when that leader already has a group, the old leader's group is gone (its members joined theirs). */
     public void follow(UUID oldLeader, UUID newLeader) {
         UUID group = ids.remove(oldLeader);
@@ -248,6 +373,8 @@ public final class GroupIndex extends SavedData {
         if (group != null) {
             types.remove(group);
             typeSince.remove(group);
+            votes.values().removeIf(v -> v.group.equals(group));
+            cooldowns.remove(group);
             setDirty();
         }
     }
@@ -297,6 +424,37 @@ public final class GroupIndex extends SavedData {
             }
         }
         readPairs(tag, CONSENT, (k, v) -> i.consent.put(NbtUtils.loadUUID(k), v.getAsString()));
+        for (Tag t : tag.getList(VOTES, Tag.TAG_COMPOUND)) {
+            try {
+                CompoundTag e = (CompoundTag) t;
+                VoteKind kind = VoteKind.parse(e.getString(TYPE)).orElseThrow(() -> new IllegalArgumentException("an unknown vote kind"));
+                Vote v = new Vote(NbtUtils.loadUUID(e.get(KEY)), kind, NbtUtils.loadUUID(e.get("subject")), NbtUtils.loadUUID(e.get("caller")), e.getLong("opened"));
+                v.cancelled = e.getBoolean("cancelled");
+                for (Tag b : e.getList("ballots", Tag.TAG_COMPOUND)) {
+                    CompoundTag ballot = (CompoundTag) b;
+                    v.ballots.put(NbtUtils.loadUUID(ballot.get(KEY)), ballot.getBoolean(VALUE));
+                }
+                i.votes.put(voteKey(v.group, v.kind), v);
+            } catch (RuntimeException bad) {
+                net.ofatech.supernaturalbloodlines.SupernaturalBloodlines.LOGGER.warn("The group index skipped a damaged vote row: {}", bad.toString());
+            }
+        }
+        for (Tag t : tag.getList(BANS, Tag.TAG_COMPOUND)) {
+            try {
+                CompoundTag e = (CompoundTag) t;
+                i.bans.computeIfAbsent(e.getString("scope"), k -> new HashMap<>()).put(NbtUtils.loadUUID(e.get("player")), e.getLong("until"));
+            } catch (RuntimeException bad) {
+                net.ofatech.supernaturalbloodlines.SupernaturalBloodlines.LOGGER.warn("The group index skipped a damaged ban row: {}", bad.toString());
+            }
+        }
+        for (Tag t : tag.getList(COOLDOWNS, Tag.TAG_COMPOUND)) {
+            try {
+                CompoundTag e = (CompoundTag) t;
+                i.cooldowns.computeIfAbsent(NbtUtils.loadUUID(e.get(KEY)), k -> new HashMap<>()).put(e.getString(TYPE), e.getLong("until"));
+            } catch (RuntimeException bad) {
+                net.ofatech.supernaturalbloodlines.SupernaturalBloodlines.LOGGER.warn("The group index skipped a damaged cooldown row: {}", bad.toString());
+            }
+        }
         for (String key : tag.getAllKeys()) {
             if (!KNOWN.contains(key)) {
                 i.extras.put(key, tag.get(key).copy());
@@ -376,6 +534,41 @@ public final class GroupIndex extends SavedData {
             consentList.add(e);
         });
         tag.put(CONSENT, consentList);
+        ListTag voteList = new ListTag();
+        votes.values().forEach(v -> {
+            CompoundTag e = row(v.group);
+            e.putString(TYPE, v.kind.id());
+            e.put("subject", NbtUtils.createUUID(v.subject));
+            e.put("caller", NbtUtils.createUUID(v.caller));
+            e.putLong("opened", v.opened);
+            e.putBoolean("cancelled", v.cancelled);
+            ListTag ballots = new ListTag();
+            v.ballots.forEach((elector, yes) -> {
+                CompoundTag b = row(elector);
+                b.putBoolean(VALUE, yes);
+                ballots.add(b);
+            });
+            e.put("ballots", ballots);
+            voteList.add(e);
+        });
+        tag.put(VOTES, voteList);
+        ListTag banList = new ListTag();
+        bans.forEach((scope, players) -> players.forEach((player, until) -> {
+            CompoundTag e = new CompoundTag();
+            e.putString("scope", scope);
+            e.put("player", NbtUtils.createUUID(player));
+            e.putLong("until", until);
+            banList.add(e);
+        }));
+        tag.put(BANS, banList);
+        ListTag cooldownList = new ListTag();
+        cooldowns.forEach((group, keys) -> keys.forEach((key, until) -> {
+            CompoundTag e = row(group);
+            e.putString(TYPE, key);
+            e.putLong("until", until);
+            cooldownList.add(e);
+        }));
+        tag.put(COOLDOWNS, cooldownList);
         return tag;
     }
 

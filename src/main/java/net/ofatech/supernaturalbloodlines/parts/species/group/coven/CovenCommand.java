@@ -34,6 +34,32 @@ public final class CovenCommand {
                                 .executes(c -> run(c, consent(self(c), StringArgumentType.getString(c, "level"))))));
     }
 
+    private static java.util.concurrent.CompletableFuture<com.mojang.brigadier.suggestion.Suggestions> members(CommandContext<CommandSourceStack> c, com.mojang.brigadier.suggestion.SuggestionsBuilder b) {
+        if (c.getSource().getEntity() instanceof ServerPlayer me) {
+            CovenGovernance.namesFor(me).forEach(b::suggest);
+        }
+        return b.buildFuture();
+    }
+
+    public static LiteralArgumentBuilder<CommandSourceStack> elder() {
+        return Commands.literal("elder")
+                .then(Commands.literal("add").then(Commands.argument("player", StringArgumentType.word()).suggests(CovenCommand::members)
+                        .executes(c -> run(c, CovenGovernance.elderAdd(self(c), StringArgumentType.getString(c, "player"))))))
+                .then(Commands.literal("remove").then(Commands.argument("player", StringArgumentType.word()).suggests(CovenCommand::members)
+                        .executes(c -> run(c, CovenGovernance.elderRemove(self(c), StringArgumentType.getString(c, "player"))))));
+    }
+
+    public static LiteralArgumentBuilder<CommandSourceStack> shun() {
+        return Commands.literal("shun").then(Commands.argument("player", StringArgumentType.word()).suggests(CovenCommand::members)
+                .executes(c -> run(c, CovenGovernance.shun(self(c), StringArgumentType.getString(c, "player")))));
+    }
+
+    public static LiteralArgumentBuilder<CommandSourceStack> vote() {
+        return Commands.literal("vote")
+                .then(Commands.literal("yes").executes(c -> run(c, CovenGovernance.vote(self(c), true))))
+                .then(Commands.literal("no").executes(c -> run(c, CovenGovernance.vote(self(c), false))));
+    }
+
     /** Sets the level the player's rites may ask of them; stored per player. */
     @Nullable
     public static Component consent(ServerPlayer p, String word) {

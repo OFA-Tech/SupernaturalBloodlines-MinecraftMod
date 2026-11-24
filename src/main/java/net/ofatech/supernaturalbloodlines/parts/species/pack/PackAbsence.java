@@ -9,6 +9,7 @@ import net.ofatech.supernaturalbloodlines.core.group.GroupRank;
 import net.ofatech.supernaturalbloodlines.core.group.GroupSuccession;
 import net.ofatech.supernaturalbloodlines.core.group.GroupType;
 import net.ofatech.supernaturalbloodlines.parts.species.group.GroupIndex;
+import net.ofatech.supernaturalbloodlines.parts.species.group.GroupLead;
 import net.ofatech.supernaturalbloodlines.parts.species.group.Groups;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
@@ -137,25 +138,7 @@ public final class PackAbsence {
 
     private static void depose(MinecraftServer server, PackIndex index, UUID old, UUID next, GroupType type) {
         List<UUID> members = index.betasOf(old);
-        index.promote(old, next);
-        if (type == GroupType.PACK) {
-            for (UUID id : members) {
-                if (!id.equals(next)) {
-                    SparkHandler.repoint(server, id, next);
-                }
-            }
-        } else {
-            // the old leader stays as the next rank down, the new one is the leader and holds no rank
-            GroupIndex groups = GroupIndex.get(server.overworld());
-            if (type == GroupType.CLAN) {
-                groups.setRank(old, GroupRank.DAY_WALKER);
-            } else if (type == GroupType.COVEN) {
-                groups.setRank(old, GroupRank.ELDER);
-            } else {
-                groups.clearRank(old, type);
-            }
-            groups.clearRank(next, type);
-        }
+        GroupLead.handOver(server, index, old, next, type);
         String name = PackAccess.nameOf(server, next);
         String shown = name != null ? name : next.toString().substring(0, 8);
         for (UUID id : members) {
@@ -166,6 +149,5 @@ public final class PackAbsence {
             }
         }
         PackMembers.tell(server, old, KEY + "absent_you", shown);
-        PartyLink.leadershipChanged(server, next);
     }
 }

@@ -43,6 +43,11 @@ public final class GroupGate {
         return GroupTypes.canFound(type, fit(p), GroupsConfig.openFounding()) ? Optional.empty() : Optional.of("not_fit");
     }
 
+    /** Whether a shunning still bars the player from every coven. */
+    public static boolean shunned(net.minecraft.server.MinecraftServer server, UUID player) {
+        return GroupIndex.get(server.overworld()).banUntil(net.ofatech.supernaturalbloodlines.parts.species.group.coven.CovenGovernance.SHUN_SCOPE, player) > PackIndex.now();
+    }
+
     /** {@link #canLead} and room for one more member. */
     public static Optional<String> canInvite(ServerPlayer p) {
         Optional<String> lead = canLead(p);
