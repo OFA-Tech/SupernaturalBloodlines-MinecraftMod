@@ -62,6 +62,17 @@ public final class KitDraw {
         }
     }
 
+    /**
+     * The icon of a hub page; the Group page's is the viewer's own group type's ({@code groupSprite}, see {@code GroupIcons}), the paw when that
+     * sprite is missing.
+     */
+    public static void pageIcon(GuiGraphics g, net.ofatech.supernaturalbloodlines.shared.hub.HubPage page, String groupSprite, int x, int y, int size, int color) {
+        if (page == net.ofatech.supernaturalbloodlines.shared.hub.HubPage.PACK && !"pack".equals(groupSprite) && UiKit.icon(g, groupSprite, x, y, size, color)) {
+            return;
+        }
+        icon(g, Icons.of(page), x, y, size, color);
+    }
+
     /** The picture of a skill: one for each skill id (the "unknown" rune for a skill of another mod). */
     public static void skillIcon(GuiGraphics g, String skillId, int x, int y, int size, int color) {
         if (!UiKit.icon(g, UiKit.skillIconName(skillId), x, y, size, color)) {

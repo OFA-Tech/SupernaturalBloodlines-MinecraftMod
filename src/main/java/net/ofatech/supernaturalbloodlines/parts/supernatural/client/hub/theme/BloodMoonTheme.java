@@ -320,7 +320,7 @@ public final class BloodMoonTheme implements HubTheme, HubThemeViews {
     @Override
     public void drawTab(GuiGraphics g, Rect r, HubPage page, boolean selected, boolean focused) {
         round(g, r, selected);
-        KitDraw.icon(g, Icons.of(page), r.x(), r.y(), Math.min(r.w(), r.h()), selected ? 0xFFFFFFFF : 0xB0FFFFFF);
+        KitDraw.pageIcon(g, page, net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page.GroupLabels.iconName(), r.x(), r.y(), Math.min(r.w(), r.h()), selected ? 0xFFFFFFFF : 0xB0FFFFFF);
         if (page.group() == HubPage.Group.OPERATOR) {
             // a gold gem on the ring: the operator's page is apart from the rest
             UiKit.draw(g, this, Part.GEM_GOLD, r.right() - 8, r.y() - 2, 11, 11);
