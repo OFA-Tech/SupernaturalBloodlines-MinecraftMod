@@ -1,0 +1,47 @@
+{
+  "title": "Rite of the Blood Sovereign",
+  "icon": {
+    "count": 1,
+    "id": "minecraft:nether_star"
+  },
+  "assigned_items": [],
+  "advancement": "supernaturalbloodlines:rites/known/evolve_blood_sovereign",
+  "pages": [
+    {
+      "components": [
+        {
+          "template": "modopedia:page/headered_text",
+          "text": "Circle: large circle, infernal chalk.\n\nOnly with Ascension. On a night of the lunar eclipse a witch-type performer opens the road from Deus Sanguis to Blood Sovereign for the one on the circle, or for herself.",
+          "header": "Blood Sovereign"
+        }
+      ]
+    },
+    {
+      "components": [
+        {
+          "template": "modopedia:page/headered_text",
+          "text": "Ascension's own demands stand: its Max EP threshold, a true Hero or true Demon Lord, Deus Sanguis mastered, and the wait since the last awakening. They agree by sneaking.",
+          "header": "Blood Sovereign"
+        }
+      ]
+    },
+    {
+      "components": [
+        {
+          "template": "modopedia:page/headered_text",
+          "text": "Costs an Ultimate Catalyst, a nether star and altar power; Deus Sanguis is given up. No bonus Max EP: that stays the altar's. The awakening wait is shared with it.",
+          "header": "Blood Sovereign"
+        }
+      ]
+    },
+    {
+      "components": [
+        {
+          "template": "supernaturalbloodlines:page/rite",
+          "rite": "supernaturalbloodlines:evolve_blood_sovereign",
+          "header": "Blood Sovereign"
+        }
+      ]
+    }
+  ]
+}

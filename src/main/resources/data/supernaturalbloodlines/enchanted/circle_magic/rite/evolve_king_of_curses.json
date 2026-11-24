@@ -1,0 +1,43 @@
+{
+    "neoforge:conditions": [
+        {
+            "type": "supernaturalbloodlines:part_enabled",
+            "part": "evolutionRites"
+        },
+        {
+            "type": "neoforge:mod_loaded",
+            "modid": "ascension"
+        }
+    ],
+    "items": [
+        {
+            "id": "minecraft:wither_skeleton_skull",
+            "count": 1
+        },
+        {
+            "id": "minecraft:crying_obsidian",
+            "count": 2
+        },
+        {
+            "id": "minecraft:amethyst_shard",
+            "count": 4
+        },
+        {
+            "id": "enchanted:spirit_of_otherwhere",
+            "count": 1
+        }
+    ],
+    "shapes": {
+        "enchanted:medium_circle": "enchanted:nether_chalk"
+    },
+    "power": 9000,
+    "factory": {
+        "type": "supernaturalbloodlines:evolution",
+        "recipe": "king_of_curses",
+        "tier": "unique",
+        "grants": "ascension:king_of_curses",
+        "requires_mod": "ascension",
+        "probe": "unique.road:com.simplygray.tensuraaddon.AddonSkillConfig#KING_OF_CURSES_ENABLED",
+        "ep_cost": 200000.0
+    }
+}

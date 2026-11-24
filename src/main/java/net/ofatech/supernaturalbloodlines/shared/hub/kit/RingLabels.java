@@ -67,6 +67,22 @@ public final class RingLabels {
         return out;
     }
 
+    /**
+     * A name that found no room beside its face goes under the face, else over it (centred on it), so the names of a small ring (GUI scale 4)
+     * are not all left to the tooltip.
+     *
+     * @return the rectangle, or null when neither side clears
+     */
+    public static @Nullable Rect underOrOver(Request asked, int faceX, int faceY, int faceSize, List<Rect> blocked, Rect bounds, int minWidth, int gap) {
+        for (int y : new int[] {faceY + faceSize / 2 + 3, faceY - faceSize / 2 - LINE - 2}) {
+            Rect got = place(List.of(new Request(faceX, y, asked.w(), LINE, Anchor.CENTER)), blocked, bounds, minWidth, gap).get(0);
+            if (got != null) {
+                return got;
+            }
+        }
+        return null;
+    }
+
     /** The height of one line of a name. */
     public static final int LINE = 9;
 

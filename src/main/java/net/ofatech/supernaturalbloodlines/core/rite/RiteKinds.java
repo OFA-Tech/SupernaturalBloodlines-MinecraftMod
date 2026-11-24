@@ -14,6 +14,13 @@ public final class RiteKinds {
      * @param werewolf    the Werewolves faction, or a wolf lineage (bitten, born)
      * @param hunter      the Vampirism hunter faction
      */
+    /** As {@link #of(Species, boolean, boolean, boolean)}, plus what the player's Tensura race adds ({@link RaceLinks}; empty or null: nothing). */
+    public static Set<RiteKind> of(Species species, String tensuraRace, boolean vampire, boolean werewolf, boolean hunter) {
+        Set<RiteKind> out = of(species, vampire, werewolf, hunter);
+        out.addAll(RaceLinks.kindsOfRace(tensuraRace));
+        return out;
+    }
+
     public static Set<RiteKind> of(Species species, boolean vampire, boolean werewolf, boolean hunter) {
         Set<RiteKind> out = EnumSet.noneOf(RiteKind.class);
         if (vampire) {

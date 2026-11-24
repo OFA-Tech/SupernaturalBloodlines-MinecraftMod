@@ -58,6 +58,8 @@ Short names: `Skill` = `io.github.manasmods.manascore.skill.api.ManasSkill`, `In
 | **Deus Sanguis** | `skill.DeusSanguisSkill` (`UNIQUE`); config `AddonSkillConfig.DEUS_SANGUIS_ENABLED` (and `DEUS_SANGUIS_*` tunables); listed in `AddonConfig.ADDITIONAL_UNIQUE_SKILLS` (a `defineListAllowEmpty` of 9 Unique ids, the reincarnation pool) and in the Codex | **No acquisition code besides the reincarnation pool** (`mixin.MixinReincarnationMenu`). It is not granted by the Bloodfiend races. Its Ultimate: `ascension:deus_sanguis -> ascension:blood_sovereign`. |
 | Races | `race.bloodfiend`: `FledglingBloodfiendRace`, `KindredBloodfiendRace`, `ElderBloodfiendRace`, `ProgenitorBloodfiendRace`, `BloodNobleRace`; mixins `MixinBeastfolkRace`, `MixinDragonewtRace`, `MixinWightRace` | Beastfolk is mixed into (adds an evolution); the id of the added one was not extracted (19d task 1). |
 
+**Resolved for plan 19c** (the jar was decompiled with Vineflower; nothing of it is in the repo): the Deus Sanguis to Blood Sovereign pair has **no extra gate** (null predicate and null success hook in `AWAKENINGS`); the catalyst is `ascension:ultimate_catalyst`; `AWAKENING_MIN_EP`, `AWAKENING_COOLDOWN_MINUTES` and `AWAKENING_BONUS` are `ModConfigSpec` values (`DoubleValue`, `IntValue`, `DoubleValue`), `DO_ASCENSION_ULTIMATE` is a `GameRules.Key<BooleanValue>` (default true); the cooldown is `minutes * 60 * 20` **game ticks** compared with `getGameTime()` although its comment says real time, and is skipped when the tag is 0; `IExistence` is `io.github.manasmods.tensura.storage.ep.IExistence` (`isTrueHero`, `isTrueDemonLord`); `complete` writes `ascension:last_awakening_tick`, grants the awakener `AWAKENING_BONUS` of Max EP through `EpUtil.grantMaxEp` and shares `WITNESS_BONUS` (the rite does neither). **`SkillHelper.learnSkill(LivingEntity, ManasSkill)` already passes `-1` to the three-argument form** (javap: `iconst_m1`), so Tensura's default learn is the permanent learn.
+
 ## Mysticism 2.2.1, Horizons 0.31, Kumo Desu ga 2.0.3-HF2, Slime Throne Extras 2.1.3 / 2.1.4
 
 | Addon | Read | Result |
@@ -75,14 +77,14 @@ See the table in [README.md](README.md). Verified: Skill Obtain's handler (`hand
 
 1. Whether `SkillHelper.learnSkill(LivingEntity, Skill)` charges Tensura's acquiring magicule price itself or leaves it to an `UNLOCK_SKILL` listener, and the exact rule (`mpAcquirement` 75000.0 for Great Sage): the call chain was read only down to `SkillEvents.UNLOCK_SKILL`. It decides the price of the Sage -> Great Sage rite (19a task 1 runs it in a GameTest).
 2. The bodies of FoxAblaze's other handlers (only Raphael's was read), and Satanael's/Veldora's "kill" triggers.
-3. Ascension's Shadow Monarch gate ("The System", level 40 job), the private `hasOtherBirdsMastered`, the exact `Prepared`/`Awakening` field types beyond those in the constructor call, and what `EpUtil.grantMaxEp` does to a target that did not use the altar.
+3. Ascension's Shadow Monarch gate ("The System", level 40 job) and the private `hasOtherBirdsMastered` (other pairs than 19c's). What `EpUtil.grantMaxEp` does is no longer needed: the Blood Sovereign rite does not call it.
 4. How Ascension's `MixinBeastfolkRace` adds its evolution (id), and Mysticism's wolf evolution ids (`direwolf`, spirit wolves) as `ManasRace.getNextEvolutions` lists: needed for the race links (19d).
 5. How Mysticism's `mysticism:embryo` is obtained.
 6. Everything at runtime: no addon was launched; the jar reads say what the code does, a real server boot with the jars is a plan task.
 7. Skill Trainer in depth, and Infinity Stones, Re:Zero, Magicule Engineering and NEB (hashed only).
 8. Rebalanced 3.2.17's rest: the nested rebalance jars other than Great Sage, FoxAblaze, Ascension, Mysticism and core, and the effect of `tensura_rebalance_core` on `SkillHelper.learnSkill`.
 
-9. For the Raphael merge: whether Tensura's own unlock listener registers an owner in `ITrulyUnique` for a gifted FoxAblaze instance; the order in which `UNLOCK_SKILL` listeners run; the target method of FoxAblaze's `GreatSageCielAccessMixin`; whether anything in Great Sage's client (`RaphaelScreen`, `RaphaelShader`) is opened only by its own Raphael id (no `holdsRaphael`/`ADDON_RAPHAELS` reference was found in them, so they may be keyed to the Great Sage id).
+9. For the Raphael merge, still unverified: cross-mod `UNLOCK_SKILL` listener order, the target method of FoxAblaze's `GreatSageCielAccessMixin`, and whether `RaphaelScreen` or `RaphaelShader` only recognizes Great Sage's own ID. Ownership was verified in 19b: FoxAblaze's `RaphaelSkill.onLearnSkill` writes the Raphael and Ciel owners to `ITrulyUnique` when its game rule is on; the merge does not write the registry itself.
 
 ## How the plan re-checks
 

@@ -54,6 +54,12 @@ final class DevDemo {
                 "RANK", "beta", "LEVEL", "4", "PACK", me, "PACK_DAYS", "3", "SIRE", "", "LINE", "", "ANCHOR", "Derek", "PRESENCE", "online", "BONUS", "")));
         map.put(id("Stranger"), new net.ofatech.supernaturalbloodlines.parts.supernatural.net.ProfilePayload(id("Stranger"), false, java.util.Map.of()));
         map.put(id("Klaus"), new net.ofatech.supernaturalbloodlines.parts.supernatural.net.ProfilePayload(id("Klaus"), false, facts("NAME", "Klaus", "SPECIES", "vampire", "LEVEL", "14", "PRESENCE", "online")));
+        String groupKind = System.getProperty("supernaturalbloodlines.devshots.demo.group", "");
+        if (!groupKind.isBlank() && !groupKind.startsWith("empty")) {
+            // a mate of the demo group: the Profile names the group and its type
+            map.put(id("Group|mate"), new net.ofatech.supernaturalbloodlines.parts.supernatural.net.ProfilePayload(id("Group|mate"), false, facts("NAME", "Rowan", "SPECIES", "witch",
+                    "LEVEL", "6", "PACK", me + "|" + groupKind, "PACK_DAYS", "9", "PRESENCE", "online")));
+        }
         map.put(id("Tyler"), new net.ofatech.supernaturalbloodlines.parts.supernatural.net.ProfilePayload(id("Tyler"), false, facts("NAME", "Tyler", "SPECIES", "hybrid", "LEVEL", "7", "SIRE", me)));
         map.put(v.player().getUUID(), new net.ofatech.supernaturalbloodlines.parts.supernatural.net.ProfilePayload(v.player().getUUID(), false, facts("NAME", me, "SPECIES", "original_hybrid",
                 "RANK", "alpha", "LEVEL", "12", "PACK", me, "PACK_DAYS", "40", "SIRE", "Klaus", "LINE", "", "GENES", "werewolf", "ANCHOR", "", "PRESENCE", "online", "BONUS", "+25% attack")));
@@ -102,9 +108,44 @@ final class DevDemo {
         }, null);
     }
 
+    /**
+     * {@code .demo.group=clan|coven|brotherhood|empty_clan|empty_coven|empty_brotherhood|empty}: the viewer leads a group of that type
+     * (three members, one away, one ally), or is a fit leader of one with nobody yet, or leads nothing. Without the property the demo pack is the pack.
+     */
+    private static void group(HubView v) {
+        String kind = System.getProperty("supernaturalbloodlines.devshots.demo.group");
+        if (kind == null || kind.isBlank()) {
+            return;
+        }
+        String me = v.player().getName().getString();
+        if (kind.equals("empty")) {
+            net.ofatech.supernaturalbloodlines.parts.supernatural.client.GroupClient.demo(net.ofatech.supernaturalbloodlines.core.group.GroupView.none(net.ofatech.supernaturalbloodlines.core.group.GroupType.COVEN));
+            return;
+        }
+        boolean empty = kind.startsWith("empty_");
+        var type = net.ofatech.supernaturalbloodlines.core.group.GroupType.parse(empty ? kind.substring(6) : kind).orElseThrow();
+        if (empty) {
+            net.ofatech.supernaturalbloodlines.parts.supernatural.client.GroupClient.demo(new net.ofatech.supernaturalbloodlines.core.group.GroupView(type, false,
+                    net.ofatech.supernaturalbloodlines.core.group.GroupView.LEADER, "", 0, List.of()));
+            return;
+        }
+        var none = net.ofatech.supernaturalbloodlines.core.group.GroupRank.NONE;
+        String second = type == net.ofatech.supernaturalbloodlines.core.group.GroupType.COVEN ? "elder" : type == net.ofatech.supernaturalbloodlines.core.group.GroupType.CLAN ? "day_walker" : "member";
+        var secondRank = type == net.ofatech.supernaturalbloodlines.core.group.GroupType.COVEN ? net.ofatech.supernaturalbloodlines.core.group.GroupRank.ELDER
+                : type == net.ofatech.supernaturalbloodlines.core.group.GroupType.CLAN ? net.ofatech.supernaturalbloodlines.core.group.GroupRank.DAY_WALKER : none;
+        net.ofatech.supernaturalbloodlines.parts.supernatural.client.GroupClient.demo(new net.ofatech.supernaturalbloodlines.core.group.GroupView(type, true,
+                net.ofatech.supernaturalbloodlines.core.group.GroupView.LEADER, me, 4, List.of(
+                        new net.ofatech.supernaturalbloodlines.core.group.GroupView.Row(me, "leader", none, true, Optional.of(v.player().getUUID())),
+                        new net.ofatech.supernaturalbloodlines.core.group.GroupView.Row("Rowan", second, secondRank, true, Optional.of(id("Group|mate"))),
+                        new net.ofatech.supernaturalbloodlines.core.group.GroupView.Row("Mira", "member", none, true, Optional.of(id("Mira"))),
+                        new net.ofatech.supernaturalbloodlines.core.group.GroupView.Row("Cass", "member", none, false, Optional.of(id("Cass"))),
+                        new net.ofatech.supernaturalbloodlines.core.group.GroupView.Row("Scott", "ally", none, true, Optional.of(id("Scott"))))));
+    }
+
     static HubView apply(HubView v) {
         String mode = DevShots.demo();
         install(v);
+        group(v);
         if ("ghoul".equals(mode)) {
             return ghoul(v);
         }

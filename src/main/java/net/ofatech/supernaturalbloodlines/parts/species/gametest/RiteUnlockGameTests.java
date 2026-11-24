@@ -95,7 +95,8 @@ public final class RiteUnlockGameTests {
     public static void loreTeachesItsRitesOnce(GameTestHelper helper) {
         ServerPlayer p = player(helper, Species.NONE);
         RiteUnlocks.reconcile(p);
-        helper.assertTrue(RiteUnlocks.learnLore(p, RiteUnlockTable.FINN) == 2, "Finn's Notes did not teach two rites");
+        int expected = 2 + (RiteUnlocks.present(p, "evolve_blood_sovereign") ? 1 : 0); // and the Blood Sovereign where Ascension is installed
+        helper.assertTrue(RiteUnlocks.learnLore(p, RiteUnlockTable.FINN) == expected, "Finn's Notes did not teach " + expected + " rites");
         helper.assertTrue(known(p, "rite_of_the_broken_line") && known(p, "rite_of_the_imprisoned_original"), "the rites are not known");
         helper.assertTrue(!sealed(p, "rite_of_the_broken_line"), "a learned rite is still sealed");
         helper.assertTrue(!known(p, "rite_of_the_cure"), "another lore's rite was taught");

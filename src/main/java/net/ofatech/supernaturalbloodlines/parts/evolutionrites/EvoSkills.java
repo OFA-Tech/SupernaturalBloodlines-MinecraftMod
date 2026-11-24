@@ -71,8 +71,15 @@ public final class EvoSkills {
         return skill instanceof Skill s && s.getType() == Skill.SkillType.RESISTANCE;
     }
 
+    /** A test seam: the dev run cannot load Rebalanced, so a test can say that a skill is retired. Null in play. */
+    public static volatile java.util.function.Predicate<ManasSkill> retiredHook = null;
+
     /** Whether Rebalanced (if it is installed) has retired this skill: a skill in its {@code retired} tag. Never throws. */
     public static boolean retired(MinecraftServer server, ManasSkill skill) {
+        var hook = retiredHook;
+        if (hook != null && hook.test(skill)) {
+            return true;
+        }
         try {
             var key = SkillAPI.getSkillRegistryKey();
             var registry = server.registryAccess().registry(key);

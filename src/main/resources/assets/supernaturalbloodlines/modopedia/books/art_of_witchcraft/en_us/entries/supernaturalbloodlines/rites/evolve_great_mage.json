@@ -1,0 +1,38 @@
+{
+  "title": "Rite of the Great Mage",
+  "icon": {
+    "count": 1,
+    "id": "minecraft:enchanted_book"
+  },
+  "assigned_items": [],
+  "advancement": "supernaturalbloodlines:rites/known/evolve_great_mage",
+  "pages": [
+    {
+      "components": [
+        {
+          "template": "modopedia:page/headered_text",
+          "text": "Circle: medium circle, infernal chalk.\n\nOnly with Ascension. A witch-type performer opens the road to Great Mage for the one on the circle, or for herself, on a full-moon night.",
+          "header": "The Great Mage"
+        }
+      ]
+    },
+    {
+      "components": [
+        {
+          "template": "modopedia:page/headered_text",
+          "text": "The one on the circle must agree by sneaking. The addon's own switch for the skill still decides whether the road is open.\n\nCosts rare items, altar power and 200,000 of their base Max EP, spent once the skill is learned.",
+          "header": "The Great Mage"
+        }
+      ]
+    },
+    {
+      "components": [
+        {
+          "template": "supernaturalbloodlines:page/rite",
+          "rite": "supernaturalbloodlines:evolve_great_mage",
+          "header": "The Great Mage"
+        }
+      ]
+    }
+  ]
+}

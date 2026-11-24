@@ -1,0 +1,38 @@
+{
+  "title": "Rite of the Butcher",
+  "icon": {
+    "count": 1,
+    "id": "minecraft:beef"
+  },
+  "assigned_items": [],
+  "advancement": "supernaturalbloodlines:rites/known/evolve_butcher",
+  "pages": [
+    {
+      "components": [
+        {
+          "template": "modopedia:page/headered_text",
+          "text": "Circle: medium circle, infernal chalk.\n\nOnly with Mysticism. A witch-type performer opens the road to Butcher for a werewolf on the circle, or for herself, on a full-moon night.",
+          "header": "Rite of the Butcher"
+        }
+      ]
+    },
+    {
+      "components": [
+        {
+          "template": "modopedia:page/headered_text",
+          "text": "The werewolf must agree by sneaking. Mysticism's direwolf and spirit wolves count as werewolves.\n\nCosts rare items, altar power and 200,000 of their base Max EP, spent once the skill is learned.",
+          "header": "Rite of the Butcher"
+        }
+      ]
+    },
+    {
+      "components": [
+        {
+          "template": "supernaturalbloodlines:page/rite",
+          "rite": "supernaturalbloodlines:evolve_butcher",
+          "header": "Rite of the Butcher"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,30 @@
+{
+    "neoforge:conditions": [
+        { "type": "supernaturalbloodlines:part_enabled", "part": "evolutionRites" },
+        { "type": "neoforge:mod_loaded", "modid": "greatsage" }
+    ],
+    "items": [
+        { "id": "minecraft:nether_star", "count": 1 },
+        { "id": "minecraft:dragon_breath", "count": 1 },
+        { "id": "enchanted:spirit_of_otherwhere", "count": 1 }
+    ],
+    "shapes": {
+        "enchanted:large_circle": "enchanted:ritual_chalk"
+    },
+    "power": 20000,
+    "factory": {
+        "type": "supernaturalbloodlines:evolution",
+        "recipe": "raphael",
+        "tier": "ultimate",
+        "grants": "greatsage:raphael",
+        "grant_form": "free",
+        "consumes": [ "tensura:great_sage", "tensura:degenerate" ],
+        "needs": [
+            { "skill": "tensura:great_sage", "mastered": true },
+            { "skill": "tensura:degenerate", "mastered": true }
+        ],
+        "requires_mod": "greatsage",
+        "probe": "greatsage.raphael",
+        "ep_cost": 0.0
+    }
+}

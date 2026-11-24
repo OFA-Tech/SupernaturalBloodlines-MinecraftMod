@@ -284,3 +284,13 @@ All data a part ships (rites, recipes, loot, tags, EP, altar blocks) is loaded o
 | `insanity_enabled`, `insanity_interval_seconds` | `true`, `30` | 1 to 3600 | In `supernaturalbloodlines-vampirism_enchanted.toml`: the Curse of Insanity, and the base time between hallucinations. |
 | `susceptibility_enabled`, `susceptibility_extra_percent`, `susceptibility_max_percent` | `true`, `25`, `200` | 0 to 100, 100 to 1000 | The Curse of Susceptibility: extra damage per strength level plus one, and the most damage taken in percent of normal. |
 
+## groups: `supernaturalbloodlines-groups.toml`
+Part of the species part. All on the Admin page (section Groups).
+
+| Key | Default | What it does |
+|---|---|---|
+| `groups_enabled` | true | Off: nobody can found a new clan, coven or brotherhood (packs and existing groups stay). |
+| `clans_enabled` | true | Off: no new clan. |
+| `covens_enabled` | true | Off: no new coven. |
+| `open_founding` | false | On: anyone can found the group their own kind leads. |
+| `max_members` | 0 | Most members of a group, the leader not counted. 0 = no limit. |
