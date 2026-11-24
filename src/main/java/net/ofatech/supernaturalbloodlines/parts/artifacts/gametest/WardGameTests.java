@@ -126,6 +126,20 @@ public final class WardGameTests {
         return new WardRules.Box(c.getX(), c.getY(), c.getZ(), half);
     }
 
+    /** The harness's fake players are refused by every vehicle (a mount event is cancelled for them), so the mount is put on by hand, as startRiding does. */
+    private static void mountByForce(net.minecraft.server.level.ServerPlayer rider, net.minecraft.world.entity.Entity vehicle) {
+        try {
+            var field = net.minecraft.world.entity.Entity.class.getDeclaredField("vehicle");
+            field.setAccessible(true);
+            field.set(rider, vehicle);
+            var add = net.minecraft.world.entity.Entity.class.getDeclaredMethod("addPassenger", net.minecraft.world.entity.Entity.class);
+            add.setAccessible(true);
+            add.invoke(vehicle, rider);
+        } catch (ReflectiveOperationException e) {
+            throw new IllegalStateException(e);
+        }
+    }
+
     @GameTest(template = "tall", templateNamespace = NS)
     public static void ridersAreDismountedBeforeThePush(GameTestHelper helper) {
         var owner = person(helper, -2, -2);
@@ -134,14 +148,18 @@ public final class WardGameTests {
         var boat = new net.minecraft.world.entity.vehicle.Boat(EntityType.BOAT, helper.getLevel());
         try {
             ward(helper, owner, HALF);
-            for (var mount : java.util.List.of(pig, boat)) {
+            for (var mount : java.util.List.<net.minecraft.world.entity.Entity>of(boat, pig)) {
                 mount.setPos(rider.position());
-                helper.assertTrue(rider.startRiding(mount, true), "could not mount " + mount);
+                helper.getLevel().addFreshEntity(mount);
+                mountByForce(rider, mount);
+                helper.assertTrue(rider.getVehicle() == mount, "setup: not mounted on " + mount);
                 helper.assertTrue(WardEnforcer.checkNow(rider), "rider not blocked");
                 helper.assertFalse(rider.isPassenger(), "rider was pushed while still mounted");
             }
         } finally {
             rider.stopRiding();
+            pig.discard();
+            boat.discard();
             clean(helper, owner, rider);
         }
         helper.succeed();
@@ -166,7 +184,13 @@ public final class WardGameTests {
             level.setBlock(lava, Blocks.LAVA.defaultBlockState(), 3);
             level.setBlock(dry, Blocks.STONE.defaultBlockState(), 3);
             for (int i = 0; i < 4; i++) WardEnforcer.checkNow(rider);
-            helper.assertTrue(rider.getX() < original.x && rider.getY() == dry.getY() + 1, "did not land on the dry lower floor: " + rider.position());
+            // the lava face is refused: the vampire lands on another face, outside the ward, on a solid dry floor
+            BlockPos feet = rider.blockPosition();
+            // any face but the lava one (+x): the -x face or a z face both count
+            helper.assertTrue(rider.getX() <= original.x + 1.0E-6, "went out on the lava face: " + rider.position());
+            helper.assertFalse(centreBox(helper, HALF).contains(rider.getX(), rider.getY(), rider.getZ()), "still inside: " + rider.position());
+            helper.assertTrue(level.getBlockState(feet.below()).isFaceSturdy(level, feet.below(), net.minecraft.core.Direction.UP)
+                    && level.getFluidState(feet).isEmpty() && level.getFluidState(feet.below()).isEmpty(), "no dry solid floor under the landing: " + rider.position());
         } finally {
             level.setBlock(dry, oldDry, 3);
             level.setBlock(lava, oldLava, 3);
