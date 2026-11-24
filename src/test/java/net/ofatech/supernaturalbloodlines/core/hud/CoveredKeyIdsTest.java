@@ -62,6 +62,29 @@ class CoveredKeyIdsTest {
     }
 
     @Test
+    void infinityKeysAreCoveredOnlyWhileTheWheelCanDoTheirJobAndReleaseIsLeftAlone() {
+        List<String> on = CoveredKeyIds.all(true, true, true, true);
+        assertTrue(on.contains("key.infinity.wheel") && on.contains("key.infinity.soul_control"));
+        assertFalse(on.contains("key.infinity.soul_release"), "his release key stays his own");
+        List<String> compatOff = CoveredKeyIds.all(true, true, false, false);
+        assertFalse(compatOff.contains("key.infinity.wheel"), "with the compat off his wheel is the only way to use a stone");
+        assertFalse(compatOff.contains("key.infinity.soul_control"));
+        List<String> noSoulClasses = CoveredKeyIds.all(true, true, true, false);
+        assertTrue(noSoulClasses.contains("key.infinity.wheel"));
+        assertFalse(noSoulClasses.contains("key.infinity.soul_control"), "a covered key with no entry would strand a possessed player");
+        // no wheel screen at all: none of the wheel keys, whatever the compat says
+        assertFalse(CoveredKeyIds.all(true, false, true, true).contains("key.infinity.wheel"));
+        // everything else is the same in every case
+        assertEquals(on.size() - 2, compatOff.size());
+    }
+
+    @Test
+    void hudPartOffRestoresTheInfinityKeys() {
+        assertFalse(CoveredKeyIds.all(true).contains("key.infinity.wheel"));
+        assertFalse(CoveredKeyIds.all(true).contains("key.infinity.soul_control"));
+    }
+
+    @Test
     void modOffRestoresItsKeyAlone() {
         // a mod that is not installed has no key to set, and the other mods' keys stay covered
         List<String> covered = CoveredKeyIds.all(true, true);

@@ -63,7 +63,11 @@ public final class DevWheel {
         out.add(power(PowerSource.BLOODLINE, "bite", PowerGroup.MAIN, PowerKind.HELD, "Bite", "fang", ready));
         out.add(power(PowerSource.VAMPIRISM, "rage", PowerGroup.MAIN, PowerKind.TOGGLE, "Rage", "claw", ready));
         out.add(power(PowerSource.WEREWOLVES, "howl", PowerGroup.MAIN, PowerKind.INSTANT, "Howl", "wolf_spirits", ready));
-        out.add(power(PowerSource.INFINITY, "soul", PowerGroup.MAIN, PowerKind.INSTANT, "Soul", "spark", ready));
+        // the stones' entries as the Infinity compat builds them: one per stone, its unlocked powers are its modes, then the soul control entry while possessing
+        out.add(power(PowerSource.INFINITY, "mind_stone", PowerGroup.MAIN, PowerKind.AIMED, "Mind Stone", "spark", ready, "Mind Read", "Puppet Strings", "Flight 3/10"));
+        out.add(power(PowerSource.INFINITY, "soul_stone", PowerGroup.MAIN, PowerKind.TOGGLE, "Soul Stone", "heart", st(true, 0, 0, LockReason.NONE, 0), "Regeneration", "Soul Sight"));
+        out.add(power(PowerSource.INFINITY, "soul_control", PowerGroup.MAIN, PowerKind.INSTANT, "Soul control", "wolf_spirits", ready));
+        out.add(power(PowerSource.INFINITY, "time_stone", PowerGroup.MAIN, PowerKind.INSTANT, "Time Stone", "moon_full", st(false, 0, 0, LockReason.REFUSED_NOW, 0), "Rewind"));
         out.add(power(PowerSource.GREAT_SAGE, "scan", PowerGroup.MAIN, PowerKind.HELD, "Scan", "eye", ready));
         out.add(power(t, "predator", sk, PowerKind.INSTANT, "Predator", "fang", ready, "Devour", "Analyze", "Stomach"));
         out.add(power(t, "ultraspeed", sk, PowerKind.TOGGLE, "Ultraspeed", "boot", st(true, 0, 0, LockReason.NONE, 0)));
@@ -100,11 +104,12 @@ public final class DevWheel {
         long now = mc.level == null ? 0 : mc.level.getGameTime();
         mc.setScreen(null); // an open wheel is removed first: its removal clears these flags
         active = true;
-        alt = "alt".equals(state);
+        alt = "alt".equals(state) || "stone".equals(state);
         holds = null;
         WheelActions.reset();
         WheelDescriptions.demo = Map.of("heat_wave", "Scorching air burns everything near you.", "predator", "Devour a target to copy its body and skills. The mode picks what it does.",
-                "black_lightning", "Call down black lightning on the spot you aim at.", "spell_15", "Hold to charge, then let go to throw a spear of lightning.");
+                "black_lightning", "Call down black lightning on the spot you aim at.", "spell_15", "Hold to charge, then let go to throw a spear of lightning.",
+                "mind_stone", "Read the mind of what you aim at. Aim, then click to confirm.", "soul_stone", "Heal over time while it is on.");
         ClientCatalogue.frozen = true;
         ClientCatalogue.set(new WheelCataloguePayload(1, demo(now)));
         WheelList.reset();
@@ -125,6 +130,10 @@ public final class DevWheel {
         switch (state) {
             case "alt" -> {
                 screen.devOpen(new WheelModel.Open(3, 0, 0));
+                screen.devHover(Ring.OUTER, 0);
+            }
+            case "stone" -> {
+                screen.devOpen(new WheelModel.Open(4, 0, 0));
                 screen.devHover(Ring.OUTER, 0);
             }
             case "page" -> {

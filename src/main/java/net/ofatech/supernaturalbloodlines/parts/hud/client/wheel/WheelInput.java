@@ -65,6 +65,7 @@ public final class WheelInput {
             }
         });
         NeoForge.EVENT_BUS.addListener((ClientPlayerNetworkEvent.LoggingOut e) -> reset());
+        NeoForge.EVENT_BUS.addListener((ClientPlayerNetworkEvent.LoggingIn e) -> net.ofatech.supernaturalbloodlines.parts.hud.client.wheel.infinity.InfinityCompat.joined());
     }
 
     public static void registerLayers(RegisterGuiLayersEvent e) {

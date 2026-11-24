@@ -27,7 +27,8 @@ class DefaultsTest {
         assertEquals(net.ofatech.supernaturalbloodlines.core.hud.TrackerAnchor.TOP_LEFT, clientDefault("toast_anchor"));
         assertEquals(200, clientDefault("wheel_tap_ms"));
         assertEquals(true, clientDefault("wheel_remember_last"));
-        assertEquals(11, HudClientConfig.SPEC.getSpec().valueMap().size(), "a client setting was added or removed: decide its player-ready default and list it here");
+        assertEquals(true, clientDefault("infinity_compat_enabled"));
+        assertEquals(12, HudClientConfig.SPEC.getSpec().valueMap().size(), "a client setting was added or removed: decide its player-ready default and list it here");
     }
 
     @Test

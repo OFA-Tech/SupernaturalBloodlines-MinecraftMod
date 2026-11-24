@@ -21,6 +21,7 @@ public final class HudClientConfig {
     private static final ModConfigSpec.EnumValue<net.ofatech.supernaturalbloodlines.core.hud.TrackerAnchor> TOAST_ANCHOR;
     private static final ModConfigSpec.IntValue WHEEL_TAP_MS;
     private static final ModConfigSpec.BooleanValue WHEEL_REMEMBER_LAST;
+    private static final ModConfigSpec.BooleanValue INFINITY_COMPAT;
 
     static {
         ModConfigSpec.Builder b = new ModConfigSpec.Builder();
@@ -44,7 +45,13 @@ public final class HudClientConfig {
                 .defineInRange("wheel_tap_ms", 200, 100, 500);
         WHEEL_REMEMBER_LAST = b.comment("Remember the power a tap of the wheel key repeats between sessions (a small file in the config folder). Off: it is forgotten when the game closes.")
                 .define("wheel_remember_last", true);
+        INFINITY_COMPAT = b.comment("Show Infinity Stones' powers on the skill wheel (one entry per carried stone, and soul control while possessing), read from his mod. Off: the stones stay plain Tensura skills in the Tensura ring and his own wheel key and soul control key come back.")
+                .define("infinity_compat_enabled", true);
         SPEC = b.build();
+    }
+
+    public static boolean infinityCompat() {
+        return read(INFINITY_COMPAT, true);
     }
 
     public static int wheelTapMs() {

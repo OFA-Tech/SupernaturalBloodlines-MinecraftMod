@@ -1,5 +1,20 @@
 # Changelog
 
+## Unreleased (skill wheel, phase W5: Infinity Stones on the wheel)
+
+### Added
+- **Infinity Stones on the skill wheel.** Each stone you carry is one entry in the Infinity Stones ring and its unlocked powers are its modes: left click uses (a switch flips and the wheel stays open, a power that needs aim aims first, a channel starts and the same click stops it), Shift + left click is the second option of a power that has one, Alt + click changes the power, scroll over a power with levels changes the level. **Soul control** is an entry next to the Soul stone while you are possessing something. Everything is read from Infinity Stones by reflection and his server checks every use. Setting `infinity_compat_enabled` (`hud`, default on).
+- **Infinity's wheel key and soul control key move onto our wheel** while this works (his soul release key stays his own).
+
+### Changed
+- The Tensura ring no longer lists Infinity's skills (the stones are in their own ring); with the setting off, or if his mod changes in a way we cannot read (one warning in the log), they are plain Tensura skills again and his own wheel key works again.
+- The Alt mode list of a power with many modes shows the three round the current one.
+
+### Known limits
+- Turning off Infinity's `soul.regen` clears every effect on the player, ours and other mods' too (a command in his tree). Not fixable from our side; a bug report for his mod is in `docs/superpowers/research/`.
+
+### Rolling back
+- Set `infinity_compat_enabled` to false: the stones return to the Tensura ring and his own keys work again. No payload changed (network version stays 4).
 ## Unreleased (skill wheel, phase W4b: round-2 notes on the screen)
 
 ### Fixed

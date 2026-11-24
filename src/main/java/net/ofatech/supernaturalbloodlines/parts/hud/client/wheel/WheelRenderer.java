@@ -368,9 +368,11 @@ final class WheelRenderer {
 
     private static void helpLines(GuiGraphics g, Font font, Frame f, int x, int y) {
         boolean paged = f.page().size() > 0 && f.layout().pageCount() > 1;
+        // a stone power with a second option takes the closing row's place (G and Esc are on the G hint already)
+        boolean dual = f.power() != null && net.ofatech.supernaturalbloodlines.parts.hud.client.wheel.infinity.InfinityCompat.isDual(f.power());
         List<WheelPanelText.HelpRow> rows = WheelPanelText.help(font, s -> font.width(WheelStrings.bold(s)),
-                List.of(text("help.click"), text("help.right"), paged ? text("help.scroll") : text("help.alt"), text("help.close_keys")),
-                List.of(text("help.click_use"), text("help.right_slot"), paged ? text("help.scroll_page") : text("help.alt_mode"), text("help.close")));
+                List.of(text("help.click"), text("help.right"), paged ? text("help.scroll") : text("help.alt"), dual ? text("help.dual_key") : text("help.close_keys")),
+                List.of(text("help.click_use"), text("help.right_slot"), paged ? text("help.scroll_page") : text("help.alt_mode"), dual ? text("help.dual_what") : text("help.close")));
         for (WheelPanelText.HelpRow row : rows) {
             g.drawString(font, WheelStrings.bold(row.key()), x, y, f.pal().ink(), false);
             g.drawString(font, row.what(), x + row.whatX(), y, f.pal().muted(), false);
@@ -402,12 +404,14 @@ final class WheelRenderer {
             Cell a = f.layout().modeListAnchor(c.index());
             UiKit.draw(g, f.kit(), Part.TOOLTIP, a.x(), a.y(), a.w(), a.h());
             int ink = UiKit.labelOver(f.kit(), Part.TOOLTIP, f.pal().hintInk());
-            for (int i = 0; i < Math.min(3, e.modeNames().size()); i++) {
+            // a power with many modes (a stone has up to a few dozen) shows the three round the current one
+            int first = Math.max(0, Math.min(e.state().mode() - 1, e.modeNames().size() - 3));
+            for (int i = first; i < Math.min(first + 3, e.modeNames().size()); i++) {
                 boolean current = i == e.state().mode();
                 if (current) {
-                    UiKit.shared(g, KitSprites.MODE_MARK, a.x() + 5, a.y() + 7 + i * 12, 7, 7, 1f);
+                    UiKit.shared(g, KitSprites.MODE_MARK, a.x() + 5, a.y() + 7 + (i - first) * 12, 7, 7, 1f);
                 }
-                g.drawString(font, cut(font, WheelStrings.of(e.modeNames().get(i)), a.w() - 20), a.x() + 15, a.y() + 6 + i * 12, ink, false);
+                g.drawString(font, cut(font, WheelStrings.of(e.modeNames().get(i)), a.w() - 20), a.x() + 15, a.y() + 6 + (i - first) * 12, ink, false);
             }
         }
     }

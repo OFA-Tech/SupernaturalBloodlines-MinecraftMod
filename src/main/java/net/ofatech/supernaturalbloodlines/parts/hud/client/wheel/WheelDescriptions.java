@@ -1,6 +1,7 @@
 package net.ofatech.supernaturalbloodlines.parts.hud.client.wheel;
 
 import java.util.HashMap;
+import net.ofatech.supernaturalbloodlines.parts.hud.client.wheel.infinity.InfinityCompat;
 import java.util.Locale;
 import java.util.Map;
 import net.minecraft.client.resources.language.I18n;
@@ -35,14 +36,21 @@ final class WheelDescriptions {
         if (d != null && d.containsKey(e.ref().id().getPath())) {
             return d.get(e.ref().id().getPath());
         }
-        return CACHE.computeIfAbsent(e.ref().key(), k -> lookup(e));
+        // a stone says what its current power does, so the power it is on is part of the key
+        String key = InfinityCompat.owns(e) ? e.ref().key() + '#' + e.state().mode() + '#' + e.modeNames().size() : e.ref().key();
+        return CACHE.computeIfAbsent(key, k -> lookup(e));
     }
 
     private static String lookup(WheelEntry e) {
         PowerRef ref = e.ref();
         try {
             switch (ref.source()) {
-                case TENSURA, INFINITY:
+                case INFINITY:
+                    if (InfinityCompat.owns(e)) {
+                        return InfinityCompat.description(e);
+                    }
+                    return ModList.get().isLoaded("tensura") ? TensuraWheelLink.description(ref.id()) : "";
+                case TENSURA:
                     return ModList.get().isLoaded("tensura") ? TensuraWheelLink.description(ref.id()) : "";
                 case VAMPIRISM, WEREWOLVES:
                     String key = "action." + ref.id().getNamespace() + "." + ref.id().getPath() + ".desc";

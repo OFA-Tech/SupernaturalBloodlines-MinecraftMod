@@ -12,6 +12,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.neoforged.fml.ModList;
 import net.neoforged.fml.loading.FMLPaths;
 import net.ofatech.supernaturalbloodlines.SupernaturalBloodlines;
+import net.ofatech.supernaturalbloodlines.parts.hud.client.wheel.infinity.InfinityCompat;
 import net.ofatech.supernaturalbloodlines.core.wheel.AimMode;
 import net.ofatech.supernaturalbloodlines.core.wheel.HeldPowers;
 import net.ofatech.supernaturalbloodlines.core.wheel.LastPower;
@@ -36,7 +37,7 @@ import net.ofatech.supernaturalbloodlines.parts.hud.net.WheelViewPayload;
 public final class WheelActions {
     private static final HeldPowers HELD = new HeldPowers();
     private static LastPower last;
-    private static final AimMode AIM = new AimMode((ref, mode, target) -> sendUse(ref, mode, target, false));
+    private static final AimMode AIM = new AimMode((ref, mode, target) -> confirmAim(ref, mode, target));
     private static WheelEntry aimEntry;
 
     private WheelActions() {
@@ -71,6 +72,20 @@ public final class WheelActions {
         HudSend.send(new UsePowerPayload(ref.key(), mode, target, release));
     }
 
+    /** The confirmed aim: a stone's power goes to Infinity's own server (the second option when that is what was chosen), anything else to ours. */
+    private static void confirmAim(PowerRef ref, int mode, int target) {
+        if (ref.source() == PowerSource.INFINITY) {
+            WheelEntry e = InfinityCompat.find(ref);
+            if (e != null) {
+                InfinityCompat.use(e, aimSecond);
+            }
+            return;
+        }
+        sendUse(ref, mode, target, false);
+    }
+
+    private static boolean aimSecond;
+
     private static final net.ofatech.supernaturalbloodlines.core.wheel.WheelViewState VIEW = new net.ofatech.supernaturalbloodlines.core.wheel.WheelViewState();
 
     /** Tells the server whether a screen that lists the powers is open (it only sends the catalogue to a viewer): the wheel and the hub share one request. */
@@ -83,11 +98,20 @@ public final class WheelActions {
      * not start (nothing is sent for a power that is locked: the panel says why).
      */
     public static boolean use(WheelEntry e, int mode) {
+        return use(e, mode, false);
+    }
+
+    /** {@code second}: Shift + left click, the second option of a power that has one (Infinity's dual powers). */
+    public static boolean use(WheelEntry e, int mode, boolean second) {
         if (e.state().locked()) {
             return false;
         }
         last().set(e.ref(), mode);
+        if (InfinityCompat.owns(e) && e.kind() != PowerKind.AIMED) {
+            return InfinityCompat.use(e, second);
+        }
         if (e.kind() == PowerKind.AIMED) {
+            aimSecond = second;
             AIM.start(e.ref(), mode, Minecraft.getInstance().level == null ? 0 : Minecraft.getInstance().level.getGameTime());
             aimEntry = e;
             return true;
@@ -130,7 +154,18 @@ public final class WheelActions {
         }
     }
 
+    /** Scroll over a power with levels (Infinity's variable powers). */
+    public static void changeLevel(WheelEntry e, int delta) {
+        if (InfinityCompat.owns(e)) {
+            InfinityCompat.level(e, delta);
+        }
+    }
+
     public static void changeMode(WheelEntry e, int delta) {
+        if (InfinityCompat.owns(e)) {
+            InfinityCompat.cycle(e, delta);
+            return;
+        }
         if (e.ref().source() == PowerSource.GREAT_SAGE || e.modeNames().size() < 2) {
             return;
         }
