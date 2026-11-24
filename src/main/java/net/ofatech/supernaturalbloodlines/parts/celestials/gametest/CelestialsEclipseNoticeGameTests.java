@@ -78,6 +78,9 @@ public final class CelestialsEclipseNoticeGameTests {
         LunarEclipse.overridePlayers(s -> List.of());
         LunarEclipse.overrideNotice((s, line) -> {
         });
+        // an eclipse is active only inside its night (the time of day is before the dawn): the world's time is whatever the tests before this one left it (some set it just past the dawn), so this test picks its own
+        long dayTime = helper.getLevel().getDayTime();
+        helper.getLevel().setDayTime(dayTime - dayTime % 24000L + 15000L);
         try {
             CelestialsPart.install(ec);
             helper.assertTrue(LunarEclipse.start(server) && ec.running.isPresent(), "setup: the eclipse did not start mirrored");
@@ -96,6 +99,7 @@ public final class CelestialsEclipseNoticeGameTests {
             helper.assertTrue(ec.running.isEmpty(), "a stale mirror of an eclipse that is over stayed on");
         } finally {
             LunarEclipse.stop(server);
+            helper.getLevel().setDayTime(dayTime);
             CelestialsPart.install(null);
             LunarEclipse.overrideNotice(null);
             LunarEclipse.overridePlayers(null);

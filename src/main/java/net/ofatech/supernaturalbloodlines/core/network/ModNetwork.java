@@ -17,7 +17,15 @@ import net.ofatech.supernaturalbloodlines.core.attachment.ModAttachments;
 import net.ofatech.supernaturalbloodlines.core.supernatural.SupernaturalAccess;
 
 public final class ModNetwork {
-    private static final String PROTOCOL = "1";
+    /**
+     * The version of this mod's required payloads. A client of another version is refused at login, with the version mismatch screen (NeoForge compares it). Bump it
+     * whenever a synced field of an entity or an attachment is added or removed too: the game's own entity-data ids are positional, so an old client that is given a
+     * new id reads past the end of its table and is kicked with an obscure error instead.
+     * <ul>
+     *   <li>"2": the Beast of Gevaudan synced two more entity data entries (form and shift ticks) for the morph (UI overhaul phase 7).</li>
+     * </ul>
+     */
+    public static final String PROTOCOL = "2";
 
     private ModNetwork() {
     }

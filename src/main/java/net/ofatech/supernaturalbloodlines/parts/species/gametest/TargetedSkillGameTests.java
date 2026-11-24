@@ -61,8 +61,7 @@ public final class TargetedSkillGameTests {
     }
 
     private static ServerPlayer target(GameTestHelper helper, Species species, boolean vampire) {
-        // a player target needs the server's PvP switch on (a targeted skill refuses a player with it off); the tests that want it off turn it off after this
-        helper.getLevel().getServer().setPvpAllowed(true);
+        // PvP is the test's own business: a player target needs it on (a targeted skill refuses a player with it off), and a test that turns it on puts it back in its finally
         ServerPlayer t = TestPlayers.createDuelist(helper);
         t.setPos(helper.absoluteVec(new Vec3(1.5, 1, 3.0)));
         if (vampire) {
@@ -147,7 +146,9 @@ public final class TargetedSkillGameTests {
         TestPlayers.TalkingDuelist userB = vampire(helper, "S-VAM-8");
         ServerPlayer original = target(helper, Species.ORIGINAL, true);
         Zombie z = zombie(helper, 5.0f);
+        boolean pvp = helper.getLevel().getServer().isPvpAllowed();
         try {
+            helper.getLevel().getServer().setPvpAllowed(true); // a player target needs the PvP switch on; put back in the finally
             original.setHealth(5.0f);
             Component a = RipHeartAction.INSTANCE.trigger(userA, original);
             Component b = RipHeartAction.INSTANCE.trigger(userB, z);
@@ -163,6 +164,7 @@ public final class TargetedSkillGameTests {
             helper.assertTrue(RipHeartAction.TOO_STRONG.equals(key(RipHeartAction.INSTANCE.trigger(userC, original))), "a healthy Original was not told too healthy, like anyone");
             clean(userC);
         } finally {
+            helper.getLevel().getServer().setPvpAllowed(pvp);
             z.discard();
             clean(userA, userB, original);
         }
@@ -300,7 +302,9 @@ public final class TargetedSkillGameTests {
         TestPlayers.TalkingDuelist user2 = vampire(helper, "S-VAM-8");
         ServerPlayer vamp = target(helper, Species.NONE, true);
         ServerPlayer original = target(helper, Species.ORIGINAL, true);
+        boolean pvp = helper.getLevel().getServer().isPvpAllowed();
         try {
+            helper.getLevel().getServer().setPvpAllowed(true); // a player target needs the PvP switch on; put back in the finally
             vamp.setHealth(5.0f);
             original.setHealth(5.0f);
             Downed.startSnapped(vamp, 600);
@@ -309,6 +313,7 @@ public final class TargetedSkillGameTests {
             helper.assertTrue(vamp.isDeadOrDying(), "a snapped vampire at 5 health was not finished");
             helper.assertTrue(!original.isDeadOrDying() && Downed.isSnapped(original), "a snapped Original was hurt");
         } finally {
+            helper.getLevel().getServer().setPvpAllowed(pvp);
             clean(user, user2, vamp, original);
         }
         helper.succeed();
@@ -319,13 +324,16 @@ public final class TargetedSkillGameTests {
     private static int snapTicks(GameTestHelper helper, Species species, boolean vampire, String why) {
         TestPlayers.TalkingDuelist user = vampire(helper, "S-VAM-9");
         ServerPlayer t = target(helper, species, vampire);
+        boolean pvp = helper.getLevel().getServer().isPvpAllowed();
         try {
+            helper.getLevel().getServer().setPvpAllowed(true); // a player target needs the PvP switch on; put back in the finally
             float before = t.getHealth();
             helper.assertTrue(NeckSnapAction.INSTANCE.trigger(user, t) == null, why + ": refused");
             helper.assertTrue(Downed.isSnapped(t), why + ": not snapped");
             helper.assertTrue(t.getHealth() == before, why + ": a snap cost " + (before - t.getHealth()) + " health");
             return t.getData(SpeciesRegistries.DOWNED);
         } finally {
+            helper.getLevel().getServer().setPvpAllowed(pvp);
             clean(user, t);
         }
     }
@@ -351,7 +359,9 @@ public final class TargetedSkillGameTests {
             return;
         }
         ServerPlayer t = target(helper, Species.NONE, true);
+        boolean pvp = helper.getLevel().getServer().isPvpAllowed();
         try {
+            helper.getLevel().getServer().setPvpAllowed(true); // a player target needs the PvP switch on; put back in the finally
             t.setHealth(13.0f);
             Downed.startSnapped(t, 40);
             Downed.giveUp(t);
@@ -363,6 +373,7 @@ public final class TargetedSkillGameTests {
             helper.assertTrue(!Downed.isDowned(t), "still down after the time");
             helper.assertTrue(t.getHealth() == 13.0f, "woke with " + t.getHealth() + ", not the 13 they had");
         } finally {
+            helper.getLevel().getServer().setPvpAllowed(pvp);
             clean(t);
         }
         helper.succeed();
@@ -375,13 +386,16 @@ public final class TargetedSkillGameTests {
         }
         ServerPlayer t = target(helper, Species.NONE, true);
         Zombie z = zombie(helper, 20.0f);
+        boolean pvp = helper.getLevel().getServer().isPvpAllowed();
         try {
+            helper.getLevel().getServer().setPvpAllowed(true); // a player target needs the PvP switch on; put back in the finally
             Downed.startSnapped(t, 100);
             AttackEntityEvent swing = new AttackEntityEvent(t, z);
             NeoForge.EVENT_BUS.post(swing);
             helper.assertTrue(swing.isCanceled(), "a snapped player could attack");
             helper.assertTrue(ExtraActions.blocked(t), "a snapped player may run an extra action");
         } finally {
+            helper.getLevel().getServer().setPvpAllowed(pvp);
             z.discard();
             clean(t);
         }
@@ -448,7 +462,9 @@ public final class TargetedSkillGameTests {
         }
         LivingEntity[] targets = {target(helper, Species.ORIGINAL, true), target(helper, Species.NONE, true), zombie(helper, 6.0f), zombie(helper, 20.0f), boss(helper)};
         int cooldown = -1;
+        boolean pvp = helper.getLevel().getServer().isPvpAllowed();
         try {
+            helper.getLevel().getServer().setPvpAllowed(true); // a player target needs the PvP switch on; put back in the finally
             for (LivingEntity t : targets) {
                 if (t == null) {
                     continue; // no bosses part
@@ -462,6 +478,7 @@ public final class TargetedSkillGameTests {
                 clean(user);
             }
         } finally {
+            helper.getLevel().getServer().setPvpAllowed(pvp);
             for (LivingEntity t : targets) {
                 if (t instanceof ServerPlayer sp) {
                     clean(sp);
@@ -526,7 +543,9 @@ public final class TargetedSkillGameTests {
         ServerPlayer creative = target(helper, Species.NONE, true);
         Zombie z = zombie(helper, 6.0f);
         java.util.function.Consumer<AttackEntityEvent> claim = e -> e.setCanceled(true);
+        boolean pvp = helper.getLevel().getServer().isPvpAllowed();
         try {
+            helper.getLevel().getServer().setPvpAllowed(true); // a player target needs the PvP switch on; put back in the finally
             Downed.startSnapped(snapped, 600);
             creative.setGameMode(net.minecraft.world.level.GameType.CREATIVE);
             helper.assertTrue(NeckSnapAction.REFUSED.equals(key(NeckSnapAction.INSTANCE.trigger(user, snapped))), "an already snapped target was not refused");
@@ -535,6 +554,7 @@ public final class TargetedSkillGameTests {
             helper.assertTrue(NeckSnapAction.REFUSED.equals(key(NeckSnapAction.INSTANCE.trigger(user, z))), "a claimed target was not refused");
             helper.assertTrue(z.isAlive() && ActionClock.left(user, ExtraActions.NECK_SNAP) == 0, "a refusal acted or started the cooldown");
         } finally {
+            helper.getLevel().getServer().setPvpAllowed(pvp);
             NeoForge.EVENT_BUS.unregister(claim);
             z.discard();
             clean(user, snapped, creative);
@@ -639,7 +659,9 @@ public final class TargetedSkillGameTests {
         }
         ServerPlayer t = target(helper, Species.NONE, true);
         TestPlayers.TalkingDuelist user = vampire(helper, "S-VAM-9");
+        boolean pvp = helper.getLevel().getServer().isPvpAllowed();
         try {
+            helper.getLevel().getServer().setPvpAllowed(true); // a player target needs the PvP switch on; put back in the finally
             Downed.startSnapped(t, 40);
             for (int i = 0; i < 40; i++) {
                 Downed.tick(t);
@@ -653,6 +675,7 @@ public final class TargetedSkillGameTests {
             var saved = t.saveWithoutId(new net.minecraft.nbt.CompoundTag());
             helper.assertTrue(saved.getCompound("neoforge:attachments").contains(NS + ":snap_grace_until"), "the grace is not saved: a logout would end it: " + saved.getCompound("neoforge:attachments").getAllKeys());
         } finally {
+            helper.getLevel().getServer().setPvpAllowed(pvp);
             clean(user, t);
         }
         helper.succeed();
@@ -733,7 +756,9 @@ public final class TargetedSkillGameTests {
         TestPlayers.TalkingDuelist userB = vampire(helper, "S-VAM-8");
         Zombie z = zombie(helper, 20.0f);
         ServerPlayer original = target(helper, Species.ORIGINAL, true);
+        boolean pvp = helper.getLevel().getServer().isPvpAllowed();
         try {
+            helper.getLevel().getServer().setPvpAllowed(true); // a player target needs the PvP switch on; put back in the finally
             // 11 of 20 health: 9 are left, so the heart-rip's blow (9 + 1) is not above the 11 the i-frames remember, and without bypasses_cooldown it would be swallowed
             z.hurt(helper.getLevel().damageSources().generic(), 11.0f);
             original.hurt(helper.getLevel().damageSources().generic(), 11.0f);
@@ -746,6 +771,7 @@ public final class TargetedSkillGameTests {
             helper.assertTrue(userA.receivedOnActionBar(RipHeartAction.DONE) && userB.receivedOnActionBar(RipHeartAction.DONE)
                     && ActionClock.left(userA, ExtraActions.RIP_HEART) == ActionClock.left(userB, ExtraActions.RIP_HEART), "the two answers differ");
         } finally {
+            helper.getLevel().getServer().setPvpAllowed(pvp);
             z.discard();
             clean(userA, userB, original);
         }
@@ -770,7 +796,9 @@ public final class TargetedSkillGameTests {
             }
         };
         NeoForge.EVENT_BUS.addListener(net.neoforged.bus.api.EventPriority.LOWEST, true, net.neoforged.neoforge.event.entity.living.LivingDeathEvent.class, watch);
+        boolean pvp = helper.getLevel().getServer().isPvpAllowed();
         try {
+            helper.getLevel().getServer().setPvpAllowed(true); // a player target needs the PvP switch on; put back in the finally
             intoDbno(helper, vamp);
             intoDbno(helper, original);
             helper.assertTrue(RipHeartAction.INSTANCE.trigger(userA, vamp) == null && RipHeartAction.INSTANCE.trigger(userB, original) == null, "refused");
@@ -780,6 +808,7 @@ public final class TargetedSkillGameTests {
             helper.assertTrue(userA.receivedOnActionBar(RipHeartAction.DONE) && userB.receivedOnActionBar(RipHeartAction.DONE)
                     && ActionClock.left(userA, ExtraActions.RIP_HEART) == ActionClock.left(userB, ExtraActions.RIP_HEART), "the two answers differ");
         } finally {
+            helper.getLevel().getServer().setPvpAllowed(pvp);
             NeoForge.EVENT_BUS.unregister(watch);
             OriginalRulesProbe.endDying(original);
             clean(userA, userB, vamp, original);
@@ -815,7 +844,13 @@ public final class TargetedSkillGameTests {
         NeoForge.EVENT_BUS.addListener(net.neoforged.bus.api.EventPriority.HIGHEST, false, net.neoforged.neoforge.event.entity.living.LivingDeathEvent.class, watch);        try {
             vamp.setHealth(5.0f);
             helper.assertTrue(!VampirismAPI.vampirePlayer(vamp).isDBNO(), "setup: already in the dying state");
-            helper.assertTrue(RipHeartAction.INSTANCE.trigger(user, vamp) == null, "refused");
+            boolean pvp = helper.getLevel().getServer().isPvpAllowed();
+            try {
+                helper.getLevel().getServer().setPvpAllowed(true); // the blow is a player's on a player: refused with PvP off
+                helper.assertTrue(RipHeartAction.INSTANCE.trigger(user, vamp) == null, "refused");
+            } finally {
+                helper.getLevel().getServer().setPvpAllowed(pvp);
+            }
             helper.assertTrue(caught[0], "setup: the death was not caught, so this test would not reach the hotspot");
             helper.runAfterDelay(2, () -> {
                 try {
@@ -855,12 +890,15 @@ public final class TargetedSkillGameTests {
         };
         NeoForge.EVENT_BUS.addListener(net.neoforged.bus.api.EventPriority.NORMAL, false, net.neoforged.neoforge.event.entity.living.LivingDeathEvent.class, saver);
         NeoForge.EVENT_BUS.addListener(net.neoforged.bus.api.EventPriority.LOW, false, net.neoforged.neoforge.event.entity.living.LivingDeathEvent.class, low);
+        boolean pvp = helper.getLevel().getServer().isPvpAllowed();
         try {
+            helper.getLevel().getServer().setPvpAllowed(true); // a player target needs the PvP switch on; put back in the finally
             vamp.setHealth(5.0f);
             helper.assertTrue(RipHeartAction.INSTANCE.trigger(user, vamp) == null, "refused");
             helper.assertTrue(!vamp.isAlive(), "the save at NORMAL kept the vampire alive");
             helper.assertTrue(seenAtLow[0], "a LOW listener never saw the death: the save was taken back only after them");
         } finally {
+            helper.getLevel().getServer().setPvpAllowed(pvp);
             NeoForge.EVENT_BUS.unregister(saver);
             NeoForge.EVENT_BUS.unregister(low);
             clean(user, vamp);
@@ -875,11 +913,14 @@ public final class TargetedSkillGameTests {
         }
         TestPlayers.TalkingDuelist user = vampire(helper, "S-VAM-9");
         ServerPlayer vamp = target(helper, Species.NONE, true);
+        boolean pvp = helper.getLevel().getServer().isPvpAllowed();
         try {
+            helper.getLevel().getServer().setPvpAllowed(true); // a player target needs the PvP switch on; put back in the finally
             intoDbno(helper, vamp);
             assertRefused(helper, "snap in the dying state", NeckSnapAction.REFUSED, NeckSnapAction.INSTANCE.trigger(user, vamp), user, ExtraActions.NECK_SNAP);
             helper.assertTrue(!Downed.isSnapped(vamp), "a player in the dying state was snapped");
         } finally {
+            helper.getLevel().getServer().setPvpAllowed(pvp);
             OriginalRulesProbe.endDying(vamp);
             clean(user, vamp);
         }
@@ -924,7 +965,9 @@ public final class TargetedSkillGameTests {
         java.util.function.Consumer<net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent> canceller = e -> e.setCanceled(true);
         NeoForge.EVENT_BUS.addListener(net.neoforged.bus.api.EventPriority.HIGH, canceller);
         java.util.List<Runnable> cleanups = new java.util.ArrayList<>();
+        boolean pvp = helper.getLevel().getServer().isPvpAllowed();
         try {
+            helper.getLevel().getServer().setPvpAllowed(true); // a player target needs the PvP switch on; put back in the finally
             ServerPlayer vamp = target(helper, Species.NONE, true);
             ServerPlayer original = target(helper, Species.ORIGINAL, true);
             original.setHealth(5.0f);
@@ -954,6 +997,7 @@ public final class TargetedSkillGameTests {
                 clean(user);
             }
         } finally {
+            helper.getLevel().getServer().setPvpAllowed(pvp);
             NeoForge.EVENT_BUS.unregister(canceller);
             cleanups.forEach(Runnable::run);
         }
@@ -1003,12 +1047,15 @@ public final class TargetedSkillGameTests {
         TestPlayers.TalkingDuelist leader = vampire(helper, "S-VAM-9", "S-VAM-8");
         ServerPlayer mate = target(helper, Species.ORIGINAL, true);
         mate.setHealth(5.0f);
+        boolean pvp = helper.getLevel().getServer().isPvpAllowed();
         try {
+            helper.getLevel().getServer().setPvpAllowed(true); // a player target needs the PvP switch on; put back in the finally
             helper.assertTrue(index.join(leader.getUUID(), mate.getUUID()), "could not make the pack");
             assertRefused(helper, "snap a pack-mate", NeckSnapAction.REFUSED, NeckSnapAction.INSTANCE.trigger(leader, mate), leader, ExtraActions.NECK_SNAP);
             assertRefused(helper, "rip a pack-mate (an Original: the no-effect branch)", RipHeartAction.REFUSED, RipHeartAction.INSTANCE.trigger(leader, mate), leader, ExtraActions.RIP_HEART);
             helper.assertTrue(!Downed.isSnapped(mate), "a pack-mate was snapped");
         } finally {
+            helper.getLevel().getServer().setPvpAllowed(pvp);
             index.leave(leader.getUUID());
             index.leave(mate.getUUID());
             index.takeDissolved(leader.getUUID());
@@ -1030,7 +1077,9 @@ public final class TargetedSkillGameTests {
         ServerPlayer a = TestPlayers.createTalkingDuelist(helper);
         ServerPlayer b = TestPlayers.createTalkingDuelist(helper);
         long until = helper.getLevel().getGameTime() + 100000;
+        boolean pvp = helper.getLevel().getServer().isPvpAllowed();
         try {
+            helper.getLevel().getServer().setPvpAllowed(true); // a snap or a heart-rip on a player is refused with PvP off
             for (ServerPlayer m : new ServerPlayer[] {a, b}) {
                 m.setPos(helper.absoluteVec(new Vec3(1.5, 1, 3.0)));
                 BloodlineAccess.set(m, BloodlineState.NONE.toBuilder().vampireBloodUntil(until).build());
@@ -1041,6 +1090,7 @@ public final class TargetedSkillGameTests {
             helper.assertTrue(RipHeartAction.INSTANCE.trigger(ripper, b) == null, "the heart-rip was refused");
             helper.assertTrue(b.isDeadOrDying() && !BloodlineAccess.get(b).inTurning() && !Downed.isDowned(b), "a heart-rip started the turning: " + BloodlineAccess.get(b));
         } finally {
+            helper.getLevel().getServer().setPvpAllowed(pvp);
             clean(snapper, ripper, a, b);
         }
         helper.succeed();
@@ -1103,7 +1153,9 @@ public final class TargetedSkillGameTests {
         TestPlayers.TalkingDuelist userB = vampire(helper, "S-VAM-9");
         ServerPlayer original = target(helper, Species.ORIGINAL, true);
         original.setHealth(5.0f);
+        boolean pvp = helper.getLevel().getServer().isPvpAllowed();
         try {
+            helper.getLevel().getServer().setPvpAllowed(true); // a player target needs the PvP switch on; put back in the finally
             var field = ServerPlayer.class.getDeclaredField("spawnInvulnerableTime");
             field.setAccessible(true);
             field.setInt(original, 60);
@@ -1112,6 +1164,7 @@ public final class TargetedSkillGameTests {
         } catch (ReflectiveOperationException e) {
             throw new IllegalStateException(e);
         } finally {
+            helper.getLevel().getServer().setPvpAllowed(pvp);
             clean(userA, userB, original);
         }
         helper.succeed();
