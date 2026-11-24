@@ -101,5 +101,6 @@ public final class CircleCost {
         if (session != null) {
             CircleLink.touch(session);
         }
+        LinkWindow.open(level, staged);
     }
 }

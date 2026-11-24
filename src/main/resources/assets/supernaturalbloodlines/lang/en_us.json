@@ -2504,5 +2504,12 @@
   "supernaturalbloodlines.coven.err.shaken": "You are too shaken to join a circle yet.",
   "supernaturalbloodlines.coven.err.bad_level": "Say none, nosebleed or damage.",
   "supernaturalbloodlines.hub.request.kind.circle_call": "Circle call",
-  "supernaturalbloodlines.hub.request.kind.group_vote": "Coven vote"
+  "supernaturalbloodlines.hub.request.kind.group_vote": "Coven vote",
+  "supernaturalbloodlines.coven.link_death_hurt": "The one who held the circle fell while the link was live. You are hurt and shaken.",
+  "supernaturalbloodlines.coven.link_death_lethal": "The one who held the circle fell while the link was live. The link takes you with them.",
+  "supernaturalbloodlines.coven.link_dropped.away": "You stood outside the circle: you pay no share of this rite.",
+  "supernaturalbloodlines.coven.link_dropped.hurt": "You are too hurt to carry a share of this rite.",
+  "supernaturalbloodlines.coven.link_dropped.too_heavy": "Your share was more than you can carry: you are left out.",
+  "supernaturalbloodlines.coven.link_dropped.needs_consent": "Your share was more than you consented to: you are left out.",
+  "supernaturalbloodlines.coven.link_dropped.ep_floor": "Your share of the rite's EP would leave you too little: you are left out."
 }

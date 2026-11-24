@@ -309,7 +309,6 @@ public final class CircleLink {
             }
             CALLS.forget(id);
             CALLS.forgetCalledBy(id);
-            SHAKEN.remove(id);
         }
     }
 

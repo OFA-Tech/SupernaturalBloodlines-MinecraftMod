@@ -36,6 +36,7 @@ public final class CovenRegistry {
                 return s == null ? 0 : s.result().shares().size();
             }
         });
+        net.ofatech.supernaturalbloodlines.parts.species.group.circle.LinkWindow.register();
         GroupSwitcher.onSwitched(e -> CircleLink.closeGroup(e.server(), e.leader()));
         NeoForge.EVENT_BUS.addListener((PlayerEvent.PlayerLoggedOutEvent e) -> {
             if (e.getEntity() instanceof ServerPlayer p) {
