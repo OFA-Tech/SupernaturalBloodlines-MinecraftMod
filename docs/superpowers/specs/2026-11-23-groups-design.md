@@ -373,7 +373,7 @@ Art: the ring variants need two new ring sprites per theme (three with the Broth
 | `/clan charter forge|reforge` | Forge / Reforge the Charter | clan leader |
 | `/coven elder add|remove <p>` | Appoint / Remove Elder | Regent |
 | `/coven shun <p>` | Call a shunning vote (confirm) | Elder, Regent |
-| `/coven vote yes|no` | Yes / No on the vote card | electorate |
+| `/group vote yes|no <kind>` | Yes / No on the vote card (the card names its kind: one vote of a kind is open per coven) | electorate |
 | `/coven link open|close|leave|join`, `consent <level>` | Open / Close / Leave / Join circle; consent selector | coven members |
 | pack-only (`heal`, `protect`, `roar`, `surge`, `spirits`, `npc ...`, `anchor`, `emissary`) | unchanged | pack |
 | (the Brotherhood has no command of its own: `/brotherhood` is one more alias of the shared tree; marks, the Code, the map and the bonus are shown, never typed; its Admin rows are in section 9) | the Map and Code cards | brotherhood |

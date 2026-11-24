@@ -4,7 +4,7 @@
 
 ### Added
 - **Covens have a circle.** A coven member standing at a gold chalk opens a circle, calls the rest of the coven and the linked witches **split the cost of a rite**: 70% of the altar's bill (a share in `link_member_share`) and the rite's EP are shared out, so a rite too big for one witch can be worked by a coven. A witch's **channel meter** (3000 power, refilling in 10 minutes) says what she can give before it hurts; each member sets how much she accepts (**Strictly my meter**, **Allow a nosebleed**, **Allow pain**) and nobody can be linked against their will. A larger circle also makes a rite stronger (potency). If the anchor dies while the rite runs, the linked members are hurt.
-- **Elders, votes, shunning and a new Regent** (`group elder add|remove`, `group shun`, `group vote yes|no`, and the Challenge button naming an Elder).
+- **Elders, votes, shunning and a new Regent** (`group elder add|remove`, `group shun`, `group vote yes|no <kind>`, the card names the vote it answers, and the Challenge button naming an Elder).
 - **Three grand rites:** the Fete des Benedictions (a circle of 3), Night Watch (7) and the Great Harvest (13), each a rite file with its own items; a coven can cast the same one every 12 hours.
 - **Two coven ring rites:** a circle of three forges a Moon Ring for a werewolf of a pack, or a Sun Ring at half the power, bound to whoever stands at the centre.
 - **The Rite of Mastery's Ultimate needs a circle of seven** (`mastery_ultimate_circle`; 0 or `link_enabled` off waives it). *This changes the existing rite: a solo caster can no longer do it.*
