@@ -43,8 +43,10 @@ class ClickAndNarrationTest {
     }
 
     @Test
-    void otherButtonsDoNothing() {
-        assertEquals(Action.NONE, ClickPlan.of(2, false, false));
+    void middleIsTheMenuAndOtherButtonsDoNothing() {
+        assertEquals(Action.MENU, ClickPlan.of(2, false, false), "Infinity's middle click");
+        assertEquals(Action.MENU, ClickPlan.of(2, true, true));
+        assertEquals(Action.NONE, ClickPlan.of(3, false, false));
         assertEquals(Action.NONE, ClickPlan.of(7, true, true));
     }
 

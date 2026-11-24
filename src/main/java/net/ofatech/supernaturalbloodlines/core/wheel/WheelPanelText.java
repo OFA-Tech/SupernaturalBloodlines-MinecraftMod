@@ -28,7 +28,7 @@ public final class WheelPanelText {
     private record LinesKey(Object font, int width, int top, int bottom, String name, String where, String cover, String kind, String description, String mode, String lock) {
     }
 
-    private record HelpKey(Object font, List<String> keys, List<String> whats, boolean bold) {
+    private record HelpKey(Object font, int width, List<String> keys, List<String> whats, boolean bold) {
     }
 
     private record WidthKey(Object font, String text) {
@@ -71,15 +71,36 @@ public final class WheelPanelText {
         });
     }
 
-    /** The help rows: each key text and its words, with where the words start. {@code keyWidth} measures the key text as it is drawn (bold). */
-    public static List<HelpRow> help(Object font, ToIntFunction<String> keyWidth, List<String> keys, List<String> whats) {
-        return HELP.get(new HelpKey(font, List.copyOf(keys), List.copyOf(whats), true), () -> {
+    /**
+     * The help rows: each key text and its words, with where the words start. {@code keyWidth} measures the key text as it is drawn (bold), {@code whatWidth} the words;
+     * the words are cut to what is left of {@code width} after the key, so a row never runs out of the panel.
+     */
+    public static List<HelpRow> help(Object font, ToIntFunction<String> keyWidth, ToIntFunction<String> whatWidth, int width, List<String> keys, List<String> whats) {
+        return HELP.get(new HelpKey(font, width, List.copyOf(keys), List.copyOf(whats), true), () -> {
             java.util.ArrayList<HelpRow> rows = new java.util.ArrayList<>();
             for (int i = 0; i < keys.size(); i++) {
-                rows.add(new HelpRow(keys.get(i), whats.get(i), keyWidth.applyAsInt(keys.get(i)) + 5));
+                int whatX = keyWidth.applyAsInt(keys.get(i)) + 5;
+                rows.add(new HelpRow(keys.get(i), TextCache.cut(font, whats.get(i), Math.max(0, width - whatX), whatWidth), whatX));
             }
             return List.copyOf(rows);
         });
+    }
+
+    /** The fewest help rows the panel has: click, right click, scroll or Alt, and the closing row or one extra. */
+    public static final int MIN_HELP_ROWS = 4;
+
+    /**
+     * How many of the {@code wanted} help rows fit. The slot, mastery and help rows are drawn from the bottom of the panel, so every extra help row takes a line from what is
+     * above them: the mode lines and the lock box (the description gives way first, to nothing). Rows that do not fit are dropped from the end, the lowest priority; the
+     * standard four always stay, as they always fitted.
+     *
+     * @param panelBottom y of the panel's last text row
+     * @param contentTop  y where the description would start, under the cover lines
+     */
+    public static int helpRows(int wanted, int panelBottom, int contentTop, int modeLines, int lockLines) {
+        int contentEnd = contentTop + modeLines * LINE + (lockLines > 0 ? lockBoxHeight(lockLines) + LOCK_BOX_GAP : 0);
+        int fit = (panelBottom - contentEnd) / LINE - 2;
+        return Math.max(Math.min(wanted, MIN_HELP_ROWS), Math.min(wanted, fit));
     }
 
     /** The width of a label as the font draws it, measured once. */

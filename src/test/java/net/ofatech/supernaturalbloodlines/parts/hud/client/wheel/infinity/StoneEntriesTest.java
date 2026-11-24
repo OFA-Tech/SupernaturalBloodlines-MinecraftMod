@@ -13,6 +13,7 @@ import net.ofatech.supernaturalbloodlines.core.wheel.LockReason;
 import net.ofatech.supernaturalbloodlines.core.wheel.PowerGroup;
 import net.ofatech.supernaturalbloodlines.core.wheel.PowerKind;
 import net.ofatech.supernaturalbloodlines.core.wheel.PowerSource;
+import net.ofatech.supernaturalbloodlines.core.wheel.StoneMenus;
 import net.ofatech.supernaturalbloodlines.core.wheel.StoneRules;
 import net.ofatech.supernaturalbloodlines.parts.hud.net.WheelEntry;
 import org.junit.jupiter.api.Test;
@@ -85,7 +86,7 @@ class StoneEntriesTest {
     @Test
     void switchStaysOpenAndShowsToggled() {
         FakeStoneApi api = new FakeStoneApi().node(0, "sw", true, true, false, false, false, null);
-        api.nodes.set(0, new NodeInfo(0, "mind", "sw", "Name sw", "", true, true, 0, true, false, false, false, null));
+        api.nodes.set(0, new NodeInfo(0, "mind", "sw", "Name sw", "", true, true, 0, true, false, false, false, null, StoneMenus.Kind.NONE, false));
         WheelEntry mind = stone(build(api, Map.of()), "mind");
         assertEquals(PowerKind.TOGGLE, mind.kind());
         assertTrue(mind.state().on(), "his toggled flag is the glow");
@@ -200,4 +201,42 @@ class StoneEntriesTest {
         }
         return null;
     }
-}
+
+    @Test
+    void aPlayerWithNoStoneGetsAPrayEntryThatSendsHisPrayerAndNothingToOurServer() {
+        FakeStoneApi api = new FakeStoneApi();
+        assertNull(find(build(api, Map.of()), "pray"), "carrying a stone, or no player: no prayer");
+        api.prayShown = true;
+        List<WheelEntry> all = build(api, Map.of());
+        WheelEntry pray = find(all, "pray");
+        assertNotNull(pray);
+        assertEquals(PowerSource.INFINITY, pray.ref().source(), "in the Infinity ring");
+        assertEquals(PowerKind.INSTANT, pray.kind());
+        assertEquals(PowerGroup.MAIN, pray.group());
+        assertFalse(pray.slottable());
+        assertFalse(pray.state().locked(), "it needs none of his powers: never stale-locked");
+        assertEquals("supernaturalbloodlines.wheel.infinity.pray", ((net.minecraft.network.chat.contents.TranslatableContents) pray.name().getContents()).getKey());
+        assertUse(api, pray, false, "pray");
+        api.prayShown = false;
+        api.calls.clear();
+        assertFalse(StoneActions.use(api, new HashMap<>(), pray, false), "his key sends nothing once a stone is carried");
+        assertTrue(api.calls.isEmpty());
+    }
+
+    @Test
+    void thePrayEntryComesAndGoesWithTheCache() {
+        FakeStoneApi api = new FakeStoneApi();
+        StoneEntries.Cache cache = new StoneEntries.Cache();
+        assertEquals(0, cache.get(api, Map.of(), 1_000).size());
+        api.prayShown = true;
+        assertEquals(1, cache.get(api, Map.of(), 1_000).size(), "the entry appears without any other change");
+        api.prayShown = false;
+        assertEquals(0, cache.get(api, Map.of(), 1_000).size());
+    }
+
+    @Test
+    void thePrayEntryIsTheOnlyEntryWhenNoStoneIsCarriedAndItStaysBesideStonesNever() {
+        FakeStoneApi api = new FakeStoneApi().plain(0, "a", true);
+        api.prayShown = true; // his own condition makes this false while a stone is carried; the entries do not second-guess it
+        assertEquals(2, build(api, Map.of()).size());
+    }}

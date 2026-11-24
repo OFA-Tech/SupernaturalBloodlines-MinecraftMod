@@ -20,6 +20,7 @@ import net.ofatech.supernaturalbloodlines.core.wheel.PowerKind;
 import net.ofatech.supernaturalbloodlines.core.wheel.PowerRef;
 import net.ofatech.supernaturalbloodlines.core.wheel.PowerSource;
 import net.ofatech.supernaturalbloodlines.core.wheel.SlotPicker;
+import net.ofatech.supernaturalbloodlines.core.wheel.StoneMenus;
 import net.ofatech.supernaturalbloodlines.core.wheel.WheelRules;
 import net.ofatech.supernaturalbloodlines.parts.hud.client.ClientLoadout;
 import net.ofatech.supernaturalbloodlines.parts.hud.client.HudClientConfig;
@@ -75,17 +76,39 @@ public final class WheelActions {
     /** The confirmed aim: a stone's power goes to Infinity's own server (the second option when that is what was chosen), anything else to ours. */
     private static void confirmAim(PowerRef ref, int mode, int target) {
         if (ref.source() == PowerSource.INFINITY) {
-            WheelEntry e = InfinityCompat.find(ref);
-            if (e != null) {
-                InfinityCompat.use(e, aimSecond);
-            }
+            InfinityCompat.useAimed(ref, aimNode, aimSecond);
             return;
         }
         sendUse(ref, mode, target, false);
     }
 
     private static boolean aimSecond;
+    /** The power of the stone that was on when the aim started: the confirmed aim fires that one, even if the stone was cycled to another meanwhile. */
+    private static String aimNode;
 
+    /**
+     * What an input does on a stone power besides a plain use: Infinity's own menu (a destination, Will Construct's screens, a choice menu) or its second option sent at
+     * once. {@code PLAIN} means nothing was done and the caller goes on with the normal use; {@code NOTHING} that the power has no such action. A screen of his that opened
+     * has replaced whatever screen was up (the wheel), so the caller must not close it.
+     */
+    public static StoneMenus.Act stone(WheelEntry e, StoneMenus.Input input) {
+        StoneMenus.Act act = InfinityCompat.route(e, input);
+        if (act == StoneMenus.Act.NOTHING) {
+            problem = "no_menu";
+        } else if (act != StoneMenus.Act.PLAIN && !InfinityCompat.act(e, act)) {
+            problem = "unavailable";
+        }
+        return act;
+    }
+
+    /** What went wrong with the last stone input, for the screen to say (a lang suffix under {@code wheel.notice.}): "no_menu" or "unavailable". Read once, then forgotten. */
+    public static String takeProblem() {
+        String p = problem;
+        problem = null;
+        return p;
+    }
+
+    private static String problem;
     private static final net.ofatech.supernaturalbloodlines.core.wheel.WheelViewState VIEW = new net.ofatech.supernaturalbloodlines.core.wheel.WheelViewState();
 
     /** Tells the server whether a screen that lists the powers is open (it only sends the catalogue to a viewer): the wheel and the hub share one request. */
@@ -107,11 +130,19 @@ public final class WheelActions {
             return false;
         }
         last().set(e.ref(), mode);
+        if (InfinityCompat.owns(e)) {
+            problem = null;
+            StoneMenus.Act act = stone(e, second ? StoneMenus.Input.SECOND : StoneMenus.Input.USE);
+            if (act != StoneMenus.Act.PLAIN) {
+                return problem == null;
+            }
+        }
         if (InfinityCompat.owns(e) && e.kind() != PowerKind.AIMED) {
             return InfinityCompat.use(e, second);
         }
         if (e.kind() == PowerKind.AIMED) {
             aimSecond = second;
+            aimNode = InfinityCompat.owns(e) ? InfinityCompat.nodeId(e) : null;
             AIM.start(e.ref(), mode, Minecraft.getInstance().level == null ? 0 : Minecraft.getInstance().level.getGameTime());
             aimEntry = e;
             return true;

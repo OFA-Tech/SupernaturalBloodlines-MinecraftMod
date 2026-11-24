@@ -3,10 +3,12 @@ package net.ofatech.supernaturalbloodlines.parts.hud.client.wheel.infinity;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import net.minecraft.client.resources.language.I18n;
 import net.neoforged.fml.ModList;
 import net.ofatech.supernaturalbloodlines.SupernaturalBloodlines;
 import net.ofatech.supernaturalbloodlines.core.wheel.PowerRef;
 import net.ofatech.supernaturalbloodlines.core.wheel.PowerSource;
+import net.ofatech.supernaturalbloodlines.core.wheel.StoneMenus;
 import net.ofatech.supernaturalbloodlines.core.wheel.StoneRules;
 import net.ofatech.supernaturalbloodlines.core.wheel.StoneRules.State;
 import net.ofatech.supernaturalbloodlines.parts.hud.client.HudClientConfig;
@@ -20,13 +22,25 @@ import org.jetbrains.annotations.Nullable;
  */
 public final class InfinityCompat {
     static final String MOD = "infinity";
+    /** A failure after the probe: an action is logged once, a failed read of his powers turns the compat off (the probe, so his key is given back on the next tick). */
+    private static final StoneFailures FAILURES = new StoneFailures(m -> SupernaturalBloodlines.LOGGER.warn(m), why -> InfinityCompat.PROBE.broke(why));
     private static final InfinityProbe PROBE = new InfinityProbe(() -> ModList.get().isLoaded(MOD), HudClientConfig::infinityCompat,
-            () -> ReflectiveStoneApi.create(Class::forName), m -> SupernaturalBloodlines.LOGGER.warn(m));
+            () -> ReflectiveStoneApi.create(Class::forName, FAILURES), m -> SupernaturalBloodlines.LOGGER.warn(m));
     /** The power each stone was last on (stone ordinal to node id); his server takes the node explicitly, so the choice lives only here. */
     private static final Map<Integer, String> CURRENT = new HashMap<>();
+    private static final StoneEntries.Cache ENTRIES = new StoneEntries.Cache();
     private static long joinedAt;
 
     private InfinityCompat() {
+    }
+
+    /** Resources or the language were reloaded: the cached names and descriptions of his powers are read again. */
+    public static void reload() {
+        StoneApi api = PROBE.api();
+        if (api != null) {
+            api.reload();
+        }
+        ENTRIES.clear();
     }
 
     public static State state() {
@@ -51,7 +65,7 @@ public final class InfinityCompat {
 
     public static List<WheelEntry> entries() {
         StoneApi api = PROBE.api();
-        return api == null ? List.of() : StoneEntries.build(api, CURRENT, joinedAt);
+        return api == null ? List.of() : ENTRIES.get(api, CURRENT, joinedAt);
     }
 
     /** Whether an entry is one of ours while the compat works, so the wheel routes it here and never to our own server (which refuses it). */
@@ -63,14 +77,12 @@ public final class InfinityCompat {
     public static String description(WheelEntry e) {
         StoneApi api = PROBE.api();
         NodeInfo n = api == null ? null : StoneEntries.nodeOf(api, e);
-        return n == null ? "" : n.description();
-    }
-
-    /** Whether the power an entry is on now has a second option (Shift-click, or Shift + Enter). */
-    public static boolean isDual(WheelEntry e) {
-        StoneApi api = PROBE.api();
-        NodeInfo n = api == null || !owns(e) ? null : StoneEntries.nodeOf(api, e);
-        return n != null && n.isDual();
+        if (n != null) {
+            return n.description();
+        }
+        // the entries that are no stone (Pray, soul control) say what they do in our own lang file
+        String key = "supernaturalbloodlines.wheel.infinity." + e.ref().id().getPath() + ".desc";
+        return I18n.exists(key) ? I18n.get(key) : "";
     }
 
     public static boolean hasLevels(WheelEntry e) {
@@ -82,6 +94,37 @@ public final class InfinityCompat {
     public static boolean use(WheelEntry e, boolean second) {
         StoneApi api = PROBE.api();
         return api != null && StoneActions.use(api, CURRENT, e, second);
+    }
+
+    /** What an input does on the power an entry is on: his menu, his second option sent at once, or {@code PLAIN} (the caller uses the power as usual). */
+    public static StoneMenus.Act route(WheelEntry e, StoneMenus.Input input) {
+        StoneApi api = PROBE.api();
+        return api == null || !owns(e) ? (input == StoneMenus.Input.MENU ? StoneMenus.Act.NOTHING : StoneMenus.Act.PLAIN) : StoneActions.route(api, e, input);
+    }
+
+    public static boolean act(WheelEntry e, StoneMenus.Act act) {
+        StoneApi api = PROBE.api();
+        return api != null && StoneActions.act(api, CURRENT, e, act);
+    }
+
+    /** What the side panel and the narrator say about the power an entry is on: its click row and its extra rows, read from the entry's power once. */
+    public static StoneView view(WheelEntry e) {
+        StoneApi api = PROBE.api();
+        return api == null || !owns(e) ? StoneView.NONE : StoneActions.view(api, e);
+    }
+    /** The node the entry is on now, remembered when an aim starts: that is the power the confirmed aim fires. */
+    @Nullable
+    public static String nodeId(WheelEntry e) {
+        StoneApi api = PROBE.api();
+        NodeInfo n = api == null ? null : StoneEntries.nodeOf(api, e);
+        return n == null ? null : n.node();
+    }
+
+    /** Fires the power that was aimed, not the one its stone is on by now. */
+    public static boolean useAimed(PowerRef ref, @Nullable String nodeId, boolean second) {
+        StoneApi api = PROBE.api();
+        String id = ref.id().getPath();
+        return api != null && id.endsWith("_stone") && StoneActions.useNode(api, CURRENT, id.substring(0, id.length() - "_stone".length()), nodeId, second);
     }
 
     public static void cycle(WheelEntry e, int delta) {
@@ -96,16 +139,5 @@ public final class InfinityCompat {
         if (api != null) {
             StoneActions.level(api, e, delta);
         }
-    }
-
-    /** For the aim: the entry of a stone looked up again by reference (its power may have changed while aiming). */
-    @Nullable
-    public static WheelEntry find(PowerRef ref) {
-        for (WheelEntry e : entries()) {
-            if (e.ref().equals(ref)) {
-                return e;
-            }
-        }
-        return null;
     }
 }

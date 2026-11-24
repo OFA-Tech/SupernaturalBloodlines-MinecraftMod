@@ -22,6 +22,27 @@ public interface StoneApi {
     /** His {@code WheelPayloads.Setting}: change a power's level by {@code delta} (+1 or -1). */
     void setLevel(int stone, String node, int delta);
 
+    /** His {@code DestinationScreen} for a power, opened over whatever screen is up (the caller has left the wheel): its confirm sends his own payloads. Every opener answers whether it worked; false is a failure already logged once. */
+    boolean openDestination(int stone, String node, boolean movesTarget);
+
+    /** His {@code ConstructScreen} (Will Construct's menu). */
+    boolean openConstruct();
+
+    /** His {@code QuickSlotsScreen} (Will Construct's quick slots). */
+    boolean openQuickSlots();
+
+    /** His {@code ExtraClientApi.requestMenu}: asks his server for the power's choice menu, which it answers by opening his screen. */
+    boolean requestChoiceMenu(int stone, String node);
+
+    /** Whether the wheel shows the Pray entry now: his own condition for his wheel key to pray (the player carries no stone and is not locked in a gathering). */
+    boolean prayShown();
+
+    /** His {@code GatherNet.Pray}, sent exactly as his key sends it. */
+    boolean pray();
+
+    /** The language or the resources were reloaded: the cached names and descriptions are read again. */
+    void reload();
+
     /** Whether his possession classes were found, so the soul control entry and the covered key can work. */
     boolean soulSupported();
 

@@ -4,6 +4,7 @@ Things that **don't work the way you may expect**, or are **not finished or not 
 
 ## Not possible
 
+- **Infinity Stones: his wheel's favourites are gone while our wheel carries his powers.** His wheel key is covered, so his favourites (H, then 1 to 4) and his quick tap go with it. Our wheel's own quick tap repeats the last power you used (a stone power too); stone powers cannot be put in our slots. Turn off `infinity_compat_enabled` to get his wheel and favourites back.
 - **Infinity Stones: turning off `soul.regen` clears every effect.** The Reality/Soul power `soul.regen` ends with `effect clear @s`, which also removes Vampirism's and Werewolves' rage, our buffs and any potion the player had. It is Infinity Stones' own power: our no-stacking rule cannot prevent it and the wheel shows no warning. A bug report for his mod is in `docs/superpowers/research/infinity-soul-regen-bug-report.md`; we do not change his mod.
 
 - **Switching the species part off and on again keeps every rite known.** With the `species` part off, every learnable rite counts as known (nothing could teach them), and turning the part back on does not take that away: knowledge is only ever added. `/bloodline rites forget <player> all` puts a player back to what their kind, their lore and their performed rites give.

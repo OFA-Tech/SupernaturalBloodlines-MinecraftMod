@@ -43,8 +43,7 @@ public final class KeyCover {
 
     private static List<String> covered() {
         return net.ofatech.supernaturalbloodlines.core.hud.CoveredKeyIds.all(HudClientConfig.sprintLeap(), net.ofatech.supernaturalbloodlines.core.wheel.WheelBuild.screenPresent(),
-                // shortcut: his wheel key stays bound, because ours cannot open his menu powers yet (teleport destinations, Will Construct, choice menus); cover it once they are handled
-                false,
+                net.ofatech.supernaturalbloodlines.core.wheel.StoneRules.wheelKeyCovered(net.ofatech.supernaturalbloodlines.parts.hud.client.wheel.infinity.InfinityCompat.state()),
                 net.ofatech.supernaturalbloodlines.parts.hud.client.wheel.infinity.InfinityCompat.soulControlCovered());
     }
 
