@@ -70,3 +70,13 @@ Events (any case): `RITE_OF_IMMORTALITY`, `DIED_WITH_ORIGINAL_BLOOD`, `DRANK_DOP
 
 - `/vampirism level <faction> <level> [player]` and `/vampirism level none @s` (Vampirism): put a player in or out of a Vampirism faction. This mod's rules follow the change (the layer, the race, the sire).
 - Tensura's race and owner commands: for example to **reset a player from an apex race** before removing the mod, or to clear a sire link by hand. See [For server owners](For-Server-Owners#removing-the-mod-or-tensura).
+
+## `/ward` (part `artifacts`)
+
+| Command | Who | What |
+|---|---|---|
+| `/ward invite <player>` | the owner of a ward | Invites them into every ward of yours. Same as the **Invite** buttons on the Path page's *Your ward* card, or saying "come in". |
+| `/ward uninvite <player>` | the owner | Withdraws them (a name from your lists, or a UUID); a vampire inside is thrown out unless `ward_expel_on_revoke` is off. |
+| `/ward drop <ward>` | the owner | Lifts one ward; its id is on the card and in `/ward info`. |
+| `/ward info` | anyone | Lists your wards in chat; the Path page shows the same. |
+

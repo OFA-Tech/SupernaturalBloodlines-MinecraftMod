@@ -41,10 +41,13 @@ class AdminCoverageTest {
             new Known(SupernaturalConfig.FILE, SupernaturalConfig.SPEC, true, "SupernaturalConfig.java"),
             new Known(HudConfig.FILE, HudConfig.SPEC, true, "HudConfig.java"),
             new Known(ArtifactsConfig.FILE, ArtifactsConfig.SPEC, true, "ArtifactsConfig.java"),
+            new Known(net.ofatech.supernaturalbloodlines.parts.vampirismenchanted.VampirismEnchantedConfig.FILE,
+                    net.ofatech.supernaturalbloodlines.parts.vampirismenchanted.VampirismEnchantedConfig.SPEC, true, "VampirismEnchantedConfig.java"),
             new Known(SpeciesConfig.FILE, SpeciesConfig.SPEC, true, "SpeciesConfig.java"),
             new Known(SpeciesTensuraConfig.FILE, SpeciesTensuraConfig.SPEC, true, "SpeciesTensuraConfig.java"),
             new Known(CelestialsConfig.FILE, CelestialsConfig.SPEC, true, "CelestialsConfig.java"),
             new Known(BossesConfig.FILE, BossesConfig.SPEC, true, "BossesConfig.java"),
+            new Known(net.ofatech.supernaturalbloodlines.parts.species.group.GroupsConfig.FILE, net.ofatech.supernaturalbloodlines.parts.species.group.GroupsConfig.SPEC, true, "GroupsConfig.java"),
         new Known(net.ofatech.supernaturalbloodlines.parts.evolutionrites.EvolutionRitesConfig.FILE, net.ofatech.supernaturalbloodlines.parts.evolutionrites.EvolutionRitesConfig.SPEC, true, "EvolutionRitesConfig.java"),
             new Known(HudClientConfig.FILE, HudClientConfig.SPEC, false, "HudClientConfig.java"),
             new Known(HubClientConfig.FILE, HubClientConfig.SPEC, false, "HubClientConfig.java"));

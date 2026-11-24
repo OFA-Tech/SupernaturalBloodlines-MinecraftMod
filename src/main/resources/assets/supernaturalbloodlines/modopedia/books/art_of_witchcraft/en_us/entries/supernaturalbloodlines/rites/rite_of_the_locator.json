@@ -1,0 +1,46 @@
+{
+  "title": "Rite of the Locator",
+  "icon": {
+    "count": 1,
+    "id": "minecraft:compass"
+  },
+  "assigned_items": [],
+  "pages": [
+    {
+      "components": [
+        {
+          "template": "modopedia:page/headered_text",
+          "text": "Circle: small circle, ritual chalk.\n\nAttunes a Vampire Compass to the owner of a taglock. In its new third mode the needle points at the middle of a square around them, and the tooltip says about how far, in hundreds of blocks.",
+          "header": "Rite of the Locator"
+        }
+      ]
+    },
+    {
+      "components": [
+        {
+          "template": "modopedia:page/headered_text",
+          "text": "Only a witch, siphoner, heretic or tribrid can work it. It lasts 30 minutes. The one looked for is told 'Somebody is looking for you', with no name.",
+          "header": "Rite of the Locator"
+        }
+      ]
+    },
+    {
+      "components": [
+        {
+          "template": "modopedia:page/headered_text",
+          "text": "The needle spins the same way for every reason it cannot find them: far away, in another dimension, cloaked, away from the game, or the time spent.",
+          "header": "Rite of the Locator"
+        }
+      ]
+    },
+    {
+      "components": [
+        {
+          "template": "supernaturalbloodlines:page/rite",
+          "rite": "supernaturalbloodlines:rite_of_the_locator",
+          "header": "Rite of the Locator"
+        }
+      ]
+    }
+  ]
+}

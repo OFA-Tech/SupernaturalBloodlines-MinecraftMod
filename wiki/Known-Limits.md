@@ -136,3 +136,7 @@ If you find something that behaves differently from this wiki, please [open an i
 - Brothers: a hunting trip is one action, not a walk (the Brother does not travel to the animals and back), and it ignores Open Parties and Claims, so it stays within 48 blocks of its post. A Brother that is far from every player is not loaded and cannot be ordered until you go near it (its row stays on the Pack page).
 - The NPC profile is a panel under the Pack page's wolf rows, not a page of its own; sire, line, genes and anchor show "?" for a wolf.
 - A Tensura subordinate is listed on the Pack page but takes its orders in Tensura; only the subordinates of a pack member or of a Brother join, one step down.
+
+- **Wards:** a ward turns away by position (a push, then a move out after `ward_expel_seconds`); somebody who is already inside with the ward off keeps their place. A door ward guards one door cell: a wall, a window or a hole is not guarded. With `ward_expel_on_revoke` off, the grace for somebody already inside is in memory and a restart ends it. An owner who turns while offline keeps the ward until their next login.
+- **The locator** points at the middle of a square, never the spot, and needs the species part. The one looked for hears "Somebody is looking for you." only if they are online when it starts, and that it ended only if they are online at the end (a restart forgets the end).
+

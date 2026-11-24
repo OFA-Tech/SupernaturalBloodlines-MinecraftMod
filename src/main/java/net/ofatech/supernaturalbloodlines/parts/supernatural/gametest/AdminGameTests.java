@@ -322,7 +322,8 @@ public final class AdminGameTests {
         }
         out.clear();
         if (p.server.getCommands().getDispatcher().getRoot().getChild("pack") == null) {
-            HubCommandReplyPayload missing = run(p, 0, 0, "P3", List.of(), out);
+            // P3 (leave) is a shared row now and runs as /group; the roar is wolf-only
+            HubCommandReplyPayload missing = run(p, 0, 0, "P14", List.of(), out);
             helper.assertTrue(says(missing, "unavailable"), "a command of a part that is off was answered " + missing);
         }
         helper.succeed();

@@ -16,7 +16,7 @@ public final class AllyProtection {
 
     private static void onDamage(LivingIncomingDamageEvent e) {
         // a pack's NPC (a Wolf Spirit, a Brother, a Tensura subordinate) never hurts its owner, their pack or an allied pack, and nobody of those hurts it (R144, R148)
-        if (net.ofatech.supernaturalbloodlines.parts.species.npc.Friends.npcFriendly(e.getSource().getEntity(), e.getEntity())) {
+        if (net.neoforged.fml.ModList.get().isLoaded("werewolves") && net.ofatech.supernaturalbloodlines.parts.species.npc.Friends.npcFriendly(e.getSource().getEntity(), e.getEntity())) {
             e.setCanceled(true);
             return;
         }

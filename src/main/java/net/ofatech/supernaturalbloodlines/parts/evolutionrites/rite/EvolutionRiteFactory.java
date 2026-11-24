@@ -19,9 +19,11 @@ import net.ofatech.supernaturalbloodlines.core.BloodlineAccess;
 import net.ofatech.supernaturalbloodlines.core.evolution.EvolutionRecipe;
 import net.ofatech.supernaturalbloodlines.core.evolution.EvolutionRecipeCodec;
 import net.ofatech.supernaturalbloodlines.core.evolution.EvolutionRules;
+import net.ofatech.supernaturalbloodlines.core.evolution.GrantForm;
 import net.ofatech.supernaturalbloodlines.core.evolution.MasteryRules;
 import net.ofatech.supernaturalbloodlines.core.evolution.Tier;
 import net.ofatech.supernaturalbloodlines.core.moon.MoonRule;
+import net.ofatech.supernaturalbloodlines.parts.evolutionrites.EvoGrant;
 import net.ofatech.supernaturalbloodlines.parts.evolutionrites.EvoSkills;
 import net.ofatech.supernaturalbloodlines.parts.evolutionrites.EvolutionRitesConfig;
 import net.ofatech.supernaturalbloodlines.parts.evolutionrites.Recipes;
@@ -49,12 +51,35 @@ public record EvolutionRiteFactory(EvolutionRecipe recipe) implements RiteFactor
 
     public enum Grant { DONE, ALREADY, VETOED }
 
+    /** The skill the rite grants: the probe's override when it names one (the merged Raphael), else the recipe's own. An override that does not exist is no grant, never a fallback. */
+    public static Optional<ManasSkill> resolveGrant(EvolutionRecipe recipe, Optional<AddonProbe> probe) {
+        return EvoSkills.skill(probe.flatMap(AddonProbe::grantOverride).orElse(recipe.grants()));
+    }
+
+    /** Whether the target holds the grant, or any skill the probe says counts as holding it (either Raphael). */
+    public static boolean holdsGrant(ServerPlayer target, Optional<AddonProbe> probe, Optional<ManasSkill> grant) {
+        if (grant.isPresent() && EvoSkills.held(target, grant.get()).isPresent()) {
+            return true;
+        }
+        return probe.map(p -> p.alsoHolds().stream().map(ResourceLocation::tryParse).anyMatch(id -> id != null && EvoSkills.held(target, id).isPresent())).orElse(false);
+    }
+
+    /** What the learn takes from base Max EP: Tensura's price for the default form, nothing for a free grant (it carries {@code NoMagiculeCost}). */
+    public static double priceOf(EvolutionRecipe recipe, ServerPlayer target, ManasSkill skill) {
+        return recipe.grantForm() == GrantForm.FREE ? 0 : EvoSkills.price(target, skill);
+    }
+
     /**
      * The one place a skill changes hands (E6, E8, E15): learn it, and only when that is confirmed forget what the recipe consumes and spend its EP. A target
      * who holds the skill by now (a third mod gave it) is {@code ALREADY}; a learn that a listener vetoed, or that leaves too little EP, is {@code VETOED} and
      * costs nothing. Tensura's own price for the skill is charged by the learn itself and is not the rite's EP cost.
      */
     public static Grant grant(ServerPlayer target, EvolutionRecipe recipe, ManasSkill skill) {
+        return grant(target, recipe, skill, Optional.empty());
+    }
+
+    /** As {@link #grant(ServerPlayer, EvolutionRecipe, ManasSkill)}; a confirmed grant then lets the addon's probe write what its own road writes ({@link AddonProbe#onGranted}). */
+    public static Grant grant(ServerPlayer target, EvolutionRecipe recipe, ManasSkill skill, Optional<AddonProbe> probe) {
         beforeGrant.run();
         if (EvoSkills.held(target, skill).isPresent()) {
             return Grant.ALREADY;
@@ -62,7 +87,10 @@ public record EvolutionRiteFactory(EvolutionRecipe recipe) implements RiteFactor
         // Tensura charges the skill's own price (from base Max EP) inside its unlock listener, which may run before another listener's veto: a refused learn gives it back
         double epBefore = EnergyHelper.getBaseMaxEP(target);
         var skills = SkillAPI.getSkillsFrom(target);
-        if (!SkillHelper.learnSkill(target, skill)) {
+        var removeTime = recipe.grantForm().removeTime();
+        boolean learned = recipe.grantForm() == GrantForm.FREE ? EvoGrant.learnFree(target, skill)
+                : removeTime.isPresent() ? SkillHelper.learnSkill(target, skill, removeTime.getAsInt()) : SkillHelper.learnSkill(target, skill);
+        if (!learned) {
             EnergyHelper.setBaseMaxEP(target, epBefore);
             return Grant.VETOED;
         }
@@ -81,6 +109,7 @@ public record EvolutionRiteFactory(EvolutionRecipe recipe) implements RiteFactor
         if (recipe.epCost() > 0) {
             EnergyHelper.setBaseMaxEP(target, EnergyHelper.getBaseMaxEP(target) - recipe.epCost());
         }
+        probe.ifPresent(p -> p.onGranted(target, recipe));
         return Grant.DONE;
     }
 
@@ -120,13 +149,13 @@ public record EvolutionRiteFactory(EvolutionRecipe recipe) implements RiteFactor
             }
 
             Optional<AddonProbe> probe = Recipes.usableProbe(recipe, Recipes::modLoaded);
-            Optional<ManasSkill> grant = EvoSkills.skill(recipe.grants());
+            Optional<ManasSkill> grant = resolveGrant(recipe, probe);
             Optional<EvolutionRules.Reason> reason = EvolutionRules.check(recipe, facts(caster, target, probe, grant));
             if (reason.isPresent()) {
                 return refuse(caster, target, reason.get());
             }
 
-            switch (grant(target, recipe, grant.get())) {
+            switch (grant(target, recipe, grant.get(), probe)) {
                 case ALREADY -> {
                     return refuse(caster, target, EvolutionRules.Reason.ALREADY);
                 }
@@ -149,17 +178,19 @@ public record EvolutionRiteFactory(EvolutionRecipe recipe) implements RiteFactor
             boolean hooks = probe.isPresent() && grant.isPresent();
             boolean roadOpen = probe.map(AddonProbe::roadOpen).orElse(false);
             boolean fullMoon = MoonRule.isFullMoonNight(level.dimensionType().hasFixedTime(), level.getMoonPhase(), level.getDayTime());
-            boolean holds = grant.isPresent() && EvoSkills.held(target, grant.get()).isPresent();
+            boolean holds = holdsGrant(target, probe, grant);
             boolean kindOk = recipe.subjectKinds().isEmpty() || RiteUnlocks.kindsOf(target).stream().anyMatch(recipe.subjectKinds()::contains);
             boolean needs = recipe.needs().stream().allMatch(n -> EvoSkills.held(target, ResourceLocation.parse(n.skill()))
                     .filter(inst -> !n.mastered() || inst.isMastered(target)).isPresent());
             boolean satisfied = probe.map(p -> p.satisfied(target, recipe)).orElse(false);
             boolean owned = probe.map(p -> p.ownedByOther(target, recipe)).orElse(false);
             // Tensura charges its own price for the skill from the same base Max EP inside the learn: both must fit, checked before anything is learned
-            boolean enoughEp = grant.isEmpty() || MasteryRules.enoughEp(EnergyHelper.getBaseMaxEP(target) - EvoSkills.price(target, grant.get()), recipe.epCost());
-            return new EvolutionRules.Facts(EvolutionRitesConfig.recipeOpen(recipe.id(), recipe.tier()), Recipes.modLoaded(recipe.requiresMod()), hooks, roadOpen,
+            boolean enoughEp = grant.isEmpty() || MasteryRules.enoughEp(EnergyHelper.getBaseMaxEP(target) - priceOf(recipe, target, grant.get()), recipe.epCost());
+            boolean retired = grant.isPresent() && EvoSkills.retired(level.getServer(), grant.get());
+            boolean enabled = EvolutionRitesConfig.recipeOpen(recipe.id(), recipe.tier()) && probe.map(p -> p.enabledIn(level)).orElse(true);
+            return new EvolutionRules.Facts(enabled, Recipes.modLoaded(recipe.requiresMod()), hooks, roadOpen,
                     SeveranceRiteFactory.isWitchType(BloodlineAccess.get(caster).species()), fullMoon, LunarEclipse.active(level.getServer()), caster == target,
-                    target.isShiftKeyDown(), holds, kindOk, needs, satisfied, owned, enoughEp);
+                    target.isShiftKeyDown(), holds, kindOk, needs, satisfied, owned, enoughEp, retired);
         }
 
         private boolean refuse(ServerPlayer caster, ServerPlayer target, EvolutionRules.Reason reason) {

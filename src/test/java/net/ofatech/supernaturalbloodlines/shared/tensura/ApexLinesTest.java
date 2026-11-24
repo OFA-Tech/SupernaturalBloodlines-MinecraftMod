@@ -12,6 +12,27 @@ import org.junit.jupiter.api.Test;
 
 class ApexLinesTest {
     @Test
+    void bloodNobleAndHigherAreTheVampireApexTier() {
+        for (String id : new String[] {"ascension:blood_noble", "ascension:elder_bloodfiend", "ascension:progenitor_bloodfiend"}) {
+            for (SupernaturalRace r : new SupernaturalRace[] {VAMPIRE, AUGUSTINE, ORIGINAL, HYBRID, ORIGINAL_HYBRID, HERETIC}) {
+                assertTrue(ApexLines.qualifies(r, id), r + " on " + id);
+            }
+            assertFalse(ApexLines.qualifies(WEREWOLF, id), "a werewolf on " + id);
+            assertFalse(ApexLines.qualifies(HUMAN, id));
+        }
+        for (String id : new String[] {"ascension:fledgling_bloodfiend", "ascension:kindred_bloodfiend"}) {
+            assertFalse(ApexLines.qualifies(VAMPIRE, id), id + " is below the saint tier");
+        }
+    }
+
+    @Test
+    void theBeastfolkLineIsKeyedByIdAndKitsuneIsNotInIt() {
+        assertEquals(Set.of("tensura:spirit_beast", "tensura:divine_beast"), ApexLines.BEASTFOLK);
+        assertFalse(ApexLines.qualifies(WEREWOLF, "ascension:kitsune"));
+        assertFalse(ApexLines.qualifies(HYBRID, "ascension:kitsune"));
+    }
+
+    @Test
     void saintRulesAreUnchanged() {
         for (String id : new String[] {"tensura:human_saint", "tensura:divine_human", "tensura:elf_saint", "tensura:divine_dwarf", "tensura:divine_fish"}) {
             for (SupernaturalRace r : new SupernaturalRace[] {VAMPIRE, ORIGINAL, HYBRID, ORIGINAL_HYBRID, TRIBRID, HERETIC, WITCH, SIPHONER, HUNTER, WEREWOLF}) {

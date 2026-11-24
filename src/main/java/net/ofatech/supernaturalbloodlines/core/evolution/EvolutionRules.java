@@ -19,7 +19,7 @@ public final class EvolutionRules {
     /** What is true of the performer, the world and the target at the moment of the rite. */
     public record Facts(boolean enabled, boolean modLoaded, boolean probeFound, boolean roadOpen, boolean casterWitch, boolean fullMoonNight,
                         boolean eclipse, boolean casterIsTarget, boolean targetSneaking, boolean holdsGrant, boolean kindOk, boolean holdsNeeds,
-                        boolean probeSatisfied, boolean ownedByOther, boolean enoughEp) {
+                        boolean probeSatisfied, boolean ownedByOther, boolean enoughEp, boolean retired) {
     }
 
     private static final Set<Reason> ABOUT_TARGET = EnumSet.of(Reason.ALREADY, Reason.NOT_READY);
@@ -43,7 +43,7 @@ public final class EvolutionRules {
         if (f.holdsGrant()) {
             return Optional.of(Reason.ALREADY);
         }
-        if (!f.kindOk() || !f.holdsNeeds() || !f.probeSatisfied() || f.ownedByOther() || !f.enoughEp()) {
+        if (!f.kindOk() || !f.holdsNeeds() || !f.probeSatisfied() || f.ownedByOther() || !f.enoughEp() || f.retired()) {
             return Optional.of(Reason.NOT_READY);
         }
         return Optional.empty();

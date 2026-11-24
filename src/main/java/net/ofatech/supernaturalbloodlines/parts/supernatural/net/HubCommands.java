@@ -63,6 +63,8 @@ public final class HubCommands {
      * @param stack   the command source of the sender (a test gives one with its own permission)
      * @return whether the command was run (false: refused before running)
      */
+    private static final java.util.Set<String> SHARED_PACK_ROWS = java.util.Set.of("P1", "P2", "P3", "P4", "P5", "P6", "P7", "P8", "P9", "P10");
+
     public static boolean run(ServerPlayer p, int level, HubCommandPayload payload, Function<ServerPlayer, CommandSourceStack> stack, Consumer<HubCommandReplyPayload> reply) {
         Optional<AdminCommands.Row> row = AdminCommands.byId(payload.rowId());
         if (row.isEmpty()) {
@@ -74,7 +76,10 @@ public final class HubCommands {
             SupernaturalBloodlines.LOGGER.warn("{} (permission {}) tried the OP command row {} from the hub and was refused", p.getGameProfile().getName(), level, row.get().id());
             return false;
         }
-        if (p.server.getCommands().getDispatcher().getRoot().getChild(row.get().root()) == null) {
+        var roots = p.server.getCommands().getDispatcher().getRoot();
+        // the shared pack rows (invite, accept, leave, kick, alliances, the challenge) are the group tree's too: a world with no Werewolves has no /pack, and its groups use /group
+        boolean viaGroup = roots.getChild(row.get().root()) == null && row.get().root().equals("pack") && roots.getChild("group") != null && SHARED_PACK_ROWS.contains(row.get().id());
+        if (roots.getChild(row.get().root()) == null && !viaGroup) {
             reply.accept(failure(row.get().id(), "unavailable")); // the part that owns this command is off on this server
             return false;
         }
@@ -90,7 +95,7 @@ public final class HubCommands {
         Capture capture = new Capture(p);
         boolean[] worked = {false};
         CommandSourceStack source = stack.apply(p).withSource(capture).withCallback((success, result) -> worked[0] = success && result != 0);
-        p.server.getCommands().performPrefixedCommand(source, command.get());
+        p.server.getCommands().performPrefixedCommand(source, viaGroup ? "group" + command.get().substring("pack".length()) : command.get());
         reply.accept(new HubCommandReplyPayload(row.get().id(), worked[0], capture.lines));
         return true;
     }

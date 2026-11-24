@@ -200,3 +200,16 @@ Two rites that need a boss's reward as a key. The grimoire is **given back** whe
 **Linking Spell** (medium circle, 5,000 power): Esther's Grimoire, 2 lead, 2 amethyst shards. Only a witch type can work it. Exactly two living creatures stand inside the chalk (it is 11 wide: within 5.5 blocks of the altar, feet within 2 blocks of it); you count if you stand in it, so you may link yourself to a creature. Neither may be one of the NPC Originals, a boss, or linked already. **A player, including a player Original, agrees by sneaking inside the circle with a lead in their main hand** (and PvP must be on): sneaking alone, or a lead alone, is not a yes. For `link_seconds` (60) half the damage one of them takes (`link_damage_share`) is dealt to the other in your name, once, never back again; a player's own hit cooldown is respected. It ends when either dies, leaves the dimension, or its time runs out, and a linked player is told at both ends.
 
 **Every refusal is the same**: "The link will not hold." It costs the lead, the amethyst and the altar's power, and the grimoire always comes back. That is deliberate, so a refusal never tells you who is a boss, whether somebody did not agree, or whether a creature was linked already. (A performer who is not a witch type is told so and gets everything back.) A partner who is not loaded owes a creature's share (never a player's) until it loads, and then takes at most half its health.
+
+## Wards, the locator and two more curses (plan 21)
+
+| Rite | Who | What |
+|---|---|---|
+| **Rite of the Ward** | a witch, siphoner, heretic or tribrid | Raises a ward on the altar. A vampire who is not invited is pushed out (`ward_radius`, 10). Whoever sneaks on the centre owns it; a vampire cannot own one. |
+| **Rite of the Door Ward** | the same | The small form: one door, trapdoor or gate within four blocks stays shut to an uninvited vampire. |
+| **Rite of the Locator** (taglock, Original's Blood, Hybrid's Blood) | the same | Attunes a **Vampire Compass** to somebody for 30 minutes. See [Items and Blocks](Items-And-Blocks). |
+| **Curse of Insanity** | anyone, with a taglock, a fermented spider eye and soul sand | Hallucinations every half minute or so. Needs Vampirism and Enchanted. |
+| **Curse of Susceptibility** | anyone, with a taglock, a vampire blood bottle and soul sand | 25% more damage taken per strength level plus one, never more than double. |
+
+The **ward** falls when its owner dies or becomes a vampire; invite people on the Path page (*Your ward*), with `/ward invite <player>`, or by saying "come in" (and "get out" to withdraw) near it. A ward never says what anybody is: every refusal is the same line. The **locator**'s needle spins the same way for every reason somebody cannot be found, and the one looked for is told "Somebody is looking for you." once. Both curses end when the target dies.
+

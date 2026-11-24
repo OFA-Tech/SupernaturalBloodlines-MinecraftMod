@@ -98,7 +98,7 @@ public final class RiteUnlocks {
     public static Set<RiteKind> kindsOf(ServerPlayer p) {
         var faction = VampirismAPI.factionPlayerHandler(p).getCurrentFaction();
         boolean wolfLineage = BloodlineAccess.get(p).wolf().lineage() != WolfState.Lineage.NONE;
-        return RiteKinds.of(BloodlineAccess.get(p).species(), faction == VReference.VAMPIRE_FACTION,
+        return RiteKinds.of(BloodlineAccess.get(p).species(), net.ofatech.supernaturalbloodlines.shared.species.TensuraRaceId.of(p), faction == VReference.VAMPIRE_FACTION,
                 VampirismSupernatural.isWerewolf(p) || wolfLineage, faction == VReference.HUNTER_FACTION);
     }
 
@@ -111,7 +111,7 @@ public final class RiteUnlocks {
      * installed (plan 19), ships no advancements, so nothing is known or sealed for it and the book shows neither entry.
      */
     public static boolean present(ServerPlayer p, String rite) {
-        return RiteUnlockTable.isGated(rite) && holder(p, RiteAdvancements.known(rite)) != null;
+        return RiteUnlockTable.isGated(rite) && holder(p, RiteAdvancements.known(rite)) != null && !RiteUnlockTable.dormant.test(rite);
     }
 
     /** The gated rites that exist in the loaded datapacks, in table order. */

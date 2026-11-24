@@ -10,6 +10,22 @@ import org.junit.jupiter.api.Test;
 
 class RiteKindsTest {
     @Test
+    void theRaceAddsTheKindAndKeepsTheSpecies() {
+        assertEquals(Set.of(RiteKind.WITCH, RiteKind.WEREWOLF), RiteKinds.of(Species.WITCH, "mysticism:direwolf", false, false, false));
+        assertEquals(Set.of(RiteKind.VAMPIRE), RiteKinds.of(Species.NONE, "ascension:blood_noble", false, false, false));
+        assertEquals(Set.of(RiteKind.HYBRID, RiteKind.WEREWOLF, RiteKind.VAMPIRE), RiteKinds.of(Species.HYBRID, "ascension:elder_bloodfiend", false, false, false));
+        assertEquals(Set.of(RiteKind.WITCH), RiteKinds.of(Species.WITCH, "tensura:human", false, false, false), "a plain race adds nothing");
+        assertEquals(Set.of(), RiteKinds.of(Species.NONE, "ascension:kitsune", false, false, false), "the kitsune line is not linked");
+        assertEquals(Set.of(RiteKind.HUNTER), RiteKinds.of(Species.NONE, "", false, false, true));
+    }
+
+    @Test
+    void theOldOverloadIsUnchanged() {
+        assertEquals(RiteKinds.of(Species.HYBRID, false, true, false), RiteKinds.of(Species.HYBRID, "", false, true, false));
+        assertEquals(Set.of(RiteKind.VAMPIRE), RiteKinds.of(Species.NONE, null, true, false, false));
+    }
+
+    @Test
     void aHumanWithNothingIsNoKind() {
         assertEquals(Set.of(), RiteKinds.of(Species.NONE, false, false, false));
     }

@@ -366,7 +366,8 @@ public final class CompassGameTests {
         withIndex(helper, () -> {
             Villager near = doppelganger(helper, new BlockPos(5, 1, 1));
             Mob vampire = vampireMob(helper, new BlockPos(7, 1, 1));
-            for (CompassMode mode : CompassMode.values()) {
+            // the locator mode has its own privacy checks in LocatorGameTests (it needs an attuned compass and a person to find)
+            for (CompassMode mode : List.of(CompassMode.VAMPIRES, CompassMode.DOPPELGANGERS)) {
                 Entity expected = mode == CompassMode.VAMPIRES ? vampire : near;
                 ItemStack stack = compass(mode);
                 p.getInventory().clearContent();

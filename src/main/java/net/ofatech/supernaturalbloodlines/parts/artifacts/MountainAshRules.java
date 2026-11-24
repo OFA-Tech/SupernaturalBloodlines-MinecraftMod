@@ -53,6 +53,12 @@ final class MountainAshRules {
         return p != null || level.getServer() == null ? p : level.getServer().getPlayerList().getPlayer(id);
     }
 
+    /** The push of Ashwarden, shared with the ward (R303): a flat unit direction, 0.6 along it and 0.2 up. */
+    static void pushBack(LivingEntity entity, Vec3 away) {
+        entity.setDeltaMovement(away.x * ASHWARDEN_PUSH, 0.2, away.z * ASHWARDEN_PUSH);
+        entity.hurtMarked = true;
+    }
+
     static void ashwarden(LivingEntity entity) {
         Level level = entity.level();
         if (level.isClientSide || entity.tickCount % ASHWARDEN_CHECK_TICKS != 0 || !Supernatural.isPrey(entity)) {
@@ -64,9 +70,7 @@ final class MountainAshRules {
                     && line.owner() != null && !line.owner().equals(entity.getUUID())
                     && owner(level, line.owner()) instanceof Player owner && LadderQuery.owns(owner, "S-WIT-3")) {
                 Vec3 away = entity.position().subtract(Vec3.atCenterOf(pos)).multiply(1, 0, 1);
-                away = away.lengthSqr() < 1.0E-6 ? new Vec3(1, 0, 0) : away.normalize();
-                entity.setDeltaMovement(away.x * ASHWARDEN_PUSH, 0.2, away.z * ASHWARDEN_PUSH);
-                entity.hurtMarked = true;
+                pushBack(entity, away.lengthSqr() < 1.0E-6 ? new Vec3(1, 0, 0) : away.normalize());
                 entity.addEffect(new MobEffectInstance(MobEffects.WEAKNESS, ASHWARDEN_WEAKNESS_TICKS, 0));
                 return;
             }
