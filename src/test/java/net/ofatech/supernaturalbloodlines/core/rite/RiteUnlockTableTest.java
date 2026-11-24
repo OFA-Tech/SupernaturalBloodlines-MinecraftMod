@@ -15,9 +15,9 @@ class RiteUnlockTableTest {
     void theNumbersOfThePlan() {
         assertEquals(11, RiteUnlockTable.OPEN.size());
         // 27, the twelve rites of plan 19 (eight evolutions, four masteries) and the four of plan 21 (two wards, two curses)
-        // plus the three grand rites of plan 20b (kind only)
-        assertEquals(46, RiteUnlockTable.GATED.size());
-        assertEquals(31, RiteUnlockTable.GATED.values().stream().filter(g -> g.lore().isEmpty()).count(), "kind only");
+        // plus the three grand rites and the two coven ring rites of plan 20b (kind only)
+        assertEquals(48, RiteUnlockTable.GATED.size());
+        assertEquals(33, RiteUnlockTable.GATED.values().stream().filter(g -> g.lore().isEmpty()).count(), "kind only");
         assertEquals(11, RiteUnlockTable.GATED.values().stream().filter(g -> g.kinds().isEmpty()).count(), "lore only (the two Ultimate evolutions and plan 21's curses are)");
         assertEquals(4, RiteUnlockTable.GATED.values().stream().filter(g -> !g.kinds().isEmpty() && !g.lore().isEmpty()).count(), "kind or lore");
     }

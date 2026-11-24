@@ -87,6 +87,8 @@ public final class RiteUnlockTable {
         kind(m, "rite_of_the_ward", RiteKind.WITCH, RiteKind.SIPHONER, RiteKind.TRIBRID);
         kind(m, "rite_of_the_door_ward", RiteKind.WITCH, RiteKind.SIPHONER, RiteKind.TRIBRID);
         // plan 20b: the three grand rites of a coven
+        kind(m, "coven_moon_ring", RiteKind.WITCH, RiteKind.SIPHONER, RiteKind.TRIBRID);
+        kind(m, "coven_sun_ring", RiteKind.WITCH, RiteKind.SIPHONER, RiteKind.TRIBRID);
         for (String grand : List.of("fete_des_benedictions", "night_watch", "great_harvest")) {
             kind(m, grand, RiteKind.WITCH, RiteKind.SIPHONER, RiteKind.TRIBRID);
         }

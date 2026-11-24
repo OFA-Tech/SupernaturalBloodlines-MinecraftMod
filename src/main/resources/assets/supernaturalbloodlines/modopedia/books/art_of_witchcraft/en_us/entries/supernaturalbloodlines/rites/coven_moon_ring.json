@@ -1,0 +1,38 @@
+{
+  "title": "Coven Moon Ring",
+  "icon": {
+    "count": 1,
+    "id": "minecraft:amethyst_shard"
+  },
+  "assigned_items": [],
+  "advancement": "supernaturalbloodlines:rites/known/coven_moon_ring",
+  "pages": [
+    {
+      "components": [
+        {
+          "template": "modopedia:page/headered_text",
+          "text": "Circle: medium circle, ritual chalk.\n\nA circle of three linked witches forges a Moon Ring bound to the werewolf of a pack who stands on the heart glyph, for half the silver the ring takes to craft.",
+          "header": "Coven Moon Ring"
+        }
+      ]
+    },
+    {
+      "components": [
+        {
+          "template": "modopedia:page/headered_text",
+          "text": "The ring is theirs alone. A werewolf with no pack, or no werewolf, gets nothing.",
+          "header": "Coven Moon Ring"
+        }
+      ]
+    },
+    {
+      "components": [
+        {
+          "template": "supernaturalbloodlines:page/rite",
+          "rite": "supernaturalbloodlines:coven_moon_ring",
+          "header": "Coven Moon Ring"
+        }
+      ]
+    }
+  ]
+}

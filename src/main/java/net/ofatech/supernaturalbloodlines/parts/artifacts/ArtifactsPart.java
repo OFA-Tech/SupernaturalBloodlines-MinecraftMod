@@ -99,6 +99,7 @@ public final class ArtifactsPart {
             if (werewolves) {
                 e.register(MountainAshWerewolfGameTests.class);
                 e.register(MoonRingGameTests.class);
+                e.register(net.ofatech.supernaturalbloodlines.parts.artifacts.gametest.CovenForgeGameTests.class);
                 e.register(WolfsbaneGameTests.class);
             }
         });

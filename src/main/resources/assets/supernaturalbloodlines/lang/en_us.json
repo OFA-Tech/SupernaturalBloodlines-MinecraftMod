@@ -2566,5 +2566,15 @@
   "supernaturalbloodlines.rite.grand.levels": "The circle cannot pay the price of this rite.",
   "supernaturalbloodlines.rite.grand.fete_done": "You are blessed.",
   "supernaturalbloodlines.rite.grand.night_watch_started": "The watch is set. It holds until dawn.",
-  "supernaturalbloodlines.rite.grand.harvest_done": "The fields answer."
+  "supernaturalbloodlines.rite.grand.harvest_done": "The fields answer.",
+  "rite.supernaturalbloodlines.coven_moon_ring": "Coven Moon Ring",
+  "rite.supernaturalbloodlines.coven_sun_ring": "Coven Sun Ring",
+  "supernaturalbloodlines.hub.rites.desc.coven_moon_ring.1": "A circle of three linked witches forges a Moon Ring bound to the werewolf of a pack who stands on the heart glyph, for half the silver the ring takes to craft.",
+  "supernaturalbloodlines.hub.rites.desc.coven_moon_ring.2": "The ring is theirs alone. A werewolf with no pack, or no werewolf, gets nothing.",
+  "supernaturalbloodlines.hub.rites.desc.coven_sun_ring.1": "A circle of three linked witches forges a Sun Ring bound to the vampire on the heart glyph. It costs half the power of the Ward of Daylight and needs no ring to start from.",
+  "supernaturalbloodlines.hub.rites.desc.coven_sun_ring.2": "A server can restrict it to Day Walkers of a clan.",
+  "supernaturalbloodlines.rite.coven_forge.circle": "This rite needs a linked circle of at least three.",
+  "supernaturalbloodlines.rite.coven_forge.off": "This rite is switched off on this server.",
+  "supernaturalbloodlines.refusal.coven_forge": "Nothing happened.",
+  "supernaturalbloodlines.refusal.mastery.circle": "This rite needs a larger linked circle."
 }

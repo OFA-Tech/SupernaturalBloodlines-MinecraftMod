@@ -345,6 +345,7 @@ public final class SpeciesPart {
             e.register(net.ofatech.supernaturalbloodlines.parts.species.gametest.CovenDeathGameTests.class);
             e.register(net.ofatech.supernaturalbloodlines.parts.species.gametest.CovenGovernanceGameTests.class);
             e.register(net.ofatech.supernaturalbloodlines.parts.species.gametest.CovenRiteGameTests.class);
+            e.register(net.ofatech.supernaturalbloodlines.parts.species.gametest.CovenRingGameTests.class);
             if (ModList.get().isLoaded("werewolves")) {
                 e.register(net.ofatech.supernaturalbloodlines.parts.species.gametest.GroupWolfGameTests.class);
                 e.register(net.ofatech.supernaturalbloodlines.parts.species.gametest.MoonWerewolfGameTests.class);

@@ -27,6 +27,8 @@ import net.ofatech.supernaturalbloodlines.core.moon.MoonRule;
 import net.ofatech.supernaturalbloodlines.parts.evolutionrites.EvoSkills;
 import net.ofatech.supernaturalbloodlines.parts.evolutionrites.EvolutionRitesConfig;
 import net.ofatech.supernaturalbloodlines.parts.evolutionrites.RiteEp;
+import net.ofatech.supernaturalbloodlines.parts.species.group.GroupsConfig;
+import net.ofatech.supernaturalbloodlines.parts.species.group.circle.CircleStage;
 import net.ofatech.supernaturalbloodlines.parts.species.group.circle.EpPriced;
 import net.ofatech.supernaturalbloodlines.parts.evolutionrites.mastery.MasteryApply;
 import net.ofatech.supernaturalbloodlines.parts.evolutionrites.mastery.MasteryChoice;
@@ -87,6 +89,11 @@ public record MasteryRiteFactory(Tier tier) implements RiteFactory {
             ServerPlayer caster = RiteTargets.performer(findEntity(params.caster), params.caster, target).orElse(null);
             if (caster == null) {
                 return cancel(); // the performer left: nobody is asked and nobody is changed
+            }
+
+            if (!MasteryRules.circleOk(riteTier, CircleStage.size(), GroupsConfig.masteryUltimateCircle(), !GroupsConfig.linkEnabled() || !GroupsConfig.covensEnabled())) {
+                caster.displayClientMessage(Component.translatable(MasteryRules.keyOf(MasteryRules.Reason.CIRCLE, riteTier)), true); // one line for every target, good or bad
+                return cancel();
             }
 
             // before anything about the target is read, so a short offering says nothing of them; a cancel gives back what was taken, the extras too
