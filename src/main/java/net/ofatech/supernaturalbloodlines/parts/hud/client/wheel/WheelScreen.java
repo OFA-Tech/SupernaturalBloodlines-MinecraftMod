@@ -376,6 +376,10 @@ public final class WheelScreen extends Screen {
         if (minecraft.screen != this || refused(p.entry())) {
             return;
         }
+        // the power may have changed between press and release (Alt-click, a new unlock): only open a screen if it still opens one
+        if (!StoneMenus.opensScreen(InfinityCompat.route(p.entry(), p.input()))) {
+            return;
+        }
         if (p.input() == StoneMenus.Input.MENU) {
             WheelActions.stone(p.entry(), StoneMenus.Input.MENU);
         } else {
@@ -742,7 +746,8 @@ public final class WheelScreen extends Screen {
             for (String suffix : extra) {
                 lines.add(WheelRenderer.text("help." + suffix, ctrl));
             }
-        }        out.add(NarratedElementType.TITLE, Component.literal(String.join(", ", lines)));
+        }
+        out.add(NarratedElementType.TITLE, Component.literal(String.join(", ", lines)));
     }
 
     /** For the development screenshots: the state of a frame (the pointer and the picker) without a real mouse. */

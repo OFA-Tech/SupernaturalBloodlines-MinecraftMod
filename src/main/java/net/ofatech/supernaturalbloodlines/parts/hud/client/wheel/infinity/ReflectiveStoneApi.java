@@ -403,7 +403,8 @@ public final class ReflectiveStoneApi implements StoneApi {
             }
             return StoneRules.prayShown(true, locked, holds);
         } catch (ReflectiveOperationException | RuntimeException | LinkageError e) {
-            failures.failed("reading whether a stone is carried", e);
+            // broken, not just failed: with Pray hidden and his key covered a stoneless player could not pray at all
+            failures.broken("reading whether a stone is carried", e);
             return false;
         }
     }
