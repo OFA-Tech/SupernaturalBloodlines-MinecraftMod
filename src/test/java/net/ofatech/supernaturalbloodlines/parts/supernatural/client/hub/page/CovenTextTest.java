@@ -133,6 +133,19 @@ class CovenTextTest {
     }
 
     @Test
+    void aVoteButtonsTipNamesTheVoteAndTheAnswer() {
+        var vote = new net.ofatech.supernaturalbloodlines.core.group.coven.CovenView.Vote(VoteKind.SHUN, "Cass", 1, 1, 3, net.ofatech.supernaturalbloodlines.core.group.coven.CovenView.Ballot.NONE, 17);
+        for (boolean yes : new boolean[] {true, false}) {
+            var tip = (net.minecraft.network.chat.contents.TranslatableContents) CovenCards.voteTip(vote, yes).getContents();
+            assertEquals(H + "vote_tip", tip.getKey());
+            var about = (net.minecraft.network.chat.contents.TranslatableContents) ((net.minecraft.network.chat.Component) tip.getArgs()[0]).getContents();
+            assertEquals(H + "vote.shun", about.getKey());
+            assertEquals("Cass", about.getArgs()[0]);
+            assertEquals(H + (yes ? "vote_yes" : "vote_no"), ((net.minecraft.network.chat.contents.TranslatableContents) ((net.minecraft.network.chat.Component) tip.getArgs()[1]).getContents()).getKey());
+        }
+    }
+
+    @Test
     void aVoteClockOverAnHourIsShownInHours() {
         var day = (net.minecraft.network.chat.contents.TranslatableContents) HomePage.clock(24 * 3600).getContents();
         assertEquals("supernaturalbloodlines.hub.home.hours", day.getKey());

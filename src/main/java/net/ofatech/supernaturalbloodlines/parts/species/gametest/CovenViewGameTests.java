@@ -140,6 +140,36 @@ public final class CovenViewGameTests {
     }
 
     @GameTest(template = "empty", templateNamespace = NS)
+    public static void theViewShowsTheFirstVoteTheViewerHasNotAnswered(GameTestHelper helper) {
+        TalkingDuelist regent = witch(helper, 1.5);
+        TalkingDuelist e1 = human(helper, 2.5);
+        TalkingDuelist e2 = human(helper, 3.5);
+        TalkingDuelist a = human(helper, 4.5);
+        TalkingDuelist b = human(helper, 5.5);
+        online(regent, e1, e2, a, b);
+        try {
+            for (TalkingDuelist m : List.of(e1, e2, a, b)) {
+                helper.assertTrue(join(regent, m), "could not join");
+            }
+            GroupIndex groups = GroupIndex.get(helper.getLevel());
+            groups.setRank(e1.getUUID(), GroupRank.ELDER);
+            groups.setRank(e2.getUUID(), GroupRank.ELDER);
+            GroupsConfig.override("elder_min_days", 0);
+            helper.assertTrue(CovenGovernance.elderAdd(regent, a.getUUID().toString()) == null, "the first vote did not open");
+            helper.assertTrue(CovenGovernance.shun(regent, b.getUUID().toString()) == null, "the second vote did not open");
+            helper.assertTrue(CovenViews.of(e1).vote().get().kind() == VoteKind.ELDER_ADD, "an Elder who has answered nothing should see the older vote first");
+            helper.assertTrue(CovenGovernance.vote(e1, true, "elder_add") == null, "the Elder could not answer");
+            var shown = CovenViews.of(e1).vote().get();
+            helper.assertTrue(shown.kind() == VoteKind.SHUN && shown.mine() == CovenView.Ballot.NONE, "the view still shows the vote already answered: " + shown);
+            helper.assertTrue(CovenGovernance.vote(e1, true, "shun") == null, "the Elder could not answer the second");
+            helper.assertTrue(CovenViews.of(e1).vote().get().kind() == VoteKind.ELDER_ADD, "with everything answered the older vote is shown");
+        } finally {
+            GroupsConfig.override("elder_min_days", null);
+            tidy(helper, regent, e1, e2, a, b);
+        }
+        helper.succeed();
+    }
+    @GameTest(template = "empty", templateNamespace = NS)
     public static void aShunnedPlayerSeesTheDaysLeft(GameTestHelper helper) {
         TalkingDuelist p = human(helper, 1.5);
         try {

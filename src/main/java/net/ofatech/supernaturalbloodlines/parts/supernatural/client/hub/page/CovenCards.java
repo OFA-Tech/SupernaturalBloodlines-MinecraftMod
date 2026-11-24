@@ -194,6 +194,11 @@ public final class CovenCards {
         return PageKit.wrapped(f, Component.translatable(KEY + "share_unknown"), r.x(), y, r.w(), t.muted());
     }
 
+    /** What a vote button reads out and shows as its tip: the vote itself and the answer ("Shun Cass? Yes"). */
+    static Component voteTip(CovenView.Vote v, boolean yes) {
+        return Component.translatable(KEY + "vote_tip", Component.translatable(KEY + "vote." + v.kind().id(), v.subjectName()), Component.translatable(KEY + (yes ? "vote_yes" : "vote_no")));
+    }
+
     private static int votes(HubScreen.Frame f, Rect r, int y, GroupView gv, CovenView cv, boolean compact) {
         HubTheme t = f.theme();
         boolean elector = gv.viewerRank() == GroupView.LEADER || gv.viewerRank() == GroupView.ELDER;
@@ -222,9 +227,8 @@ public final class CovenCards {
         Component yes = Component.translatable(KEY + "vote_yes");
         Component no = Component.translatable(KEY + "vote_no");
         Flow.Result flow = Flow.wrap(new Rect(r.x(), y + 2, r.w(), 0), List.of(PageWidgets.widthOf(f.font(), yes), PageWidgets.widthOf(f.font(), no)), PageWidgets.H, PageWidgets.GAP);
-        Component about = Component.translatable(KEY + "vote." + v.kind().id(), v.subjectName());
-        PageWidgets.button(f, "coven:vote_yes", flow.rects().get(0), yes, true, true, Component.translatable(KEY + "vote_tip", about, yes), () -> HubClient.runCommand("C9", List.of(v.kind().id())));
-        PageWidgets.button(f, "coven:vote_no", flow.rects().get(1), no, true, false, Component.translatable(KEY + "vote_tip", about, no), () -> HubClient.runCommand("C10", List.of(v.kind().id())));
+        PageWidgets.button(f, "coven:vote_yes", flow.rects().get(0), yes, true, true, voteTip(v, true), () -> HubClient.runCommand("C9", List.of(v.kind().id())));
+        PageWidgets.button(f, "coven:vote_no", flow.rects().get(1), no, true, false, voteTip(v, false), () -> HubClient.runCommand("C10", List.of(v.kind().id())));
         return flow.bottom() + 2;
     }
 
