@@ -35,10 +35,19 @@ public final class EvolutionRitesPart {
         RiteFactoryRegistry.get().register(MasteryRiteFactory.ID, MasteryRiteFactory.CODEC);
         // last, so the species part's /sb bloodline redirect exists when the node is added to its target
         NeoForge.EVENT_BUS.addListener(net.neoforged.bus.api.EventPriority.LOWEST, (RegisterCommandsEvent e) -> MasteryCommand.register(e.getDispatcher()));
+        net.ofatech.supernaturalbloodlines.parts.evolutionrites.merge.RaphaelMerge.register();
+        net.ofatech.supernaturalbloodlines.core.rite.RiteUnlockTable.dormant = rite -> rite.equals("evolve_raphael")
+                && !net.ofatech.supernaturalbloodlines.parts.evolutionrites.probe.Probes.of(net.ofatech.supernaturalbloodlines.parts.evolutionrites.probe.Probes.GREAT_SAGE_RAPHAEL)
+                        .map(net.ofatech.supernaturalbloodlines.parts.evolutionrites.probe.AddonProbe::roadOpen).orElse(false);
         modBus.addListener((RegisterGameTestsEvent e) -> {
             e.register(EvolutionHookProbeGameTests.class);
+            e.register(net.ofatech.supernaturalbloodlines.parts.evolutionrites.gametest.FreeGrantGameTests.class);
+            e.register(net.ofatech.supernaturalbloodlines.parts.evolutionrites.gametest.RaphaelProbeGameTests.class);
+            e.register(net.ofatech.supernaturalbloodlines.parts.evolutionrites.gametest.RaphaelMergeGameTests.class);
+            e.register(net.ofatech.supernaturalbloodlines.parts.evolutionrites.gametest.RaphaelMergeAddonGameTests.class);
             e.register(EvolutionRiteGameTests.class);
             e.register(EvolutionUnlockGameTests.class);
+            e.register(net.ofatech.supernaturalbloodlines.parts.evolutionrites.gametest.EvolutionAscensionGameTests.class);
             e.register(MasteryGameTests.class);
             e.register(net.ofatech.supernaturalbloodlines.parts.evolutionrites.gametest.CasterLeavesGameTests.class);
             e.register(net.ofatech.supernaturalbloodlines.parts.evolutionrites.gametest.EvolutionCommandGameTests.class);

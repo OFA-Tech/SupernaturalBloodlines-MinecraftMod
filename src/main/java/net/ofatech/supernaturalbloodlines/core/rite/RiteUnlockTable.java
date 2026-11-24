@@ -37,6 +37,12 @@ public final class RiteUnlockTable {
 
     public static final Map<String, Gate> GATED;
 
+    /**
+     * A rite that exists but whose road is closed (plan 19b: the Raphael rite while Great Sage's own road to Raphael is closed) is not present: nothing is
+     * taught or sealed for it, so the book shows neither entry until it opens. Set by the part that owns the rite; nothing is dormant by default.
+     */
+    public static volatile java.util.function.Predicate<String> dormant = rite -> false;
+
     static {
         Map<String, Gate> m = new LinkedHashMap<>();
         kind(m, "cleansing_blood", RiteKind.VAMPIRE);
@@ -57,6 +63,9 @@ public final class RiteUnlockTable {
         // plan 19: the evolution rites and the Rite of Mastery, sealed in the book and known by kind (D5, D15): a witch type works them, a vampire learns that Deus Sanguis exists
         kind(m, "evolve_great_sage", RiteKind.WITCH, RiteKind.SIPHONER, RiteKind.TRIBRID);
         kind(m, "evolve_deus_sanguis", RiteKind.WITCH, RiteKind.SIPHONER, RiteKind.TRIBRID, RiteKind.VAMPIRE);
+        // the Ultimates: sealed until Finn's Notes, "the rites of the eclipse" (E7, Q4)
+        lore(m, "evolve_blood_sovereign", FINN);
+        lore(m, "evolve_raphael", FINN);
         for (String tier : List.of("common", "extra", "unique", "ultimate")) {
             kind(m, "mastery_" + tier, RiteKind.WITCH, RiteKind.SIPHONER, RiteKind.TRIBRID);
         }

@@ -59,7 +59,17 @@ class EvolutionRecipeCodecTest {
         assertTrue(decode("{ " + base + ", \"tier\": \"mythic\" }").error().isPresent());
         assertTrue(decode("{ " + base + ", \"tier\": \"common\" }").error().isPresent(), "a Common skill is only for the Rite of Mastery");
         assertTrue(decode("{ " + base + ", \"tier\": \"unique\", \"subject_kinds\": [\"dragon\"] }").error().isPresent());
-        assertTrue(decode("{ " + base + ", \"tier\": \"unique\", \"grant_form\": \"free\" }").error().isPresent(), "FREE arrives with 19b");
+        assertTrue(decode("{ " + base + ", \"tier\": \"unique\", \"grant_form\": \"free\" }").error().isEmpty(), "FREE arrived with 19b");
+        assertTrue(decode("{ " + base + ", \"tier\": \"unique\", \"grant_form\": \"permanent\" }").error().isEmpty(), "PERMANENT arrived with 19c");
+        assertTrue(decode("{ " + base + ", \"tier\": \"unique\", \"grant_form\": \"forever\" }").error().isPresent());
+    }
+
+    @Test
+    void grantFormPermanentDecodesAndEncodesBack() {
+        var r = decode("{ \"recipe\": \"x\", \"tier\": \"ultimate\", \"grants\": \"a:b\", \"grant_form\": \"permanent\", \"requires_mod\": \"a\", \"probe\": \"p\" }").getOrThrow();
+        assertEquals(GrantForm.PERMANENT, r.grantForm());
+        var json = EvolutionRecipeCodec.RECIPE.codec().encodeStart(JsonOps.INSTANCE, r).getOrThrow().getAsJsonObject();
+        assertEquals("permanent", json.get("grant_form").getAsString());
     }
 
     @Test

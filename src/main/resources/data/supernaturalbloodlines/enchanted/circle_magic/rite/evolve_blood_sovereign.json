@@ -1,0 +1,26 @@
+{
+    "neoforge:conditions": [
+        { "type": "supernaturalbloodlines:part_enabled", "part": "evolutionRites" },
+        { "type": "neoforge:mod_loaded", "modid": "ascension" }
+    ],
+    "items": [
+        { "id": "ascension:ultimate_catalyst", "count": 1 },
+        { "id": "minecraft:nether_star", "count": 1 },
+        { "id": "enchanted:spirit_of_otherwhere", "count": 1 }
+    ],
+    "shapes": {
+        "enchanted:large_circle": "enchanted:nether_chalk"
+    },
+    "power": 20000,
+    "factory": {
+        "type": "supernaturalbloodlines:evolution",
+        "recipe": "blood_sovereign",
+        "tier": "ultimate",
+        "grants": "ascension:blood_sovereign",
+        "grant_form": "permanent",
+        "consumes": [ "ascension:deus_sanguis" ],
+        "needs": [ { "skill": "ascension:deus_sanguis", "mastered": true } ],
+        "requires_mod": "ascension",
+        "probe": "ascension.awakening"
+    }
+}
