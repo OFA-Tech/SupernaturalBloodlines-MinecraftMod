@@ -208,6 +208,8 @@ public final class LocatorGameTests {
         try {
             long now = helper.getLevel().getGameTime();
             net.ofatech.supernaturalbloodlines.parts.species.SpeciesConfig.overrideLocator("locator_range", 0);
+            // the target stands 10 blocks into a 32 block square, so a step of one or two blocks can never cross its edge (the world position of this cell differs per run)
+            target.setPos(Math.floor(target.getX() / 32) * 32 + 10.5, target.getY(), Math.floor(target.getZ() / 32) * 32 + 10.5);
             // control: findable, a blurred point, an answer in hundreds
             ItemStack found = attuned(target.getUUID(), now + 5000);
             LodestoneTracker aimed = aim(helper, found, holder);
@@ -218,11 +220,11 @@ public final class LocatorGameTests {
             helper.assertTrue(aimed.target().get().pos().getX() != (int) Math.floor(target.getX()) || aimed.target().get().pos().getZ() != (int) Math.floor(target.getZ()),
                     "the needle points at the exact spot");
             // standing still inside the square does not move the needle, and a step to the next square does
-            target.setPos(target.position().add(1, 0, 1));
-            ItemStack again = attuned(target.getUUID(), now + 5000);
-            helper.assertTrue(aim(helper, again, holder).target().get().pos().equals(aimed.target().get().pos()) || (int) Math.floor(target.getX() / 32) != (int) Math.floor((target.getX() - 1) / 32),
-                    "a step inside one square moved the needle");
-            target.setPos(target.position().add(-1, 0, -1));
+            target.setPos(target.position().add(2, 0, 2));
+            helper.assertTrue(aim(helper, attuned(target.getUUID(), now + 5000), holder).target().get().pos().equals(aimed.target().get().pos()), "a step inside one square moved the needle");
+            target.setPos(target.position().add(30, 0, 0));
+            helper.assertFalse(aim(helper, attuned(target.getUUID(), now + 5000), holder).target().get().pos().equals(aimed.target().get().pos()), "a step into the next square did not move the needle");
+            target.setPos(target.position().add(-32, 0, -2));
             helper.assertTrue(found.getOrDefault(ArtifactItems.LOCATOR_NEAR.get(), -1) == 600 || found.getOrDefault(ArtifactItems.LOCATOR_NEAR.get(), -1) == 500 || found.getOrDefault(ArtifactItems.LOCATOR_NEAR.get(), -1) == 700,
                     "the distance is not in hundreds: " + found.getOrDefault(ArtifactItems.LOCATOR_NEAR.get(), -1));
             // every reason it cannot be found is the same empty needle and the same -1
