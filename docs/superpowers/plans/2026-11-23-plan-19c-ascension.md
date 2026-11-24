@@ -1,5 +1,7 @@
 # Plan 19c: Ascension's Blood Sovereign (the `permanent` grant form, `AscensionProbe`, the eclipse rite): Implementation Plan
 
+> **Status: built in PR "plan 19c" on `feature/plan-19c`.** Differences from the task list below: `AscensionProbe.Source` is the test seam (fake config) and `AscensionProbe.Live` the per-target facts; `Probes.overrides` is a GameTest seam; the book-entry and unlock work reuse 19a's generator; two older GameTests that counted Finn's rites now follow `RiteUnlocks.present`. Mutation results and the matrix are in the PR description.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans. Steps use checkbox (`- [ ]`) syntax.
 
 **Goal:** Add the second Ascension road of plan 19: a witch-type performer, at a lunar eclipse, lets a consenting target who holds and has mastered Deus Sanguis become Blood Sovereign, keeping **Ascension's own requirements exactly** (5,000,000 Max EP, True Hero or True Demon Lord, the Awakening cooldown, the `doAscensionUltimate` rule, the Ultimate Catalyst). Only this pair (owner Q5). Deus Sanguis itself (`evolve_deus_sanguis`) is already on main from 19a; so are the engine, the `unique.road` probe and the `ascension` row of `LinkedMods.TESTED`.
