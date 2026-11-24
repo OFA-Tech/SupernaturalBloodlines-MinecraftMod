@@ -59,6 +59,48 @@ public final class CovenDeathGameTests {
     }
 
     @GameTest(template = "empty", templateNamespace = NS)
+    public static void anAnchorWhoDiesBeforeCastingClosesTheCircleWithoutDamage(GameTestHelper helper) {
+        Circle c = circle(helper, 3);
+        try {
+            CircleLink.close(c.anchor());
+            helper.assertTrue(CircleLink.open(c.anchor()) == null && CircleLink.join(c.others().getFirst(), null) == null,
+                    "the replacement circle did not open and take a member");
+            var anchor = c.anchor().getUUID();
+            var invitee = c.others().get(1).getUUID();
+            helper.assertTrue(CircleLink.calls().tokenOf(anchor, invitee).isPresent(), "there is no pending call");
+            fall(c.anchor());
+            helper.assertTrue(CircleLink.of(anchor) == null && CircleLink.calls().tokenOf(anchor, invitee).isEmpty(),
+                    "the anchor's death left a circle or call open");
+            for (TalkingDuelist member : c.others()) {
+                helper.assertTrue(member.getHealth() == member.getMaxHealth() && !CircleLink.shaken(member.getUUID()),
+                        "the group took a death penalty before a cast");
+            }
+        } finally {
+            done(helper, c);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aSecondCastKeepsTheFirstLinksMembersButDoesNotDoubleThePenalty(GameTestHelper helper) {
+        Circle c = circle(helper, 4);
+        try {
+            startRite(helper, c);
+            var earlierOnly = c.others().getLast();
+            earlierOnly.setPos(earlierOnly.getX() + 20, earlierOnly.getY(), earlierOnly.getZ());
+            startRite(helper, c);
+            fall(c.anchor());
+            for (TalkingDuelist member : c.others()) {
+                helper.assertTrue(member.getHealth() == member.getMaxHealth() - 12,
+                        "the link did not apply exactly one penalty to " + member.getUUID() + ": " + member.getHealth());
+            }
+        } finally {
+            done(helper, c);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
     public static void theAnchorsDeathHurtsEveryLinkedMember(GameTestHelper helper) {
         Circle c = circle(helper, 3);
         try {

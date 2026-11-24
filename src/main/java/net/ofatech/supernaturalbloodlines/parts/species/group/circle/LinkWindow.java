@@ -2,6 +2,7 @@ package net.ofatech.supernaturalbloodlines.parts.species.group.circle;
 
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Queue;
@@ -39,7 +40,7 @@ public final class LinkWindow {
     public record Live(UUID anchor, List<UUID> members, ResourceKey<Level> dimension, BlockPos chalk, long startedMillis, WeakReference<Rite> rite) {
     }
 
-    private static final Map<UUID, Live> LIVE = new ConcurrentHashMap<>();
+    private static final Map<UUID, List<Live>> LIVE = new ConcurrentHashMap<>();
     private static final Queue<Rite> STOPS = new ConcurrentLinkedQueue<>();
     private static boolean registered;
 
@@ -52,7 +53,15 @@ public final class LinkWindow {
         }
         registered = true;
         NeoForge.EVENT_BUS.addListener(EventPriority.LOWEST, false, LivingDeathEvent.class, LinkWindow::onDeath);
-        NeoForge.EVENT_BUS.addListener((ServerTickEvent.Post e) -> drain());
+        NeoForge.EVENT_BUS.addListener((ServerTickEvent.Post e) -> {
+            drain();
+            if (e.getServer().getTickCount() % 200 == 0) {
+                LIVE.values().removeIf(casts -> {
+                    casts.removeIf(live -> !stillOpen(e.getServer(), live));
+                    return casts.isEmpty();
+                });
+            }
+        });
         NeoForge.EVENT_BUS.addListener((PlayerEvent.PlayerLoggedOutEvent e) -> LIVE.remove(e.getEntity().getUUID()));
         NeoForge.EVENT_BUS.addListener((net.neoforged.neoforge.event.server.ServerStoppedEvent e) -> {
             LIVE.clear();
@@ -64,20 +73,20 @@ public final class LinkWindow {
     public static void open(ServerLevel level, CircleStage.Staged staged) {
         List<UUID> members = new ArrayList<>(staged.result().shares().keySet());
         Rite running = RiteManager.getRiteAt(level, staged.chalk());
-        LIVE.put(staged.anchor(), new Live(staged.anchor(), members, staged.dimension(), staged.chalk(), PackIndex.now(), new WeakReference<>(running)));
+        LIVE.computeIfAbsent(staged.anchor(), id -> new ArrayList<>())
+                .add(new Live(staged.anchor(), members, staged.dimension(), staged.chalk(), PackIndex.now(), new WeakReference<>(running)));
     }
 
     /** A member who left the coven, was kicked or shunned owes nothing more: they leave every live link; the link of an anchor who left is over. */
     public static void drop(UUID member) {
         LIVE.remove(member);
-        for (Live live : LIVE.values()) {
-            live.members().remove(member);
-        }
+        LIVE.values().forEach(casts -> casts.forEach(live -> live.members().remove(member)));
     }
 
     @Nullable
     public static Live liveOf(UUID anchor) {
-        return LIVE.get(anchor);
+        List<Live> casts = LIVE.get(anchor);
+        return casts == null || casts.isEmpty() ? null : casts.getLast();
     }
 
     public static int queuedStops() {
@@ -116,17 +125,31 @@ public final class LinkWindow {
         }
         MinecraftServer server = dead.server;
         UUID id = dead.getUUID();
-        for (Live other : LIVE.values()) {
-            other.members().remove(id);
+        List<Live> casts = LIVE.remove(id);
+        CircleLink.dropMember(server, id, false);
+        CircleLink.calls().forget(id);
+        if (casts == null) {
+            return;
         }
-        Live live = LIVE.remove(id);
-        if (live == null || !stillOpen(server, live)) {
+        var members = new LinkedHashSet<UUID>();
+        for (Live live : casts) {
+            if (!stillOpen(server, live)) {
+                continue;
+            }
+            members.addAll(live.members());
+            Rite rite = live.rite().get();
+            ServerLevel level = server.getLevel(live.dimension());
+            if (rite != null && level != null && RiteManager.getRiteAt(level, live.chalk()) == rite) {
+                STOPS.add(rite);
+            }
+        }
+        if (members.isEmpty()) {
             return;
         }
         long now = PackIndex.now();
         GroupIndex groups = GroupIndex.get(dead.serverLevel());
         UUID coven = CircleLink.covenOf(dead);
-        for (UUID memberId : List.copyOf(live.members())) {
+        for (UUID memberId : members) {
             ServerPlayer member = memberId.equals(id) ? null : find(server, memberId);
             // someone who left, was kicked or shunned since the rite started is no longer in the coven: the link is no longer theirs
             if (member == null || !member.isAlive() || coven == null || !coven.equals(CircleLink.covenOf(member))) {
@@ -144,11 +167,6 @@ public final class LinkWindow {
                 CircleLink.shake(memberId, now + GroupsConfig.linkShakenMinutes() * 60_000L);
             }
             member.sendSystemMessage(CovenText.of(GroupsConfig.linkDeathLethal() ? "link_death_lethal" : "link_death_hurt"));
-        }
-        Rite rite = live.rite().get();
-        ServerLevel level = server.getLevel(live.dimension());
-        if (rite != null && level != null && RiteManager.getRiteAt(level, live.chalk()) == rite) {
-            STOPS.add(rite);
         }
     }
 
