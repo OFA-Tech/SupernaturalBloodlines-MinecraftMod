@@ -78,7 +78,7 @@ public final class HubCommands {
         }
         var roots = p.server.getCommands().getDispatcher().getRoot();
         // the shared pack rows (invite, accept, leave, kick, alliances, the challenge) are the group tree's too: a world with no Werewolves has no /pack, and its groups use /group
-        boolean viaGroup = false && roots.getChild(row.get().root()) == null && row.get().root().equals("pack") && roots.getChild("group") != null && SHARED_PACK_ROWS.contains(row.get().id());
+        boolean viaGroup = roots.getChild(row.get().root()) == null && row.get().root().equals("pack") && roots.getChild("group") != null && SHARED_PACK_ROWS.contains(row.get().id());
         if (roots.getChild(row.get().root()) == null && !viaGroup) {
             reply.accept(failure(row.get().id(), "unavailable")); // the part that owns this command is off on this server
             return false;
