@@ -27,6 +27,12 @@ public final class CovenForgeGameTests {
 
     @GameTest(template = "empty", templateNamespace = NS)
     public static void theForgeFactoryLoadsAndRefusesWithNoCircle(GameTestHelper helper) {
+        if (!net.ofatech.supernaturalbloodlines.core.EnabledParts.isEnabled("species")) {
+            // the rite files need the species part: without it they are not loaded at all, so there is nothing to start (and the factory class still loads)
+            helper.assertTrue(CovenForgeRiteFactory.ID != null && CircleQuery.staged() == 0, "the seam answers a plan with the species part off");
+            helper.succeed();
+            return;
+        }
         var caster = TestPlayers.createTalkingDuelist(helper);
         place(helper, caster);
         try {

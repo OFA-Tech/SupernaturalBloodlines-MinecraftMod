@@ -47,9 +47,9 @@ public final class CommandCoverageGameTests {
                 walk(node, name, real);
             }
         }
-        real.removeIf(s -> s.startsWith("group ") && SHARED_WITH_PACK.contains(s.substring("group ".length())) && real.contains("pack " + s.substring("group ".length())));
         Set<String> rows = new TreeSet<>();
         AdminCommands.ALL.forEach(r -> rows.addAll(r.shapes()));
+        real.removeIf(s -> s.startsWith("group ") && SHARED_WITH_PACK.contains(s.substring("group ".length())) && rows.contains("pack " + s.substring("group ".length())));
 
         List<String> noRow = new ArrayList<>(real);
         noRow.removeAll(rows);
