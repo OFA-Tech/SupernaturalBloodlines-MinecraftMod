@@ -7,10 +7,13 @@ import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.event.server.ServerStoppedEvent;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
+import net.ofatech.supernaturalbloodlines.core.group.GroupType;
 import net.ofatech.supernaturalbloodlines.parts.species.group.GroupSwitcher;
+import net.ofatech.supernaturalbloodlines.parts.species.group.Groups;
 import net.ofatech.supernaturalbloodlines.parts.species.group.GroupsConfig;
 import net.ofatech.supernaturalbloodlines.parts.species.group.circle.CircleLink;
 import net.ofatech.supernaturalbloodlines.parts.species.group.circle.CircleStage;
+import net.ofatech.supernaturalbloodlines.parts.species.pack.PackIndex;
 import net.ofatech.supernaturalbloodlines.shared.supernatural.CircleQuery;
 
 /** What the coven perks listen to, with or without Werewolves (the species part registers it through {@code GroupsRegistry}). */
@@ -39,7 +42,8 @@ public final class CovenRegistry {
 
             @Override
             public boolean inPack(ServerLevel level, java.util.UUID player) {
-                return net.ofatech.supernaturalbloodlines.parts.species.pack.PackIndex.get(level).inPack(player);
+                PackIndex packs = PackIndex.get(level);
+                return packs.inPack(player) && Groups.typeOfGroup(level, packs.leaderOf(player)) == GroupType.PACK;
             }
 
             @Override

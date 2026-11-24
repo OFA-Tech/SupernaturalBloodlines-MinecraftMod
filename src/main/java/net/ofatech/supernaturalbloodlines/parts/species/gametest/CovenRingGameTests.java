@@ -149,6 +149,26 @@ public final class CovenRingGameTests {
     }
 
     @GameTest(template = "empty", templateNamespace = NS)
+    public static void aWerewolfInACovenIsNotEligibleForTheMoonRing(GameTestHelper helper) {
+        if (skip(helper, true)) {
+            return;
+        }
+        Circle c = circleAt(helper, new BlockPos(8, 1, 8), 3);
+        TalkingDuelist receiver = onCentre(helper);
+        try {
+            Wolves.make(receiver);
+            PackIndex.get(helper.getLevel()).join(c.anchor().getUUID(), receiver.getUUID());
+            cast(helper, c, "coven_moon_ring", moonItems());
+            helper.assertTrue(rings(helper, "supernaturalbloodlines:moon_ring").isEmpty()
+                    && c.anchor().receivedOnActionBar(NO_EFFECT) && dropped(helper, "werewolves:silver_ingot") == 2,
+                    "a werewolf in a coven was treated as a pack member");
+        } finally {
+            done(helper, c, receiver);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
     public static void aReceiverOutsideAPackIsRefusedTheSameAsAHuman(GameTestHelper helper) {
         if (skip(helper, true)) {
             return;
