@@ -6,6 +6,7 @@ import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.phys.Vec3;
+import net.ofatech.supernaturalbloodlines.SupernaturalBloodlines;
 import net.ofatech.supernaturalbloodlines.core.boss.ShiftRules;
 import net.ofatech.supernaturalbloodlines.parts.bosses.entity.BossNpc;
 import net.ofatech.supernaturalbloodlines.parts.bosses.entity.ShiftBody;
@@ -25,8 +26,19 @@ public final class ShiftRenderer<T extends BossNpc & GeoEntity & ShiftBody> exte
     public ShiftRenderer(EntityRendererProvider.Context context, String model, String texture, float wolfShadow) {
         super(context);
         this.human = new HumanoidBossRenderer<>(context, false);
-        this.beast = new BeastRenderer<>(context, model, texture, wolfShadow);
+        this.beast = new BeastRenderer<>(context, model, texture, wolfShadow, hasGlow(context, texture));
         this.shadowRadius = 0.5F;
+    }
+
+    /**
+     * Whether the wolf has anything to glow: a {@code <texture>_glowmask.png} next to it, or a glowing section in its own {@code .png.mcmeta}. GeckoLib's glow
+     * layer on a texture with neither registers an emissive texture that is never uploaded and paints the whole model solid black (the Beast has no mask).
+     */
+    private static boolean hasGlow(EntityRendererProvider.Context context, String texture) {
+        String base = "textures/entity/boss/" + texture;
+        var manager = context.getResourceManager();
+        return manager.getResource(ResourceLocation.fromNamespaceAndPath(SupernaturalBloodlines.MODID, base + "_glowmask.png")).isPresent()
+                || manager.getResource(ResourceLocation.fromNamespaceAndPath(SupernaturalBloodlines.MODID, base + ".png.mcmeta")).isPresent();
     }
 
     private boolean beast(T boss) {
@@ -59,9 +71,11 @@ public final class ShiftRenderer<T extends BossNpc & GeoEntity & ShiftBody> exte
 
     /** The wolf: the glow mask makes the eyes shine, and the death animation is the only fall (the root bone moves, so the entity adds no rotation). */
     private static final class BeastRenderer<T extends BossNpc & GeoEntity & ShiftBody> extends GeoEntityRenderer<T> {
-        BeastRenderer(EntityRendererProvider.Context context, String model, String texture, float shadow) {
+        BeastRenderer(EntityRendererProvider.Context context, String model, String texture, float shadow, boolean glow) {
             super(context, new BossGeoModel<>(model, texture));
-            addRenderLayer(new AutoGlowingGeoLayer<>(this));
+            if (glow) {
+                addRenderLayer(new AutoGlowingGeoLayer<>(this));
+            }
             this.shadowRadius = shadow;
         }
 

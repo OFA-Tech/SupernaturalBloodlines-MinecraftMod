@@ -195,6 +195,24 @@ Nothing is drawn yet: this phase is the server half of the skill wheel (`docs/su
 ### Art needed
 - `textures/gui/hud/give_blood.png` for Fable 5.2 (the action uses `unknown.png` until then).
 
+## Unreleased (UI overhaul phase 7: transformation animations)
+
+### Added
+- **Klaus, Deucalion, Peter Hale and the Beast of Gevaudan change body in a 2 second morph** (R161). For the first second the man bends (a pose table per boss, anticipation, a hunch that is not mirrored, a held breath) with a growl, dust climbing his body and two bone cracks; at the midpoint the wolf arrives (the same body swap as before, hidden by smoke) and plays a new `shift_in` clip, landing on its forepaws at 0.6 s with a puff of dust; then the howl clip plays, re-timed to 2.2 s. Everything is drawn from the form and ticks the server already syncs, and the shift itself (2 s, swap at 20, the same 64 tick howl) did not change.
+- **The Beast changes like the others.** The Host becomes the Beast in a shift of its own instead of at once: a man in the tricorn for a second, then the wolf. It stands still and cannot Roar while it changes, can be hit all the time, and a Beast from an old save or `/summon` is whole as before. Its boss bar shows the Host chip for the man, the Beast from the swap and the Spirit when it falls; the three men's bars show Shifting from tick 0 and Beast from tick 40.
+- `shift_out` is authored for Klaus, Deucalion and Peter and wired to nothing.
+- Dev only: `-Dsupernaturalbloodlines.devshots.bosses=morph:<boss>` for hidden stills and clips of each morph.
+
+### Changed
+- The man's pose can lean up to 45 degrees: a lean about the shoulder carries the hips back and up (`ManPoseTable.hipShiftZ`, `hipLift`) and the legs go with them, so the body is not torn at the waist (the old limit was about 14).
+- A boss cannot step or strike while he shifts, even with a target in front of him (`isImmobile`, which also stops every goal); the Beast cannot Roar while it changes or howls (to tick 84); a dying body is not counted or swapped; the shake at the swap is a damage event (the old entity event 2 does nothing on 1.21.1); a pose table is clamped to a body between 0.1 and 3 times and a squat of 2 blocks.
+- Deucalion's `drop_to_fours` and Peter's `rise_up` clips are gone: `shift_in` replaces them. Reduce motion is not read by any of this (it is for the interface only), and player werewolf forms are the Werewolves mod's and are not drawn by us.
+
+### Network
+- **The network protocol is bumped from "1" to "2"** (`ModNetwork.PROTOCOL`), so a client of an older build is refused at login by NeoForge's version check, with its own screen. No payload changed, but the Beast has two more synced entity data entries (`FORM` and `SHIFT_TICKS`), and entity data ids are positional: an old client that is given an id it does not have reads past the end of its table and is kicked with an error nobody can read. **Update the server and every client together.**
+
+### Rolling back
+- Reverting the PR restores the old shift. Saves are fine: the Beast's `form` and `shift_ticks` tags are optional and ignored by the old build, and a Beast saved mid-change comes back a whole Beast. **A Beast saved during its first second still carries the Host's tricorn in its head slot** (it comes off at the swap, and on any load after the swap); the old build does not know the swap, so it keeps the hat on a wolf until the Beast is killed or collapses (the hat is never dropped: its drop chance is 0). Going back also puts the protocol back to "1".
 ## Unreleased (UI overhaul phase 8: logo, mod icon, store art)
 
 ### Added

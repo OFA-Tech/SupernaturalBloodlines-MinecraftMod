@@ -80,6 +80,7 @@ public final class BossesPart {
         WorldNowHook.setBossNear(BossDirector::near);
         if (FMLEnvironment.dist == Dist.CLIENT) {
             modBus.addListener(BossRenderers::register);
+            modBus.addListener(net.ofatech.supernaturalbloodlines.parts.bosses.client.ManPose::register);
             net.ofatech.supernaturalbloodlines.parts.bosses.deal.DealClientHook.install(net.ofatech.supernaturalbloodlines.parts.bosses.client.ElijahDealScreen::open);
             modBus.addListener((FMLClientSetupEvent e) -> BossShots.registerIfRequested());
             net.ofatech.supernaturalbloodlines.parts.bosses.client.BossBarClient.register();
@@ -101,6 +102,7 @@ public final class BossesPart {
         e.register(net.ofatech.supernaturalbloodlines.parts.bosses.gametest.GrimoireLoreGameTests.class);
             e.register(net.ofatech.supernaturalbloodlines.parts.bosses.gametest.FinnGameTests.class);
             e.register(net.ofatech.supernaturalbloodlines.parts.bosses.gametest.CloakLinkGameTests.class);
+            e.register(net.ofatech.supernaturalbloodlines.parts.bosses.gametest.MorphGameTests.class);
         });
         SupernaturalBloodlines.LOGGER.info("BossesPart enabled");
     }
