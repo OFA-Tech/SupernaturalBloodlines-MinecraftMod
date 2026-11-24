@@ -1,10 +1,30 @@
 # Changelog
 
+## Unreleased (skill wheel, phase W5b: Infinity's menus on our wheel)
+
+### Added
+- **Infinity's own wheel key is covered again: every stone power, menus included, is on our wheel.** The menu powers open Infinity's own screens (his server stays the only authority); our wheel keeps left click = use and right click = slot picker, so his extra clicks sit on other inputs, and each one is a row in the side panel for that power:
+  - **Middle click (or Ctrl + Enter)** is his middle click: the destination screen on the Teleport and Spatial Banishment powers (Banishment: choose, then aim at the target), Will Construct's quick slots, the choice menu of Suggestion, Reality Pet, Local Decree, Reality Shatter, Climate Zone and Area Heist.
+  - **Shift + click (or Shift + Enter)** is his right click: Will Construct's construct menu; on a choice-menu power the second option is sent at once, with no aiming.
+  - The **Teleport GUI**'s plain click (or Enter) opens the destination screen, as his left click does.
+- The narrator reads the extra inputs of a power after its description.
+
+### Fixed
+- **A confirmed aim fires the power that was aimed**, not whatever the stone was cycled to while aiming.
+- **The stone entries are built when something they are made of changes** (his powers, our current power per stone, a running channel, a possession), not on every tick: his state is read once per update, not once per power per tick.
+- **Names and descriptions of his powers are read again after a language or resource reload.**
+
+### Network
+No payload changed (hud network version stays 4; `LadderNet.PROTOCOL` stays "15").
+
+### Rolling back
+Set `infinity_compat_enabled` to false: his wheel key and his own menus work as before. Nothing is saved or migrated.
+
 ## Unreleased (skill wheel, phase W5: Infinity Stones on the wheel)
 
 ### Added
 - **Infinity Stones on the skill wheel.** Each stone you carry is one entry in the Infinity Stones ring and its unlocked powers are its modes: left click uses (a switch flips and the wheel stays open, a power that needs aim aims first, a channel starts and the same click stops it), Shift + left click is the second option of a power that has one, Alt + click changes the power, scroll over a power with levels changes the level. **Soul control** is an entry next to the Soul stone while you are possessing something. Everything is read from Infinity Stones by reflection and his server checks every use. Setting `infinity_compat_enabled` (`hud`, default on).
-- **Infinity's wheel key and soul control key move onto our wheel** while this works (his soul release key stays his own).
+- **Infinity's soul control key moves onto our wheel** while this works (his soul release key stays his own); his wheel key followed in W5b.
 
 ### Changed
 - The Tensura ring no longer lists Infinity's skills (the stones are in their own ring); with the setting off, or if his mod changes in a way we cannot read (one warning in the log), they are plain Tensura skills again and his own wheel key works again.

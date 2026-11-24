@@ -263,3 +263,27 @@ Client only, by reflection, no build dependency, his mod unchanged (read-only ch
 - **Stale state:** his server sends the list when it changes, so age alone says nothing; a list received before this world was joined is another world's and its entries are shown locked (`StoneRules.stale`), and `joined()` also forgets which power each stone was on.
 - **Known limit:** turning off `soul.regen` clears every effect (`effect clear @s` in his tree); see `wiki/Known-Limits.md` and `docs/superpowers/research/infinity-soul-regen-bug-report.md`.
 - **Deviations from the plan:** the plan's `staleStateIsNotUsed` (older than 5 s) is `StoneRules.stale` by join time for the reason above; `isChannel` and a running channel make the entry a TOGGLE (it is on while it runs) instead of "HELD-style"; the mode list on Alt shows the three modes round the current one.
+
+## Skill wheel, phase W5b: Infinity's menus on our wheel
+
+Client only, by reflection, his mod unchanged (jar 8.0.0-alpha.6, source `f82452f`). No payload change (hud network "4", `LadderNet.PROTOCOL` "15").
+
+- **We open his own screens; nothing of his is re-implemented.** `ReflectiveStoneApi` builds `client.wheel.DestinationScreen(int stone, String node, boolean movesTarget, int stoneColor)` (his confirm sends his `Destination` payload, or starts his own `AimMode.startDestination` for Banishment), `client.will.ConstructScreen()` and `client.will.QuickSlotsScreen()` (both ask his server for their data in `init`), and calls `ExtraClientApi.requestMenu(stone, node)` (his `MenuNet.Pick(.., -1)`; his server answers with `MenuNet.Open`, which his client turns into his `MenuScreen`). They are shown with `Minecraft.setScreen`, which closes our wheel first. His server validates every payload they send.
+- **Required, not optional:** the classes and methods above are resolved with the rest in `ReflectiveStoneApi.create`; one missing makes the compat `OFF_BROKEN` (one warning, the stones are plain Tensura skills, his wheel key works). That is why his wheel key is covered exactly while `InfinityCompat.state()` is ACTIVE (`StoneRules.wheelKeyCovered`).
+- **Facts read once per power** (with the name and description): `DualModes.hasDestination / movesTarget / menuOnLeft`, `ExtraClientApi.hasMenu`, and `modeId == "reality.will_construct"` (his own hard-coded id). `StoneMenus.kind` turns them into `NONE / DESTINATION / DESTINATION_TARGET / WILL / CHOICE`.
+- **Inputs (`StoneMenus.route`, his `WheelScreen.mouseClicked` and `WheelActions.activate`):**
+
+| Power | Click / Enter | Shift + click / Shift + Enter (his right click) | Middle click / Ctrl + Enter (his middle click) |
+| --- | --- | --- | --- |
+| `space.teleport_gui` | his destination screen (his left click) | none | his destination screen |
+| `space.teleport` | plain use | none | his destination screen |
+| `space.spatial_banishment` | aim, then Use 0 (the End) | aim, then Use 2 (above the Nether roof) | his destination screen for the target, then his aim |
+| `reality.will_construct` | plain use (grip mode) | his construct screen | his quick slots screen |
+| choice-menu powers (`mind.suggestion`, `reality.reality_pet`, `reality.local_decree`, `reality.reality_shatter`, `time.climate_zone`, `space.area_heist`) | plain use (aimed first) | Use 2 at once, no aiming | `requestMenu`: his choice menu |
+
+  Every other power: Shift is his phase 2 when it is dual, the middle click does nothing. Our right click stays the slot picker (a stone is not slottable: it says so).
+- **Side panel:** `StoneMenus.help` gives the extra rows (Shift-click, Mid-click, Keys) that take the closing row's place; the panel's slot, mastery and help rows move up by the extra rows (`WheelRenderer.helpText`). The narrator reads one line per extra input (`StoneMenus.Help.narrate`, `help.narrate_*` in the lang file).
+- **Aim fix:** `WheelActions` remembers the node the stone was on when the aim started (`InfinityCompat.nodeId`) and a confirmed aim fires that node (`StoneActions.useNode`), not the stone's current power.
+- **Cache (review LOW items):** `ReflectiveStoneApi.nodes()` reads his `WheelClientState.get()` once per state object (his state is a record that is replaced, never changed); `StoneEntries.Cache` rebuilds the entries only when his powers, our current-power map, the running channel, `receivedAt`, the possession or the join time change; `InfinityCompat.reload()` (called from `WheelInput.resourcesReloaded`) clears the cached names and descriptions.
+- **Tests:** `StoneMenusTest` (the table), `StoneMenuActionsTest` (the calls made against a fake, the aim node, the cache), `InfinityRealJarTest` (his real jar: `nodes()` / `readFacts` with his client wheel state set by reflection, and the reload; skipped when the jar is not there), `StoneRulesTest.hisWheelKey...`.
+- **Not verified without his mod in a real client:** that his screens look and behave right when opened from our wheel (they were written to replace his own wheel screen), the width of the new help rows at every GUI scale, and the Banishment aim after his destination screen.
