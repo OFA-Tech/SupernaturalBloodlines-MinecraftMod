@@ -249,9 +249,11 @@ public final class HomePage implements HubPageView {
         HubTheme t = f.theme();
         y = section(f, s, y, "people");
         var snap = f.view.snapshot();
-        List<HubSocial.Member> pack = snap.pack();
+        net.ofatech.supernaturalbloodlines.core.group.GroupView gv = GroupLabels.view();
+        boolean grp = GroupLabels.active(gv);
+        List<HubSocial.Member> pack = grp ? GroupLabels.members(gv) : snap.pack();
         if (pack.isEmpty()) {
-            y = PageKit.wrapped(f, Component.translatable(KEY + "no_pack"), s.x(), y, s.w(), t.muted());
+            y = PageKit.wrapped(f, GroupLabels.t(gv, KEY + "no_pack", "no_pack"), s.x(), y, s.w(), t.muted());
         }
         int face = 16;
         int step = face + 4;
@@ -272,7 +274,7 @@ public final class HomePage implements HubPageView {
             }
             online += m.online() ? 1 : 0;
             String tid = "stage:person:" + m.name();
-            Component role = Component.translatableWithFallback(PageKit.HUB + "pack.member." + m.base(), HubModel.pretty(m.base()));
+            Component role = grp ? GroupLabels.memberRank(gv, m.base()) : Component.translatableWithFallback(PageKit.HUB + "pack.member." + m.base(), HubModel.pretty(m.base()));
             UUID id = m.id().orElse(null);
             f.target(tid, hit, List.of(Component.literal(m.name()), role, Component.translatable(KEY + "open_profile")), id == null ? null : () -> f.screen().openProfile(id, m.name()));
             if (drawn && (f.focused(tid) || (id != null && f.hovered(hit)))) {
@@ -281,7 +283,7 @@ public final class HomePage implements HubPageView {
         }
         if (!pack.isEmpty()) {
             y += 6 + ((pack.size() - 1) / perRow + 1) * (face + 8);
-            y = PageKit.wrapped(f, Component.translatable(KEY + "pack_count", pack.size(), online), s.x(), y, s.w(), t.muted());
+            y = PageKit.wrapped(f, GroupLabels.t(gv, KEY + "pack_count", "pack_count", pack.size(), online), s.x(), y, s.w(), t.muted());
         }
         if (snap.sire().filter(n -> !n.isEmpty()).isPresent()) {
             String n = snap.sire().get();

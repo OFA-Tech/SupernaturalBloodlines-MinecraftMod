@@ -2637,5 +2637,17 @@
   "supernaturalbloodlines.hub.profile.confirm.shun": "Open a vote to shun %s?",
   "supernaturalbloodlines.hub.profile.action.call_regent": "Call for a new Regent",
   "supernaturalbloodlines.hub.profile.action.call_regent.what": "Opens a vote to make %s the Regent.",
-  "supernaturalbloodlines.hub.profile.confirm.call_regent": "Open a vote to make %s the Regent?"
+  "supernaturalbloodlines.hub.profile.confirm.call_regent": "Open a vote to make %s the Regent?",
+  "supernaturalbloodlines.hub.group.no_pack.clan": "You have no clan.",
+  "supernaturalbloodlines.hub.group.pack_count.clan": "%s in your clan, %s online.",
+  "supernaturalbloodlines.hub.group.no_pack.coven": "You have no coven.",
+  "supernaturalbloodlines.hub.group.pack_count.coven": "%s in your coven, %s online.",
+  "supernaturalbloodlines.hub.group.no_pack.brotherhood": "You have no brotherhood.",
+  "supernaturalbloodlines.hub.group.pack_count.brotherhood": "%s in your brotherhood, %s online.",
+  "supernaturalbloodlines.hub.group.no_pack.none": "You are in no group.",
+  "supernaturalbloodlines.hub.group.pack_count.none": "%s in your group, %s online.",
+  "supernaturalbloodlines.hub.coven.f.names": "In the circle",
+  "supernaturalbloodlines.hub.coven.f.channel": "Your channel",
+  "supernaturalbloodlines.hub.coven.f.share": "Your share",
+  "supernaturalbloodlines.hub.coven.f.channel_value": "%s of %s. %s"
 }

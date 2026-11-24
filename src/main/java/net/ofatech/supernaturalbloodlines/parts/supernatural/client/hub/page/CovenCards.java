@@ -41,16 +41,50 @@ public final class CovenCards {
 
     /** The coven's lines and buttons from {@code y}; returns the y under them. */
     public static int render(HubScreen.Frame f, Rect r, int y, GroupView gv, @Nullable HubSocial.Member chosen) {
+        return render(f, r, y, gv, chosen, false);
+    }
+
+    /**
+     * {@code compact}: only the controls (the Tensura page keeps the facts in its info pane, see {@link #facts}). An open vote comes before the circle in
+     * both shapes: it is what waits for an answer.
+     */
+    public static int render(HubScreen.Frame f, Rect r, int y, GroupView gv, @Nullable HubSocial.Member chosen, boolean compact) {
         if (!applies(gv)) {
             return y;
         }
         CovenView cv = CovenClient.view();
         y = tier(f, r, y + 4, gv, cv);
-        y = circle(f, r, y + 4, cv);
-        y = votes(f, r, y + 4, gv, cv);
+        if (cv.vote().isPresent()) {
+            y = votes(f, r, y + 4, gv, cv, compact);
+            y = circle(f, r, y + 4, cv, compact);
+        } else {
+            y = circle(f, r, y + 4, cv, compact);
+            y = votes(f, r, y + 4, gv, cv, compact);
+        }
         return elders(f, r, y + 4, gv, chosen);
     }
 
+    /** The facts of the open vote and of the circle, for the info pane of the Tensura page, most urgent first (a small pane keeps the first that fit). */
+    public static void facts(net.ofatech.supernaturalbloodlines.shared.hub.kit.Detail.Builder d) {
+        CovenView cv = CovenClient.view();
+        if (cv.vote().isPresent()) {
+            CovenView.Vote v = cv.vote().get();
+            d.field(Component.translatable(KEY + "votes_title"), Component.translatable(KEY + "vote_counts", v.yes(), v.no(), v.electors(), v.hoursLeft()));
+        }
+        d.field(Component.translatable(KEY + "circle_title"), Component.translatable(KEY + "circle." + cv.circle().name().toLowerCase(java.util.Locale.ROOT), cv.anchorName()));
+        if (cv.meterCap() > 0) {
+            Component refill = cv.regenSeconds() <= 0 ? Component.translatable(KEY + "meter_full")
+                    : Component.translatable(KEY + "meter_refill", cv.regenSeconds() / 60, String.format("%02d", cv.regenSeconds() % 60));
+            d.field(Component.translatable(KEY + "f.channel"), Component.translatable(KEY + "f.channel_value", cv.meter(), cv.meterCap(), refill));
+        }
+        if (cv.circle() == CovenView.Circle.ANCHOR || cv.circle() == CovenView.Circle.JOINED) {
+            d.field(Component.translatable(KEY + "f.share"), cv.shareKnown() ? Component.translatable(KEY + "share", cv.sharePower(), cv.shareEp())
+                    : Component.translatable(KEY + "share_worst", cv.sharePower()));
+        }
+        if (!cv.circleNames().isEmpty()) {
+            d.field(Component.translatable(KEY + "f.names"), Component.literal(String.join(", ", cv.circleNames())));
+        }
+    }
     private static int tier(HubScreen.Frame f, Rect r, int y, GroupView gv, CovenView cv) {
         HubTheme t = f.theme();
         Component line = Component.translatable(KEY + "tier", Component.translatable(KEY + "tier." + cv.tier()), cv.size(), gv.sinceDays());
@@ -62,8 +96,12 @@ public final class CovenCards {
         return y;
     }
 
-    private static int circle(HubScreen.Frame f, Rect r, int y, CovenView cv) {
+    private static int circle(HubScreen.Frame f, Rect r, int y, CovenView cv, boolean compact) {
         HubTheme t = f.theme();
+        if (compact) {
+            y = circleButtons(f, r, y, cv);
+            return consent(f, r, y + 4, cv);
+        }
         y = PageKit.title(f, Component.translatable(KEY + "circle_title"), r.x(), y, r.w(), t.accent());
         t.drawRule(f.g, r.x(), y + 2, r.w());
         y += 6;
@@ -156,18 +194,25 @@ public final class CovenCards {
         return PageKit.wrapped(f, Component.translatable(KEY + "share_unknown"), r.x(), y, r.w(), t.muted());
     }
 
-    private static int votes(HubScreen.Frame f, Rect r, int y, GroupView gv, CovenView cv) {
+    private static int votes(HubScreen.Frame f, Rect r, int y, GroupView gv, CovenView cv, boolean compact) {
         HubTheme t = f.theme();
-        y = PageKit.title(f, Component.translatable(KEY + "votes_title"), r.x(), y, r.w(), t.accent());
-        t.drawRule(f.g, r.x(), y + 2, r.w());
-        y += 6;
         boolean elector = gv.viewerRank() == GroupView.LEADER || gv.viewerRank() == GroupView.ELDER;
+        if (compact && cv.vote().isEmpty()) {
+            return y;
+        }
+        if (!compact) {
+            y = PageKit.title(f, Component.translatable(KEY + "votes_title"), r.x(), y, r.w(), t.accent());
+            t.drawRule(f.g, r.x(), y + 2, r.w());
+            y += 6;
+        }
         if (cv.vote().isEmpty()) {
             return PageKit.wrapped(f, Component.translatable(KEY + "no_vote"), r.x(), y, r.w(), t.muted());
         }
         CovenView.Vote v = cv.vote().get();
-        y = PageKit.wrapped(f, Component.translatable(KEY + "vote." + v.kind().id(), v.subjectName()), r.x(), y, r.w(), t.ink());
-        y = PageKit.wrapped(f, Component.translatable(KEY + "vote_counts", v.yes(), v.no(), v.electors(), v.hoursLeft()), r.x(), y, r.w(), t.muted());
+        y = PageKit.wrapped(f, Component.translatable(KEY + "vote." + v.kind().id(), v.subjectName()), r.x(), y, r.w(), compact ? t.accent() : t.ink());
+        if (!compact) {
+            y = PageKit.wrapped(f, Component.translatable(KEY + "vote_counts", v.yes(), v.no(), v.electors(), v.hoursLeft()), r.x(), y, r.w(), t.muted());
+        }
         if (v.mine() != CovenView.Ballot.NONE) {
             return PageKit.wrapped(f, Component.translatable(KEY + "vote_mine." + v.mine().name().toLowerCase(java.util.Locale.ROOT)), r.x(), y, r.w(), t.muted());
         }
