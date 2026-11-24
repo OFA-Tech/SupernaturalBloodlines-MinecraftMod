@@ -5,6 +5,14 @@ package net.ofatech.supernaturalbloodlines.core.boss;
  * hurts it, what it regenerates, what stuns it).
  */
 public final class BeastRules {
+    /** The Beast's body (2.4 wide, 3 high) once it is the wolf; before the swap of its change it is the Host's man, as {@link ShiftRules#dimensionsFor} has him. */
+    public static final ShiftRules.Size BODY = new ShiftRules.Size(2.4F, 3.0F);
+
+    /** The hitbox follows the body that is drawn (UI overhaul phase 7): a man until the swap tick, then the Beast's. A Beast that never morphed is always whole. */
+    public static ShiftRules.Size dimensionsFor(BossForm form, int shiftTicks) {
+        return ShiftRules.showsBeast(form, shiftTicks) ? BODY : new ShiftRules.Size(0.6F, 1.95F);
+    }
+
     /** The Roar's wind-up: the Beast rears up for this long before the fear lands. */
     public static final int ROAR_WINDUP_TICKS = 40;
     /** Shots (arrows, tridents) do this part of their damage: the Beast is a shadow pretending to be real. Melee and the pike are not reduced. */

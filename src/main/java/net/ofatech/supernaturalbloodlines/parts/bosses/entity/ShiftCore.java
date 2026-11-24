@@ -10,11 +10,35 @@ import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.ofatech.supernaturalbloodlines.core.boss.BossForm;
+import net.ofatech.supernaturalbloodlines.core.boss.MorphRules;
 import net.ofatech.supernaturalbloodlines.core.boss.ShiftRules;
 
 /** The shift the two shifting bosses share (plan 17c and 17f): standing still while it runs, counting its ticks, the swap and the end, and the beast's bonuses. */
 final class ShiftCore {
     private ShiftCore() {
+    }
+
+    /**
+     * The wolf's clips by the name {@code KlausRules.animation} gives, built once per boss (a {@code RawAnimation} is immutable and has equals, so the controller
+     * sees the same one every frame and allocates nothing): the death pose held, the howl clip (the model's {@code howl} or {@code roar}) once, the arrival
+     * {@code shift_in} once, and the three loops.
+     */
+    /** Plays a clip on the wolf's controller: a blend of {@link MorphRules#blendTicks} first, none for the arrival, so that the first frame drawn at the swap is the first frame of {@code shift_in}. */
+    static <T extends software.bernie.geckolib.animatable.GeoAnimatable> software.bernie.geckolib.animation.PlayState play(software.bernie.geckolib.animation.AnimationState<T> state,
+            software.bernie.geckolib.animation.RawAnimation clip, boolean arriving) {
+        state.getController().transitionLength(net.ofatech.supernaturalbloodlines.core.boss.MorphRules.blendTicks(arriving));
+        return state.setAndContinue(clip);
+    }
+
+    static java.util.Map<String, software.bernie.geckolib.animation.RawAnimation> clips(String model, String howlClip) {
+        String p = "animation." + model + ".";
+        return java.util.Map.of(
+                "death", software.bernie.geckolib.animation.RawAnimation.begin().thenPlayAndHold(p + "death"),
+                "howl", software.bernie.geckolib.animation.RawAnimation.begin().thenPlay(p + howlClip),
+                "shift_in", software.bernie.geckolib.animation.RawAnimation.begin().thenPlay(p + "shift_in"),
+                "idle", software.bernie.geckolib.animation.RawAnimation.begin().thenLoop(p + "idle"),
+                "walk", software.bernie.geckolib.animation.RawAnimation.begin().thenLoop(p + "walk"),
+                "run", software.bernie.geckolib.animation.RawAnimation.begin().thenLoop(p + "run"));
     }
 
     /** Before the entity's own tick: he stands where he is while he shifts, so the tick cannot move him. */
@@ -27,8 +51,16 @@ final class ShiftCore {
 
     /** One more tick of the shift (server): the counter, the swap on its tick, and the end of the shift. */
     static void advance(ShiftBody body) {
+        // a dying body is not in the middle of anything: no count, no swap, no cue (the death clip wins)
+        if (body instanceof LivingEntity dying && dying.isDeadOrDying()) {
+            return;
+        }
         BossForm form = body.form();
         int before = body.shiftTicks();
+        // the cues of the tick that is about to be counted (growl at 0 ... landing at 32); none for one who is dying: the death clip wins
+        if (body instanceof LivingEntity living && body.level() instanceof ServerLevel level) {
+            MorphCues.play(level, living, before, MorphRules.cues(form, before));
+        }
         int counted = ShiftRules.nextTicks(form, before);
         if (counted != before) {
             body.setShiftTicks(counted);

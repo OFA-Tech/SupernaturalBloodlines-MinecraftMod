@@ -61,6 +61,7 @@ public final class PeterHaleEntity extends BossNpc implements GeoEntity, ShiftBo
     private static final String SWIPE = "swipe";
     private static final String BITE = "bite";
     private static final String POUNCE = "pounce";
+    private static final java.util.Map<String, RawAnimation> CLIPS = ShiftCore.clips("peter_hale_alpha", "roar");
     private static final int HOME_RADIUS = 32;
 
     private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
@@ -435,14 +436,10 @@ public final class PeterHaleEntity extends BossNpc implements GeoEntity, ShiftBo
     public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
         controllers.add(new AnimationController<>(this, CONTROLLER, 4, state -> {
             PeterHaleEntity p = state.getAnimatable();
-            String name = net.ofatech.supernaturalbloodlines.core.boss.KlausRules.animation(p.isDeadOrDying(), false, ShiftRules.howling(p.form(), p.shiftTicks()),
+            String name = net.ofatech.supernaturalbloodlines.core.boss.KlausRules.animation(p.isDeadOrDying(), false,
+                    net.ofatech.supernaturalbloodlines.core.boss.MorphRules.arriving(p.form(), p.shiftTicks()), ShiftRules.howling(p.form(), p.shiftTicks()),
                     state.isMoving(), p.getDeltaMovement().horizontalDistance());
-            RawAnimation animation = RawAnimation.begin();
-            return state.setAndContinue(switch (name) {
-                case "death" -> animation.thenPlayAndHold("animation.peter_hale_alpha.death");
-                case "howl" -> animation.thenPlay("animation.peter_hale_alpha.roar");
-                default -> animation.thenLoop("animation.peter_hale_alpha." + name);
-            });
+            return ShiftCore.play(state, CLIPS.get(name), name.equals("shift_in"));
         }).triggerableAnim(SWIPE, RawAnimation.begin().thenPlay("animation.peter_hale_alpha.attack_swipe"))
                 .triggerableAnim(BITE, RawAnimation.begin().thenPlay("animation.peter_hale_alpha.attack_bite"))
                 .triggerableAnim(POUNCE, RawAnimation.begin().thenPlay("animation.peter_hale_alpha.pounce")));
