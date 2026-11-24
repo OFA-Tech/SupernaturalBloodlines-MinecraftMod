@@ -1,0 +1,38 @@
+{
+  "title": "Rite of the Imitator",
+  "icon": {
+    "count": 1,
+    "id": "minecraft:echo_shard"
+  },
+  "assigned_items": [],
+  "advancement": "supernaturalbloodlines:rites/known/evolve_imitator",
+  "pages": [
+    {
+      "components": [
+        {
+          "template": "modopedia:page/headered_text",
+          "text": "Circle: medium circle, infernal chalk.\n\nOnly with Slime Throne Extras. A witch-type performer opens the road to Imitator for the one on the circle, or for herself, on a full-moon night.",
+          "header": "Rite of the Imitator"
+        }
+      ]
+    },
+    {
+      "components": [
+        {
+          "template": "modopedia:page/headered_text",
+          "text": "The one on the circle must agree by sneaking.\n\nCosts rare items, altar power and 200,000 of their base Max EP, spent once the skill is learned.",
+          "header": "Rite of the Imitator"
+        }
+      ]
+    },
+    {
+      "components": [
+        {
+          "template": "supernaturalbloodlines:page/rite",
+          "rite": "supernaturalbloodlines:evolve_imitator",
+          "header": "Rite of the Imitator"
+        }
+      ]
+    }
+  ]
+}

@@ -14,8 +14,8 @@ class RiteUnlockTableTest {
     @Test
     void theNumbersOfThePlan() {
         assertEquals(8, RiteUnlockTable.OPEN.size());
-        assertEquals(35, RiteUnlockTable.GATED.size()); // 27 and the eight rites of plan 19 (four evolutions, four masteries)
-        assertEquals(22, RiteUnlockTable.GATED.values().stream().filter(g -> g.lore().isEmpty()).count(), "kind only");
+        assertEquals(39, RiteUnlockTable.GATED.size()); // 27 and the twelve rites of plan 19 (eight evolutions, four masteries)
+        assertEquals(26, RiteUnlockTable.GATED.values().stream().filter(g -> g.lore().isEmpty()).count(), "kind only");
         assertEquals(9, RiteUnlockTable.GATED.values().stream().filter(g -> g.kinds().isEmpty()).count(), "lore only (the two Ultimate evolutions are)");
         assertEquals(4, RiteUnlockTable.GATED.values().stream().filter(g -> !g.kinds().isEmpty() && !g.lore().isEmpty()).count(), "kind or lore");
     }
