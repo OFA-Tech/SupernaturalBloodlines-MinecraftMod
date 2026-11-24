@@ -8,6 +8,7 @@ import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.event.server.ServerStoppedEvent;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
 import net.ofatech.supernaturalbloodlines.parts.species.group.GroupSwitcher;
+import net.ofatech.supernaturalbloodlines.parts.species.group.GroupsConfig;
 import net.ofatech.supernaturalbloodlines.parts.species.group.circle.CircleLink;
 import net.ofatech.supernaturalbloodlines.parts.species.group.circle.CircleStage;
 import net.ofatech.supernaturalbloodlines.shared.supernatural.CircleQuery;
@@ -34,6 +35,27 @@ public final class CovenRegistry {
             public int staged() {
                 CircleStage.Staged s = CircleStage.current();
                 return s == null ? 0 : s.result().shares().size();
+            }
+
+            @Override
+            public boolean inPack(ServerLevel level, java.util.UUID player) {
+                return net.ofatech.supernaturalbloodlines.parts.species.pack.PackIndex.get(level).inPack(player);
+            }
+
+            @Override
+            public boolean dayWalker(ServerLevel level, java.util.UUID player) {
+                var groups = net.ofatech.supernaturalbloodlines.parts.species.group.GroupIndex.get(level);
+                return groups.rankOf(player, net.ofatech.supernaturalbloodlines.core.group.GroupType.CLAN) == net.ofatech.supernaturalbloodlines.core.group.GroupRank.DAY_WALKER;
+            }
+
+            @Override
+            public boolean switchOn(String name) {
+                return switch (name) {
+                    case "moon_ring" -> GroupsConfig.moonlightRingEnabled();
+                    case "sun_ring" -> GroupsConfig.sunRingForgeEnabled();
+                    case "sun_ring_day_walker_only" -> GroupsConfig.sunRingDayWalkerOnly();
+                    default -> false;
+                };
             }
         });
         net.ofatech.supernaturalbloodlines.parts.species.group.circle.LinkWindow.register();
