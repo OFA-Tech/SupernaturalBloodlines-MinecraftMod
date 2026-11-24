@@ -111,11 +111,24 @@ public final class WardRules {
         return Math.max(1, Math.min(MAX_RADIUS, r));
     }
 
-    /** The upper ends of the config ranges {@code ward_max_per_owner} and {@code ward_max_invites}: the hub payload's caps are these, so no setting can outgrow it. */
-    public static final int MAX_PER_OWNER_LIMIT = 16;
-    public static final int MAX_INVITES_LIMIT = 64;
-    /** The same two people may not be invited again, or withdrawn and invited again, sooner than this (a message each time). */
-    public static final long INVITE_COOLDOWN_TICKS = 200;
+    /** The upper end of {@code ward_max_per_owner}: the hub shows this many wards of one owner, so no setting can outgrow it. */
+    public static final int MAX_PER_OWNER_LIMIT = 8;
+    /** The invited person hears "you are invited" from the same owner at most this often (invite, withdraw, invite cannot spam them). */
+    public static final long INVITE_NOTICE_TICKS = 1200;
+
+    /** One point per block column just outside the box ({@code margin} out), round all four faces. */
+    public static java.util.List<Point> perimeter(Box b, double margin) {
+        java.util.List<Point> out = new java.util.ArrayList<>();
+        for (double x = Math.floor(b.minX() - margin) + 0.5; x <= b.maxX() + margin; x++) {
+            out.add(new Point(x, b.minZ() - margin));
+            out.add(new Point(x, b.maxZ() + margin));
+        }
+        for (double z = Math.floor(b.minZ()) + 0.5; z <= b.maxZ(); z++) {
+            out.add(new Point(b.minX() - margin, z));
+            out.add(new Point(b.maxX() + margin, z));
+        }
+        return out;
+    }
     /** How far below, and above, the spot of a vampire that is moved out a safe place is looked for: three blocks is the most a fall does no harm from. */
     public static final int SAFE_DOWN = 3;
     public static final int SAFE_UP = 8;

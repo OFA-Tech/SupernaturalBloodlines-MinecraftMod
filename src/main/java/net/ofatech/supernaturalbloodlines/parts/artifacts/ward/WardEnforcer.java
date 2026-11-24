@@ -65,7 +65,10 @@ public final class WardEnforcer {
             INSIDE.remove(e.getEntity().getUUID());
             TOLD.remove(e.getEntity().getUUID());
         });
-        NeoForge.EVENT_BUS.addListener((ServerStoppedEvent e) -> reset());
+        NeoForge.EVENT_BUS.addListener((ServerStoppedEvent e) -> {
+            reset();
+            WardService.reset();
+        });
         NeoForge.EVENT_BUS.addListener((EntityTeleportEvent.EnderPearl e) -> blockTeleport(e));
         NeoForge.EVENT_BUS.addListener((EntityTeleportEvent.ChorusFruit e) -> blockTeleport(e));
     }
@@ -216,6 +219,29 @@ public final class WardEnforcer {
                 }
             }
         }
+        // nothing near their own line (water or walls laid outside every face): any column round the box, at the ground's height there
+        for (WardRules.Point out : WardRules.perimeter(box, 1)) {
+            int top = level.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, (int) Math.floor(out.x()), (int) Math.floor(out.z()));
+            if (land(level, entity, out.x(), top, out.z())) {
+                return;
+            }
+        }
+        // last resort: the world's spawn, so a prepared enclosure cannot keep a vampire inside for good
+        var spawn = level.getSharedSpawnPos();
+        land(level, entity, spawn.getX() + 0.5, level.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, spawn.getX(), spawn.getZ()), spawn.getZ() + 0.5);
+    }
+
+    private static boolean land(ServerLevel level, LivingEntity entity, double x, double y, double z) {
+        if (!safeLanding(level, entity, x, y, z)) {
+            return false;
+        }
+        if (entity instanceof ServerPlayer player) {
+            player.teleportTo(x, y, z);
+        } else {
+            entity.moveTo(x, y, z, entity.getYRot(), entity.getXRot());
+        }
+        entity.fallDistance = 0;
+        return true;
     }
 
     private static boolean safeLanding(ServerLevel level, LivingEntity entity, double x, double y, double z) {
@@ -234,7 +260,8 @@ public final class WardEnforcer {
 
     private static void blockTeleport(EntityTeleportEvent event) {
         if (event.getEntity() instanceof LivingEntity entity && entity.level() instanceof ServerLevel level
-                && blockedAt(level, entity, event.getTargetX(), event.getTargetY(), event.getTargetZ())) {
+                && WardIndex.get(level).table().standingIn(dimension(level)).stream().anyMatch(ward -> ward.box().contains(event.getTargetX(), event.getTargetY(), event.getTargetZ())
+                        && blocks(ward, entity) && !tolerated(ward, entity))) {
             event.setCanceled(true);
             if (entity instanceof ServerPlayer player) tell(player, level.getGameTime());
         }

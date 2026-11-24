@@ -44,7 +44,7 @@ public final class ArtifactsConfig {
         WARD_RADIUS = b.comment("R300: an area ward's half-size in blocks, from the altar it was raised on (a cube of 2 x this + 1).")
                 .defineInRange("ward_radius", DEFAULT_WARD_RADIUS, 1, WardRules.MAX_RADIUS);
         WARD_MAX_PER_OWNER = b.comment("R301: how many standing wards (areas and doors together) one owner may have.")
-                .defineInRange("ward_max_per_owner", DEFAULT_WARD_MAX_PER_OWNER, 1, 16);
+                .defineInRange("ward_max_per_owner", DEFAULT_WARD_MAX_PER_OWNER, 1, net.ofatech.supernaturalbloodlines.core.ward.WardRules.MAX_PER_OWNER_LIMIT);
         WARD_MAX_INVITES = b.comment("R306: how many names a ward's invite list holds (the owner counts).")
                 .defineInRange("ward_max_invites", DEFAULT_WARD_MAX_INVITES, 1, 64);
         WARD_FALLS_ON_OWNER_DEATH = b.comment("R307: a ward falls when its owner dies, and when its owner becomes vampiric (turning means dying first). Off: it keeps standing.")

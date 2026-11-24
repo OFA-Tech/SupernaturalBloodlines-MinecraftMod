@@ -199,6 +199,43 @@ public final class WardGameTests {
         helper.succeed();
     }
 
+    /** Water laid outside every face on the vampire's own lines (the review's prepared house): the expel goes round the box instead of leaving them inside. */
+    @GameTest(template = "tall", templateNamespace = NS)
+    public static void aVampireWhoseOwnLinesAreAllWaterIsStillPutOut(GameTestHelper helper) {
+        var owner = person(helper, -2, -2);
+        var vamp = vampire(helper, 1, 0);
+        BlockPos c = centre(helper);
+        var level = helper.getLevel();
+        java.util.List<BlockPos> wet = new java.util.ArrayList<>();
+        // the cell's floor is two below the centre, so the water fills from the floor up to the centre's height
+        for (int m = 1; m <= 4; m++) for (int dy = -2; dy <= 0; dy++) {
+            wet.add(c.offset(-HALF - m, dy, 0));
+            wet.add(c.offset(HALF + 1 + m, dy, 0)); // the box ends at cx + HALF + 1
+            wet.add(c.offset(1, dy, -HALF - m));
+            wet.add(c.offset(1, dy, HALF + 1 + m));
+        }
+        java.util.Map<BlockPos, net.minecraft.world.level.block.state.BlockState> old = new java.util.HashMap<>();
+        try {
+            ArtifactsConfig.override("ward_expel_seconds", 1);
+            ward(helper, owner, HALF);
+            for (BlockPos pos : wet) {
+                old.put(pos, level.getBlockState(pos));
+                level.setBlock(pos, Blocks.WATER.defaultBlockState(), 2);
+            }
+            for (int i = 0; i < 4; i++) WardEnforcer.checkNow(vamp);
+            helper.assertFalse(centreBox(helper, HALF).contains(vamp.getX(), vamp.getY(), vamp.getZ()), "left inside for good: " + vamp.position());
+            // round the box, not the world spawn (the last resort): the next dry column is right beside it
+            helper.assertTrue(centreBox(helper, HALF).near(vamp.getX(), c.getY(), vamp.getZ(), 2), "sent far away instead of round the box: " + vamp.position());
+            BlockPos feet = vamp.blockPosition();
+            helper.assertTrue(level.getFluidState(feet).isEmpty() && level.getBlockState(feet.below()).isFaceSturdy(level, feet.below(), net.minecraft.core.Direction.UP),
+                    "not put on dry solid ground: " + vamp.position());
+        } finally {
+            old.forEach((pos, state) -> level.setBlock(pos, state, 2));
+            clean(helper, owner, vamp);
+        }
+        helper.succeed();
+    }
+
     @GameTest(template = "tall", templateNamespace = NS)
     public static void aDoorWardKeepsTheDoorShutForAnUninvitedVampire(GameTestHelper helper) {
         TalkingDuelist owner = person(helper, -4, -4);

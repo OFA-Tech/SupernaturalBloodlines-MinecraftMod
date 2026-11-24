@@ -32,6 +32,10 @@ public final class WardService {
     private WardService() {
     }
 
+    static void reset() {
+        INVITE_NOTICE.clear();
+    }
+
     static Component error(String key) {
         return Component.translatable(KEY + key);
     }
@@ -79,7 +83,7 @@ public final class WardService {
             case ADDED -> {
                 // the invited person hears it at most once a minute from the same owner (invite, withdraw, invite cannot spam them)
                 if (who != owner) {
-                    if (INVITE_NOTICE.tryUse(owner.getUUID(), who.getUUID(), owner.serverLevel().getGameTime(), 1200L)) {
+                    if (INVITE_NOTICE.tryUse(owner.getUUID(), who.getUUID(), owner.serverLevel().getGameTime(), WardRules.INVITE_NOTICE_TICKS)) {
                         who.sendSystemMessage(Component.translatable(INVITED_YOU, owner.getGameProfile().getName()));
                     }
                     owner.sendSystemMessage(Component.translatable(YOU_INVITED, who.getGameProfile().getName()));

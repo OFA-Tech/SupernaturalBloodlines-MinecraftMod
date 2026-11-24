@@ -30,7 +30,7 @@ public final class WardCommand {
                         .then(Commands.argument("ward", StringArgumentType.word())
                                 .executes(c -> run(c, WardService.drop(self(c), StringArgumentType.getString(c, "ward"))))))
                 .then(Commands.literal("info").executes(c -> info(c)))
-                // operators: every ward of a player (who may be offline for good), by name or UUID; the Admin page's player picker runs it
+                // operators: every ward of a player, by online name or by UUID (an owner offline for good); the Admin page's player picker sends the UUID
                 .then(Commands.literal("dropall").requires(s -> s.hasPermission(2))
                         .then(Commands.argument("player", StringArgumentType.word())
                                 .executes(c -> {
@@ -48,8 +48,9 @@ public final class WardCommand {
         try {
             return UUID.fromString(word);
         } catch (IllegalArgumentException notUuid) {
-            var cache = c.getSource().getServer().getProfileCache();
-            return cache == null ? null : cache.get(word).map(com.mojang.authlib.GameProfile::getId).orElse(null);
+            // an online name only: the profile cache would ask Mojang for an unknown name on the server thread; an offline owner is given by UUID
+            ServerPlayer online = c.getSource().getServer().getPlayerList().getPlayerByName(word);
+            return online == null ? null : online.getUUID();
         }
     }
 
