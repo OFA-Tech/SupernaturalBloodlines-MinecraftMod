@@ -58,11 +58,17 @@ public final class CircleCost {
         for (UUID id : session.members()) {
             ServerPlayer p = level.getPlayerByUUID(id) instanceof ServerPlayer sp ? sp : null;
             if (p == null) {
+                if (id.equals(session.anchor())) {
+                    return altarBill;
+                }
                 continue;
             }
             String left = !p.isAlive() ? "hurt" : !CircleSites.inside(chalk, p) ? "away" : p.getHealth() < p.getMaxHealth() * 0.5f ? "hurt" : null;
             if (left != null) {
                 p.sendSystemMessage(CovenText.of("link_dropped." + left));
+                if (id.equals(session.anchor())) {
+                    return altarBill;
+                }
                 continue;
             }
             int cap = capacityOf(p);

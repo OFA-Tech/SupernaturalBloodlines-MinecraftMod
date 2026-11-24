@@ -264,6 +264,22 @@ public final class CovenCostGameTests {
     }
 
     @GameTest(template = "empty", templateNamespace = NS)
+    public static void anIneligibleAnchorCannotChargeEligibleHelpers(GameTestHelper helper) {
+        Circle c = circle(helper, 4);
+        try {
+            int solo = soloBill(helper, c, c.anchor().getUUID(), 4500);
+            c.anchor().setHealth(c.anchor().getMaxHealth() * 0.4f);
+            int bill = begin(helper, c, c.anchor().getUUID(), 4500, true);
+            RiteCost.commit();
+            helper.assertTrue(bill == solo && c.all().stream().allMatch(p -> meter(helper, p.getUUID()) == null),
+                    "an ineligible anchor split the solo bill " + solo + " and left " + bill + " for the altar");
+        } finally {
+            tidy(helper, c.array());
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
     public static void aMemberAtLowHealthIsDropped(GameTestHelper helper) {
         Circle c = circle(helper, 3);
         try {
