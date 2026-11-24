@@ -37,14 +37,14 @@ public final class GroupViews {
         } else {
             rows.add(row(p, leader, "leader", GroupRank.NONE));
             for (UUID id : packs.betasOf(leader)) {
-                GroupRank rank = groups.activeRankOf(id, type);
+                GroupRank rank = groups.rankOf(id, type);
                 rows.add(row(p, id, rank == GroupRank.NONE ? "member" : rank.id(), rank));
             }
             for (UUID ally : packs.alliesOf(leader)) {
                 rows.add(row(p, ally, "ally", GroupRank.NONE));
             }
         }
-        GroupRank mine = groups.activeRankOf(me, type);
+        GroupRank mine = groups.rankOf(me, type);
         byte viewer = me.equals(leader) ? GroupView.LEADER : mine == GroupRank.DAY_WALKER ? GroupView.DAY_WALKER : mine == GroupRank.ELDER ? GroupView.ELDER : GroupView.MEMBER;
         long since = groups.existingGroupOf(leader).map(groups::typeSince).orElse(0L);
         int days = since <= 0 ? 0 : (int) Math.max(0, (PackIndex.now() - since) / PackAbsence.DAY_MILLIS);

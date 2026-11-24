@@ -55,9 +55,8 @@ public final class ProfilePage implements HubPageView {
             return Component.translatable(KEY + "none");
         }
         if (fact == Fact.PACK && values.size() == 2) {
-            // a group that is not a pack: "Clan: Name"
-            return GroupType.parse(values.get(1)).map(type -> (Component) Component.empty().append(GroupLabels.noun(type)).append(": " + values.get(0)))
-                    .orElse(Component.literal(values.get(0)));
+            // a group that is not a pack: the label already says which kind ("Clan"), so the value is the leader's name
+            return Component.literal(values.get(0));
         }
         List<Component> parts = new ArrayList<>();
         for (String v : values) {
@@ -69,6 +68,12 @@ public final class ProfilePage implements HubPageView {
             out = Component.empty().append(out).append(", ").append(parts.get(i));
         }
         return out;
+    }
+
+    /** The type of the group the profile's player is in: {@code PACK} when the fact is unknown, absent or a pack (a pack's fact is the name alone). */
+    static GroupType groupTypeOf(ProfilePayload payload) {
+        List<String> pack = payload == null ? null : payload.facts().get(Fact.PACK);
+        return pack != null && pack.size() == 2 ? GroupType.parse(pack.get(1)).orElse(GroupType.PACK) : GroupType.PACK;
     }
 
     /** The facts of the grid, in reading order; the rank is a chip, and shows here only while it is unknown. */
@@ -107,7 +112,7 @@ public final class ProfilePage implements HubPageView {
         } else {
             y = grid(f, r, y + 4, payload);
             List<String> bonus = payload.facts().get(Fact.BONUS);
-            if (bonus != null && !bonus.isEmpty()) {
+            if (bonus != null && !bonus.isEmpty() && groupTypeOf(payload) == GroupType.PACK) {
                 y = bonusCard(f, r, y + 2, bonus.get(0));
             }
         }
@@ -171,8 +176,9 @@ public final class ProfilePage implements HubPageView {
         if (!payload.facts().containsKey(Fact.RANK)) {
             shown.add(0, Fact.RANK);
         }
-        if (!payload.facts().containsKey(Fact.BONUS)) {
-            shown.add(Fact.BONUS);
+        GroupType groupType = groupTypeOf(payload);
+        if (groupType == GroupType.PACK && !payload.facts().containsKey(Fact.BONUS)) {
+            shown.add(Fact.BONUS); // the pack bonus is a pack's: a clan, a coven or a brotherhood has none to show or to hide
         }
         int col = 0;
         int rowTop = y;
@@ -180,7 +186,8 @@ public final class ProfilePage implements HubPageView {
         for (Fact fact : shown) {
             int x = r.x() + col * (cw + 6);
             List<String> known = payload.facts().get(fact);
-            Component label = Component.translatable(KEY + "fact." + fact.name().toLowerCase(Locale.ROOT));
+            String factName = fact.name().toLowerCase(Locale.ROOT);
+            Component label = fact == Fact.PACK || fact == Fact.PACK_DAYS ? GroupLabels.t(groupType, KEY + "fact." + factName, "fact_" + factName) : Component.translatable(KEY + "fact." + factName);
             Component text = known == null ? Component.translatable(KEY + "unknown") : value(fact, known);
             String caps = label.getString().toUpperCase(Locale.ROOT);
             int vy;

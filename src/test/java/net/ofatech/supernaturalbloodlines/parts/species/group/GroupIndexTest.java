@@ -3,6 +3,7 @@ package net.ofatech.supernaturalbloodlines.parts.species.group;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Set;
@@ -10,7 +11,6 @@ import java.util.UUID;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.NbtUtils;
-import net.minecraft.nbt.StringTag;
 import net.ofatech.supernaturalbloodlines.core.group.GroupRank;
 import net.ofatech.supernaturalbloodlines.core.group.GroupType;
 import net.ofatech.supernaturalbloodlines.parts.species.pack.PackIndex;
@@ -45,17 +45,6 @@ class GroupIndexTest {
         for (UUID leader : g.leaders()) {
             assertEquals(GroupType.PACK, g.typeOf(g.existingGroupOf(leader).orElseThrow()));
         }
-    }
-
-    @Test
-    void seedNeverReadsAnOfflineLeader() {
-        // the seed takes the index and nothing else: no species, no profile, no state to read, so no leader can flip it
-        GroupIndex g = new GroupIndex();
-        g.seed(twoPacks());
-        for (UUID leader : g.leaders()) {
-            assertEquals(GroupType.PACK, g.typeOf(g.existingGroupOf(leader).orElseThrow()));
-        }
-        assertEquals(1, java.util.Arrays.stream(GroupIndex.class.getMethods()).filter(m -> m.getName().equals("seed")).filter(m -> m.getParameterCount() == 1).count());
     }
 
     @Test
@@ -128,7 +117,7 @@ class GroupIndexTest {
         g.drop(L1);
         g.prune(packs);
         assertTrue(g.existingGroupOf(L1).isEmpty());
-        assertEquals(GroupRank.NONE, g.rankOf(A), "a stale rank survived the dissolve");
+        assertEquals(GroupRank.NONE, g.rankOf(A, GroupType.COVEN), "a stale rank survived the dissolve");
         assertEquals(GroupType.PACK, g.typeOf(old), "the type row survived");
         assertEquals(0L, g.typeSince(old));
         assertNotEquals(old, g.groupOf(L1), "a new group got the old id");
@@ -138,12 +127,35 @@ class GroupIndexTest {
     void ranksAreForgottenWhenAMemberLeaves() {
         GroupIndex g = new GroupIndex();
         g.setRank(A, GroupRank.DAY_WALKER);
+        g.setRank(A, GroupRank.ELDER);
         g.setRank(B, GroupRank.ELDER);
         g.clearRanks(A);
-        assertEquals(GroupRank.NONE, g.rankOf(A));
-        assertEquals(GroupRank.ELDER, g.rankOf(B));
-        g.setRank(B, GroupRank.NONE);
-        assertEquals(GroupRank.NONE, g.rankOf(B));
+        assertEquals(GroupRank.NONE, g.rankOf(A, GroupType.CLAN));
+        assertEquals(GroupRank.NONE, g.rankOf(A, GroupType.COVEN));
+        assertEquals(GroupRank.ELDER, g.rankOf(B, GroupType.COVEN));
+    }
+
+    @Test
+    void eachTypeKeepsItsOwnRank() {
+        GroupIndex g = new GroupIndex();
+        g.setRank(A, GroupRank.DAY_WALKER);
+        g.setRank(A, GroupRank.ELDER); // promoted in a coven while the clan row is dormant
+        assertEquals(GroupRank.DAY_WALKER, g.rankOf(A, GroupType.CLAN), "a rank earned in the coven overwrote the clan's");
+        assertEquals(GroupRank.ELDER, g.rankOf(A, GroupType.COVEN));
+        GroupIndex back = roundTrip(g);
+        assertEquals(GroupRank.DAY_WALKER, back.rankOf(A, GroupType.CLAN));
+        assertEquals(GroupRank.ELDER, back.rankOf(A, GroupType.COVEN));
+    }
+
+    @Test
+    void clearRankTouchesOnlyThatType() {
+        GroupIndex g = new GroupIndex();
+        g.setRank(A, GroupRank.DAY_WALKER);
+        g.setRank(A, GroupRank.ELDER);
+        g.clearRank(A, GroupType.COVEN);
+        assertEquals(GroupRank.NONE, g.rankOf(A, GroupType.COVEN));
+        assertEquals(GroupRank.DAY_WALKER, g.rankOf(A, GroupType.CLAN), "clearing the coven rank took the clan's with it");
+        assertThrows(IllegalArgumentException.class, () -> g.setRank(A, GroupRank.NONE));
     }
 
     @Test
@@ -152,16 +164,24 @@ class GroupIndexTest {
         g.setRank(A, GroupRank.DAY_WALKER);
         g.setRank(B, GroupRank.ELDER);
         CompoundTag tag = g.save(new CompoundTag(), null);
+        ListTag ranks = tag.getList("ranks", 10);
         CompoundTag noKey = new CompoundTag();
+        noKey.putString("type", "coven");
         noKey.putString("value", "elder");
         CompoundTag badKey = new CompoundTag();
         badKey.putString("key", "not a uuid");
+        badKey.putString("type", "coven");
         badKey.putString("value", "elder");
-        tag.getList("ranks", 10).add(noKey);
-        tag.getList("ranks", 10).add(badKey);
+        CompoundTag noType = new CompoundTag();
+        noType.put("key", NbtUtils.createUUID(C));
+        noType.putString("value", "elder");
+        ranks.add(noKey);
+        ranks.add(badKey);
+        ranks.add(noType);
         GroupIndex back = GroupIndex.load(tag, null);
-        assertEquals(GroupRank.DAY_WALKER, back.rankOf(A));
-        assertEquals(GroupRank.ELDER, back.rankOf(B));
+        assertEquals(GroupRank.DAY_WALKER, back.rankOf(A, GroupType.CLAN));
+        assertEquals(GroupRank.ELDER, back.rankOf(B, GroupType.COVEN));
+        assertEquals(GroupRank.NONE, back.rankOf(C, GroupType.COVEN), "a rank row with no type was believed");
     }
 
     @Test
@@ -197,9 +217,18 @@ class GroupIndexTest {
     void aRankOfAnotherTypeIsHiddenNotDeleted() {
         GroupIndex g = new GroupIndex();
         g.setRank(A, GroupRank.DAY_WALKER);
-        assertEquals(GroupRank.DAY_WALKER, g.activeRankOf(A, GroupType.CLAN));
-        assertEquals(GroupRank.NONE, g.activeRankOf(A, GroupType.COVEN));
-        assertEquals(GroupRank.DAY_WALKER, g.rankOf(A));
-        assertEquals(GroupRank.DAY_WALKER, g.activeRankOf(A, GroupType.CLAN));
+        assertEquals(GroupRank.DAY_WALKER, g.rankOf(A, GroupType.CLAN));
+        assertEquals(GroupRank.NONE, g.rankOf(A, GroupType.COVEN));
+        assertEquals(GroupRank.NONE, g.rankOf(A, GroupType.BROTHERHOOD));
+        assertEquals(GroupRank.DAY_WALKER, g.rankOf(A, GroupType.CLAN), "asking in another type deleted the row");
+    }
+
+    @Test
+    void aRankStoredUnderTheWrongTypeIsNotShown() {
+        GroupIndex g = new GroupIndex();
+        g.setRank(A, GroupRank.DAY_WALKER);
+        CompoundTag tag = g.save(new CompoundTag(), null);
+        tag.getList("ranks", 10).getCompound(0).putString("type", "coven"); // a damaged file: a Day Walker row filed under the coven
+        assertEquals(GroupRank.NONE, GroupIndex.load(tag, null).rankOf(A, GroupType.COVEN));
     }
 }

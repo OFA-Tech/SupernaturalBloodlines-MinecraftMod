@@ -171,7 +171,7 @@ public final class GroupInviteGameTests {
             helper.assertTrue(join(w, a) && join(w, b), "the members could not join");
             groups.setRank(a.getUUID(), GroupRank.ELDER);
             helper.assertTrue(PackCommand.leave(a) == null && index.alphaOf(a.getUUID()).isEmpty(), "leaving did not work");
-            helper.assertTrue(groups.rankOf(a.getUUID()) == GroupRank.NONE, "a rank stayed after leaving");
+            helper.assertTrue(groups.rankOf(a.getUUID(), GroupType.COVEN) == GroupRank.NONE, "a rank stayed after leaving");
             helper.assertTrue(a.received("supernaturalbloodlines.group.left.coven"), "the leaver was not told in coven words");
             helper.assertTrue(PackCommand.kickNamed(w, b.getUUID().toString()) == null && index.alphaOf(b.getUUID()).isEmpty(), "the kick did not work");
             helper.assertTrue(PackCommand.leave(w) != null, "a leader left their own coven");
@@ -280,4 +280,72 @@ public final class GroupInviteGameTests {
         helper.assertTrue(d.getRoot().getChild("sb").getChild("group").getRedirect() == group, "/sb group is not the same tree");
         helper.succeed();
     }
-}
+
+    /** Two invitations sent while one seat was left: the cap is checked when joining too, so the second acceptance is refused. */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void twoInvitesForOneSeatSeatOnlyOne(GameTestHelper helper) {
+        TalkingDuelist w = witch(helper, 1.5);
+        TalkingDuelist first = human(helper, 2.5);
+        TalkingDuelist a = human(helper, 3.5);
+        TalkingDuelist b = human(helper, 4.5);
+        online(w, first, a, b);
+        GroupsConfig.override("max_members", 2);
+        PackIndex index = PackIndex.get(helper.getLevel());
+        try {
+            helper.assertTrue(join(w, first), "the first member could not join");
+            helper.assertTrue(PackCommand.invite(w, a) == null && PackCommand.invite(w, b) == null, "both invitations are allowed with one seat left");
+            String ta = PackCommand.requests().tokenOf(w.getUUID(), a.getUUID()).orElseThrow();
+            String tb = PackCommand.requests().tokenOf(w.getUUID(), b.getUUID()).orElseThrow();
+            helper.assertTrue(PackCommand.accept(a, ta) == null, "the first acceptance was refused");
+            var refused = PackCommand.accept(b, tb);
+            helper.assertTrue(refused != null && key(refused).equals("supernaturalbloodlines.group.full.coven"), "the second acceptance was " + key(refused));
+            helper.assertTrue(index.betasOf(w.getUUID()).size() == 2 && index.alphaOf(b.getUUID()).isEmpty(), "the coven holds " + index.betasOf(w.getUUID()).size());
+        } finally {
+            clean(helper, w, first, a, b);
+        }
+        helper.succeed();
+    }
+
+    /** A leader who joins brings the members: they count against the cap too. */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aLeaderWhoWouldBringTooManyIsRefused(GameTestHelper helper) {
+        TalkingDuelist w = witch(helper, 1.5);
+        TalkingDuelist wm = human(helper, 2.5);
+        TalkingDuelist v = witch(helper, 3.5);
+        TalkingDuelist m1 = human(helper, 4.5);
+        TalkingDuelist m2 = human(helper, 5.5);
+        online(w, wm, v, m1, m2);
+        PackIndex index = PackIndex.get(helper.getLevel());
+        try {
+            helper.assertTrue(join(w, wm) && join(v, m1) && join(v, m2), "the groups were not made");
+            GroupsConfig.override("max_members", 2);
+            helper.assertTrue(PackCommand.invite(w, v) == null, "the invitation to a leader is allowed");
+            var refused = PackCommand.accept(v, PackCommand.requests().tokenOf(w.getUUID(), v.getUUID()).orElseThrow());
+            helper.assertTrue(refused != null && key(refused).equals("supernaturalbloodlines.group.full.coven"), "the merge was " + key(refused));
+            helper.assertTrue(index.betasOf(v.getUUID()).size() == 2 && index.betasOf(w.getUUID()).size() == 1, "somebody moved");
+        } finally {
+            clean(helper, w, wm, v, m1, m2);
+        }
+        helper.succeed();
+    }
+
+    /** Groups that merge: the members who came along hold no rank of the group they left. */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aMergeClearsTheRanksOfTheMembersWhoCameAlong(GameTestHelper helper) {
+        TalkingDuelist w = witch(helper, 1.5);
+        TalkingDuelist v = witch(helper, 2.5);
+        TalkingDuelist elder = human(helper, 3.5);
+        online(w, v, elder);
+        PackIndex index = PackIndex.get(helper.getLevel());
+        GroupIndex groups = GroupIndex.get(helper.getLevel());
+        try {
+            helper.assertTrue(join(v, elder), "the first coven was not made");
+            groups.setRank(elder.getUUID(), GroupRank.ELDER);
+            helper.assertTrue(join(w, v), "the leader could not join the other coven");
+            helper.assertTrue(index.alphaOf(elder.getUUID()).map(w.getUUID()::equals).orElse(false), "the Elder did not come along");
+            helper.assertTrue(groups.rankOf(elder.getUUID(), GroupType.COVEN) == GroupRank.NONE, "the Elder kept a rank of a coven that is gone");
+        } finally {
+            clean(helper, w, v, elder);
+        }
+        helper.succeed();
+    }}

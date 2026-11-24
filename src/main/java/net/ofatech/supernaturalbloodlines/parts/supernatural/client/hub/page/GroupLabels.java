@@ -38,9 +38,9 @@ public final class GroupLabels {
         return neutral(v) ? "none" : v.type().id();
     }
 
-    /** The command root the page types: the pack's own tree for a pack (it needs Werewolves), the shared one for the rest. */
+    /** The command root the shared buttons type. Always {@code group}: {@code /pack} does not exist in a world without Werewolves, and a pack's shared actions are the group tree's too. */
     public static String root(GroupView v) {
-        return active(v) ? "group" : "pack";
+        return "group";
     }
 
     public static Component noun(GroupType type) {
@@ -58,6 +58,11 @@ public final class GroupLabels {
     /** {@code packKey} for a pack (exactly as before), {@code hub.group.<name>.<type>} for the other types. */
     public static Component t(GroupView v, String packKey, String name, Object... args) {
         return active(v) ? Component.translatable(HUB + "group." + name + "." + slot(v), args) : Component.translatable(packKey, args);
+    }
+
+    /** {@link #t(GroupView, String, String, Object...)} for a group seen from outside (a profile): its own type, not the viewer's. */
+    public static Component t(GroupType type, String packKey, String name, Object... args) {
+        return type == GroupType.PACK ? Component.translatable(packKey, args) : Component.translatable(HUB + "group." + name + "." + type.id(), args);
     }
 
     /** The members the way the pack page keeps them, so the ledger, the ring and the detail pane draw them unchanged. */
@@ -88,6 +93,11 @@ public final class GroupLabels {
     /** What the empty page says: how to found a group of the viewer's kind, or that they wait to be invited. */
     public static String emptyName(GroupView v) {
         return "group_" + slot(v);
+    }
+
+    /** Whether the page offers "Leave": somebody in the group who is not its leader (the leader is the first row); the server refuses a leader's leave, so the button is not shown. */
+    public static boolean mayLeave(List<HubSocial.Member> members, String viewerName) {
+        return !members.isEmpty() && !members.get(0).name().equals(viewerName);
     }
 
     /** The ring's colours for a group (placeholder art until the ring sprites of 20b to 20d): leader red, the next rank gold, members blue or brown. */

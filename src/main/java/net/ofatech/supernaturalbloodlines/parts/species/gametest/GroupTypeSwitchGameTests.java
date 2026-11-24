@@ -125,11 +125,13 @@ public final class GroupTypeSwitchGameTests {
             VampirismAPI.factionPlayerHandler(leader).leaveFaction(false);
             GroupSwitcher.refresh(leader);
             helper.assertTrue(stored(helper, leader.getUUID()) == GroupType.COVEN, "no switch to a coven");
-            helper.assertTrue(groups.activeRankOf(a.getUUID(), GroupType.COVEN) == GroupRank.NONE, "a clan rank shows in a coven");
-            helper.assertTrue(groups.rankOf(a.getUUID()) == GroupRank.DAY_WALKER, "the clan rank was deleted by the switch");
+            helper.assertTrue(groups.rankOf(a.getUUID(), GroupType.COVEN) == GroupRank.NONE, "a clan rank shows in a coven");
+            helper.assertTrue(groups.rankOf(a.getUUID(), GroupType.CLAN) == GroupRank.DAY_WALKER, "the clan rank was deleted by the switch");
+            groups.setRank(a.getUUID(), GroupRank.ELDER); // promoted while it was a coven
             VampirismAPI.factionPlayerHandler(leader).setFactionAndLevel(VReference.VAMPIRE_FACTION, 1);
             GroupSwitcher.refresh(leader);
-            helper.assertTrue(stored(helper, leader.getUUID()) == GroupType.CLAN && groups.activeRankOf(a.getUUID(), GroupType.CLAN) == GroupRank.DAY_WALKER, "the rank did not come back");
+            helper.assertTrue(stored(helper, leader.getUUID()) == GroupType.CLAN && groups.rankOf(a.getUUID(), GroupType.CLAN) == GroupRank.DAY_WALKER, "the Day Walker rank did not come back after the Elder one");
+            helper.assertTrue(groups.rankOf(a.getUUID(), GroupType.COVEN) == GroupRank.ELDER, "the coven rank was lost");
         } finally {
             clean(helper, leader, a);
         }
@@ -201,4 +203,89 @@ public final class GroupTypeSwitchGameTests {
         }
         helper.succeed();
     }
-}
+
+    /** Joining or leaving the vampires changes a leader without touching the bloodline state: the faction event switches the group by itself. */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aFactionChangeSwitchesTheGroupByItself(GameTestHelper helper) {
+        TalkingDuelist leader = human(helper, 1.5);
+        TalkingDuelist a = human(helper, 2.5);
+        online(leader, a);
+        VampirismAPI.factionPlayerHandler(leader).setFactionAndLevel(VReference.VAMPIRE_FACTION, 1);
+        try {
+            helper.assertTrue(join(leader, a) && stored(helper, leader.getUUID()) == GroupType.CLAN, "no clan: " + Groups.typeOf(leader));
+            VampirismAPI.factionPlayerHandler(leader).leaveFaction(false);
+            helper.assertTrue(stored(helper, leader.getUUID()) == GroupType.COVEN, "the group is still " + stored(helper, leader.getUUID()) + " after the leader left the vampires");
+            VampirismAPI.factionPlayerHandler(leader).setFactionAndLevel(VReference.VAMPIRE_FACTION, 1);
+            helper.assertTrue(stored(helper, leader.getUUID()) == GroupType.CLAN, "the group did not go back to a clan");
+        } finally {
+            clean(helper, leader, a);
+        }
+        helper.succeed();
+    }
+
+    /** The follow and the dissolve of the group index are wired to the pack index's own events, not called by the test. */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void theIndexFollowsTheLeaderThroughTheListeners(GameTestHelper helper) {
+        TalkingDuelist leader = hybridLeader(helper, 1.5);
+        TalkingDuelist a = human(helper, 2.5);
+        TalkingDuelist b = human(helper, 3.5);
+        online(leader, a, b);
+        GroupsConfig.override("open_founding", true);
+        PackIndex index = PackIndex.get(helper.getLevel());
+        GroupIndex groups = GroupIndex.get(helper.getLevel());
+        try {
+            helper.assertTrue(join(leader, a) && join(leader, b), "the members could not join");
+            UUID id = groups.existingGroupOf(leader.getUUID()).orElseThrow();
+            index.promote(leader.getUUID(), a.getUUID());
+            helper.assertTrue(groups.existingGroupOf(a.getUUID()).map(id::equals).orElse(false), "the group id did not follow the new leader");
+            helper.assertTrue(groups.existingGroupOf(leader.getUUID()).isEmpty(), "the old leader still has the group id");
+        } finally {
+            clean(helper, leader, a, b);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aDissolvedGroupLeavesNoRowsThroughTheListeners(GameTestHelper helper) {
+        TalkingDuelist leader = hybridLeader(helper, 1.5);
+        TalkingDuelist a = human(helper, 2.5);
+        online(leader, a);
+        GroupsConfig.override("open_founding", true);
+        PackIndex index = PackIndex.get(helper.getLevel());
+        GroupIndex groups = GroupIndex.get(helper.getLevel());
+        try {
+            helper.assertTrue(join(leader, a), "the member could not join");
+            UUID id = groups.existingGroupOf(leader.getUUID()).orElseThrow();
+            groups.setType(id, GroupType.COVEN, 5L);
+            groups.setRank(a.getUUID(), GroupRank.ELDER);
+            index.dissolve(leader.getUUID());
+            helper.assertTrue(groups.existingGroupOf(leader.getUUID()).isEmpty(), "the dissolved group kept its id");
+            helper.assertTrue(groups.typeSince(id) == 0L, "the dissolved group kept its type row");
+            helper.assertTrue(groups.rankOf(a.getUUID(), GroupType.COVEN) == GroupRank.NONE, "the member of a dissolved group kept a rank");
+        } finally {
+            clean(helper, leader, a);
+        }
+        helper.succeed();
+    }
+
+    /** The notice of a switch names the type in its own key and is kept for the member who is away, with no argument. */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void theSwitchNoticeCarriesNoArgument(GameTestHelper helper) {
+        TalkingDuelist leader = hybridLeader(helper, 1.5);
+        TalkingDuelist away = human(helper, 2.5);
+        online(leader, away);
+        GroupsConfig.override("open_founding", true);
+        PackIndex index = PackIndex.get(helper.getLevel());
+        try {
+            helper.assertTrue(join(leader, away), "the member could not join");
+            online(leader);
+            BloodlineAccess.set(leader, BloodlineState.NONE);
+            GroupSwitcher.refresh(leader);
+            var notes = index.takeNotices(away.getUUID());
+            helper.assertTrue(notes.size() == 1 && notes.get(0)[0].equals(CHANGED), "the notice is " + notes.stream().map(java.util.Arrays::toString).toList());
+            helper.assertTrue(notes.get(0)[1].isEmpty(), "the notice carries the argument '" + notes.get(0)[1] + "'");
+        } finally {
+            clean(helper, leader, away);
+        }
+        helper.succeed();
+    }}

@@ -75,7 +75,7 @@ public final class GroupAbsenceGameTests {
             groups.setRank(second.getUUID(), GroupRank.DAY_WALKER);
             helper.assertTrue(PackAbsence.check(helper.getLevel().getServer(), now) == 1, "the absent leader was not deposed");
             helper.assertTrue(index.isLeader(first.getUUID()) && index.alphaOf(gone).map(first.getUUID()::equals).orElse(false), "the longest Day Walker does not lead: " + index.leaderOf(second.getUUID()));
-            helper.assertTrue(groups.rankOf(gone) == GroupRank.DAY_WALKER && groups.rankOf(first.getUUID()) == GroupRank.NONE, "the ranks did not follow the lead");
+            helper.assertTrue(groups.rankOf(gone, GroupType.CLAN) == GroupRank.DAY_WALKER && groups.rankOf(first.getUUID(), GroupType.CLAN) == GroupRank.NONE, "the ranks did not follow the lead");
             helper.assertTrue(groups.existingGroupOf(first.getUUID()).map(groups::typeOf).orElse(null) == GroupType.CLAN, "the clan id did not follow the leader");
             helper.assertTrue(first.received("supernaturalbloodlines.pack.absent_lead_now") && night.received("supernaturalbloodlines.pack.absent_leader"), "the members were not told");
             helper.assertTrue(index.noticeCount(gone) == 1, "the old leader was not told");
@@ -99,7 +99,7 @@ public final class GroupAbsenceGameTests {
             build(helper, gone, GroupType.COVEN, now - 8 * DAY, plain, elder);
             groups.setRank(elder.getUUID(), GroupRank.ELDER);
             helper.assertTrue(PackAbsence.check(helper.getLevel().getServer(), now) == 1 && index.isLeader(elder.getUUID()), "the Elder does not lead");
-            helper.assertTrue(groups.rankOf(gone) == GroupRank.ELDER && index.alphaOf(gone).map(elder.getUUID()::equals).orElse(false), "the old leader is not an Elder of the new one");
+            helper.assertTrue(groups.rankOf(gone, GroupType.COVEN) == GroupRank.ELDER && index.alphaOf(gone).map(elder.getUUID()::equals).orElse(false), "the old leader is not an Elder of the new one");
         } finally {
             drop(helper, gone);
             clean(helper, plain, elder);
@@ -121,7 +121,7 @@ public final class GroupAbsenceGameTests {
         try {
             build(helper, gone, GroupType.BROTHERHOOD, now - 8 * DAY, low, high);
             helper.assertTrue(PackAbsence.check(helper.getLevel().getServer(), now) == 1 && index.isLeader(high.getUUID()), "the highest mark does not lead");
-            helper.assertTrue(index.alphaOf(gone).map(high.getUUID()::equals).orElse(false) && groups.rankOf(gone) == GroupRank.NONE, "the old leader is not a plain Brother");
+            helper.assertTrue(index.alphaOf(gone).map(high.getUUID()::equals).orElse(false) && groups.rankOf(gone, GroupType.BROTHERHOOD) == GroupRank.NONE, "the old leader is not a plain Brother");
         } finally {
             drop(helper, gone);
             clean(helper, low, high);

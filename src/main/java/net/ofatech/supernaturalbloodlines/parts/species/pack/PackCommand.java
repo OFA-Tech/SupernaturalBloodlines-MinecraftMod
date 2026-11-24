@@ -31,6 +31,7 @@ import net.ofatech.supernaturalbloodlines.core.group.GroupType;
 import net.ofatech.supernaturalbloodlines.parts.species.group.GroupGate;
 import net.ofatech.supernaturalbloodlines.parts.species.group.GroupIndex;
 import net.ofatech.supernaturalbloodlines.parts.species.group.GroupText;
+import net.ofatech.supernaturalbloodlines.parts.species.group.GroupsConfig;
 import net.ofatech.supernaturalbloodlines.parts.species.group.Groups;
 import net.ofatech.supernaturalbloodlines.parts.species.pack.party.PartyLink;
 import net.ofatech.supernaturalbloodlines.parts.species.sireline.CallRequests;
@@ -263,7 +264,7 @@ public final class PackCommand {
     }
 
     public static Component inviteMessage(Component alphaName, String token, int bringing, GroupType type) {
-        String command = type == GroupType.PACK ? "/pack accept " : "/group accept ";
+        String command = "/group accept "; // /pack is not there in a world without Werewolves
         Component accept = GroupText.of(type, "accept").copy().withStyle(s -> s.withColor(ChatFormatting.GREEN).withBold(true)
                 .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, command + token))
                 .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, GroupText.of(type, "accept_hover", alphaName))));
@@ -318,20 +319,28 @@ public final class PackCommand {
         if (leader.equals(p.getUUID())) {
             return GroupText.error(type, "self");
         }
-        GroupIndex.get(p.serverLevel()).ensure(leader, type, PackIndex.now());
+        // the cap counts everybody who would be in the group afterwards: the joiner, and the members a joining leader brings
+        List<UUID> own = index.betasOf(p.getUUID());
+        int max = GroupsConfig.maxMembers();
+        if (max > 0 && index.betasOf(leader).size() + 1 + own.size() > max) {
+            return GroupText.error(type, "full");
+        }
+        GroupIndex groups = GroupIndex.get(p.serverLevel());
         if (w.lineage() != Lineage.NONE && !PackAccess.isAlpha(w.rank())) {
             if (PackAccess.applyPack(p, PackEvent.JOINED_PACK, context(leader, now)).refused()) {
                 return GroupText.error(type, "refused");
             }
         } else {
             // an Alpha keeps the spark and a non-werewolf is a Packmate: the index alone holds them (a leader brings their members)
-            List<UUID> own = index.betasOf(p.getUUID());
             if (!index.join(leader, p.getUUID())) {
                 return GroupText.error(type, "refused");
             }
             own.forEach(id -> SparkHandler.repoint(p.server, id, leader));
             PackMembers.moved(p.server, own, leader);
+            // the members who came along belong to another group's ranks no more
+            own.forEach(groups::clearRanks);
         }
+        groups.ensure(leader, type, PackIndex.now());
         PackLeader.refresh(p);
         PartyLink.sync(p.server, p.getUUID(), true);
         p.sendSystemMessage(GroupText.of(type, "joined", name(alpha)));
@@ -413,7 +422,7 @@ public final class PackCommand {
             return GroupText.error(type, "ally_already", name(target));
         }
         String token = ALLY_REQUESTS.open(leader.getUUID(), target.getUUID(), leader.serverLevel().getGameTime());
-        String command = type == GroupType.PACK ? "/pack ally accept " : "/group ally accept ";
+        String command = "/group ally accept ";
         Component accept = GroupText.of(type, "accept").copy().withStyle(s -> s.withColor(ChatFormatting.GREEN).withBold(true)
                 .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, command + token)));
         target.sendSystemMessage(GroupText.of(type, "ally_invite", net.ofatech.supernaturalbloodlines.shared.supernatural.ProfileLink.name(name(leader), leader.getUUID())).copy().append(" ").append(accept));

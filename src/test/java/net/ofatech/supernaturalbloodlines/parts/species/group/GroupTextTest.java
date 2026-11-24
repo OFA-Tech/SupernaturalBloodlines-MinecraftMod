@@ -53,4 +53,28 @@ public class GroupTextTest {
             }
         }
     }
+
+    @Test
+    void theTypeChangedNoticeNamesTheTypeItselfAndTakesNoArgument() throws IOException {
+        JsonObject lang = lang();
+        for (GroupType type : GroupType.values()) {
+            String text = lang.get(GroupText.key(type, "type_changed")).getAsString();
+            assertFalse(text.contains("%"), "the notice of a switch carries no argument: " + text);
+            assertTrue(text.toLowerCase().contains(type.id()), "the notice does not name the type: " + text);
+        }
+    }
+
+    @Test
+    void aProfileHasWordsForEveryGroupType() throws IOException {
+        JsonObject lang = lang();
+        for (GroupType type : new GroupType[] {GroupType.CLAN, GroupType.COVEN, GroupType.BROTHERHOOD}) {
+            for (String name : new String[] {"fact_pack", "fact_pack_days"}) {
+                String key = "supernaturalbloodlines.hub.group." + name + "." + type.id();
+                assertTrue(lang.has(key), "missing " + key);
+                assertTrue(lang.get(key).getAsString().toLowerCase().contains(type.id()), key);
+            }
+        }
+        assertTrue(lang.get("supernaturalbloodlines.hub.profile.fact.pack").getAsString().equals("Pack"), "a pack's profile wording changed");
+        assertTrue(lang.get("supernaturalbloodlines.hub.profile.fact.pack_days").getAsString().equals("Days in the pack"), "a pack's profile wording changed");
+    }
 }

@@ -16,8 +16,13 @@ public final class GroupGate {
     }
 
     public static GroupTypes.Fit fit(ServerPlayer p) {
-        return new GroupTypes.Fit(PackCommand.isActiveAlpha(p), VampirismSupernatural.isVampire(p),
+        return new GroupTypes.Fit(alphaFit(p), VampirismSupernatural.isVampire(p),
                 Groups.isMagicUser(BloodlineAccess.get(p).species()), Groups.isHunter(p));
+    }
+
+    /** A pack's leader is an active Alpha where Werewolves has Alphas; without it nobody can be one, and a hybrid-type leader (the kind that derives PACK) is fit (spec Q3). */
+    private static boolean alphaFit(ServerPlayer p) {
+        return !net.neoforged.fml.ModList.get().isLoaded("werewolves") || PackCommand.isActiveAlpha(p);
     }
 
     /**

@@ -49,14 +49,18 @@ public final class EmptyState {
             y += 10;
         }
         y += 6;
-        Component title = Component.translatable(key + "title");
-        var pose = f.g.pose();
-        pose.pushPose();
-        pose.translate(x + (w - f.font().width(title) * 1.3f) / 2f, y, 0);
-        pose.scale(1.3f, 1.3f, 1f);
-        f.g.drawString(f.font(), title, 0, 0, t.ink(), false);
-        pose.popPose();
-        y += 16;
+        // the title is drawn 1.3 times larger: it wraps at the width that leaves, so a long one ("Your clan is only you.") is never cut at the edge
+        var titleLines = f.font().split(Component.translatable(key + "title"), (int) (w / 1.3f));
+        for (int i = 0; i < titleLines.size(); i++) {
+            var line = titleLines.get(i);
+            var pose = f.g.pose();
+            pose.pushPose();
+            pose.translate(x + (w - f.font().width(line) * 1.3f) / 2f, y, 0);
+            pose.scale(1.3f, 1.3f, 1f);
+            f.g.drawString(f.font(), line, 0, 0, t.ink(), false);
+            pose.popPose();
+            y += i == titleLines.size() - 1 ? 16 : 12;
+        }
         for (var line : f.font().split(Component.translatable(key + "body"), w)) {
             f.g.drawString(f.font(), line, x + (w - f.font().width(line)) / 2, y, t.muted(), false);
             y += 10;

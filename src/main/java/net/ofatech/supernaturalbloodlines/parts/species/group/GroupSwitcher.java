@@ -7,6 +7,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Consumer;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
+import de.teamlapen.vampirism.api.event.PlayerFactionEvent;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
@@ -45,6 +46,12 @@ public final class GroupSwitcher {
         }
         registered = true;
         BloodlineAccess.addListener((p, change) -> refresh(p));
+        // joining or leaving the vampires or the hunters changes what a leader is without touching the bloodline state
+        NeoForge.EVENT_BUS.addListener((PlayerFactionEvent.FactionLevelChanged e) -> {
+            if (e.getPlayer().getPlayer() instanceof ServerPlayer p && !p.level().isClientSide) {
+                refresh(p);
+            }
+        });
         PackIndex.onLeadershipMoved((old, next) -> {
             MinecraftServer server = ServerLifecycleHooks.getCurrentServer();
             ServerPlayer leader = server == null ? null : SireCall.player(server, next);
@@ -98,10 +105,10 @@ public final class GroupSwitcher {
         }
         groups.setType(group, derived, now);
         MinecraftServer server = leader.server;
-        String noun = derived.id();
-        PackMembers.tell(server, id, GroupText.key(derived, "type_changed"), noun);
+        // the per-type key names the type itself, so the notice carries no argument
+        PackMembers.tell(server, id, GroupText.key(derived, "type_changed"), "");
         for (UUID member : packs.betasOf(id)) {
-            PackMembers.tell(server, member, GroupText.key(derived, "type_changed"), noun);
+            PackMembers.tell(server, member, GroupText.key(derived, "type_changed"), "");
         }
         HOOKS.forEach(h -> h.accept(new Switched(server, id, group, plan.get().from(), derived)));
         return plan;

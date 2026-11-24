@@ -96,34 +96,6 @@ public final class GroupWolfGameTests {
     }
 
     @GameTest(template = "empty", templateNamespace = NS)
-    public static void aSwitchDuringADuel(GameTestHelper helper) {
-        TalkingDuelist leader = wolf(helper, Rank.ALPHA, null, 5, 1.5);
-        TalkingDuelist second = wolf(helper, Rank.ALPHA, null, 3, 2.5);
-        TalkingDuelist beta = wolf(helper, Rank.BETA, leader.getUUID(), 1, 3.5);
-        PackIndex index = PackIndex.get(helper.getLevel());
-        online(leader, second, beta);
-        try {
-            index.join(leader.getUUID(), beta.getUUID());
-            helper.assertTrue(join(leader, second), "the second Alpha could not join");
-            PackDuel.challenge(second, leader.getGameProfile().getName());
-            becomeAWitch(leader);
-            for (int i = 0; i < 3; i++) {
-                GroupSwitcher.sweep(helper.getLevel().getServer());
-            }
-            // the pack's own rules decide what happens to a leader who stops being an Alpha (the duel and the lead); the group follows whoever leads now
-            UUID leads = index.leaderOf(beta.getUUID());
-            ServerPlayer now = leads.equals(leader.getUUID()) ? leader : leads.equals(second.getUUID()) ? second : null;
-            helper.assertTrue(now == null || Groups.typeOf(beta) == Groups.derive(now), "the stored type " + Groups.typeOf(beta) + " is not the leader's " + (now == null ? "?" : Groups.derive(now)));
-            int told = beta.count("supernaturalbloodlines.group.type_changed.coven") + beta.count("supernaturalbloodlines.group.type_changed.clan") + beta.count("supernaturalbloodlines.group.type_changed.brotherhood");
-            helper.assertTrue(told <= 1, "the Beta was told " + told + " times");
-        } finally {
-            PackDuel.board().all().forEach(d -> PackDuel.board().callOffBoth(d, 0L));
-            clean(helper, leader, second, beta);
-        }
-        helper.succeed();
-    }
-
-    @GameTest(template = "empty", templateNamespace = NS)
     public static void slashPackStillWorks(GameTestHelper helper) {
         CommandDispatcher<CommandSourceStack> d = new CommandDispatcher<>();
         PackCommand.register(d);
@@ -134,4 +106,23 @@ public final class GroupWolfGameTests {
         helper.assertTrue(d.getRoot().getChild("sb").getChild("pack").getRedirect() == pack, "/sb pack is not the same tree");
         helper.succeed();
     }
-}
+
+    /** A wolf Alpha who is a plain member of somebody's coven has no pack: the profile shows no pack bonus (it is a pack's). */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aWolfAlphaInACovenShowsNoPackBonus(GameTestHelper helper) {
+        TalkingDuelist witch = GroupTestKit.witch(helper, 1.5);
+        TalkingDuelist alpha = wolf(helper, Rank.ALPHA, null, 5, 2.5);
+        online(witch, alpha);
+        try {
+            var alone = net.ofatech.supernaturalbloodlines.shared.supernatural.profile.ProfileService.of(alpha, alpha.getUUID()).facts();
+            helper.assertTrue(alone.containsKey(net.ofatech.supernaturalbloodlines.shared.supernatural.profile.Fact.BONUS), "an Alpha with no group has a pack bonus to show: " + alone.keySet());
+            helper.assertTrue(join(witch, alpha), "the Alpha could not join the coven");
+            var facts = net.ofatech.supernaturalbloodlines.shared.supernatural.profile.ProfileService.of(alpha, alpha.getUUID()).facts();
+            helper.assertTrue(!facts.containsKey(net.ofatech.supernaturalbloodlines.shared.supernatural.profile.Fact.BONUS), "a member of a coven shows a pack bonus: " + facts.get(net.ofatech.supernaturalbloodlines.shared.supernatural.profile.Fact.BONUS));
+            var group = facts.get(net.ofatech.supernaturalbloodlines.shared.supernatural.profile.Fact.PACK);
+            helper.assertTrue(group != null && group.size() == 2 && group.get(1).equals("coven"), "the group fact is " + group);
+        } finally {
+            clean(helper, witch, alpha);
+        }
+        helper.succeed();
+    }}

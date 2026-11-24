@@ -314,7 +314,7 @@ public final class BookPackPage implements HubPageView {
             } else if (!grp && canChallenge(f, pack, wolf, chosen)) {
                 BookKit.link(f, "pack:challenge", Component.translatable(KEY + "challenge"), r.x(), y, List.of(Component.translatable(KEY + "challenge_for", chosen.name())),
                         () -> f.confirm(Component.translatable(KEY + "challenge_title", chosen.name()), Component.translatable(KEY + "challenge_body"),
-                                Component.translatable(KEY + "challenge"), () -> BloodlinePage.command("pack challenge " + chosen.name())));
+                                Component.translatable(KEY + "challenge"), () -> BloodlinePage.command("group challenge " + chosen.name())));
                 y += 13;
             } else if (canEndAlliance(f, pack, chosen)) {
                 BookKit.link(f, "pack:ally_end", t(KEY + "ally_end", "ally_end"), r.x(), y, List.of(t(KEY + "ally_end_for", "ally_end_for", chosen.name())),
@@ -326,13 +326,13 @@ public final class BookPackPage implements HubPageView {
         if (style == Style.BOOK && askedForTheLead(f, pack)) {
             String asking = challengerName(pack);
             int acceptW = BookKit.link(f, "pack:duel_accept", Component.translatable(KEY + "duel_accept"), r.x(), y, List.of(Component.translatable(KEY + "duel_accept_for", asking)),
-                    () -> BloodlinePage.command("pack challenge accept"));
+                    () -> BloodlinePage.command("group challenge accept"));
             Component decline = Component.translatable(KEY + "duel_decline");
             // beside the accept link when it fits, under it when it does not
             int dx = declineX(r.x(), acceptW, f.font().width(decline), r.w());
             int dy = dx < 0 ? y + 13 : y;
             BookKit.link(f, "pack:duel_decline", decline, dx < 0 ? r.x() : dx, dy, List.of(Component.translatable(KEY + "duel_decline_for", asking)),
-                    () -> BloodlinePage.command("pack challenge decline"));
+                    () -> BloodlinePage.command("group challenge decline"));
             y = dy + 13;
         }
         boolean mayInvite = grp ? gv.viewerRank() == GroupView.LEADER
@@ -350,7 +350,7 @@ public final class BookPackPage implements HubPageView {
             // the seal says only ACCEPT: the line beside it says what it accepts
             String note = net.ofatech.supernaturalbloodlines.shared.hub.kit.TextCache.cut(f.font(), t(KEY + "accept", "accept").getString(), r.w(), f.font()::width);
             f.g.drawString(f.font(), note, r.x(), BookKit.sealNoteY(sy), t.muted(), false);
-            if (!pack.isEmpty()) {
+            if (GroupLabels.mayLeave(pack, f.view.player().getName().getString())) {
                 BookKit.link(f, "pack:leave", t(KEY + "leave", "leave"), r.x() + BookKit.SEAL + 8, sy + 24, List.of(t(KEY + "leave", "leave")),
                         () -> f.confirm(t(BOOK + "leave_title", "leave_title"), t(BOOK + "leave_body", "leave_body"), t(BOOK + "leave_yes", "leave_yes"),
                                 () -> BloodlinePage.command(cmd("leave"))));
@@ -395,18 +395,18 @@ public final class BookPackPage implements HubPageView {
         } else if (!grp && canChallenge(f, pack, wolf, chosen)) {
             d.action(new Detail.Action("challenge", Component.translatable(KEY + "challenge_btn", chosen.name()), false, true, null,
                     new Detail.Confirm(Component.translatable(KEY + "challenge_title", chosen.name()), Component.translatable(KEY + "challenge_body")),
-                    () -> BloodlinePage.command("pack challenge " + chosen.name())));
+                    () -> BloodlinePage.command("group challenge " + chosen.name())));
         } else if (canEndAlliance(f, pack, chosen)) {
             d.action(new Detail.Action("ally_end", t(KEY + "ally_end", "ally_end"), false, true, null,
                     new Detail.Confirm(t(KEY + "ally_end_title", "ally_end_title", chosen.name()), t(KEY + "ally_end_body", "ally_end_body")),
                     () -> BloodlinePage.command(cmd("ally remove " + chosen.name()))));
         }
         if (askedForTheLead(f, pack)) {
-            d.action("duel_accept", Component.translatable(KEY + "duel_accept"), true, true, () -> BloodlinePage.command("pack challenge accept"));
-            d.action("duel_decline", Component.translatable(KEY + "duel_decline"), false, true, () -> BloodlinePage.command("pack challenge decline"));
+            d.action("duel_accept", Component.translatable(KEY + "duel_accept"), true, true, () -> BloodlinePage.command("group challenge accept"));
+            d.action("duel_decline", Component.translatable(KEY + "duel_decline"), false, true, () -> BloodlinePage.command("group challenge decline"));
             d.field(Component.translatable(KEY + "duel_asked"), Component.literal(challengerName(pack)));
         }
-        if (!pack.isEmpty()) {
+        if (GroupLabels.mayLeave(pack, f.view.player().getName().getString())) {
             d.action(new Detail.Action("leave", t(KEY + "leave", "leave"), false, true, null,
                     new Detail.Confirm(t(BOOK + "leave_title", "leave_title"), t(BOOK + "leave_body", "leave_body")), () -> BloodlinePage.command(cmd("leave"))));
         }
@@ -481,7 +481,18 @@ public final class BookPackPage implements HubPageView {
                         : new RingLabels.Request(slot.x() - size / 2 - 3, ny, nw, 9, RingLabels.Anchor.RIGHT));
             }
         }
-        List<Rect> where = TextCache.ring(asked, blocked, new Rect(s.x(), top - 12, areaW, s.bottom() - top + 12), RING_NAME_MIN, 2);
+        Rect nameBounds = new Rect(s.x(), top - 12, areaW, s.bottom() - top + 12);
+        List<Rect> where = new ArrayList<>(TextCache.ring(asked, blocked, nameBounds, RING_NAME_MIN, 2));
+        // a name with no room beside its face (a small ring, GUI scale 4) goes under it, then over it, rather than being left to the tooltip
+        for (int i = 0; i < where.size(); i++) {
+            if (where.get(i) != null) {
+                continue;
+            }
+            PackRing.Slot slot = ring.slots().get(i);
+            List<Rect> taken = new ArrayList<>(blocked);
+            where.stream().filter(java.util.Objects::nonNull).forEach(taken::add);
+            where.set(i, RingLabels.underOrOver(asked.get(i), slot.x(), slot.y(), slot.size(), taken, nameBounds, RING_NAME_MIN, 2));
+        }
         int named_i = 0;
         for (PackRing.Slot slot : ring.slots()) {
             int size = slot.size();

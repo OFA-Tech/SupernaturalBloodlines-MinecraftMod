@@ -36,12 +36,14 @@ public final class GroupIndex extends SavedData {
     private static final Set<String> KNOWN = Set.of(VERSION, IDS, TYPES, TYPE_SINCE, RANKS);
     private static final String KEY = "key";
     private static final String VALUE = "value";
+    private static final String TYPE = "type";
 
     private final Map<UUID, UUID> ids = new HashMap<>();
     // raw strings: a type this build does not know is kept and written back
     private final Map<UUID, String> types = new HashMap<>();
     private final Map<UUID, Long> typeSince = new HashMap<>();
-    private final Map<UUID, String> ranks = new HashMap<>();
+    // member -> (type id -> rank id): one rank per member per type, so a rank earned in another type is never overwritten by this one
+    private final Map<UUID, Map<String, String>> ranks = new HashMap<>();
     private CompoundTag extras = new CompoundTag();
     private int dataVersion;
 
@@ -147,25 +149,35 @@ public final class GroupIndex extends SavedData {
         return typeSince.getOrDefault(group, 0L);
     }
 
-    /** The stored rank, whatever the group's type is now (a row of another type is dormant, see {@link #activeRankOf}). */
-    public GroupRank rankOf(UUID member) {
-        return GroupRank.parse(ranks.getOrDefault(member, GroupRank.NONE.id()));
+    /** The rank the member holds in a group of {@code type}; a rank of another type is dormant (kept, never shown), so it answers {@code NONE} here. */
+    public GroupRank rankOf(UUID member, GroupType type) {
+        Map<String, String> byType = ranks.get(member);
+        GroupRank r = byType == null ? GroupRank.NONE : GroupRank.parse(byType.getOrDefault(type.id(), GroupRank.NONE.id()));
+        return r == GroupRank.NONE || GroupSwitch.dormant(type, r.type()) ? GroupRank.NONE : r;
     }
 
-    /** The rank as the group of type {@code active} sees it: a rank of another type is hidden, not deleted. */
-    public GroupRank activeRankOf(UUID member, GroupType active) {
-        GroupRank r = rankOf(member);
-        return r == GroupRank.NONE || GroupSwitch.dormant(active, r.type()) ? GroupRank.NONE : r;
-    }
-
+    /** Stores {@code rank} under the type it belongs to; the member's ranks in the other types are left as they are. */
     public void setRank(UUID member, GroupRank rank) {
         if (rank == GroupRank.NONE) {
-            clearRanks(member);
-        } else if (!rank.id().equals(ranks.put(member, rank.id()))) {
+            throw new IllegalArgumentException("use clearRank(member, type) to take a rank away");
+        }
+        if (!rank.id().equals(ranks.computeIfAbsent(member, k -> new HashMap<>()).put(rank.type().id(), rank.id()))) {
             setDirty();
         }
     }
 
+    /** Takes the member's rank in one type away (a new leader holds none of their group's type); the other types' ranks stay dormant. */
+    public void clearRank(UUID member, GroupType type) {
+        Map<String, String> byType = ranks.get(member);
+        if (byType != null && byType.remove(type.id()) != null) {
+            if (byType.isEmpty()) {
+                ranks.remove(member);
+            }
+            setDirty();
+        }
+    }
+
+    /** Takes every rank of the member away: they are in no group (left, kicked, or merged into another). */
     public void clearRanks(UUID member) {
         if (ranks.remove(member) != null) {
             setDirty();
@@ -221,7 +233,18 @@ public final class GroupIndex extends SavedData {
         readPairs(tag, IDS, (k, v) -> i.ids.put(NbtUtils.loadUUID(k), NbtUtils.loadUUID(v)));
         readPairs(tag, TYPES, (k, v) -> i.types.put(NbtUtils.loadUUID(k), v.getAsString()));
         readPairs(tag, TYPE_SINCE, (k, v) -> i.typeSince.put(NbtUtils.loadUUID(k), ((net.minecraft.nbt.NumericTag) v).getAsLong()));
-        readPairs(tag, RANKS, (k, v) -> i.ranks.put(NbtUtils.loadUUID(k), v.getAsString()));
+        for (Tag t : tag.getList(RANKS, Tag.TAG_COMPOUND)) {
+            try {
+                CompoundTag e = (CompoundTag) t;
+                String type = e.getString(TYPE);
+                if (!e.contains(TYPE) || type.isEmpty()) {
+                    throw new IllegalArgumentException("a rank row with no type");
+                }
+                i.ranks.computeIfAbsent(NbtUtils.loadUUID(e.get(KEY)), k -> new HashMap<>()).put(type, e.get(VALUE).getAsString());
+            } catch (RuntimeException bad) {
+                net.ofatech.supernaturalbloodlines.SupernaturalBloodlines.LOGGER.warn("The group index skipped a damaged rank row: {}", bad.toString());
+            }
+        }
         for (String key : tag.getAllKeys()) {
             if (!KNOWN.contains(key)) {
                 i.extras.put(key, tag.get(key).copy());
@@ -279,11 +302,12 @@ public final class GroupIndex extends SavedData {
         });
         tag.put(TYPE_SINCE, sinceList);
         ListTag rankList = new ListTag();
-        ranks.forEach((k, v) -> {
-            CompoundTag e = row(k);
-            e.putString(VALUE, v);
+        ranks.forEach((member, byType) -> byType.forEach((type, rank) -> {
+            CompoundTag e = row(member);
+            e.putString(TYPE, type);
+            e.putString(VALUE, rank);
             rankList.add(e);
-        });
+        }));
         tag.put(RANKS, rankList);
         return tag;
     }

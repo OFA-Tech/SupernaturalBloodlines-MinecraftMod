@@ -127,16 +127,10 @@ public final class PackIndex extends SavedData {
     static final ThreadLocal<Boolean> KEEP_PACK = ThreadLocal.withInitial(() -> false);
 
     /**
-     * Keeps the index in step with {@code WolfState.packAlpha}: on every change, and at login (heals a lost file). A cured
-     * werewolf and a Beta who becomes an Alpha of their own (not through the trial) leave the pack they were in; a Packmate
-     * (not a werewolf) and a co-Alpha live in the index only.
+     * Keeps the index in step with {@code WolfState.packAlpha}: on every change. A cured werewolf and a Beta who becomes an Alpha of
+     * their own (not through the trial) leave the pack they were in; a Packmate (not a werewolf) and a co-Alpha live in the index only.
+     * The wolf-state sync: Werewolves worlds only (the login and logout half is {@link #registerSession}).
      */
-    public static void register() {
-        registerWolf();
-        registerSession();
-    }
-
-    /** The wolf-state sync: Werewolves worlds only. */
     public static void registerWolf() {
         BloodlineAccess.addListener((p, change) -> {
             WolfState before = change.before().wolf();

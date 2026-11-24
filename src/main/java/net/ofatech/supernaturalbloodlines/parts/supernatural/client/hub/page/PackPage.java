@@ -77,7 +77,8 @@ public final class PackPage implements HubPageView {
         t.drawRule(f.g, s.x(), sy + 2, s.w());
         String root = GroupLabels.root(gv);
         sy = SkillsPage.stamp(f, s, sy + 2, "pack:accept", GroupLabels.t(gv, KEY + "accept", "accept"), () -> command(root + " accept"));
-        if (!pack.isEmpty()) {
+        boolean leads = !pack.isEmpty() && pack.get(0).name().equals(f.view.player().getName().getString());
+        if (GroupLabels.mayLeave(pack, f.view.player().getName().getString())) {
             // leaving takes two presses within 5 seconds: the first only asks
             long now = f.view.player().level().getGameTime();
             boolean asking = now < confirmUntil;
@@ -92,7 +93,6 @@ public final class PackPage implements HubPageView {
             });
         }
         boolean alpha = wolf.rank() == WolfState.Rank.ALPHA || wolf.rank() == WolfState.Rank.TRUE_ALPHA;
-        boolean leads = !pack.isEmpty() && pack.get(0).name().equals(f.view.player().getName().getString());
         sy = PackInvite.render(f, s, sy + 6, grp ? gv.viewerRank() == GroupView.LEADER : leads || (pack.isEmpty() && alpha));
         f.end(sy);
     }

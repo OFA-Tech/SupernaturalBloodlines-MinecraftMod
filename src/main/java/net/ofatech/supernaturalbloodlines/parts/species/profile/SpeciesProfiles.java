@@ -146,7 +146,7 @@ public final class SpeciesProfiles implements ProfileService.Source {
             case RANK -> relation == Relation.ALLY_LEADER ? Optional.of(List.of("ally")) : Optional.ofNullable(who).map(w -> List.of(rank(w, packs)));
             case LEVEL -> Optional.ofNullable(who).map(w -> List.of(Integer.toString(VampirismAPI.factionPlayerHandler(w).getCurrentLevel())));
             case PACK_DAYS -> packs == null ? Optional.empty() : packs.inPackSince(subject).map(since -> List.of(Long.toString(daysSince(since))));
-            case BONUS -> who == null ? Optional.empty() : RankEffects.bonusText(who).map(List::of);
+            case BONUS -> who == null || inOtherGroup(observer, packs, subject) ? Optional.empty() : RankEffects.bonusText(who).map(List::of);
             case PACK -> packs == null ? Optional.empty() : Optional.of(packs.inPack(subject) ? groupFact(observer, packs.leaderOf(subject)) : List.of());
             case PRESENCE -> Optional.of(List.of(who != null ? "online" : "offline"));
             case SIRE -> remembered(observer, subject, relation, Fact.SIRE, MemorySnapshots.Memory::sire).orElseGet(() -> sire(observer, subject));
@@ -199,6 +199,12 @@ public final class SpeciesProfiles implements ProfileService.Source {
     private static String nameOf(MinecraftServer server, UUID id) {
         String n = PackAccess.nameOf(server, id);
         return n != null ? n : SirelineIndex.get(server.overworld()).nameOf(id).orElse(null);
+    }
+
+    /** The pack bonus belongs to a pack: somebody in a clan, a coven or a brotherhood has none to show. */
+    private static boolean inOtherGroup(ServerPlayer observer, @Nullable PackIndex packs, UUID subject) {
+        return packs != null && packs.inPack(subject)
+                && net.ofatech.supernaturalbloodlines.parts.species.group.Groups.typeOfGroup(observer.serverLevel(), packs.leaderOf(subject)) != net.ofatech.supernaturalbloodlines.core.group.GroupType.PACK;
     }
 
     /** The leader's name, and the group's type when it is not a pack (a pack's fact is the name alone, as it always was). */

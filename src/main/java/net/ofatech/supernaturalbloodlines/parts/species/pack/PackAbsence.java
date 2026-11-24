@@ -124,7 +124,7 @@ public final class PackAbsence {
         GroupIndex groups = GroupIndex.get(server.overworld());
         List<GroupSuccession.Candidate> candidates = index.betasOf(leader).stream().map(id -> {
             ServerPlayer online = SireCall.player(server, id);
-            return new GroupSuccession.Candidate(id, groups.activeRankOf(id, type), index.inPackSince(id).orElse(Long.MAX_VALUE),
+            return new GroupSuccession.Candidate(id, groups.rankOf(id, type), index.inPackSince(id).orElse(Long.MAX_VALUE),
                     here(server, index, id, nowMillis, limit), online == null ? -1 : BloodlineAccess.get(online).markKills());
         }).toList();
         return GroupSuccession.heir(type, candidates).orElse(null);
@@ -147,8 +147,14 @@ public final class PackAbsence {
         } else {
             // the old leader stays as the next rank down, the new one is the leader and holds no rank
             GroupIndex groups = GroupIndex.get(server.overworld());
-            groups.setRank(old, type == GroupType.CLAN ? GroupRank.DAY_WALKER : type == GroupType.COVEN ? GroupRank.ELDER : GroupRank.NONE);
-            groups.clearRanks(next);
+            if (type == GroupType.CLAN) {
+                groups.setRank(old, GroupRank.DAY_WALKER);
+            } else if (type == GroupType.COVEN) {
+                groups.setRank(old, GroupRank.ELDER);
+            } else {
+                groups.clearRank(old, type);
+            }
+            groups.clearRank(next, type);
         }
         String name = PackAccess.nameOf(server, next);
         String shown = name != null ? name : next.toString().substring(0, 8);
