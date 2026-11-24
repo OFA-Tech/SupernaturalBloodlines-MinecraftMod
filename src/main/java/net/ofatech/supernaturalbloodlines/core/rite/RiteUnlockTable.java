@@ -86,6 +86,10 @@ public final class RiteUnlockTable {
         both(m, "ward_of_return", Set.of(RiteKind.WITCH), OLD_RITES);
         kind(m, "rite_of_the_ward", RiteKind.WITCH, RiteKind.SIPHONER, RiteKind.TRIBRID);
         kind(m, "rite_of_the_door_ward", RiteKind.WITCH, RiteKind.SIPHONER, RiteKind.TRIBRID);
+        // plan 20b: the three grand rites of a coven
+        for (String grand : List.of("fete_des_benedictions", "night_watch", "great_harvest")) {
+            kind(m, grand, RiteKind.WITCH, RiteKind.SIPHONER, RiteKind.TRIBRID);
+        }
         lore(m, "curse_magicule_drain", CURSES);
         lore(m, "curse_skill_seal", CURSES);
         lore(m, "curse_insanity", CURSES);

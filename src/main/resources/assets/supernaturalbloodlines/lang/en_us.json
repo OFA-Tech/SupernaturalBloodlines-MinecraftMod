@@ -2550,5 +2550,21 @@
   "supernaturalbloodlines.coven.shun_done": "%s is shunned from the coven.",
   "supernaturalbloodlines.coven.shunned": "The coven has shunned you. Regent: %s. You keep your magic, but no coven will take you for a while.",
   "supernaturalbloodlines.coven.regent_new": "%s is the new Regent of the coven.",
-  "supernaturalbloodlines.coven.regent_you": "You are the Regent of the coven now. %s led before you and is an Elder."
+  "supernaturalbloodlines.coven.regent_you": "You are the Regent of the coven now. %s led before you and is an Elder.",
+  "rite.supernaturalbloodlines.fete_des_benedictions": "Fete des Benedictions",
+  "rite.supernaturalbloodlines.night_watch": "Night Watch",
+  "rite.supernaturalbloodlines.great_harvest": "Great Harvest",
+  "supernaturalbloodlines.hub.rites.desc.fete_des_benedictions.1": "A coven rite for a linked circle of three. Everyone near the chalk, the coven and strangers alike, is blessed with Luck I and Regeneration I.",
+  "supernaturalbloodlines.hub.rites.desc.fete_des_benedictions.2": "The reach and the length grow with the circle. The coven can work it once every twelve hours.",
+  "supernaturalbloodlines.hub.rites.desc.night_watch.1": "A coven rite for a linked circle of seven, worked at night. Until dawn the monsters around the chalk are outlined and slowed.",
+  "supernaturalbloodlines.hub.rites.desc.night_watch.2": "It stays while the night lasts. If the one who holds the circle falls, it ends, and the link takes its toll.",
+  "supernaturalbloodlines.hub.rites.desc.great_harvest.1": "A coven rite for a full circle of thirteen. The linked members split a price in experience levels, and every crop near the chalk grows.",
+  "supernaturalbloodlines.hub.rites.desc.great_harvest.2": "It never harms a creature. A member who cannot pay their share stops the rite before anyone pays.",
+  "supernaturalbloodlines.rite.grand.off": "The grand rites are switched off on this server.",
+  "supernaturalbloodlines.rite.grand.circle": "This rite needs a bigger linked circle of your coven.",
+  "supernaturalbloodlines.rite.grand.cooldown": "Your coven worked this rite too recently.",
+  "supernaturalbloodlines.rite.grand.levels": "The circle cannot pay the price of this rite.",
+  "supernaturalbloodlines.rite.grand.fete_done": "You are blessed.",
+  "supernaturalbloodlines.rite.grand.night_watch_started": "The watch is set. It holds until dawn.",
+  "supernaturalbloodlines.rite.grand.harvest_done": "The fields answer."
 }

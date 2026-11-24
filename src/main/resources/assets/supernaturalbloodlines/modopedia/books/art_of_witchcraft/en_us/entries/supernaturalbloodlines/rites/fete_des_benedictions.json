@@ -1,0 +1,38 @@
+{
+  "title": "Fete des Benedictions",
+  "icon": {
+    "count": 1,
+    "id": "minecraft:honey_bottle"
+  },
+  "assigned_items": [],
+  "advancement": "supernaturalbloodlines:rites/known/fete_des_benedictions",
+  "pages": [
+    {
+      "components": [
+        {
+          "template": "modopedia:page/headered_text",
+          "text": "Circle: medium circle, ritual chalk.\n\nA coven rite for a linked circle of three. Everyone near the chalk, the coven and strangers alike, is blessed with Luck I and Regeneration I.",
+          "header": "The Fete"
+        }
+      ]
+    },
+    {
+      "components": [
+        {
+          "template": "modopedia:page/headered_text",
+          "text": "The reach and the length grow with the circle. The coven can work it once every twelve hours.",
+          "header": "The Fete"
+        }
+      ]
+    },
+    {
+      "components": [
+        {
+          "template": "supernaturalbloodlines:page/rite",
+          "rite": "supernaturalbloodlines:fete_des_benedictions",
+          "header": "The Fete"
+        }
+      ]
+    }
+  ]
+}

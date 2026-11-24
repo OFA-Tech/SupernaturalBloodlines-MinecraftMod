@@ -1,0 +1,38 @@
+{
+  "title": "Great Harvest",
+  "icon": {
+    "count": 1,
+    "id": "minecraft:wheat"
+  },
+  "assigned_items": [],
+  "advancement": "supernaturalbloodlines:rites/known/great_harvest",
+  "pages": [
+    {
+      "components": [
+        {
+          "template": "modopedia:page/headered_text",
+          "text": "Circle: large circle, infernal chalk.\n\nA coven rite for a full circle of thirteen. The linked members split a price in experience levels, and every crop near the chalk grows.",
+          "header": "Great Harvest"
+        }
+      ]
+    },
+    {
+      "components": [
+        {
+          "template": "modopedia:page/headered_text",
+          "text": "It never harms a creature. A member who cannot pay their share stops the rite before anyone pays.",
+          "header": "Great Harvest"
+        }
+      ]
+    },
+    {
+      "components": [
+        {
+          "template": "supernaturalbloodlines:page/rite",
+          "rite": "supernaturalbloodlines:great_harvest",
+          "header": "Great Harvest"
+        }
+      ]
+    }
+  ]
+}

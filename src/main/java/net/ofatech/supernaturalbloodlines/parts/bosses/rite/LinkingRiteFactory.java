@@ -99,8 +99,9 @@ public record LinkingRiteFactory() implements RiteFactory {
                 caster.displayClientMessage(Component.translatable(LinkRules.WONT_HOLD), true);
                 return false; // not cancelled: the rest of the ingredients and the power are spent
             }
-            Links.link(level.getServer(), inside.get(0), inside.get(1), BossesConfig.linkSeconds(), caster.getUUID());
-            caster.displayClientMessage(Component.translatable(DONE, BossesConfig.linkSeconds()), true);
+            int seconds = (int) Math.round(net.ofatech.supernaturalbloodlines.parts.species.group.circle.CovenPotency.scale(BossesConfig.linkSeconds()));
+            Links.link(level.getServer(), inside.get(0), inside.get(1), seconds, caster.getUUID());
+            caster.displayClientMessage(Component.translatable(DONE, seconds), true);
             return false;
         }
     }
