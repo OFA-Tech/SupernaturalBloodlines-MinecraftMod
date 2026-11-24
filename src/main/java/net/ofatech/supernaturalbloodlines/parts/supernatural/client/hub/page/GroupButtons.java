@@ -56,8 +56,7 @@ public final class GroupButtons {
             Map.entry("coven:vote_no", GroupLabels.HUB + "coven.vote_no"));
 
     /** The coven controls whose card is drawn by plan 20b Task 12; until then they are registered and not yet on a page. */
-    public static final Set<String> NOT_DRAWN_YET = Set.of("coven:link_open", "coven:link_close", "coven:link_join", "coven:link_leave", "coven:consent",
-            "coven:elder_add", "coven:elder_remove", "coven:shun", "coven:vote_yes", "coven:vote_no");
+    public static final Set<String> NOT_DRAWN_YET = Set.of();
 
     /** Literals the page shows by itself and needs no control for. */
     public static final Set<String> NO_BUTTON = Set.of("info");

@@ -300,6 +300,7 @@ public final class BookPackPage implements HubPageView {
         } else {
             y += 2;
         }
+        y = CovenCards.render(f, r, y, gv, chosen);
         t.drawRule(f.g, r.x(), y + 3, r.w());
         y += 9;
         if (style == Style.BOOK && chosen != null) {
