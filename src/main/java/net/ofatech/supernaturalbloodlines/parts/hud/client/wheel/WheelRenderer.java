@@ -368,9 +368,11 @@ final class WheelRenderer {
 
     private static void helpLines(GuiGraphics g, Font font, Frame f, int x, int y) {
         boolean paged = f.page().size() > 0 && f.layout().pageCount() > 1;
+        // a stone power with a second option takes the closing row's place (G and Esc are on the G hint already)
+        boolean dual = f.power() != null && net.ofatech.supernaturalbloodlines.parts.hud.client.wheel.infinity.InfinityCompat.isDual(f.power());
         List<WheelPanelText.HelpRow> rows = WheelPanelText.help(font, s -> font.width(WheelStrings.bold(s)),
-                List.of(text("help.click"), text("help.right"), paged ? text("help.scroll") : text("help.alt"), text("help.close_keys")),
-                List.of(text("help.click_use"), text("help.right_slot"), paged ? text("help.scroll_page") : text("help.alt_mode"), text("help.close")));
+                List.of(text("help.click"), text("help.right"), paged ? text("help.scroll") : text("help.alt"), dual ? text("help.dual_key") : text("help.close_keys")),
+                List.of(text("help.click_use"), text("help.right_slot"), paged ? text("help.scroll_page") : text("help.alt_mode"), dual ? text("help.dual_what") : text("help.close")));
         for (WheelPanelText.HelpRow row : rows) {
             g.drawString(font, WheelStrings.bold(row.key()), x, y, f.pal().ink(), false);
             g.drawString(font, row.what(), x + row.whatX(), y, f.pal().muted(), false);

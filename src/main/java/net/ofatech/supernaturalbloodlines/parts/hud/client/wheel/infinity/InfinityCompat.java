@@ -66,6 +66,13 @@ public final class InfinityCompat {
         return n == null ? "" : n.description();
     }
 
+    /** Whether the power an entry is on now has a second option (Shift-click, or Shift + Enter). */
+    public static boolean isDual(WheelEntry e) {
+        StoneApi api = PROBE.api();
+        NodeInfo n = api == null || !owns(e) ? null : StoneEntries.nodeOf(api, e);
+        return n != null && n.isDual();
+    }
+
     public static boolean hasLevels(WheelEntry e) {
         StoneApi api = PROBE.api();
         NodeInfo n = api == null ? null : StoneEntries.nodeOf(api, e);

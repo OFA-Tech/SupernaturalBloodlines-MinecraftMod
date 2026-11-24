@@ -19,6 +19,7 @@ import net.ofatech.supernaturalbloodlines.parts.hud.net.WheelEntry;
 public final class WheelList {
     private static List<WheelEntry> rawSeen;
     private static boolean leapSeen;
+    private static net.ofatech.supernaturalbloodlines.core.wheel.StoneRules.State stoneStateSeen;
     private static List<WheelEntry> kept = List.of();
     private static long builtAt = Long.MIN_VALUE;
     private static List<WheelEntry> cached = List.of();
@@ -43,12 +44,15 @@ public final class WheelList {
         long now = mc.level == null ? 0 : mc.level.getGameTime();
         List<WheelEntry> raw = ClientCatalogue.entries();
         boolean leap = HudClientConfig.sprintLeap();
-        if (raw == rawSeen && leap == leapSeen && now == builtAt) {
+        // the compat switch decides whether the plain Tensura stone skills are hidden, so it is part of the key
+        var stoneState = InfinityCompat.state();
+        if (raw == rawSeen && leap == leapSeen && stoneState == stoneStateSeen && now == builtAt) {
             return cached;
         }
-        if (raw != rawSeen || leap != leapSeen) {
+        if (raw != rawSeen || leap != leapSeen || stoneState != stoneStateSeen) {
             rawSeen = raw;
             leapSeen = leap;
+            stoneStateSeen = stoneState;
             List<WheelEntry> out = new ArrayList<>();
             for (WheelEntry e : raw) {
                 if (!ReplacedPowers.hidden(e.ref(), leap) && !InfinityCompat.hidesTensura(e.ref().id().getNamespace())) {

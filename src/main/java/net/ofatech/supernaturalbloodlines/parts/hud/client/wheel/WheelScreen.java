@@ -407,6 +407,12 @@ public final class WheelScreen extends Screen {
                 return true;
             }
         }
+        // Alt + Up/Down is the keyboard's scroll wheel for a stone power's level
+        WheelEntry focused = entryAt(active());
+        if (hasAltDown() && (key == GLFW.GLFW_KEY_UP || key == GLFW.GLFW_KEY_DOWN) && focused != null && InfinityCompat.owns(focused) && InfinityCompat.hasLevels(focused)) {
+            WheelActions.changeLevel(focused, key == GLFW.GLFW_KEY_UP ? 1 : -1);
+            return true;
+        }
         switch (key) {
             case GLFW.GLFW_KEY_LEFT -> arrow(Dir.LEFT);
             case GLFW.GLFW_KEY_RIGHT -> arrow(Dir.RIGHT);
@@ -418,7 +424,9 @@ public final class WheelScreen extends Screen {
                     return true; // key repeat of the press that is holding a power
                 }
                 lastKey = key;
+                secondOption = hasShiftDown(); // Shift + Enter is the keyboard's Shift-click
                 useActive(HoldPlan.Trigger.KEY_PRESS);
+                secondOption = false;
             }
             default -> {
                 return super.keyPressed(key, scan, mods);
@@ -657,6 +665,10 @@ public final class WheelScreen extends Screen {
         List<String> lines = WheelNarration.lines(WheelRenderer.modName(source), groups.isEmpty() ? "" : WheelRenderer.text("group." + e.group().name().toLowerCase(Locale.ROOT)),
                 e.name().getString(), e.coverNote().getString(), WheelDescriptions.of(e), e.modeNames().size() > 1 ? e.modeName().getString() : "", state, lock, open.page() * WheelLayout.PAGE_SIZE + h.index() + 1, pageTotal,
                 open.page() + 1, layout.pageCount(), (key, args) -> Component.translatable(key, args).getString());
+        if (InfinityCompat.isDual(e)) {
+            lines = new java.util.ArrayList<>(lines);
+            lines.add(WheelRenderer.text("help.dual"));
+        }
         out.add(NarratedElementType.TITLE, Component.literal(String.join(", ", lines)));
     }
 
