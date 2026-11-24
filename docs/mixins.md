@@ -15,6 +15,8 @@ Config `supernaturalbloodlines.vampirism_tensura.mixins.json`, plugin `Vampirism
 | vampirism_tensura | `RaceUtilsSunMixin` | `RaceUtils.isUnderSun(LivingEntity)` (HEAD, returns false) | `VampireRace.onTick` adds Weakness, Slowness and Mining Fatigue (amplifier 3) whenever `isUnderSun` is true, before it ever calls `shouldBurn`. Faction vampires skip them too: Vampirism's sun handling wins (its own sun damage, nausea and weakness by level). The same method gates Tensura's bat form under sun, so a faction vampire may use it by day. Only faction-vampire players are affected; the night/moon-phase branch of `onTick` is unchanged. | `parts.vampirismTensura` |
 
 ## species (3 of 3)
+Plan 20b added no mixin: the circle link rides the existing RiteCostMixin hook (RiteCost.begin / commit / discard), the anchor's death is a LivingDeathEvent handler that queues the stop of a running rite for the end of the tick, and the Rite of Mastery, the grand rites and the ring rites are ordinary rite factories.
+
 Plan 15d added no mixin either: the Brothers, their orders, hunting trips and the Tensura bridge (`species_tensura` stays at 2 of 3) use NeoForge events and the public navigation API only.
 Plan 15b added no mixin: the NPC packs, the weaker spark, Surge and Spirits use NeoForge events only (`EntityTickEvent`, `LivingChangeTargetEvent`, `LivingDeathEvent`, `LivingDropsEvent`, `LevelTickEvent`).
 

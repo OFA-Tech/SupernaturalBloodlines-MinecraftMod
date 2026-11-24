@@ -26,4 +26,10 @@ After `absent_leader_days` (7) offline, the lead passes: a **pack** to its stron
 ## Allies and parties
 Leaders of any two groups can ally, a coven and a pack included; allied members cannot hurt each other. With Open Parties and Claims, a group is its party. All of this works without Werewolves.
 
-Clan, coven and brotherhood **perks** (circles, the Charter, brothers in arms) come in later updates.
+## Covens
+A coven has a **Regent** (its leader), **Elders** and members. The Regent appoints Elders (after `elder_min_days` in the coven; one seat per four members, a vote of the Elders when there are some); the Regent and the Elders vote on shunning a member (who then cannot join any coven for a week) and on a new Regent. Votes need three electors and a majority; with fewer the Regent decides.
+
+**The circle.** Stand within five blocks of a gold chalk and press **Open the circle** on the Group page: the rest of your coven near you gets a card on Home to **Join**. When the Regent, or any member who opened it, starts a rite on that chalk, the linked witches pay a share of it from their **channel meter** instead of the altar paying it all, and a bigger circle makes the rite stronger. **Strictly my meter** (the default) never asks more of you than your meter holds; the other two levels let a heavy rite hurt a little or a lot. If the one who holds the circle dies while the rite runs, the rest are hurt. A circle of 3 / 7 / 13 reaches tier I / II / III.
+
+**What a coven can do:** the three grand rites (Fete des Benedictions, Night Watch, Great Harvest; see [Rites](Rites#coven-rites)), forge a Moon Ring or a Sun Ring, and the Rite of Mastery's Ultimate needs a circle of seven. The numbers are in [Configuration](Configuration#groups-supernaturalbloodlines-groupstoml).
+Clan, coven and brotherhood **perks** other than the coven's (the Charter, brothers in arms) come in later updates.

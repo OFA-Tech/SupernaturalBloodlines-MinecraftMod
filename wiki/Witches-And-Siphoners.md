@@ -69,3 +69,6 @@ Witches and siphoners have no special weakness of their own. They are not prey, 
 ## Mixins
 
 The witch bonus uses three mixins into Enchanted (`AltarRangeMixin`, `RiteCostMixin`, `RiteCancelMixin`; all `require = 0`). If an Enchanted update breaks one, that bonus is missing and the log says so; nothing crashes. See [Parts and compatibility](Parts-And-Compatibility#mixins).
+
+## In a coven
+A witch in a coven can work rites **together** with it: the linked witches share the cost of a rite, a bigger circle makes it stronger, and the coven's grand rites are open to a large enough circle. Your **channel meter** says how much you can give before it hurts, and you choose how much you accept. See [Groups](Groups#covens) and [Rites](Rites#coven-rites).

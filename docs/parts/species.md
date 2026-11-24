@@ -581,3 +581,14 @@ Proved by `CovenHookGameTests` with a real gold chalk and a throwaway rite type 
 - Order for a rite that stays: `begin`, `onStart`, `commit`, then `discard` (the chalk's `serverTick` RETURN, harmless after `commit`), then the first `onTick`.
 - A running rite is stopped from outside with `rite.stop(); RiteManager.removeRite(level, rite)` queued for `ServerTickEvent.Post`, from plain code and from a `LivingDeathEvent` handler: `getRiteAt` is empty and the chalk detached.
 - `RiteType.create(level, pos)` builds a rite with no side effect (nothing added to `RiteManager`, no item moved).
+## Covens (plan 20b)
+- [x] Elders, votes, shunning, Regent election (`CovenGovernance`, `CovenRules`, `VoteTally`; rows `votes`, `bans`, `cooldowns` in `supernaturalbloodlines_groups.dat`).
+- [x] The circle: sessions in memory (`CircleLink`), the staged plan (`CircleStage`), the pure plan, meter, potency and tiers (`core/group/circle`), the anchor's death (`LinkWindow`), strain (`Strain`).
+- [x] The cost hook carries the plan (`RiteCost` -> `CircleCost`); EP leaves a player only through `RiteEp`.
+- [x] Three grand rites (`FeteRiteFactory`, `NightWatchRiteFactory`, `HarvestRiteFactory`, gate `GrandGate`); potency on the Linking Spell.
+- [x] Two ring rites (artifacts part, `coven_forge`) and the Rite of Mastery's Ultimate needing a circle of 7.
+- [x] The coven view (`CovenView`, `CovenViewPayload`, hub protocol 16) and the Group page's coven cards; rows C1 to C10 of `AdminCommands`.
+
+Settings (`supernaturalbloodlines-groups.toml`, 30 new keys, each an Admin row): `link_enabled`, `link_member_share`, `channel_cap`, `channel_other_factor`, `channel_regen_minutes`, `ep_keep_percent`, `potency_max_bonus`, `potency_falloff`, `tier1_members`, `tier2_members`, `tier3_members`, `link_window_seconds`, `link_death_damage_percent`, `link_death_lethal`, `link_shaken_minutes`, `elder_min_days`, `members_per_elder`, `vote_hours`, `election_cooldown_days`, `shun_days`, `moonlight_ring_enabled`, `sun_ring_forge_enabled`, `sun_ring_day_walker_only`, `mastery_ultimate_circle`, `grand_rites_enabled`, `grand_rite_cooldown_hours`, `grand_rite_radius`, `fete_minutes`, `harvest_xp_levels`, `harvest_max_blocks`.
+
+What vanishes with a switch: `link_enabled` off: no new circle, the staged plan is never built, Mastery's Ultimate needs no circle; nothing already paid is refunded. `covens_enabled` off: no new coven; existing covens, their Elders and their votes are kept. `grand_rites_enabled` off: the three grand rites refuse. `species` part off: groups, circles and the grand rites are gone; the artifacts part still loads and its forge rites refuse (no circle behind the seam). Mastery's Ultimate gate is not reachable code with the evolution rites part off.

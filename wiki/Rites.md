@@ -213,3 +213,16 @@ Two rites that need a boss's reward as a key. The grimoire is **given back** whe
 
 The **ward** falls when its owner dies or becomes a vampire; invite people on the Path page (*Your ward*), with `/ward invite <player>`, or by saying "come in" (and "get out" to withdraw) near it. A ward never says what anybody is: every refusal is the same line. The **locator**'s needle spins the same way for every reason somebody cannot be found, and the one looked for is told "Somebody is looking for you." once. Both curses end when the target dies.
 
+
+## Coven rites
+Worked by a circle of linked witches (see [Groups](Groups#covens)); each is a rite file with its own items and a circle.
+
+| Rite | Linked members | What it does |
+|---|---|---|
+| **Fete des Benedictions** | 3 | Everyone near the chalk, the coven and strangers alike, gets Luck I and Regeneration I. The reach and the length grow with the circle. Once every 12 hours per coven. |
+| **Night Watch** | 7 | At night. Until dawn the monsters around the chalk are outlined and slowed. |
+| **Great Harvest** | 13 | The linked members split 30 experience levels; every crop near the chalk grows. It never harms a creature. |
+| **Coven Moon Ring** | 3 | Forges a Moon Ring bound to the werewolf of a pack who stands at the centre, for half the silver. Needs Werewolves. |
+| **Coven Sun Ring** | 3 | Forges a Sun Ring bound to the vampire at the centre, for half the power of the Ward of Daylight. |
+
+The **Rite of Mastery's Ultimate** needs a circle of seven (the setting `mastery_ultimate_circle`).
