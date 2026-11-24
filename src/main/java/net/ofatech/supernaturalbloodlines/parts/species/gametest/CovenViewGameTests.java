@@ -155,6 +155,7 @@ public final class CovenViewGameTests {
             groups.setRank(e1.getUUID(), GroupRank.ELDER);
             groups.setRank(e2.getUUID(), GroupRank.ELDER);
             GroupsConfig.override("elder_min_days", 0);
+            GroupsConfig.override("members_per_elder", 1);
             helper.assertTrue(CovenGovernance.elderAdd(regent, a.getUUID().toString()) == null, "the first vote did not open");
             helper.assertTrue(CovenGovernance.shun(regent, b.getUUID().toString()) == null, "the second vote did not open");
             helper.assertTrue(CovenViews.of(e1).vote().get().kind() == VoteKind.ELDER_ADD, "an Elder who has answered nothing should see the older vote first");
@@ -165,6 +166,7 @@ public final class CovenViewGameTests {
             helper.assertTrue(CovenViews.of(e1).vote().get().kind() == VoteKind.ELDER_ADD, "with everything answered the older vote is shown");
         } finally {
             GroupsConfig.override("elder_min_days", null);
+            GroupsConfig.override("members_per_elder", null);
             tidy(helper, regent, e1, e2, a, b);
         }
         helper.succeed();
