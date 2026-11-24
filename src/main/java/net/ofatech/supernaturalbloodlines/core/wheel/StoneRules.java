@@ -71,6 +71,14 @@ public final class StoneRules {
         return soulMode == SOUL_NONE ? -1 : soulMode == SOUL_MOB ? ACT_RELEASE : ACT_CONTROL;
     }
 
+    /**
+     * His wheel key is covered while the compat works: every stone power, his menus included, is then on our wheel. With the compat off (his mod missing, the setting, a
+     * class we cannot read) his wheel is the only way to use a stone, so its key must work.
+     */
+    public static boolean wheelKeyCovered(State state) {
+        return state == State.ACTIVE;
+    }
+
     /** His soul-control key is covered only when the wheel can do its job, or the player would have no way to release a possession. */
     public static boolean soulControlKeyCovered(State state, boolean soulSupported) {
         return state == State.ACTIVE && soulSupported;

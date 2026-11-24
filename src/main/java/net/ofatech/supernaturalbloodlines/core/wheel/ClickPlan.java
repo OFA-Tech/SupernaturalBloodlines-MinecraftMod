@@ -2,7 +2,8 @@ package net.ofatech.supernaturalbloodlines.core.wheel;
 
 /** What a click or a scroll on the wheel means (owner decisions, 2026-11-22): left uses, right opens the slot picker, Alt cycles the mode, scroll changes a level or turns the page. */
 public final class ClickPlan {
-    public enum Action { NONE, USE, SLOT_PICKER, USE_SECOND_OPTION, MODE_NEXT, MODE_PREVIOUS }
+    /** {@code MENU}: the middle click, Infinity's own (a destination, Will Construct's quick slots, a choice menu); a power without a menu ignores it. */
+    public enum Action { NONE, USE, SLOT_PICKER, USE_SECOND_OPTION, MODE_NEXT, MODE_PREVIOUS, MENU }
 
     public enum Scroll { NONE, LEVEL_UP, LEVEL_DOWN, MODE_NEXT, MODE_PREVIOUS, PAGE_NEXT, PAGE_PREVIOUS }
 
@@ -19,7 +20,7 @@ public final class ClickPlan {
     private ClickPlan() {
     }
 
-    /** {@code button} is GLFW's: 0 left, 1 right. Alt wins over Shift. */
+    /** {@code button} is GLFW's: 0 left, 1 right, 2 middle. Alt wins over Shift. */
     public static Action of(int button, boolean alt, boolean shift) {
         if (button == 0) {
             return alt ? Action.MODE_NEXT : shift ? Action.USE_SECOND_OPTION : Action.USE;
@@ -27,7 +28,7 @@ public final class ClickPlan {
         if (button == 1) {
             return alt ? Action.MODE_PREVIOUS : Action.SLOT_PICKER;
         }
-        return Action.NONE;
+        return button == 2 ? Action.MENU : Action.NONE;
     }
 
     /**

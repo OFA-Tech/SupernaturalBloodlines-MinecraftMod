@@ -84,6 +84,14 @@ class StoneRulesTest {
     }
 
     @Test
+    void hisWheelKeyIsCoveredWhileTheCompatWorksAndComesBackWhenItDoesNot() {
+        assertTrue(StoneRules.wheelKeyCovered(State.ACTIVE), "every stone power, menus included, is on our wheel");
+        for (State s : new State[] {State.OFF_MISSING, State.OFF_BROKEN, State.OFF_SETTING}) {
+            assertFalse(StoneRules.wheelKeyCovered(s), s + ": his wheel is the only way to use a stone");
+        }
+    }
+
+    @Test
     void theSoulKeyIsCoveredOnlyWhenTheWheelCanDoItsJob() {
         assertTrue(StoneRules.soulControlKeyCovered(State.ACTIVE, true));
         assertFalse(StoneRules.soulControlKeyCovered(State.ACTIVE, false), "no SoulNet.Action: a covered key would strand the player");
