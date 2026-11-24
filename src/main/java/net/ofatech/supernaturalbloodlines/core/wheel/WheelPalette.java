@@ -11,17 +11,17 @@ import net.ofatech.supernaturalbloodlines.core.wheel.WheelLayout.Look;
  * @param onPill the colour of the text on the ON pill and the selected chip, and {@code pill} what it is written on
  */
 public record WheelPalette(int outerBand, int outerLit, int innerBand, int innerLit, int middleTrack, int middleLit, int hub, int seal, int line, int rim, int ink, int muted,
-                           int panel, int warn, int pill, int onPill, int hintInk, int hintOn, int cell, int lockOnCell, int innerLine) {
+                           int panel, int warn, int pill, int onPill, int hintInk, int hintOn, int innerLine) {
     /** A text and what it is written on, for the contrast test. */
     public record TextPair(String what, int fg, int bg) {
     }
 
     public static final WheelPalette GRIMOIRE = new WheelPalette(0xE6CFBF8F, 0xF2F1E8CC, 0xF04A1919, 0xF0E9DDB8, 0x80B7A572, 0xF0F1E8CC, 0xFF260A0A, 0xFF9A1C22, 0xFF5C3A12, 0xFF4A2E0E,
-            0xFF2A1A10, 0xFF6A5236, 0xFFE9DDB8, 0xFF7A1218, 0xFF9A1C22, 0xFFF5ECCF, 0xFFF5ECCF, 0xFF4A1717, 0xFF2A1A10, 0xFFE8806E, 0xFFD9B766);
+            0xFF2A1A10, 0xFF6A5236, 0xFFE9DDB8, 0xFF7A1218, 0xFF9A1C22, 0xFFF5ECCF, 0xFFF5ECCF, 0xFF4A1717, 0xFFD9B766);
     public static final WheelPalette BLOOD_MOON = new WheelPalette(0xCC10060A, 0xE62E0F18, 0xCC1D0B13, 0xE62E141C, 0x66443640, 0xCC53333B, 0xFF211315, 0xFFBE4137, 0xFFE0A9A3, 0xFFFF7A6B,
-            0xFFFFF1EA, 0xFFC9A7A5, 0xFF1D0B13, 0xFFFF7A6B, 0xFFBE4137, 0xFFFFF1EA, 0xFFFFF1EA, 0xFF1D0B13, 0xFF1D0B13, 0xFFFF7A6B, 0xFFE0A9A3);
+            0xFFFFF1EA, 0xFFC9A7A5, 0xFF1D0B13, 0xFFFF7A6B, 0xFFBE4137, 0xFFFFF1EA, 0xFFFFF1EA, 0xFF1D0B13, 0xFFE0A9A3);
     public static final WheelPalette TENSURA = new WheelPalette(0xCC112636, 0xE61B3C56, 0xCC12263B, 0xE61B3C56, 0x66304761, 0xCC354B62, 0xFF0A1827, 0xFF12293F, 0xFF5FD0DC, 0xFF3FD0D6,
-            0xFFE6F3FB, 0xFF97A7B5, 0xFF12293F, 0xFFF0646A, 0xFF3FD0D6, 0xFF0A1827, 0xFFE6F3FB, 0xFF12293F, 0xFF12293F, 0xFFF0646A, 0xFF5FD0DC);
+            0xFFE6F3FB, 0xFF97A7B5, 0xFF12293F, 0xFFF0646A, 0xFF3FD0D6, 0xFF0A1827, 0xFFE6F3FB, 0xFF12293F, 0xFF5FD0DC);
 
     public static WheelPalette of(Look look) {
         return switch (look) {

@@ -29,11 +29,14 @@ class WheelHudViewTest {
 
     @Test
     void descriptionGetsWhatIsLeftAfterTheModeLineAndTheLockBox() {
-        assertEquals(4, WheelPanelText.descriptionLines(50, 130, 0, false));
-        assertEquals(4, WheelPanelText.descriptionLines(50, 130, 2, false));
-        assertEquals(1, WheelPanelText.descriptionLines(50, 130, 2, true), "80 - 20 - 42 - 2 = 16: one line");
-        assertEquals(0, WheelPanelText.descriptionLines(90, 130, 2, true));
-        assertEquals(0, WheelPanelText.descriptionLines(130, 100, 0, false), "no room, no lines, never a negative");
+        assertEquals(4, WheelPanelText.descriptionLines(50, 130, 0, 0));
+        assertEquals(4, WheelPanelText.descriptionLines(50, 130, 2, 0));
+        assertEquals(1, WheelPanelText.descriptionLines(50, 130, 2, 2), "80 - 20 - (38 + 4) - 2 = 16: one line");
+        assertEquals(2, WheelPanelText.descriptionLines(50, 130, 2, 1), "a one-line reason makes a 28 px box: 80 - 20 - (28 + 4) - 2 = 26, two lines");
+        assertEquals(38, WheelPanelText.lockBoxHeight(2));
+        assertEquals(28, WheelPanelText.lockBoxHeight(1));
+        assertEquals(0, WheelPanelText.descriptionLines(90, 130, 2, 2));
+        assertEquals(0, WheelPanelText.descriptionLines(130, 100, 0, 0), "no room, no lines, never a negative");
     }
 
     @Test

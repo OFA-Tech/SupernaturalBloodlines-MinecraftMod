@@ -56,11 +56,52 @@ class WheelContrastTest {
         }
     }
 
+    /** The colours a sprite is drawn in: [0] the lightest and [1] the darkest of those that fill at least a tenth of its opaque pixels (its fill and its outline). */
+    private int[] spriteColours(String path) throws Exception {
+        try (InputStream in = getClass().getResourceAsStream(path)) {
+            assertNotNull(in, path + " is missing");
+            java.awt.image.BufferedImage img = javax.imageio.ImageIO.read(in);
+            java.util.Map<Integer, Integer> counts = new java.util.HashMap<>();
+            int opaque = 0;
+            for (int y = 0; y < img.getHeight(); y++) {
+                for (int x = 0; x < img.getWidth(); x++) {
+                    int argb = img.getRGB(x, y);
+                    if ((argb >>> 24) > 128) {
+                        counts.merge(argb | 0xFF000000, 1, Integer::sum);
+                        opaque++;
+                    }
+                }
+            }
+            final int total = opaque;
+            List<Integer> main = counts.entrySet().stream().filter(e -> e.getValue() * 10 >= total).map(java.util.Map.Entry::getKey).toList();
+            assertTrue(!main.isEmpty(), path + " has no main colour");
+            int light = main.get(0);
+            int dark = main.get(0);
+            for (int c : main) {
+                light = Contrast.ratio(c, 0xFF000000) > Contrast.ratio(light, 0xFF000000) ? c : light;
+                dark = Contrast.ratio(c, 0xFF000000) < Contrast.ratio(dark, 0xFF000000) ? c : dark;
+            }
+            return new int[] {light, dark};
+        }
+    }
+
+    /** The middle of a cell sprite: what the lock is drawn over. */
+    private int cellFace(String kit) throws Exception {
+        try (InputStream in = getClass().getResourceAsStream(SPRITES + "kit/" + kit + "/wheel_cell_36.png")) {
+            assertNotNull(in, kit + " cell is missing");
+            return javax.imageio.ImageIO.read(in).getRGB(18, 18) | 0xFF000000;
+        }
+    }
+
     @Test
-    void theLockOnACellReadsAt3To1() {
-        for (Look look : Look.values()) {
-            WheelPalette p = WheelPalette.of(look);
-            assertTrue(Contrast.ratio(p.lockOnCell(), p.cell()) >= 3.0, look + " lock on its cell: " + Contrast.ratio(p.lockOnCell(), p.cell()));
+    void theLockSpritesOwnColoursReadAt3To1OnEveryThemesCell() throws Exception {
+        for (int size : new int[] {16, 32}) {
+            int[] lock = spriteColours(SPRITES + "icons/" + size + "/lock.png");
+            for (String kit : KitSprites.KITS) {
+                int face = cellFace(kit);
+                double best = Math.max(Contrast.ratio(lock[0], face), Contrast.ratio(lock[1], face));
+                assertTrue(best >= 3.0, String.format("the %d px lock (fill %06x, outline %06x) on the %s cell %06x: %.2f", size, lock[0] & 0xFFFFFF, lock[1] & 0xFFFFFF, kit, face & 0xFFFFFF, best));
+            }
         }
     }
     @Test

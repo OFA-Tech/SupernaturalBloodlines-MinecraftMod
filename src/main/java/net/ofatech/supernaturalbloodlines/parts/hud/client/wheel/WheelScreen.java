@@ -170,6 +170,7 @@ public final class WheelScreen extends Screen {
             return;
         }
         layoutKey = key;
+        boolean rehit = layout != null;
         pageTotal = all.size();
         int from = Math.min(all.size(), open.page() * WheelLayout.PAGE_SIZE);
         page = all.subList(from, Math.min(all.size(), from + WheelLayout.PAGE_SIZE));
@@ -180,6 +181,9 @@ public final class WheelScreen extends Screen {
                 widths[i] = WheelPanelText.width(font, WheelRenderer.text("group." + groups.get(i).name().toLowerCase(Locale.ROOT)), font::width) + 10;
             }
             layout = layout.withLabelWidths(widths);
+        }
+        if (rehit && pickerRef == null && !DevWheel.active) {
+            cursor.rehit(layout.hit(mouseX, mouseY).orElse(null)); // the list changed under a resting pointer
         }
     }
 
@@ -643,7 +647,7 @@ public final class WheelScreen extends Screen {
         String state = WheelNarration.stateWord(e.state().on(), e.state().cooldownLeft(now), (key, args) -> Component.translatable(key, args).getString());
         String lock = e.state().locked() ? WheelRenderer.text("state.locked", WheelRenderer.reason(e.state().lock())) : "";
         List<String> lines = WheelNarration.lines(WheelRenderer.modName(source), groups.isEmpty() ? "" : WheelRenderer.text("group." + e.group().name().toLowerCase(Locale.ROOT)),
-                e.name().getString(), e.coverNote().getString(), e.modeNames().size() > 1 ? e.modeName().getString() : "", state, lock, open.page() * WheelLayout.PAGE_SIZE + h.index() + 1, pageTotal,
+                e.name().getString(), e.coverNote().getString(), WheelDescriptions.of(e), e.modeNames().size() > 1 ? e.modeName().getString() : "", state, lock, open.page() * WheelLayout.PAGE_SIZE + h.index() + 1, pageTotal,
                 open.page() + 1, layout.pageCount(), (key, args) -> Component.translatable(key, args).getString());
         out.add(NarratedElementType.TITLE, Component.literal(String.join(", ", lines)));
     }

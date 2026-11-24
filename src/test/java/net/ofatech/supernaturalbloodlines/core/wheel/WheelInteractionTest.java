@@ -36,6 +36,21 @@ class WheelInteractionTest {
     }
 
     @Test
+    void aChangedListLooksAgainWhereAMouseHoverIsButNeverTakesAKeyFocusBack() {
+        WheelCursor c = new WheelCursor();
+        Hit focused = new Hit(Ring.OUTER, 5);
+        c.mouseMoved(new Hit(Ring.OUTER, 2));
+        c.rehit(new Hit(Ring.OUTER, 3));
+        assertEquals(new Hit(Ring.OUTER, 3), c.active().orElseThrow(), "the list changed: the cell under the resting pointer is another one");
+        c.rehit(null);
+        assertTrue(c.hover().isEmpty(), "nothing is under it any more");
+        c.keyFocus(focused);
+        c.rehit(new Hit(Ring.OUTER, 1));
+        assertEquals(focused, c.active().orElseThrow(), "a key set the focus: a pointer that did not move does not take it back");
+        assertTrue(c.hover().isEmpty());
+    }
+
+    @Test
     void aKeyMovesTheFocusAndARestingMouseDoesNotTakeItBack() {
         WheelCursor c = new WheelCursor();
         Hit under = new Hit(Ring.OUTER, 2);
