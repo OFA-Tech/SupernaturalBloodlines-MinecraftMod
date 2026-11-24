@@ -149,6 +149,24 @@ public final class GroupAbsenceGameTests {
         helper.succeed();
     }
 
+    /** A pack's absence path (the spark rule) is reached without Werewolves too, and with no second Alpha it changes nothing. */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void anAbsentPackLeaderWithNoSecondAlphaKeepsTheLead(GameTestHelper helper) {
+        UUID gone = UUID.randomUUID();
+        TalkingDuelist a = human(helper, 1.5);
+        online(a);
+        PackIndex index = PackIndex.get(helper.getLevel());
+        long now = System.currentTimeMillis();
+        try {
+            build(helper, gone, GroupType.PACK, now - 30 * DAY, a);
+            helper.assertTrue(PackAbsence.check(helper.getLevel().getServer(), now) == 0 && index.isLeader(gone), "a pack with no second Alpha changed hands");
+        } finally {
+            drop(helper, gone);
+            clean(helper, a);
+        }
+        helper.succeed();
+    }
+
     /** Open Parties and Claims, as far as the link uses it. */
     private static final class FakeParties implements PartyBackend {
         final Map<UUID, UUID> ids = new HashMap<>();
