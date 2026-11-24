@@ -1182,6 +1182,81 @@ def _(I):
     I.shape('gold', [('p', [(8, 9.5), (6.5, 2.8), (12, 6), (16, 2.2), (20, 6), (25.5, 2.8), (24, 9.5)]), ('r', 8, 9, 16, 2.6)])
 
 
+# ================================ group types (the pack keeps the paw above) ================================
+def moon_cres(edge, r, d, cy, ry, flip=False):
+    """A crescent: a disc minus the same disc d to the side, its bulge at x = edge; flip mirrors it round the middle."""
+    ops = [('d', edge - r, cy, r, ry), ('-d', edge - r - d, cy, r, ry)]
+    return [(o[0], 32 - o[1]) + tuple(o[2:]) for o in ops] if flip else ops
+
+
+def stake(bx, by, tx, ty, w):
+    """A sharpened stake: a shaft from the butt to 74% of the way, then the point; returns the body and the pale tip."""
+    dx, dy = tx - bx, ty - by
+    n = math.hypot(dx, dy)
+    ux, uy = dx / n, dy / n
+    nx, ny = -uy * w / 2, ux * w / 2
+    sx, sy = bx + dx * 0.74, by + dy * 0.74
+    body = [('p', [(bx + nx, by + ny), (sx + nx, sy + ny), (tx, ty), (sx - nx, sy - ny), (bx - nx, by - ny)])]
+    tip = [('p', [(sx + nx * 1.25, sy + ny * 1.25), (tx + ux * 0.8, ty + uy * 0.8), (sx - nx * 1.25, sy - ny * 1.25)])]
+    return body, tip
+
+
+COVEN_L16 = ['#.', '##', '.#', '.#', '.#', '##', '#.']
+COVEN_DISC16 = ['.###.', '#####', '#####', '#####', '.###.']
+CLAN_CLOTH16 = ['########'] * 6 + ['###..###', '##....##', '#......#']
+STAKE16 = ['..........#.....', '.........##.....', '.........##.....', '........##......', '.......##.......', '.......##.......',
+           '......##........', '......##........', '.....##.........', '....##..........', '....##..........', '...##...........']
+TIP16 = rgba('#E3C59A')
+
+
+@icon('coven')
+def _(I):  # the triple moon under a witch's star
+    if I.big:
+        I.shape('violet', moon_cres(9.4, 5.0, 3.2, 21.5, 5.6))
+        I.shape('violet', moon_cres(9.4, 5.0, 3.2, 21.5, 5.6, True))
+        I.shape('violet', [('d', 16, 21.5, 6.1)])
+        I.shape('gold', star4(16, 9, 4.6, 1.15), False)
+        I.dot(13.6, 17.1, mix(IR['violet'].hi, WHITE, 0.3), 2, 2)
+    else:
+        I.bits('violet', COVEN_L16, 2, 6)
+        I.bits('violet', [r[::-1] for r in COVEN_L16], 11, 6)
+        I.bits('violet', COVEN_DISC16, 5, 7)
+        I.bits('gold', ['#'], 7, 3)
+
+
+@icon('clan')
+def _(I):  # a house banner with the fangs on it
+    if I.big:
+        I.shape('blood', [('p', [(7, 9.5), (25, 9.5), (25, 26.5), (16, 20.5), (7, 26.5)])])
+        I.shape('bone', [('p', [(10.2, 12.5), (15.4, 12.5), (14.8, 16.5), (12.8, 19.6), (10.8, 16.5)])], False)
+        I.shape('bone', [('p', [(16.6, 12.5), (21.8, 12.5), (21.2, 16.5), (19.2, 19.6), (17.2, 16.5)])], False)
+        I.shape('gold', [('r', 6, 5, 20, 3), ('d', 5.5, 6.5, 2.4), ('d', 26.5, 6.5, 2.4)], False)
+    else:
+        I.bits('blood', CLAN_CLOTH16, 4, 4)
+        for x in (5, 9):
+            I.tx(x, 6, IR['bone'].b, 2, 2).tx(x, 6, IR['bone'].hi)
+        I.tx(6, 8, IR['bone'].b, 1, 2).tx(9, 8, IR['bone'].b, 1, 2)
+        I.bits('gold', ['############', '#..........#'], 2, 2)
+
+
+@icon('brotherhood')
+def _(I):  # two stakes lashed together
+    if I.big:
+        for b in ((24, 27.5, 8.5, 3.8), (8, 27.5, 23.5, 3.8)):
+            body, tip = stake(*b, 4.2)
+            I.shape('wood', body)
+            I.paint(tip, TIP16, body)
+        I.shape('blood', [('r', 12.5, 14.7, 7, 2.6)], False)
+    else:
+        for rows in ([r[::-1] for r in STAKE16], STAKE16):
+            I.bits('wood', rows, 0, 2)
+        I.bits('blood', ['######'], 5, 7)
+        for y in (2, 3, 4):
+            for x in range(16):
+                if I.cv.get(x, y) in (IR['wood'].hi, IR['wood'].b, IR['wood'].sh):
+                    I.tx(x, y, TIP16)
+
+
 # ================================ source tags ================================
 @icon('tag_sb')
 def _(I):
@@ -1230,6 +1305,7 @@ def _(I):
 
 
 GROUPS = [('pages', ['home', 'path', 'skills', 'quests', 'rites', 'bloodline', 'pack', 'guide', 'loadout', 'settings', 'admin']),
+          ('group types', ['coven', 'clan', 'brotherhood']),
           ('controls', ['check', 'lock', 'crown', 'dot', 'close', 'theme', 'launch', 'question', 'info', 'plus', 'arrow_left', 'arrow_right', 'bell', 'key', 'unknown']),
           ('sky', ['moon_new', 'moon_waxing_crescent', 'moon_first_quarter', 'moon_waxing_gibbous', 'moon_full', 'moon_waning_gibbous', 'moon_last_quarter', 'moon_waning_crescent', 'sun']),
           ('motifs', ['drop', 'shield', 'fang', 'vial', 'claw', 'heart', 'boot', 'eye', 'voice', 'spark', 'bolt']),
