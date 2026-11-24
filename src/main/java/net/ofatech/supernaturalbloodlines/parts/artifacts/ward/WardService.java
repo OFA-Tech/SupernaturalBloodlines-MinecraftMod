@@ -26,6 +26,7 @@ public final class WardService {
     public static final String NOT_WELCOME = KEY + "not_welcome";
     public static final String YOU_WITHDREW = KEY + "you_withdrew";
     public static final String DROPPED = KEY + "dropped";
+    private static final net.ofatech.supernaturalbloodlines.core.ward.PairCooldown INVITE_NOTICE = new net.ofatech.supernaturalbloodlines.core.ward.PairCooldown();
     private static final Pattern UUID_TEXT = Pattern.compile("[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}");
 
     private WardService() {
@@ -76,8 +77,11 @@ public final class WardService {
                 return error("list_full");
             }
             case ADDED -> {
+                // the invited person hears it at most once a minute from the same owner (invite, withdraw, invite cannot spam them)
                 if (who != owner) {
-                    who.sendSystemMessage(Component.translatable(INVITED_YOU, owner.getGameProfile().getName()));
+                    if (INVITE_NOTICE.tryUse(owner.getUUID(), who.getUUID(), owner.serverLevel().getGameTime(), 1200L)) {
+                        who.sendSystemMessage(Component.translatable(INVITED_YOU, owner.getGameProfile().getName()));
+                    }
                     owner.sendSystemMessage(Component.translatable(YOU_INVITED, who.getGameProfile().getName()));
                     changed(owner, who);
                 }
@@ -99,17 +103,34 @@ public final class WardService {
     static Component withdraw(ServerPlayer owner, UUID id) {
         WardIndex index = WardIndex.get(owner.serverLevel());
         ServerPlayer who = find(owner.serverLevel(), id);
+        if (!index.uninviteAll(owner.getUUID(), id)) {
+            return error("no_such"); // never on a list: "get out" must not shelter an uninvited vampire
+        }
         if (who != null && !ArtifactsConfig.wardExpelOnRevoke()) {
             WardEnforcer.tolerateInside(index.table().ownedBy(owner.getUUID()), who);
-        }
-        if (!index.uninviteAll(owner.getUUID(), id)) {
-            return error("no_such");
         }
         owner.sendSystemMessage(Component.translatable(YOU_WITHDREW, name(owner.serverLevel(), id)));
         if (who != null) {
             who.sendSystemMessage(Component.translatable(NOT_WELCOME));
         }
         changed(owner, who);
+        return null;
+    }
+
+    /** An operator drops every ward of a player (moderation: wards on public ground, or of an owner who never comes back). */
+    @Nullable
+    public static Component dropAllAsOperator(ServerLevel level, UUID owner) {
+        WardIndex index = WardIndex.get(level);
+        List<String> ids = index.table().ownedBy(owner).stream().map(WardTable.Ward::id).toList();
+        if (index.dropAllOf(owner) == 0) {
+            return error("no_ward");
+        }
+        ids.forEach(WardEnforcer::forgetWard);
+        ServerPlayer online = find(level, owner);
+        if (online != null) {
+            online.sendSystemMessage(Component.translatable(DROPPED));
+            changed(online);
+        }
         return null;
     }
 

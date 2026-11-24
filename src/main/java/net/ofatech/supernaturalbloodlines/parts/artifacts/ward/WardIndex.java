@@ -60,6 +60,15 @@ public final class WardIndex extends SavedData {
         return removed;
     }
 
+    /** @return how many wards of the owner were removed */
+    public int dropAllOf(UUID owner) {
+        int dropped = table.dropAllOf(owner);
+        if (dropped > 0) {
+            setDirty();
+        }
+        return dropped;
+    }
+
     /** @return how many wards fell now */
     public int fallAllOf(UUID owner) {
         int fell = table.fallAllOf(owner);

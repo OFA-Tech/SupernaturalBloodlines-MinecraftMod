@@ -139,7 +139,15 @@ public final class WardCard {
                 candidates(ward).stream().limit(PEOPLE).forEach(m -> d.action("ward:invite:" + ward.id() + ":" + m.id(),
                         Component.translatable(KEY + "invite_tip", m.name()), false, true, () -> HubClient.runCommand("W1", List.of(m.id().toString()))));
             }
-            d.action("ward:drop:" + ward.id(), Component.translatable(KEY + "drop"), false, true, () -> HubClient.runCommand("W3", List.of(ward.id())));
+            // asks twice, as the card does: a dropped ward cannot be restored
+            boolean sure = confirming.equals(ward.id());
+            d.action("ward:drop:" + ward.id(), Component.translatable(KEY + (sure ? "drop_sure" : "drop")), sure, true, () -> {
+                net.ofatech.supernaturalbloodlines.core.ward.DropConfirm.Result r = net.ofatech.supernaturalbloodlines.core.ward.DropConfirm.press(confirming, ward.id());
+                confirming = r.armed();
+                if (r.run()) {
+                    HubClient.runCommand("W3", List.of(ward.id()));
+                }
+            });
         }
         if (!v.welcomedBy().isEmpty()) {
             d.field(Component.translatable(KEY + "welcomed_label"), Component.literal(String.join(", ", v.welcomedBy())));

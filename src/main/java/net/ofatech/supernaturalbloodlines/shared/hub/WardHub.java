@@ -27,6 +27,8 @@ public final class WardHub {
     public record Own(String id, boolean door, boolean fallen, String dimension, int x, int y, int z, List<Member> invited) {
         public Own {
             invited = List.copyOf(invited.subList(0, Math.min(invited.size(), MAX_INVITED)));
+            // the codec writes at most MAX_DIMENSION characters: a longer modded id would throw and disconnect the viewer
+            dimension = dimension.length() > MAX_DIMENSION ? dimension.substring(0, MAX_DIMENSION) : dimension;
         }
     }
 

@@ -420,6 +420,7 @@ public final class AdminPage implements HubPageView {
         if (net.neoforged.fml.ModList.get().isLoaded("werewolves")) {
             acts.add(new Act("npc_release", "D13", List.of()));
         }
+        acts.add(new Act("ward_dropall", "W5", List.of()));
         y = PageKit.wrapped(f, Component.translatable(KEY + "params").withStyle(ChatFormatting.BOLD), r.x(), y, r.w(), t.accent());
         List<Component> pl = List.of(Component.literal(cycle(species, speciesAt).name()), Component.literal(cycle(events, eventAt).name()),
                 Component.literal(cycle(races, raceAt).id()), Component.literal(String.valueOf(number)), Component.literal(riteNow));
@@ -436,10 +437,10 @@ public final class AdminPage implements HubPageView {
             List<String> args = new ArrayList<>();
             args.add(picked ? player.toString() : "");
             args.addAll(a.extra());
-            boolean danger = a.id().equals("reset");
+            boolean danger = a.id().equals("reset") || a.id().equals("ward_dropall");
             Runnable run = () -> {
                 if (danger) {
-                    f.confirm(Component.translatable(KEY + "act.reset"), Component.translatable(KEY + "confirm_reset", playerName), Component.translatable(KEY + "act.reset"),
+                    f.confirm(Component.translatable(KEY + "act." + a.id()), Component.translatable(KEY + "confirm_" + a.id(), playerName), Component.translatable(KEY + "act." + a.id()),
                             () -> HubClient.runCommand(a.rowId(), args));
                 } else {
                     HubClient.runCommand(a.rowId(), args);

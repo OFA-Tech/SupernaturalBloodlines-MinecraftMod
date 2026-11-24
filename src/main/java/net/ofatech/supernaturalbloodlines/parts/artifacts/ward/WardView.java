@@ -17,7 +17,10 @@ public final class WardView {
         WardTable table = WardIndex.get(viewer.serverLevel()).table();
         UUID me = viewer.getUUID();
         List<WardHub.Own> own = new ArrayList<>();
-        for (WardTable.Ward ward : table.ownedBy(me)) {
+        // standing wards first: the hub shows at most MAX_OWN, and fallen ones are kept forever
+        List<WardTable.Ward> mine = new ArrayList<>(table.ownedBy(me));
+        mine.sort(java.util.Comparator.comparing(WardTable.Ward::fallen));
+        for (WardTable.Ward ward : mine) {
             List<WardHub.Member> invited = new ArrayList<>();
             for (UUID id : ward.invited()) {
                 if (!id.equals(me)) {

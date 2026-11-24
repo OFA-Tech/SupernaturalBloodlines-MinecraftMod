@@ -147,6 +147,7 @@ public final class AdminCommands {
             row("W2", "ward uninvite <player>", 0, Ui.HUB_BUTTON, "PATH"),
             row("W3", "ward drop <ward>", 0, Ui.HUB_BUTTON, "PATH"),
             new Row("W4", "ward info", 0, Ui.CHAT_ONLY, "the Path page shows the wards as a card; the command only prints the same list in chat", "PATH"),
+            row("W5", "ward dropall <player>", 2, Ui.ADMIN_ACTION, "ADMIN"),
             row("D1", ROOT + " get <player>", 2, Ui.ADMIN_ACTION, "ADMIN"),
             row("D2", ROOT + " set <player> <species>", 2, Ui.ADMIN_ACTION, "ADMIN"),
             row("D3", ROOT + " event <player> <event>", 2, Ui.ADMIN_ACTION, "ADMIN"),

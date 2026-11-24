@@ -94,8 +94,8 @@ public record LocatorRiteFactory(boolean blood) implements RiteFactory {
                 return false; // not cancelled: the rest of the ingredients and the power are spent, whatever the reason
             }
             UUID owner = target.orElseThrow();
+            // spec 4.1: an offline target is refused, so nobody is tracked without the notice (a test's fake player is only in a level)
             if (level.getServer().getPlayerList().getPlayer(owner) == null
-                    && level.getServer().getAllLevels().iterator().hasNext()
                     && java.util.stream.StreamSupport.stream(level.getServer().getAllLevels().spliterator(), false)
                             .noneMatch(world -> world.getPlayerByUUID(owner) instanceof ServerPlayer)) {
                 caster.displayClientMessage(Component.translatable("supernaturalbloodlines.gene.refusal.owner_away"), true);

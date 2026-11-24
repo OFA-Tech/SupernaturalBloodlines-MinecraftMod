@@ -4,6 +4,7 @@ import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import java.util.UUID;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.arguments.EntityArgument;
@@ -28,7 +29,28 @@ public final class WardCommand {
                 .then(Commands.literal("drop")
                         .then(Commands.argument("ward", StringArgumentType.word())
                                 .executes(c -> run(c, WardService.drop(self(c), StringArgumentType.getString(c, "ward"))))))
-                .then(Commands.literal("info").executes(c -> info(c))));
+                .then(Commands.literal("info").executes(c -> info(c)))
+                // operators: every ward of a player (who may be offline for good), by name or UUID; the Admin page's player picker runs it
+                .then(Commands.literal("dropall").requires(s -> s.hasPermission(2))
+                        .then(Commands.argument("player", StringArgumentType.word())
+                                .executes(c -> {
+                                    UUID owner = owner(c, StringArgumentType.getString(c, "player"));
+                                    if (owner == null) {
+                                        c.getSource().sendFailure(WardService.error("no_such"));
+                                        return 0;
+                                    }
+                                    return run(c, WardService.dropAllAsOperator(c.getSource().getLevel(), owner));
+                                }))));
+    }
+
+    @Nullable
+    private static UUID owner(CommandContext<CommandSourceStack> c, String word) {
+        try {
+            return UUID.fromString(word);
+        } catch (IllegalArgumentException notUuid) {
+            var cache = c.getSource().getServer().getProfileCache();
+            return cache == null ? null : cache.get(word).map(com.mojang.authlib.GameProfile::getId).orElse(null);
+        }
     }
 
     private static ServerPlayer self(CommandContext<CommandSourceStack> c) throws CommandSyntaxException {
