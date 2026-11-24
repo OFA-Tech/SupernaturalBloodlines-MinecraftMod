@@ -26,6 +26,8 @@ import net.ofatech.supernaturalbloodlines.core.evolution.Tier;
 import net.ofatech.supernaturalbloodlines.core.moon.MoonRule;
 import net.ofatech.supernaturalbloodlines.parts.evolutionrites.EvoSkills;
 import net.ofatech.supernaturalbloodlines.parts.evolutionrites.EvolutionRitesConfig;
+import net.ofatech.supernaturalbloodlines.parts.evolutionrites.RiteEp;
+import net.ofatech.supernaturalbloodlines.parts.species.group.circle.EpPriced;
 import net.ofatech.supernaturalbloodlines.parts.evolutionrites.mastery.MasteryApply;
 import net.ofatech.supernaturalbloodlines.parts.evolutionrites.mastery.MasteryChoice;
 import net.ofatech.supernaturalbloodlines.parts.species.pack.LunarEclipse;
@@ -62,8 +64,13 @@ public record MasteryRiteFactory(Tier tier) implements RiteFactory {
         return List.of();
     }
 
-    private static final class MasteryRite extends Rite {
+    private static final class MasteryRite extends Rite implements EpPriced {
         private final Tier riteTier;
+
+        @Override
+        public double epCost() {
+            return EvolutionRitesConfig.masteryEp(riteTier);
+        }
 
         MasteryRite(BaseRiteParams base, RiteParams params, Tier riteTier) {
             super(base, params);
@@ -120,9 +127,7 @@ public record MasteryRiteFactory(Tier tier) implements RiteFactory {
                 RiteTargets.refuseAbout(caster, target, result == MasteryApply.Result.VETOED ? MasteryRules.VETOED : MasteryRules.KEY + "already");
                 return cancel();
             }
-            if (cost > 0) {
-                EnergyHelper.setBaseMaxEP(target, EnergyHelper.getBaseMaxEP(target) - cost);
-            }
+            RiteEp.charge(target, cost);
             MasteryChoice.markRite(target);
             MasteryChoice.clear(target);
             target.displayClientMessage(Component.translatable(DONE), true);

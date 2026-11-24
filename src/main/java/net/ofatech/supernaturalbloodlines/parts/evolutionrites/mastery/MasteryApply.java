@@ -7,6 +7,7 @@ import io.github.manasmods.tensura.util.EnergyHelper;
 import net.minecraft.server.level.ServerPlayer;
 import net.ofatech.supernaturalbloodlines.core.evolution.MasteryRules;
 import net.ofatech.supernaturalbloodlines.parts.evolutionrites.EvoSkills;
+import net.ofatech.supernaturalbloodlines.parts.evolutionrites.RiteEp;
 
 /**
  * Brings one skill instance to mastered the verified way (research {@code mastery.md} 1.5, option A): through {@code addMasteryPoint}, so
@@ -34,7 +35,7 @@ public final class MasteryApply {
             double ep = EnergyHelper.getBaseMaxEP(target);
             boolean went = tensura.addLearnPoint(inst, target, 0, MasteryRules.POINTS);
             if (!went || inst.getMastery() < 0) {
-                EnergyHelper.setBaseMaxEP(target, ep);
+                RiteEp.restore(target, ep);
                 inst.setMastery(before);
                 SkillAPI.getSkillsFrom(target).markDirty();
                 return Result.VETOED;
