@@ -1554,6 +1554,7 @@
   "supernaturalbloodlines.refusal.evolution.closed": "This rite is closed.",
   "supernaturalbloodlines.refusal.evolution.not_witch": "Only a witch, siphoner, heretic or tribrid can work this rite.",
   "supernaturalbloodlines.refusal.evolution.already": "You already hold the skill this rite would open.",
+  "supernaturalbloodlines.raphael.restored": "Great Sage and Degenerate came back to you, but their mastery did not.",
   "supernaturalbloodlines.refusal.evolution.not_ready": "The rite finds you not ready.",
   "supernaturalbloodlines.rite.needs_eclipse": "This rite can only be performed on the night of a lunar eclipse.",
   "supernaturalbloodlines.rite.sneak_to_evolve": "Someone is working an evolution rite on you. Sneak to accept.",

@@ -35,10 +35,12 @@ public final class EvolutionRitesPart {
         RiteFactoryRegistry.get().register(MasteryRiteFactory.ID, MasteryRiteFactory.CODEC);
         // last, so the species part's /sb bloodline redirect exists when the node is added to its target
         NeoForge.EVENT_BUS.addListener(net.neoforged.bus.api.EventPriority.LOWEST, (RegisterCommandsEvent e) -> MasteryCommand.register(e.getDispatcher()));
+        net.ofatech.supernaturalbloodlines.parts.evolutionrites.merge.RaphaelMerge.register();
         modBus.addListener((RegisterGameTestsEvent e) -> {
             e.register(EvolutionHookProbeGameTests.class);
             e.register(net.ofatech.supernaturalbloodlines.parts.evolutionrites.gametest.FreeGrantGameTests.class);
             e.register(net.ofatech.supernaturalbloodlines.parts.evolutionrites.gametest.RaphaelProbeGameTests.class);
+            e.register(net.ofatech.supernaturalbloodlines.parts.evolutionrites.gametest.RaphaelMergeGameTests.class);
             e.register(EvolutionRiteGameTests.class);
             e.register(EvolutionUnlockGameTests.class);
             e.register(MasteryGameTests.class);
