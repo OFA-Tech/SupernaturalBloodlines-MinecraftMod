@@ -36,7 +36,7 @@ public final class EvolutionRitesPart {
         // last, so the species part's /sb bloodline redirect exists when the node is added to its target
         NeoForge.EVENT_BUS.addListener(net.neoforged.bus.api.EventPriority.LOWEST, (RegisterCommandsEvent e) -> MasteryCommand.register(e.getDispatcher()));
         net.ofatech.supernaturalbloodlines.parts.evolutionrites.merge.RaphaelMerge.register();
-        net.ofatech.supernaturalbloodlines.parts.species.unlock.RiteUnlocks.dormant = rite -> rite.equals("evolve_raphael")
+        net.ofatech.supernaturalbloodlines.core.rite.RiteUnlockTable.dormant = rite -> rite.equals("evolve_raphael")
                 && !net.ofatech.supernaturalbloodlines.parts.evolutionrites.probe.Probes.of(net.ofatech.supernaturalbloodlines.parts.evolutionrites.probe.Probes.GREAT_SAGE_RAPHAEL)
                         .map(net.ofatech.supernaturalbloodlines.parts.evolutionrites.probe.AddonProbe::roadOpen).orElse(false);
         modBus.addListener((RegisterGameTestsEvent e) -> {

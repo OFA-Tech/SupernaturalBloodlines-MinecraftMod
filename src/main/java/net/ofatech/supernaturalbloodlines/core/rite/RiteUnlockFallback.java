@@ -26,6 +26,9 @@ public final class RiteUnlockFallback {
     /** Makes every learnable rite known (and none sealed). */
     public static void knowAll(ServerPlayer p) {
         for (String rite : RiteUnlockTable.GATED.keySet()) {
+            if (RiteUnlockTable.dormant.test(rite)) {
+                continue; // a closed road shows no entry at all
+            }
             AdvancementHolder known = p.server.getAdvancements().get(ResourceLocation.parse(RiteAdvancements.known(rite)));
             AdvancementHolder sealed = p.server.getAdvancements().get(ResourceLocation.parse(RiteAdvancements.sealed(rite)));
             if (known != null) {

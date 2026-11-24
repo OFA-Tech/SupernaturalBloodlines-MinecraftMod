@@ -37,6 +37,12 @@ public final class RiteUnlockTable {
 
     public static final Map<String, Gate> GATED;
 
+    /**
+     * A rite that exists but whose road is closed (plan 19b: the Raphael rite while Great Sage's own road to Raphael is closed) is not present: nothing is
+     * taught or sealed for it, so the book shows neither entry until it opens. Set by the part that owns the rite; nothing is dormant by default.
+     */
+    public static volatile java.util.function.Predicate<String> dormant = rite -> false;
+
     static {
         Map<String, Gate> m = new LinkedHashMap<>();
         kind(m, "cleansing_blood", RiteKind.VAMPIRE);

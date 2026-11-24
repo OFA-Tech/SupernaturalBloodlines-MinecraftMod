@@ -74,6 +74,9 @@ public final class RaphaelMergeAddonGameTests {
 
     @SuppressWarnings("unchecked")
     private static boolean setRule(GameTestHelper helper, boolean on) {
+        if (!Recipes.modLoaded("foxablazeultimate")) {
+            return false; // Great Sage alone: there is no rule to set
+        }
         var key = (GameRules.Key<GameRules.BooleanValue>) Hooks.staticField("com.foxablazeultimate.world.FoxAblazeGameRules", "RAPHAEL_TRULY_UNIQUE").value().orElseThrow();
         var server = helper.getLevel().getServer();
         GameRules.BooleanValue rule = server.getGameRules().getRule(key);
@@ -211,6 +214,7 @@ public final class RaphaelMergeAddonGameTests {
     // ---- the dormant rite (task 6) ----
 
     private static final String RITE = "evolve_raphael";
+    private static final String NOT_READY = RaphaelMerge.NOT_READY;
     private static final String CLOSED = "supernaturalbloodlines.refusal.evolution.closed";
     private static final String ALREADY = "supernaturalbloodlines.refusal.evolution.already";
 
@@ -303,7 +307,9 @@ public final class RaphaelMergeAddonGameTests {
             try {
                 perform(helper, caster2, true);
                 helper.assertTrue(ownedCaster.equals(caster2.heard()), "the performer can tell an owner from a missing requirement: [" + ownedCaster + "] vs [" + caster2.heard() + "]");
-                helper.assertTrue(ownedTarget.equals(lacking.heard()), "the target can tell: [" + ownedTarget + "] vs [" + lacking.heard() + "]");
+                // what the target heard of the rite itself (ManasCore's own "you learned" lines are from the setup): one line, the same
+                helper.assertTrue(owned.received(NOT_READY) && lacking.received(NOT_READY) && owned.count(NOT_READY) == lacking.count(NOT_READY), "the target can tell: [" + ownedTarget + "] vs [" + lacking.heard() + "]");
+                helper.assertTrue(!owned.received(ALREADY) && !owned.received(CLOSED) && !lacking.received(ALREADY) && !lacking.received(CLOSED), "a different refusal: [" + ownedTarget + "] vs [" + lacking.heard() + "]");
             } finally {
                 EvoTestSupport.forgetAll(caster2);
                 net.ofatech.supernaturalbloodlines.parts.vampirismenchanted.gametest.RiteTestSupport.remove(helper, caster2);
