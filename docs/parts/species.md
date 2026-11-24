@@ -574,3 +574,10 @@ Tests: `LineRulesTest`, `RingFillTest`, `LineIndexTest`, `LineTreeTest`, `LineTr
 | `max_members` (0 = unlimited) | 0 |
 
 What vanishes with `groups_enabled = false`: no new clan, coven or brotherhood. Existing groups, their rows and every pack stay.
+
+## Covens: hooks read (plan 20b, Task 0)
+Proved by `CovenHookGameTests` with a real gold chalk and a throwaway rite type (`RiteCost.trace` is the test seam):
+- `RiteCost.begin(start = true)` runs once per start attempt, also for a rite whose power is 0 (`begin:0`), and `discard` follows when the altar cannot pay (`begin:1000, discard`; the rite is never created).
+- Order for a rite that stays: `begin`, `onStart`, `commit`, then `discard` (the chalk's `serverTick` RETURN, harmless after `commit`), then the first `onTick`.
+- A running rite is stopped from outside with `rite.stop(); RiteManager.removeRite(level, rite)` queued for `ServerTickEvent.Post`, from plain code and from a `LivingDeathEvent` handler: `getRiteAt` is empty and the chalk detached.
+- `RiteType.create(level, pos)` builds a rite with no side effect (nothing added to `RiteManager`, no item moved).

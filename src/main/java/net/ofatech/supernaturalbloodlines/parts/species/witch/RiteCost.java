@@ -31,7 +31,17 @@ public final class RiteCost {
 
     private static final ThreadLocal<Pending> PENDING = new ThreadLocal<>();
 
+    /** A test seam: told {@code begin:<base>}, {@code tick-begin:<base>}, {@code commit} and {@code discard} in the order they happen. */
+    public static volatile java.util.function.Consumer<String> trace;
+
     private RiteCost() {}
+
+    private static void note(String what) {
+        java.util.function.Consumer<String> t = trace;
+        if (t != null) {
+            t.accept(what);
+        }
+    }
 
     public static Split split(int base, boolean witch, int siphonedAvailable) {
         return split(base, witch, false, siphonedAvailable);
@@ -70,6 +80,7 @@ public final class RiteCost {
     public static int begin(Level level, UUID caster, BlockPos chalk, PowerConsumer.PowerPosHolder holder, int base, boolean start,
                             @Nullable RiteType type) {
         PENDING.remove();
+        note((start ? "begin:" : "tick-begin:") + base);
         if (level == null || level.isClientSide || base <= 0) {
             return base;
         }
@@ -116,6 +127,7 @@ public final class RiteCost {
     }
 
     public static void commit() {
+        note("commit");
         Pending pending = PENDING.get();
         PENDING.remove();
         if (pending != null) {
@@ -125,6 +137,7 @@ public final class RiteCost {
     }
 
     public static void discard() {
+        note("discard");
         PENDING.remove();
     }
 }
