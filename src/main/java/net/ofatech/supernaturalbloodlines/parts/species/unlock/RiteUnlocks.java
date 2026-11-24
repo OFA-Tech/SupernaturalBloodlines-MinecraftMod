@@ -111,8 +111,14 @@ public final class RiteUnlocks {
      * installed (plan 19), ships no advancements, so nothing is known or sealed for it and the book shows neither entry.
      */
     public static boolean present(ServerPlayer p, String rite) {
-        return RiteUnlockTable.isGated(rite) && holder(p, RiteAdvancements.known(rite)) != null;
+        return RiteUnlockTable.isGated(rite) && holder(p, RiteAdvancements.known(rite)) != null && !dormant.test(rite);
     }
+
+    /**
+     * A rite that exists but whose road is closed (plan 19b: the Raphael rite while Great Sage's own road to Raphael is closed) is not present: nothing is
+     * taught or sealed for it, so the book shows neither entry until it opens. Set by the part that owns the rite; nothing is dormant by default.
+     */
+    public static volatile java.util.function.Predicate<String> dormant = rite -> false;
 
     /** The gated rites that exist in the loaded datapacks, in table order. */
     public static List<String> presentRites(ServerPlayer p) {

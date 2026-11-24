@@ -73,7 +73,7 @@ final class RitesBook {
                     List.of("curse_magicule_drain", "curse_skill_seal", "magicule_offering", "purification", "purification_holy_water")),
             new Cat("evolutions", "Evolution Rites", "minecraft:nether_star",
                     "Rites that open a road to a skill that already exists, and bring one to mastery.",
-                    List.of("evolve_great_sage", "evolve_deus_sanguis", "mastery_common", "mastery_extra", "mastery_unique", "mastery_ultimate")));
+                    List.of("evolve_great_sage", "evolve_deus_sanguis", "evolve_raphael", "mastery_common", "mastery_extra", "mastery_unique", "mastery_ultimate")));
 
     /** The book entry's icon. Only {@code minecraft:} items: an icon from a mod that is not there would drop the whole entry. */
     static final Map<String, String> ICON = Map.ofEntries(
@@ -92,7 +92,7 @@ final class RitesBook {
             Map.entry("rite_of_the_moon", "minecraft:clock"), Map.entry("silver_moon", "minecraft:iron_ingot"),
             Map.entry("vampire_compass", "minecraft:compass"), Map.entry("ward_of_daylight", "minecraft:sunflower"),
             Map.entry("ward_of_return", "minecraft:totem_of_undying"), Map.entry("ward_of_the_moon", "minecraft:amethyst_shard"),
-            Map.entry("werewolf_brother", "minecraft:beef"), Map.entry("evolve_great_sage", "minecraft:ender_eye"), Map.entry("evolve_deus_sanguis", "minecraft:redstone_block"),
+            Map.entry("werewolf_brother", "minecraft:beef"), Map.entry("evolve_great_sage", "minecraft:ender_eye"), Map.entry("evolve_deus_sanguis", "minecraft:redstone_block"), Map.entry("evolve_raphael", "minecraft:nether_star"),
             Map.entry("mastery_common", "minecraft:diamond_block"), Map.entry("mastery_extra", "minecraft:echo_shard"), Map.entry("mastery_unique", "minecraft:nether_star"),
             Map.entry("mastery_ultimate", "minecraft:dragon_breath"));
 

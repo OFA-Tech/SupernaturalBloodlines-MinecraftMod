@@ -14,6 +14,10 @@ public final class GreatSageProbe implements AddonProbe {
     private static final String GATE = "dev.dedek.greatsage.server.CapstoneGate";
     private static final String RULES = "dev.dedek.greatsage.GreatSageGameRules";
 
+    /** Test seams: Great Sage's road is closed in 0.0.7.1, so a test says what it would be when it opens. Null in play. */
+    public static volatile java.util.function.BooleanSupplier roadHook = null;
+    public static volatile java.util.function.Predicate<ServerPlayer> availableHook = null;
+
     @Override
     public Optional<String> missingHook() {
         Optional<String> field = Hooks.staticField(GATE, "OBTAINABLE").missing();
@@ -29,11 +33,19 @@ public final class GreatSageProbe implements AddonProbe {
 
     @Override
     public boolean roadOpen() {
+        var hook = roadHook;
+        if (hook != null) {
+            return hook.getAsBoolean();
+        }
         return Hooks.staticField(GATE, "OBTAINABLE").value().map(Boolean.TRUE::equals).orElse(false);
     }
 
     @Override
     public boolean satisfied(ServerPlayer target, EvolutionRecipe recipe) {
+        var hook = availableHook;
+        if (hook != null) {
+            return hook.test(target);
+        }
         Hooks.Hit hit = Hooks.method(GATE, "available", ServerPlayer.class);
         if (hit.handle().isEmpty()) {
             return false;
