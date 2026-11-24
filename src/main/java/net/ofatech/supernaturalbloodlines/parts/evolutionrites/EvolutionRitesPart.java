@@ -41,6 +41,7 @@ public final class EvolutionRitesPart {
             e.register(net.ofatech.supernaturalbloodlines.parts.evolutionrites.gametest.FreeGrantGameTests.class);
             e.register(net.ofatech.supernaturalbloodlines.parts.evolutionrites.gametest.RaphaelProbeGameTests.class);
             e.register(net.ofatech.supernaturalbloodlines.parts.evolutionrites.gametest.RaphaelMergeGameTests.class);
+            e.register(net.ofatech.supernaturalbloodlines.parts.evolutionrites.gametest.RaphaelMergeAddonGameTests.class);
             e.register(EvolutionRiteGameTests.class);
             e.register(EvolutionUnlockGameTests.class);
             e.register(MasteryGameTests.class);
