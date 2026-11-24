@@ -59,9 +59,9 @@ In-flight work that touches the same files (branch `feature/pack-moon-control`, 
 | `types` | group UUID to `PACK/CLAN/COVEN` | The type last derived. Compared with the live derivation to detect a switch. | 20a |
 | `type_since` | group UUID to long | Wall-clock millis of the last switch (hub shows it). | 20a |
 | `ranks` | member UUID to string | Only non-default ranks: clan `day_walker`, coven `elder`. A pack has none (its ranks are in `WolfState`). | 20a (clan/coven fill it) |
-| `bans` | (group UUID, player UUID) to until-millis | Exile (clan) and Shunning (coven) re-join bans. | 20b/20c |
+| `bans` | (scope, player UUID) to until-millis | Exile (clan; scope is the group UUID) and Shunning (coven; scope is `type:coven`, because a shunned witch cannot join **any** coven) re-join bans. *(Corrected in plan 20b: the scope is a group UUID or a type.)* | 20b/20c |
 | `votes` | list of vote rows | Open coven votes (regent, shun, elder). | 20b |
-| `channel` | player UUID to (value, at-tick) | The per-witch channel meter; regenerates lazily from the tick stamp, so there is no per-tick work. | 20b |
+| `channel` | player UUID to (value, at-millis) | The per-witch channel meter; regenerates lazily from the wall-clock stamp (`PackIndex.now()`, pinned in tests), so there is no per-tick work; a clock that goes backwards gives no time. *(Corrected in plan 20b: was a tick stamp.)* Also in 20b: `consent` (player to level, non-default only) and `cooldowns` (group, key, until). | 20b |
 | `charters` | group UUID to charter row | Charter id, holder, state, forged at, last sighting. | 20c |
 | `contests` | group UUID to contest row | A Game of Kings in progress. | 20c |
 | `marks` | member UUID to int | The last mark (kills) seen online for each brotherhood member; lets the lead follow the mark (R291) and draws the map (R297). | 20d |
@@ -188,9 +188,9 @@ Worked numbers (witch-type, meter full at 3000, consent `none`):
 | 20 000 | 15 000 | 7 | 10 500 | 1 500 | 4 500 | clean |
 | 36 000 (Imprisoned Original) | 27 000 | 13 | 18 900 | 1 453 or 1 454 | 8 100 | clean |
 
-**Potency (R254).** `m(N) = 1 + P x (1 - r^(N-1))`, `P = potency_max_bonus` (1.0), `r = potency_falloff` (0.8). Values: N=1 1.000, 2 1.200, 3 1.360, 4 1.488, 5 1.590, 7 1.738, 10 1.866, 13 1.931. Each extra member adds less (+0.200, +0.160, +0.128 ...). `CovenPotency.scale(base)` is the one function a rite calls to scale a knob that is a duration, a radius or a count (20b wires the Linking Spell's `link_seconds` and the three ward durations; the evolution rites are all-or-nothing and take no potency: their link benefit is the cost split). Potency is read from the live window of the chalk, so a rite that is not linked gets 1.0.
+**Potency (R254).** `m(N) = 1 + P x (1 - r^(N-1))`, `P = potency_max_bonus` (1.0), `r = potency_falloff` (0.8). Values: N=1 1.000, 2 1.200, 3 1.360, 4 1.488, 5 1.590, 7 1.738, 10 1.866, 13 1.931. Each extra member adds less (+0.200, +0.160, +0.128 ...). `CovenPotency.scale(base)` is the one function a rite calls to scale a knob that is a duration, a radius or a count (20b wires the Linking Spell's `link_seconds` and the radius or duration of the three grand rites; the evolution rites are all-or-nothing and take no potency: their link benefit is the cost split. *Correction, plan 20b:* the wards have no duration in the code, so they take no potency.) Potency is read from the live window of the chalk, so a rite that is not linked gets 1.0.
 
-**Size tiers (R255).** Tier 1 at `N >= 3`, tier 2 at `N >= 7`, tier 3 at `N >= 13` (`tier1_members`, `tier2_members`, `tier3_members`, Admin rows). A **grand rite** declares `min_circle` in its factory block (a field of our own `GrandRiteFactory` base; the factory reads `CircleLink.current(chalk).size()` in `onStart` and cancels with a refusal when the circle is smaller). No existing rite becomes grand; a solo caster can still do everything they can do today. Which rites are grand: decided on PR #83 (Q2), none of the existing ones.
+**Size tiers (R255).** Tier 1 at `N >= 3`, tier 2 at `N >= 7`, tier 3 at `N >= 13` (`tier1_members`, `tier2_members`, `tier3_members`, Admin rows). A **grand rite** declares `min_circle` in its factory block (a field of our own `GrandRiteFactory` base; the factory reads `CircleLink.current(chalk).size()` in `onStart` and cancels with a refusal when the circle is smaller). No existing rite becomes grand; a solo caster can still do everything they can do today, **except** the Rite of Mastery's Ultimate tier, which needs a linked circle of 7 (R267, owner decision recorded in plan 20b; waived while the link is off). Which rites are grand: decided on PR #83 (Q2), none of the existing ones; the three new ones are Fete des Benedictions (3), Night Watch (7) and Great Harvest (13), their effects specified in plan 20b.
 
 **Failure on caster death (R256).** From the moment the rite starts (`commit()`), the circle is **active** for the rite's duration, or `link_window_seconds` (30) for an instant rite. If the anchor dies in that window (`LivingDeathEvent` on the anchor's UUID, any cause):
 
@@ -232,7 +232,7 @@ For each online clanmate within 32 blocks who is in the same sireline as you (yo
 
 ### 7.4 Rings (R273)
 
-Day Walker is about the sun. A **coven-forged Sun Ring** (a rite performed by a coven circle with tier 1, output the existing `sun_ring` with a `coven_forged` component) binds through `ward_of_daylight` at `sun_ring_discount_percent` (50%) of its power, only for a Day Walker of a clan. Everyone else binds a plain Sun Ring at the full 6000 as today. Decided on PR #83 (Q4).
+Day Walker is about the sun. A **coven-forged Sun Ring** (a rite performed by a coven circle with tier 1, output the existing `sun_ring`; *plan 20b builds it as its own rite file, `coven_sun_ring`, at half the power (3000), with no new component*) binds through `ward_of_daylight` at `sun_ring_discount_percent` (50%) of its power, only for a Day Walker of a clan (*plan 20b: switch `sun_ring_day_walker_only`, default false until the Day Walker rank exists in 20c; owner answer of 2026-11-24, recorded in plan 20b*). Everyone else binds a plain Sun Ring at the full 6000 as today. Decided on PR #83 (Q4).
 
 ### 7.5 Exile (R276), no Garden
 
@@ -329,7 +329,7 @@ New file `supernaturalbloodlines-groups.toml`, section `groups`, registered by `
 | Plan | Keys (default) | Rows |
 |---|---|---|
 | 20a | `groups_enabled` (true), `clans_enabled` (true), `covens_enabled` (true), `open_founding` (false), `max_members` (0) | 5 |
-| 20b | `link_enabled` (true), `link_member_share` (0.70), `channel_cap` (3000), `channel_other_factor` (0.5), `channel_regen_minutes` (10), `potency_max_bonus` (1.0), `potency_falloff` (0.8), `tier1_members` (3), `tier2_members` (7), `tier3_members` (13), `link_window_seconds` (30), `link_death_damage_percent` (60), `link_death_lethal` (false), `link_shaken_minutes` (30), `ep_keep_percent` (10), `elder_min_days` (3), `members_per_elder` (4), `vote_hours` (24), `election_cooldown_days` (7), `shun_days` (7), `moonlight_ring_enabled` (true) | 21 |
+| 20b | `link_enabled` (true), `link_member_share` (0.70), `channel_cap` (3000), `channel_other_factor` (0.5), `channel_regen_minutes` (10), `potency_max_bonus` (1.0), `potency_falloff` (0.8), `tier1_members` (3), `tier2_members` (7), `tier3_members` (13), `link_window_seconds` (30), `link_death_damage_percent` (60), `link_death_lethal` (false), `link_shaken_minutes` (30), `ep_keep_percent` (10), `elder_min_days` (3), `members_per_elder` (4), `vote_hours` (24), `election_cooldown_days` (7), `shun_days` (7), `moonlight_ring_enabled` (true); *added by plan 20b:* `sun_ring_forge_enabled` (true), `sun_ring_day_walker_only` (false), `mastery_ultimate_circle` (7, 0 = off), `grand_rites_enabled` (true), `grand_rite_cooldown_hours` (12), `grand_rite_radius` (24), `fete_minutes` (10), `harvest_xp_levels` (30), `harvest_max_blocks` (2048) | 30 |
 | 20c | `charter_enabled` (true), `charter_min_members` (3), `contest_cooldown_days` (7), `contest_accept_minutes` (10), `contest_max_hours` (1), `charter_lost_days` (7), `daywalker_days` (14), `exile_days` (7), `feed_share_enabled` (true), `feed_share_percent` (10), `feed_share_max` (2), `feed_share_radius` (16), `feed_share_cap_per_minute` (4), `sireline_bonus_percent` (3), `sireline_bonus_max_percent` (15), `sun_ring_discount_percent` (50) | 16 |
 | 20d | `brotherhood_enabled` (true), `lead_by_mark` (true), `arms_percent` (3), `arms_max_percent` (12), `arms_radius` (24), `sight_share_enabled` (true), `sight_radius` (48), `code_enabled` (true), `code_mark_penalty_percent` (25), `code_breaker_hours` (24), `code_strikes` (3), `code_strikes_days` (7), `code_exile_days` (7), `curse_extends_enabled` (true), `brotherhood_curse_hours` (48), `kol_warning_enabled` (true) | 16 |
 
@@ -367,7 +367,7 @@ Art: the ring variants need two new ring sprites per theme (three with the Broth
 | `/group info` | the page itself | member |
 | `/pack challenge ...` | Challenge / Accept / Decline | pack: second Alpha / leader |
 | `/clan challenge`, accept | Challenge for the Charter / Accept | clan: Day Walker / leader |
-| `/coven regent <p>` | Call for a new Regent (Elder picker) | coven Elder |
+| `/coven challenge <elder>` (the coven's route of the one `challenge` literal, R245; *corrected in plan 20b: not a separate `regent` literal*) | Call for a new Regent (Elder picker) | coven Elder |
 | `/clan promote <p>`, `/clan demote <p>` | Promote / Demote | clan leader |
 | `/clan exile <p>` | Exile (confirm) | clan leader |
 | `/clan charter forge|reforge` | Forge / Reforge the Charter | clan leader |
@@ -394,7 +394,7 @@ No new C2S payload: actions are typed commands (the pattern the pack page uses).
 
 - `GroupViewPayload` (S2C, optional channel on `LadderNet`'s registrar, client handler named only on the client like its neighbours). Sent where `HubSnapshotPayload` and `HubRequestsPayload` are sent (on `HubSnapshotRequestPayload` with the same 20-tick cooldown, and on `HubRequests.changed`). Content: group type (byte), viewer's rank (byte), leader name, `since` days, member rows (name, rank string as today plus a one-letter group rank, online, optional UUID; capped at 64), then a type block: coven (Elders flags, tier, circle state, the viewer's meter and consent and a share preview, the open vote with counts only), clan (Charter state, holder name, contest line, sireline mates count), brotherhood (the viewer's own kills, the leader's kills, whether any brother has 20, the viewer's strikes and Code-breaker time, the current bonus percent; never another brother's kills), pack (nothing new). It carries **nothing about people outside the viewer's group** and never another player's meter, consent or vote choice.
 - Why a new payload and not more fields on `HubSnapshotPayload`: that record already has 8 fields written by hand ("more than `StreamCodec.composite` takes"), and the pack-moon branch is adding a ninth concern to it. A separate payload keeps the two branches independent.
-- `HubRequests.Kind` gains `CIRCLE_CALL`, `GROUP_VOTE`, `CHARTER_CONTEST` at the end.
+- `HubRequests.Kind` gains `CIRCLE_CALL`, `GROUP_VOTE`, `CHARTER_CONTEST` at the end (plan 20b appends the first two; the coven card travels in its own `CovenViewPayload`, separate from `GroupViewPayload`, as 20a's wire test anticipated).
 - `LadderNet.PROTOCOL`: raise by one at merge time (10 on main today, 11 on the pack-moon branch); the plan says "next integer after main's at merge", and `SnapshotIdsWireTest` is updated with it. The channel is optional, so a mismatch hides the hub's group data but does not refuse the connection (documented behaviour of `LadderNet`).
 - Bounds and hostile sizes: every list capped in the codec; a decode of an oversize count fails the packet cleanly (tests: round trip, max size, count over the cap).
 - Server authority: the client decides nothing. Ranks, shares, votes, Charter state are computed on the server from `GroupIndex`/`PackIndex`; the client only draws and sends commands.
@@ -420,8 +420,8 @@ Read from the jars in the Gradle cache (`~\.gradle\caches\modules-2`):
 
 **Not verified (flagged, each has a task that checks it first):**
 
-1. `RiteManager.removeRite` / `Rite.stop()` is enough to abort a running rite on the anchor's death (only signatures were read). 20b task 6 proves it in a GameTest or drops that line of R256.
-2. `RiteCost.begin(start = true)` is called exactly once per rite start; the siphon `Pending` design assumes it. 20b task 2 adds a GameTest that counts calls.
+1. `RiteManager.removeRite` / `Rite.stop()` is enough to abort a running rite on the anchor's death. *Updated by plan 20b:* read in the Enchanted 4.2.7 sources (it is exactly what `GoldChalkBlockEntity.use` does when a player interrupts a rite; `RiteManager.tick` iterates with `removeIf`, so the stop is queued to the end of the tick). 20b task 0 proves it in a GameTest and task 7 repeats it with Night Watch, or R256 drops that line.
+2. `RiteCost.begin(start = true)` is called exactly once per rite start; the siphon `Pending` design assumes it. *Updated by plan 20b:* read in `GoldChalkBlockEntity.serverTick` (one store of `power` per start attempt, also for power 0, where `begin` returns early today). 20b task 0 adds a GameTest that counts calls.
 3. `ItemEntityPickupEvent.Pre` can deny a pickup in this NeoForge (21.1.x). 20c task 4 reads it; the sweep fallback is written either way.
 4. The sireline index API for "same sireline" (the code lives in `parts/species/sireline` and `parts/species/line`; names were not read). 20c task 1.
 5. `Detectors.onDrinkBlood` ignores events without a living source, and the forced feed / give blood of plan 18f (`core/blood/ForceFeedRules`, `GiveBloodGameTests`; merged after this was read) either carries no living-entity context or is excluded from sharing. 20c task 1.
@@ -464,7 +464,7 @@ Per plan (each plan lists its own, with a mutation table); the cross-cutting lis
 ### 16.1 Decided (the first review, owner approved all six picks on PR #83)
 
 1. **Q1 What pays a coven's power share:** members pay 70% of the altar bill from a per-witch channel meter (cap 3000, refills in 10 minutes); the altar still pays 30%; EP is split exactly as decided (6.2).
-2. **Q2 Grand rites:** none of the existing rites becomes grand and 19a's rites are not coupled to tiers (they only get the cost split); 20b ships the `min_circle` gate and three new grand rites, one per tier: Fete des Benedictions (3), Night Watch (7), Great Harvest (13, items and XP, never kills).
+2. **Q2 Grand rites:** none of the existing rites becomes grand and 19a's rites are not coupled to tiers (they only get the cost split), with the one exception that the Rite of Mastery's Ultimate tier needs a linked circle of 7 (R267); 20b ships the `min_circle` gate and three new grand rites, one per tier: Fete des Benedictions (3), Night Watch (7), Great Harvest (13, items and XP, never kills).
 3. **Q3 Edge kinds:** an Original leads a clan; Original hybrid and tribrid lead packs; heretic, human and potential derive as covens, and a coven still needs a magic user to found unless `open_founding` is on; a heretic who is a vampire does not make a clan. (A hunter now derives BROTHERHOOD, A5.)
 4. **Q4 Rings:** no new items. A coven circle of 3 or more forges the existing Moon Ring pre-bound for half the silver, and a Sun Ring that binds at 50% power for a Day Walker. Every present recipe and bind is unchanged.
 5. **Q5 The Charter contest:** a Day Walker with 7 days in the clan may challenge; the leader must accept; one contest per 7 days; the holder at midnight must be online and a Day Walker or the leader; the Charter lives only with clan members.
