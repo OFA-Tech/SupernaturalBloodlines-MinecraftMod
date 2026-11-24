@@ -312,6 +312,159 @@ public final class CovenCostGameTests {
         helper.succeed();
     }
 
+    // ---- strain (R257): the meter, the nosebleed and the pain ----
+
+    private static void consentAll(GameTestHelper helper, Circle c, Consent level) {
+        for (TalkingDuelist p : c.all()) {
+            GroupIndex.get(helper.getLevel()).setConsent(p.getUUID(), level);
+        }
+    }
+
+    private static void setMeter(GameTestHelper helper, Circle c, int value) {
+        for (TalkingDuelist p : c.all()) {
+            GroupIndex.get(helper.getLevel()).setChannel(p.getUUID(), value, PackIndex.now(), CircleCost.capacityOf(p));
+        }
+    }
+
+    private static void startRite(GameTestHelper helper, Circle c, int base) {
+        begin(helper, c, c.anchor().getUUID(), base, true);
+        RiteCost.commit();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aCleanShareOnlyLowersTheMeter(GameTestHelper helper) {
+        Circle c = circle(helper, 3);
+        try {
+            startRite(helper, c, 4500);
+            for (TalkingDuelist p : c.all()) {
+                helper.assertTrue(!p.hasEffect(net.minecraft.world.effect.MobEffects.CONFUSION) && !p.hasEffect(net.minecraft.world.effect.MobEffects.WEAKNESS), "a clean share gave an effect");
+                helper.assertTrue(p.getHealth() == p.getMaxHealth(), "a clean share hurt");
+                helper.assertTrue(meter(helper, p.getUUID()) != null && meter(helper, p.getUUID()).value() < 3000, "the meter did not go down");
+            }
+        } finally {
+            tidy(helper, c.array());
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aNosebleedShareGivesNauseaAndWeakness(GameTestHelper helper) {
+        Circle c = circle(helper, 3);
+        try {
+            consentAll(helper, c, Consent.NOSEBLEED);
+            startRite(helper, c, 15000);
+            for (TalkingDuelist p : c.all()) {
+                helper.assertTrue(p.hasEffect(net.minecraft.world.effect.MobEffects.CONFUSION) && p.hasEffect(net.minecraft.world.effect.MobEffects.WEAKNESS), "no nosebleed for " + p.getGameProfile().getName());
+                helper.assertTrue(p.getHealth() == p.getMaxHealth(), "a nosebleed share hurt");
+            }
+        } finally {
+            tidy(helper, c.array());
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aDamageShareHurtsByTheTableAndNeverBelowOneHeart(GameTestHelper helper) {
+        Circle c = circle(helper, 3);
+        try {
+            consentAll(helper, c, Consent.DAMAGE);
+            setMeter(helper, c, 1500);
+            startRite(helper, c, 15000);
+            for (TalkingDuelist p : c.all()) {
+                helper.assertTrue(p.getHealth() == p.getMaxHealth() - 3, "an overdraw of 2000 over a cap of 3000 should cost 3 hit points: " + p.getHealth());
+            }
+        } finally {
+            tidy(helper, c.array());
+        }
+        Circle low = circle(helper, 3);
+        try {
+            consentAll(helper, low, Consent.DAMAGE);
+            setMeter(helper, low, 0);
+            TalkingDuelist weak = low.others().get(0);
+            weak.setHealth(weak.getMaxHealth() * 0.5f);
+            startRite(helper, low, 12858);
+            helper.assertTrue(weak.getHealth() == 1.0f && weak.isAlive(), "the hardest share should leave a member at 1 HP, not " + weak.getHealth());
+            helper.assertTrue(low.anchor().getHealth() == low.anchor().getMaxHealth() - 10, "a share at the hard cap should cost 10 hit points: " + low.anchor().getHealth());
+        } finally {
+            tidy(helper, low.array());
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void damageNeverKillsEvenWithTheLethalOptionOff(GameTestHelper helper) {
+        Circle c = circle(helper, 3);
+        try {
+            GroupsConfig.override("link_death_lethal", false);
+            consentAll(helper, c, Consent.DAMAGE);
+            setMeter(helper, c, 0);
+            for (TalkingDuelist p : c.all()) {
+                p.setHealth(p.getMaxHealth() * 0.5f);
+            }
+            startRite(helper, c, 12858);
+            for (TalkingDuelist p : c.all()) {
+                helper.assertTrue(p.isAlive() && p.getHealth() >= 1.0f, "the strain killed " + p.getGameProfile().getName());
+            }
+        } finally {
+            GroupsConfig.override("link_death_lethal", null);
+            tidy(helper, c.array());
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void theMeterIsZeroAfterAnOverdraw(GameTestHelper helper) {
+        Circle c = circle(helper, 3);
+        try {
+            consentAll(helper, c, Consent.NOSEBLEED);
+            startRite(helper, c, 15000);
+            for (TalkingDuelist p : c.all()) {
+                helper.assertTrue(meter(helper, p.getUUID()).value() == 0, "the meter after an overdraw is " + meter(helper, p.getUUID()).value());
+            }
+        } finally {
+            tidy(helper, c.array());
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void theMeterRefillsLazilyAfterTenMinutes(GameTestHelper helper) {
+        Circle c = circle(helper, 3);
+        long[] clock = {5_000_000L};
+        PackIndex.overrideClock(() -> clock[0]);
+        try {
+            consentAll(helper, c, Consent.NOSEBLEED);
+            startRite(helper, c, 15000);
+            GroupIndex groups = GroupIndex.get(helper.getLevel());
+            UUID id = c.anchor().getUUID();
+            int cap = CircleCost.capacityOf(c.anchor());
+            helper.assertTrue(CircleCost.meterOf(groups, id, cap, clock[0]) == 0, "not empty right after");
+            helper.assertTrue(CircleCost.meterOf(groups, id, cap, clock[0] + 5 * 60_000L) == cap / 2, "not half after five minutes: " + CircleCost.meterOf(groups, id, cap, clock[0] + 5 * 60_000L));
+            helper.assertTrue(CircleCost.meterOf(groups, id, cap, clock[0] + 10 * 60_000L) == cap, "not full after ten minutes");
+        } finally {
+            tidy(helper, c.array());
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aShareIsChargedToTheMemberWhoseConsentAllowedIt(GameTestHelper helper) {
+        Circle c = circle(helper, 4);
+        try {
+            consentAll(helper, c, Consent.NOSEBLEED);
+            TalkingDuelist strict = c.others().get(1);
+            GroupIndex.get(helper.getLevel()).setConsent(strict.getUUID(), Consent.NONE);
+            setMeter(helper, c, 2000);
+            startRite(helper, c, 15000);
+            helper.assertTrue(!strict.hasEffect(net.minecraft.world.effect.MobEffects.CONFUSION), "a member who consented to nothing was strained");
+            helper.assertTrue(meter(helper, strict.getUUID()).value() == 2000, "a member who consented to nothing paid: " + meter(helper, strict.getUUID()));
+            helper.assertTrue(c.anchor().hasEffect(net.minecraft.world.effect.MobEffects.CONFUSION), "the others were not strained");
+        } finally {
+            tidy(helper, c.array());
+        }
+        helper.succeed();
+    }
+
     // ---- through the chalk's own tick: a batch of its own; the circle is built inside the tick that starts the rite, so nothing can close it while waiting ----
 
     @GameTest(template = "empty", templateNamespace = NS, batch = "covens_cost_chalk", timeoutTicks = 100)

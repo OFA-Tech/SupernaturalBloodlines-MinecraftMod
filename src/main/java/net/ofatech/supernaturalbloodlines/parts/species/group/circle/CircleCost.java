@@ -95,6 +95,7 @@ public final class CircleCost {
             int cap = capacityOf(p);
             int meter = meterOf(groups, e.getKey(), cap, now);
             groups.setChannel(e.getKey(), Math.max(0, meter - e.getValue().power()), now, cap);
+            Strain.apply(p, e.getValue(), cap);
         }
         CircleLink.Session session = CircleLink.current(level, staged.chalk(), staged.anchor());
         if (session != null) {
