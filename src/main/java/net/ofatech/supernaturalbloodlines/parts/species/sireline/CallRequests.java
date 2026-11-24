@@ -1,6 +1,7 @@
 package net.ofatech.supernaturalbloodlines.parts.species.sireline;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
@@ -76,6 +77,17 @@ public final class CallRequests {
     /** A player logged out: only the requests that were SENT TO them are void. What they asked of others stays open until it runs out (the other may still answer while they are away). */
     public void forgetFor(UUID sired) {
         open.values().removeIf(r -> r.sired().equals(sired));
+    }
+
+    /** Every request this player opened as the caller (a circle that closed takes its calls with it). */
+    public List<UUID> forgetCalledBy(UUID caller) {
+        List<UUID> asked = open.values().stream().filter(r -> r.caller().equals(caller)).map(Request::sired).toList();
+        open.values().removeIf(r -> r.caller().equals(caller));
+        return asked;
+    }
+
+    public void clear() {
+        open.clear();
     }
 
     int size() {

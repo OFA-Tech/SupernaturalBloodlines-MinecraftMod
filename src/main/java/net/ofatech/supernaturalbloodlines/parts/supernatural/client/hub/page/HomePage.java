@@ -45,6 +45,7 @@ public final class HomePage implements HubPageView {
             case CHALLENGE -> List.of(new Answer("accept", "P9", false, true), new Answer("decline", "P10", false, false));
             case COMPULSION -> List.of(new Answer("discount", "B5", true, true), new Answer("follow", "B6", true, false));
             case DUEL -> List.of();
+            case CIRCLE_CALL, GROUP_VOTE -> List.of();
         };
     }
 

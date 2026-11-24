@@ -63,6 +63,7 @@ public final class GroupCommand {
                                 .then(Commands.argument("player", StringArgumentType.word())
                                         .suggests((c, b) -> PackCommand.suggest(c, b, true))
                                         .executes(c -> run(c, PackCommand.allyRemoveNamed(self(c), StringArgumentType.getString(c, "player")))))))
+                .then(net.ofatech.supernaturalbloodlines.parts.species.group.coven.CovenCommand.link())
                 .then(Commands.literal("info").executes(c -> info(c.getSource(), self(c))))
                 .then(Commands.literal("challenge")
                         .then(Commands.literal("accept").executes(c -> run(c, challenge(self(c), p -> PackDuel.accept(p)))))

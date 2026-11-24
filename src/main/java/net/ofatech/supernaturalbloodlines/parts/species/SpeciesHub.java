@@ -87,6 +87,7 @@ public final class SpeciesHub {
         tokens(out, HubRequests.Kind.SIRE_CALL, SireCall.requests(), p, server, now);
         tokens(out, HubRequests.Kind.PACK_INVITE, PackCommand.requests(), p, server, now);
         tokens(out, HubRequests.Kind.ALLY_INVITE, PackCommand.allyRequests(), p, server, now);
+        tokens(out, HubRequests.Kind.CIRCLE_CALL, net.ofatech.supernaturalbloodlines.parts.species.group.circle.CircleLink.calls(), p, server, now);
         if (werewolves()) {
             PackDuel.board().asked(p.getUUID(), now).ifPresent(d -> {
                 String name = PackAccess.nameOf(server, d.challenger());

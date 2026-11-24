@@ -19,6 +19,7 @@ import net.neoforged.neoforge.event.server.ServerStoppedEvent;
 import net.ofatech.supernaturalbloodlines.core.group.GroupRank;
 import net.ofatech.supernaturalbloodlines.core.group.GroupType;
 import net.ofatech.supernaturalbloodlines.core.group.GroupSwitch;
+import net.ofatech.supernaturalbloodlines.core.group.circle.Consent;
 import net.ofatech.supernaturalbloodlines.parts.species.pack.PackIndex;
 
 /**
@@ -33,7 +34,10 @@ public final class GroupIndex extends SavedData {
     private static final String TYPES = "types";
     private static final String TYPE_SINCE = "type_since";
     private static final String RANKS = "ranks";
-    private static final Set<String> KNOWN = Set.of(VERSION, IDS, TYPES, TYPE_SINCE, RANKS);
+    private static final String CHANNEL = "channel";
+    private static final String CONSENT = "consent";
+    private static final String AT = "at";
+    private static final Set<String> KNOWN = Set.of(VERSION, IDS, TYPES, TYPE_SINCE, RANKS, CHANNEL, CONSENT);
     private static final String KEY = "key";
     private static final String VALUE = "value";
     private static final String TYPE = "type";
@@ -44,12 +48,20 @@ public final class GroupIndex extends SavedData {
     private final Map<UUID, Long> typeSince = new HashMap<>();
     // member -> (type id -> rank id): one rank per member per type, so a rank earned in another type is never overwritten by this one
     private final Map<UUID, Map<String, String>> ranks = new HashMap<>();
+    // member -> the channel meter as it stood at a wall-clock time; a member with a full, idle meter has no row
+    private final Map<UUID, ChannelRow> channel = new HashMap<>();
+    // member -> consent id; only a level that is not the default
+    private final Map<UUID, String> consent = new HashMap<>();
     private CompoundTag extras = new CompoundTag();
     private int dataVersion;
 
     private static volatile GroupIndex live;
     private static volatile PackIndex livePacks;
     private static boolean registered;
+
+    /** What the channel meter held at {@code at} (wall-clock millis); it refills lazily from there ({@code ChannelMeter.valueAt}). */
+    public record ChannelRow(int value, long at) {
+    }
 
     public GroupIndex() {
     }
@@ -184,6 +196,37 @@ public final class GroupIndex extends SavedData {
         }
     }
 
+    /** The stored meter of a member, or null: a full and idle meter is not stored. */
+    @org.jetbrains.annotations.Nullable
+    public ChannelRow channelOf(UUID member) {
+        return channel.get(member);
+    }
+
+    /** Stores the meter; a meter that is back at {@code cap} stores nothing. */
+    public void setChannel(UUID member, int value, long atMillis, int cap) {
+        if (value >= cap) {
+            if (channel.remove(member) != null) {
+                setDirty();
+            }
+            return;
+        }
+        ChannelRow row = new ChannelRow(Math.max(0, value), atMillis);
+        if (!row.equals(channel.put(member, row))) {
+            setDirty();
+        }
+    }
+
+    public Consent consentOf(UUID member) {
+        return Consent.parse(consent.getOrDefault(member, Consent.NONE.id()));
+    }
+
+    /** Only a level that is not {@code NONE} is stored. */
+    public void setConsent(UUID member, Consent level) {
+        if (level == Consent.NONE ? consent.remove(member) != null : !level.id().equals(consent.put(member, level.id()))) {
+            setDirty();
+        }
+    }
+
     /** The id goes to the new leader; when that leader already has a group, the old leader's group is gone (its members joined theirs). */
     public void follow(UUID oldLeader, UUID newLeader) {
         UUID group = ids.remove(oldLeader);
@@ -245,6 +288,15 @@ public final class GroupIndex extends SavedData {
                 net.ofatech.supernaturalbloodlines.SupernaturalBloodlines.LOGGER.warn("The group index skipped a damaged rank row: {}", bad.toString());
             }
         }
+        for (Tag t : tag.getList(CHANNEL, Tag.TAG_COMPOUND)) {
+            try {
+                CompoundTag e = (CompoundTag) t;
+                i.channel.put(NbtUtils.loadUUID(e.get(KEY)), new ChannelRow(e.getInt(VALUE), e.getLong(AT)));
+            } catch (RuntimeException bad) {
+                net.ofatech.supernaturalbloodlines.SupernaturalBloodlines.LOGGER.warn("The group index skipped a damaged channel row: {}", bad.toString());
+            }
+        }
+        readPairs(tag, CONSENT, (k, v) -> i.consent.put(NbtUtils.loadUUID(k), v.getAsString()));
         for (String key : tag.getAllKeys()) {
             if (!KNOWN.contains(key)) {
                 i.extras.put(key, tag.get(key).copy());
@@ -309,6 +361,21 @@ public final class GroupIndex extends SavedData {
             rankList.add(e);
         }));
         tag.put(RANKS, rankList);
+        ListTag channelList = new ListTag();
+        channel.forEach((member, row) -> {
+            CompoundTag e = row(member);
+            e.putInt(VALUE, row.value());
+            e.putLong(AT, row.at());
+            channelList.add(e);
+        });
+        tag.put(CHANNEL, channelList);
+        ListTag consentList = new ListTag();
+        consent.forEach((member, level) -> {
+            CompoundTag e = row(member);
+            e.putString(VALUE, level);
+            consentList.add(e);
+        });
+        tag.put(CONSENT, consentList);
         return tag;
     }
 
