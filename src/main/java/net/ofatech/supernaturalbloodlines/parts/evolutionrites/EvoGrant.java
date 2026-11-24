@@ -1,10 +1,13 @@
 package net.ofatech.supernaturalbloodlines.parts.evolutionrites;
 
 import io.github.manasmods.manascore.skill.api.ManasSkill;
+import io.github.manasmods.manascore.skill.api.ManasSkillInstance;
+import io.github.manasmods.manascore.skill.api.SkillAPI;
 import io.github.manasmods.tensura.ability.SkillHelper;
 import io.github.manasmods.tensura.ability.TensuraSkillInstance;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerPlayer;
+import net.ofatech.supernaturalbloodlines.shared.tensura.SkillOwners;
 
 /**
  * The free grant ({@link net.ofatech.supernaturalbloodlines.core.evolution.GrantForm#FREE}): the way Great Sage's {@code grantIfMissing} and FoxAblaze's
@@ -24,7 +27,15 @@ public final class EvoGrant {
         CompoundTag tag = instance.getOrCreateTag();
         tag.putBoolean(NO_COST, true);
         tag.putBoolean(GIFTED, true);
+        // Mysticism vetoes a learn the player has no Soul Energy for; a free grant (and giving back what a refused merge took) must not be priced by it
+        tag.putBoolean(SkillOwners.NO_SOUL_ENERGY_COST, true);
         instance.markDirty();
-        return SkillHelper.learnSkill(player, instance);
+        boolean learned = SkillHelper.learnSkill(player, instance);
+        SkillAPI.getSkillsFrom(player).getSkill(skill.getRegistryName()).map(ManasSkillInstance::getTag).ifPresent(held -> {
+            if (held != null) {
+                held.remove(SkillOwners.NO_SOUL_ENERGY_COST);
+            }
+        });
+        return learned;
     }
 }
