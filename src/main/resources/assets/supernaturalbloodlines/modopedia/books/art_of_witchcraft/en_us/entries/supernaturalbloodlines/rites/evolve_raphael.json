@@ -1,0 +1,47 @@
+{
+  "title": "Rite of Raphael",
+  "icon": {
+    "count": 1,
+    "id": "minecraft:nether_star"
+  },
+  "assigned_items": [],
+  "advancement": "supernaturalbloodlines:rites/known/evolve_raphael",
+  "pages": [
+    {
+      "components": [
+        {
+          "template": "modopedia:page/headered_text",
+          "text": "Only with Great Sage, and only when Great Sage itself opens the road to Raphael: until then the rite is closed. A witch-type performer, at a lunar eclipse, works it for the one on the circle, or for herself.",
+          "header": "Rite of Raphael"
+        }
+      ]
+    },
+    {
+      "components": [
+        {
+          "template": "modopedia:page/headered_text",
+          "text": "They must hold Great Sage and Degenerate, both mastered, and agree by sneaking. Great Sage's own requirements still decide. If FoxAblaze is there, the Raphael is FoxAblaze's, and only one player can own it.",
+          "header": "Rite of Raphael"
+        }
+      ]
+    },
+    {
+      "components": [
+        {
+          "template": "modopedia:page/headered_text",
+          "text": "Costs rare items and altar power. The two skills are the price: they are taken once Raphael is learned.",
+          "header": "Rite of Raphael"
+        }
+      ]
+    },
+    {
+      "components": [
+        {
+          "template": "supernaturalbloodlines:page/rite",
+          "rite": "supernaturalbloodlines:evolve_raphael",
+          "header": "Rite of Raphael"
+        }
+      ]
+    }
+  ]
+}

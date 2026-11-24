@@ -26,7 +26,7 @@ import net.minecraft.server.level.ServerPlayer;
 public final class SkillOwners {
     public static final String GRANTED_TAG = "supernaturalbloodlines:granted";
     private static final String NO_MAGICULE_COST = "NoMagiculeCost";
-    private static final String NO_SOUL_ENERGY_COST = "NoSoulEnergyCost";
+    public static final String NO_SOUL_ENERGY_COST = "NoSoulEnergyCost";
 
     /** Does this source still want {@code skill} for {@code p}, judging by the player's current state. */
     @FunctionalInterface

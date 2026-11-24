@@ -111,7 +111,7 @@ public final class RiteUnlocks {
      * installed (plan 19), ships no advancements, so nothing is known or sealed for it and the book shows neither entry.
      */
     public static boolean present(ServerPlayer p, String rite) {
-        return RiteUnlockTable.isGated(rite) && holder(p, RiteAdvancements.known(rite)) != null;
+        return RiteUnlockTable.isGated(rite) && holder(p, RiteAdvancements.known(rite)) != null && !RiteUnlockTable.dormant.test(rite);
     }
 
     /** The gated rites that exist in the loaded datapacks, in table order. */

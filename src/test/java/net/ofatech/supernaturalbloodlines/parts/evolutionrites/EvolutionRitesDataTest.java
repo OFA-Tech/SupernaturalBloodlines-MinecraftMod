@@ -61,8 +61,28 @@ class EvolutionRitesDataTest {
     }
 
     @Test
-    void thereAreSixRites() throws IOException {
-        assertEquals(List.of("evolve_deus_sanguis", "evolve_great_sage", "mastery_common", "mastery_extra", "mastery_ultimate", "mastery_unique"), mine());
+    void thereAreSevenRites() throws IOException {
+        assertEquals(List.of("evolve_deus_sanguis", "evolve_great_sage", "evolve_raphael", "mastery_common", "mastery_extra", "mastery_ultimate", "mastery_unique"), mine());
+    }
+
+    @Test
+    void theRaphaelRecipeIsTheDormantUltimateThatNeedsGreatSage() throws IOException {
+        JsonObject rite = read(ROOT.resolve(RITES).resolve("evolve_raphael.json"));
+        assertTrue(conditions(rite, "neoforge:mod_loaded", "modid").contains("greatsage"), "the rite must exist only with Great Sage");
+        EvolutionRecipe recipe = EvolutionRecipeCodec.RECIPE.codec().parse(JsonOps.INSTANCE, rite.getAsJsonObject("factory")).getOrThrow();
+        assertEquals(Tier.ULTIMATE, recipe.tier());
+        assertEquals("greatsage:raphael", recipe.grants());
+        assertEquals(net.ofatech.supernaturalbloodlines.core.evolution.GrantForm.FREE, recipe.grantForm());
+        assertEquals("greatsage", recipe.requiresMod());
+        assertEquals("greatsage.raphael", recipe.probe());
+        assertEquals(Set.of("tensura:great_sage", "tensura:degenerate"), new HashSet<>(recipe.consumes()));
+        Set<String> needs = new HashSet<>();
+        recipe.needs().forEach(n -> {
+            needs.add(n.skill());
+            assertTrue(n.mastered(), n.skill() + " must be mastered");
+        });
+        assertEquals(Set.of("tensura:great_sage", "tensura:degenerate"), needs);
+        assertTrue(recipe.subjectKinds().isEmpty());
     }
 
     @Test
@@ -93,8 +113,8 @@ class EvolutionRitesDataTest {
             Set<String> needed = new HashSet<>();
             recipe.needs().forEach(n -> needed.add(n.skill()));
             assertTrue(needed.containsAll(recipe.consumes()), name + " consumes a skill it does not require: " + recipe.consumes());
-            // E15: a sacrifice: an EP cost or the addon's own tribute (19a has no tribute recipe, so an EP cost)
-            assertTrue(recipe.epCost() > 0, name + " has no sacrifice (E15)");
+            // E15: a sacrifice: an EP cost, or the addon's own tribute. Raphael's is the addon's own: Great Sage's evolution forgets Great Sage and Degenerate.
+            assertTrue(recipe.epCost() > 0 || recipe.tier() == Tier.ULTIMATE && !recipe.consumes().isEmpty(), name + " has no sacrifice (E15)");
             assertTrue(recipe.tier() != Tier.COMMON, name);
         }
     }
@@ -153,6 +173,7 @@ class EvolutionRitesDataTest {
         assertEquals(Tier.Night.ECLIPSE, Tier.ULTIMATE.night());
         JsonObject rite = read(ROOT.resolve(RITES).resolve("mastery_ultimate.json"));
         assertEquals("ultimate", rite.getAsJsonObject("factory").get("tier").getAsString());
+        assertEquals("ultimate", read(ROOT.resolve(RITES).resolve("evolve_raphael.json")).getAsJsonObject("factory").get("tier").getAsString());
         for (String other : List.of("common", "extra", "unique")) {
             assertEquals(Tier.Night.FULL_MOON, Tier.parse(other).orElseThrow().night());
         }

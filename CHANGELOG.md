@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased (plan 19b: Raphael)
+
+- With FoxAblaze installed, learning Great Sage's Raphael redirects to FoxAblaze's, subject to its single-owner rule. The Rite of Raphael stays dormant until Great Sage opens its own road.
+- A refused Great Sage evolution can reset the mastery of Great Sage and Degenerate: the redirect attempts to restore missing skills at default mastery.
+- Disabling `evolutionRites` removes the redirect and rite. It does not undo prior login conversions. No network protocol change.
+
 ## Unreleased (skill wheel, phase W4: the wheel screen)
 
 ### Added
