@@ -8,9 +8,12 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.neoforged.neoforge.network.PacketDistributor;
+import net.ofatech.supernaturalbloodlines.core.wheel.StoneMenus;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -62,8 +65,17 @@ public final class ReflectiveStoneApi implements StoneApi {
     private final Method settingMax;
     private final Method settingStep;
     private final Method isDual;
+    private final Method stoneColor;
+    private final Method hasDestination;
+    private final Method movesTarget;
+    private final Method menuOnLeft;
+    private final Method hasChoiceMenu;
+    private final Method requestMenu;
     private final Constructor<?> useCtor;
     private final Constructor<?> settingCtor;
+    private final Constructor<?> destinationCtor;
+    private final Constructor<?> constructCtor;
+    private final Constructor<?> quickSlotsCtor;
     @Nullable
     private final Field soulState;
     @Nullable
@@ -72,9 +84,13 @@ public final class ReflectiveStoneApi implements StoneApi {
     private final Constructor<?> soulActionCtor;
     private final Map<String, NodeFacts> facts = new HashMap<>();
     private Object[] stones;
+    /** His state is replaced, never changed, so the list read from it is good until the object is another one (or the language changes). */
+    private Object seenState;
+    private List<NodeInfo> seenNodes = List.of();
 
-    /** What a node is, which never changes while the game runs (his trees are read from the jar). */
-    private record NodeFacts(String name, String description, boolean isSwitch, boolean isChannel, boolean needsAim, boolean isDual, @Nullable NodeInfo.Levels levels) {
+    /** What a node is, which never changes while the game runs (his trees are read from the jar) but for the language of its name and description. */
+    private record NodeFacts(String name, String description, boolean isSwitch, boolean isChannel, boolean needsAim, boolean isDual, @Nullable NodeInfo.Levels levels,
+                             StoneMenus.Kind menu, boolean menuOnLeft) {
     }
 
     private ReflectiveStoneApi(ClassFinder f) throws Missing {
@@ -113,8 +129,21 @@ public final class ReflectiveStoneApi implements StoneApi {
         settingMax = method(spec, "max");
         settingStep = method(spec, "step");
         isDual = method(dual, "isDual", String.class);
+        Class<?> extraClient = cls(f, "skill.ability.extra.client.ExtraClientApi");
+        Class<?> destination = cls(f, "client.wheel.DestinationScreen");
+        Class<?> construct = cls(f, "client.will.ConstructScreen");
+        Class<?> quickSlots = cls(f, "client.will.QuickSlotsScreen");
+        stoneColor = method(stone, "color");
+        hasDestination = method(dual, "hasDestination", String.class);
+        movesTarget = method(dual, "movesTarget", String.class);
+        menuOnLeft = method(dual, "menuOnLeft", String.class);
+        hasChoiceMenu = method(extraClient, "hasMenu", String.class);
+        requestMenu = method(extraClient, "requestMenu", int.class, String.class);
         useCtor = ctor(use, int.class, String.class, int.class);
         settingCtor = ctor(settingPayload, int.class, String.class, int.class);
+        destinationCtor = ctor(destination, int.class, String.class, boolean.class, int.class);
+        constructCtor = ctor(construct);
+        quickSlotsCtor = ctor(quickSlots);
         Field state = null;
         Method mode = null;
         Constructor<?> action = null;
@@ -193,6 +222,9 @@ public final class ReflectiveStoneApi implements StoneApi {
         List<NodeInfo> out = new ArrayList<>();
         try {
             Object state = call(wheelState, null);
+            if (state == seenState) {
+                return seenNodes;
+            }
             for (Object entry : (List<?>) call(stateEntries, state)) {
                 int stone = (int) call(entryStone, entry);
                 String node = (String) call(entryNode, entry);
@@ -207,12 +239,21 @@ public final class ReflectiveStoneApi implements StoneApi {
                     facts.put(key + "." + node, nf);
                 }
                 out.add(new NodeInfo(stone, key, node, nf.name(), nf.description(), (boolean) call(entryUnlocked, entry), (boolean) call(entryToggled, entry),
-                        (int) call(entrySetting, entry), nf.isSwitch(), nf.isChannel(), nf.needsAim(), nf.isDual(), nf.levels()));
+                        (int) call(entrySetting, entry), nf.isSwitch(), nf.isChannel(), nf.needsAim(), nf.isDual(), nf.levels(), nf.menu(), nf.menuOnLeft()));
             }
+            seenState = state;
+            seenNodes = List.copyOf(out);
+            return seenNodes;
         } catch (ReflectiveOperationException | RuntimeException | LinkageError e) {
             return List.of();
         }
-        return out;
+    }
+
+    @Override
+    public void reload() {
+        facts.clear();
+        seenState = null;
+        seenNodes = List.of();
     }
 
     @Nullable
@@ -229,8 +270,12 @@ public final class ReflectiveStoneApi implements StoneApi {
         if (spec != null) {
             levels = new NodeInfo.Levels((int) call(settingMin, spec), (int) call(settingMax, spec), Math.max(1, (int) call(settingStep, spec)));
         }
+        String modeId = (String) call(nodeModeId, node);
+        boolean destination = (boolean) call(hasDestination, null, modeId);
+        StoneMenus.Kind menu = StoneMenus.kind(StoneMenus.WILL_MODE.equals(modeId), destination, destination && (boolean) call(movesTarget, null, modeId),
+                (boolean) call(hasChoiceMenu, null, modeId));
         return new NodeFacts(name, description, (boolean) call(isSwitch, null, node), (boolean) call(isChannel, null, node), (boolean) call(needsAim, null, node),
-                (boolean) call(isDual, null, call(nodeModeId, node)), levels);
+                (boolean) call(isDual, null, modeId), levels, menu, (boolean) call(menuOnLeft, null, modeId));
     }
 
     @Override
@@ -268,6 +313,46 @@ public final class ReflectiveStoneApi implements StoneApi {
     public void setLevel(int stone, String node, int delta) {
         try {
             send(settingCtor.newInstance(stone, node, delta));
+        } catch (ReflectiveOperationException | RuntimeException | LinkageError ignored) {
+            // see use
+        }
+    }
+
+    private static void show(Object screen) {
+        Minecraft.getInstance().setScreen((Screen) screen);
+    }
+
+    @Override
+    public void openDestination(int stone, String node, boolean movesTarget) {
+        try {
+            show(destinationCtor.newInstance(stone, node, movesTarget, (int) call(stoneColor, stones()[stone])));
+        } catch (ReflectiveOperationException | RuntimeException | LinkageError ignored) {
+            // see use
+        }
+    }
+
+    @Override
+    public void openConstruct() {
+        try {
+            show(constructCtor.newInstance());
+        } catch (ReflectiveOperationException | RuntimeException | LinkageError ignored) {
+            // see use
+        }
+    }
+
+    @Override
+    public void openQuickSlots() {
+        try {
+            show(quickSlotsCtor.newInstance());
+        } catch (ReflectiveOperationException | RuntimeException | LinkageError ignored) {
+            // see use
+        }
+    }
+
+    @Override
+    public void requestChoiceMenu(int stone, String node) {
+        try {
+            call(requestMenu, null, stone, node);
         } catch (ReflectiveOperationException | RuntimeException | LinkageError ignored) {
             // see use
         }

@@ -23,6 +23,7 @@ import net.ofatech.supernaturalbloodlines.core.wheel.PowerRef;
 import net.ofatech.supernaturalbloodlines.core.wheel.PowerSource;
 import net.ofatech.supernaturalbloodlines.core.wheel.PowerState;
 import net.ofatech.supernaturalbloodlines.core.wheel.SlotPicker;
+import net.ofatech.supernaturalbloodlines.core.wheel.StoneMenus;
 import net.ofatech.supernaturalbloodlines.core.wheel.WheelCursor;
 import net.ofatech.supernaturalbloodlines.core.wheel.WheelLayout;
 import net.ofatech.supernaturalbloodlines.core.wheel.WheelLayout.Cell;
@@ -319,14 +320,13 @@ public final class WheelScreen extends Screen {
     /** Uses the power under the pointer (or focus); true when something was started. */
     private boolean useActive(HoldPlan.Trigger trigger) {
         WheelEntry e = entryAt(active());
-        if (e == null) {
-            return false;
-        }
-        if (net.ofatech.supernaturalbloodlines.core.wheel.WheelNarration.enter(e.state()).isPresent()) {
-            minecraft.getNarrator().sayNow(Component.literal(WheelRenderer.reason(e.state().lock())));
+        if (e == null || refused(e)) {
             return false;
         }
         boolean started = WheelActions.use(e, modeOf(e), secondOption);
+        if (started && minecraft.screen != this) {
+            return true; // one of Infinity's own screens opened over the wheel: it is closed already, and closing again would close his
+        }
         if (started && HoldPlan.releaseAtOnce(e.kind(), trigger)) {
             WheelActions.release(); // nothing to hold it with: a G that was let go of, a tap
         } else if (started && HoldPlan.heldUntilInputUp(e.kind(), trigger)) {
@@ -342,6 +342,22 @@ public final class WheelScreen extends Screen {
             machine = machine.sticky();
         }
         return started;
+    }
+
+    /** Says why a locked power cannot be used (to the narrator) and returns true; false for a power that can. */
+    private boolean refused(WheelEntry e) {
+        if (WheelNarration.enter(e.state()).isPresent()) {
+            minecraft.getNarrator().sayNow(Component.literal(WheelRenderer.reason(e.state().lock())));
+            return true;
+        }
+        return false;
+    }
+
+    /** The middle click or Ctrl + Enter: Infinity's own middle click on a stone power (a destination menu, Will Construct's quick slots, a choice menu). */
+    private void menu(WheelEntry e) {
+        if (e != null && !refused(e)) {
+            WheelActions.stone(e, StoneMenus.Input.MENU);
+        }
     }
 
     private int lastKey = -1;
@@ -422,6 +438,10 @@ public final class WheelScreen extends Screen {
             case GLFW.GLFW_KEY_ENTER, GLFW.GLFW_KEY_KP_ENTER, GLFW.GLFW_KEY_SPACE -> {
                 if (heldByKey == key) {
                     return true; // key repeat of the press that is holding a power
+                }
+                if (hasControlDown()) {
+                    menu(entryAt(active())); // Ctrl + Enter is the keyboard's middle click
+                    return true;
                 }
                 lastKey = key;
                 secondOption = hasShiftDown(); // Shift + Enter is the keyboard's Shift-click
@@ -576,6 +596,7 @@ public final class WheelScreen extends Screen {
             }
             case MODE_NEXT -> WheelActions.changeMode(e, 1);
             case MODE_PREVIOUS -> WheelActions.changeMode(e, -1);
+            case MENU -> menu(e);
             default -> { }
         }
         return true;
@@ -665,9 +686,17 @@ public final class WheelScreen extends Screen {
         List<String> lines = WheelNarration.lines(WheelRenderer.modName(source), groups.isEmpty() ? "" : WheelRenderer.text("group." + e.group().name().toLowerCase(Locale.ROOT)),
                 e.name().getString(), e.coverNote().getString(), WheelDescriptions.of(e), e.modeNames().size() > 1 ? e.modeName().getString() : "", state, lock, open.page() * WheelLayout.PAGE_SIZE + h.index() + 1, pageTotal,
                 open.page() + 1, layout.pageCount(), (key, args) -> Component.translatable(key, args).getString());
-        if (InfinityCompat.isDual(e)) {
+        List<StoneMenus.Help> extra = InfinityCompat.help(e);
+        if (!extra.isEmpty() || InfinityCompat.clickWhat(e).equals("click_destination")) {
             lines = new java.util.ArrayList<>(lines);
-            lines.add(WheelRenderer.text("help.dual"));
+            if (InfinityCompat.clickWhat(e).equals("click_destination")) {
+                lines.add(WheelRenderer.text("help.narrate_click_destination"));
+            }
+            for (StoneMenus.Help row : extra) {
+                if (!row.narrate().isEmpty()) {
+                    lines.add(WheelRenderer.text("help." + row.narrate()));
+                }
+            }
         }
         out.add(NarratedElementType.TITLE, Component.literal(String.join(", ", lines)));
     }

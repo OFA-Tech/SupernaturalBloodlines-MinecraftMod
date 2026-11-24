@@ -1,6 +1,7 @@
 package net.ofatech.supernaturalbloodlines.parts.hud.client.wheel.infinity;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -26,6 +27,52 @@ public final class StoneEntries {
     private static final int SOUL_STONE = 4;
 
     private StoneEntries() {
+    }
+
+    /**
+     * The entries built by {@link #build}, kept until something they are made from changes: his powers, which one each stone is on (our map), what is running, when the world
+     * was joined or the possession. Asking costs a few reads of his state (not one per power), so the wheel can ask every tick.
+     */
+    public static final class Cache {
+        private List<NodeInfo> nodes;
+        private Map<Integer, String> current;
+        private String holding;
+        private long receivedAt;
+        private long joinedAt;
+        private boolean soulSupported;
+        private int soulMode;
+        private List<WheelEntry> built = List.of();
+        private int builds;
+
+        public List<WheelEntry> get(StoneApi api, Map<Integer, String> now, long joined) {
+            List<NodeInfo> n = api.nodes();
+            String h = api.holding();
+            long r = api.receivedAt();
+            boolean s = api.soulSupported();
+            int m = api.soulMode();
+            if (nodes != null && joined == joinedAt && r == receivedAt && m == soulMode && s == soulSupported && h.equals(holding) && nodes.equals(n) && current.equals(now)) {
+                return built;
+            }
+            nodes = List.copyOf(n);
+            current = new HashMap<>(now);
+            holding = h;
+            receivedAt = r;
+            joinedAt = joined;
+            soulSupported = s;
+            soulMode = m;
+            built = build(api, now, joined);
+            builds++;
+            return built;
+        }
+
+        public void clear() {
+            nodes = null;
+        }
+
+        /** How many times the entries were built, which is what a test counts. */
+        public int builds() {
+            return builds;
+        }
     }
 
     public static ResourceLocation stoneId(String key) {

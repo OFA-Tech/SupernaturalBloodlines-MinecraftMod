@@ -74,6 +74,7 @@ public final class WheelInput {
 
     public static void resourcesReloaded() {
         WheelDescriptions.reload();
+        net.ofatech.supernaturalbloodlines.parts.hud.client.wheel.infinity.InfinityCompat.reload();
         WheelStrings.clear();
         net.ofatech.supernaturalbloodlines.core.wheel.WheelPanelText.clear();
     }

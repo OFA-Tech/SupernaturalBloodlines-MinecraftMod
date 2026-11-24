@@ -1,6 +1,7 @@
 package net.ofatech.supernaturalbloodlines.parts.hud.client.wheel;
 
 import com.mojang.math.Axis;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -15,6 +16,7 @@ import net.ofatech.supernaturalbloodlines.core.wheel.Annulus.Span;
 import net.ofatech.supernaturalbloodlines.core.wheel.LockReason;
 import net.ofatech.supernaturalbloodlines.core.wheel.PowerSource;
 import net.ofatech.supernaturalbloodlines.core.wheel.SlotPicker;
+import net.ofatech.supernaturalbloodlines.core.wheel.StoneMenus;
 import net.ofatech.supernaturalbloodlines.core.wheel.WheelLayout;
 import net.ofatech.supernaturalbloodlines.core.wheel.WheelLayout.Cell;
 import net.ofatech.supernaturalbloodlines.core.wheel.WheelLayout.Layout;
@@ -22,6 +24,7 @@ import net.ofatech.supernaturalbloodlines.core.wheel.WheelLayout.Ring;
 import net.ofatech.supernaturalbloodlines.core.wheel.WheelModel;
 import net.ofatech.supernaturalbloodlines.core.wheel.WheelPalette;
 import net.ofatech.supernaturalbloodlines.parts.hud.client.HudKeys;
+import net.ofatech.supernaturalbloodlines.parts.hud.client.wheel.infinity.InfinityCompat;
 import net.ofatech.supernaturalbloodlines.parts.hud.net.WheelEntry;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.Icons;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.KitSprites;
@@ -299,13 +302,15 @@ final class WheelRenderer {
         if (e == null) {
             String head = source == null ? text("hint.open") : modName(source);
             g.drawString(font, WheelStrings.bold(cut(font, head, w)), x, y, pal.ink(), false);
-            helpLines(g, font, f, x, rows - 4 * 10);
+            helpLines(g, font, f, x, rows - 4 * 10, helpText(f));
             return;
         }
+        HelpText help = helpText(f);
+        int hl = help.keys().size();
         boolean modes = e.modeNames().size() > 1;
         String where = modName(source) + (e.group() == net.ofatech.supernaturalbloodlines.core.wheel.PowerGroup.MAIN || f.model().groups(source).isEmpty() ? ""
                 : " · " + text("group." + e.group().name().toLowerCase(Locale.ROOT)));
-        WheelPanelText.Lines t = WheelPanelText.lines(font, font::width, w, p.y() + 49, rows - 6 * 10, WheelStrings.of(e.name()), where, WheelStrings.of(e.coverNote()), text("kind." + e.kind().name().toLowerCase(Locale.ROOT)),
+        WheelPanelText.Lines t = WheelPanelText.lines(font, font::width, w, p.y() + 49, rows - (hl + 2) * 10, WheelStrings.of(e.name()), where, WheelStrings.of(e.coverNote()), text("kind." + e.kind().name().toLowerCase(Locale.ROOT)),
                 WheelDescriptions.of(e), modes ? text("panel.mode", e.state().mode() + 1, e.modeNames().size(), WheelStrings.of(e.modeName())) : "",
                 e.state().locked() ? reason(e.state().lock()) : "");
         g.drawString(font, WheelStrings.bold(t.name()), x, y, pal.ink(), false);
@@ -343,19 +348,21 @@ final class WheelRenderer {
             }
         }
         // the rows: where it is slotted and how well it is known
-        g.drawString(font, text("panel.slot"), x, rows - 6 * 10, pal.muted(), false);
-        g.drawString(font, slotText(e, f), x + 46, rows - 6 * 10, pal.ink(), false);
-        g.drawString(font, text("panel.mastery"), x, rows - 5 * 10, pal.muted(), false);
+        int slotY = rows - (hl + 2) * 10;
+        int masteryY = rows - (hl + 1) * 10;
+        g.drawString(font, text("panel.slot"), x, slotY, pal.muted(), false);
+        g.drawString(font, slotText(e, f), x + 46, slotY, pal.ink(), false);
+        g.drawString(font, text("panel.mastery"), x, masteryY, pal.muted(), false);
         if (e.mastery() >= 0f) {
             int bw = w - 46 - 28;
-            UiKit.draw(g, f.kit(), Part.MASTERY_TRACK, x + 46, rows - 5 * 10 + 1, bw, 6);
-            UiKit.draw(g, f.kit(), e.mastery() >= 1f ? Part.MASTERY_FILL_MASTERED : Part.MASTERY_FILL, x + 46, rows - 5 * 10 + 1, Math.max(1, Math.round(bw * Math.min(1f, e.mastery()))), 6);
+            UiKit.draw(g, f.kit(), Part.MASTERY_TRACK, x + 46, masteryY + 1, bw, 6);
+            UiKit.draw(g, f.kit(), e.mastery() >= 1f ? Part.MASTERY_FILL_MASTERED : Part.MASTERY_FILL, x + 46, masteryY + 1, Math.max(1, Math.round(bw * Math.min(1f, e.mastery()))), 6);
             String pct = Math.round(Math.min(1f, e.mastery()) * 100) + "%";
-            g.drawString(font, pct, x + w - w(font, pct), rows - 5 * 10, pal.ink(), false);
+            g.drawString(font, pct, x + w - w(font, pct), masteryY, pal.ink(), false);
         } else {
-            g.drawString(font, "-", x + 46, rows - 5 * 10, pal.ink(), false);
+            g.drawString(font, "-", x + 46, masteryY, pal.ink(), false);
         }
-        helpLines(g, font, f, x, rows - 4 * 10);
+        helpLines(g, font, f, x, rows - hl * 10, help);
     }
     private static String slotText(WheelEntry e, Frame f) {
         String s = f.slotOf().apply(e);
@@ -366,13 +373,29 @@ final class WheelRenderer {
         return text("lock." + r.name().toLowerCase(Locale.ROOT));
     }
 
-    private static void helpLines(GuiGraphics g, Font font, Frame f, int x, int y) {
+    /** The help rows: click, right click, scroll or Alt, then the closing row, or a stone power's own rows (its second option and menus, with their keys) in its place. */
+    private record HelpText(List<String> keys, List<String> whats) {
+    }
+
+    private static HelpText helpText(Frame f) {
         boolean paged = f.page().size() > 0 && f.layout().pageCount() > 1;
-        // a stone power with a second option takes the closing row's place (G and Esc are on the G hint already)
-        boolean dual = f.power() != null && net.ofatech.supernaturalbloodlines.parts.hud.client.wheel.infinity.InfinityCompat.isDual(f.power());
-        List<WheelPanelText.HelpRow> rows = WheelPanelText.help(font, s -> font.width(WheelStrings.bold(s)),
-                List.of(text("help.click"), text("help.right"), paged ? text("help.scroll") : text("help.alt"), dual ? text("help.dual_key") : text("help.close_keys")),
-                List.of(text("help.click_use"), text("help.right_slot"), paged ? text("help.scroll_page") : text("help.alt_mode"), dual ? text("help.dual_what") : text("help.close")));
+        List<StoneMenus.Help> extra = f.power() == null ? List.of() : InfinityCompat.help(f.power());
+        List<String> keys = new ArrayList<>(List.of(text("help.click"), text("help.right"), paged ? text("help.scroll") : text("help.alt")));
+        List<String> whats = new ArrayList<>(List.of(text("help." + (f.power() == null ? "click_use" : InfinityCompat.clickWhat(f.power()))), text("help.right_slot"),
+                paged ? text("help.scroll_page") : text("help.alt_mode")));
+        if (extra.isEmpty()) {
+            keys.add(text("help.close_keys"));
+            whats.add(text("help.close"));
+        }
+        for (StoneMenus.Help h : extra) {
+            keys.add(text("help." + h.key()));
+            whats.add(text("help." + h.what()));
+        }
+        return new HelpText(keys, whats);
+    }
+
+    private static void helpLines(GuiGraphics g, Font font, Frame f, int x, int y, HelpText help) {
+        List<WheelPanelText.HelpRow> rows = WheelPanelText.help(font, s -> font.width(WheelStrings.bold(s)), help.keys(), help.whats());
         for (WheelPanelText.HelpRow row : rows) {
             g.drawString(font, WheelStrings.bold(row.key()), x, y, f.pal().ink(), false);
             g.drawString(font, row.what(), x + row.whatX(), y, f.pal().muted(), false);

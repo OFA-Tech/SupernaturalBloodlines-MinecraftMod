@@ -7,6 +7,7 @@ import net.neoforged.fml.ModList;
 import net.ofatech.supernaturalbloodlines.SupernaturalBloodlines;
 import net.ofatech.supernaturalbloodlines.core.wheel.PowerRef;
 import net.ofatech.supernaturalbloodlines.core.wheel.PowerSource;
+import net.ofatech.supernaturalbloodlines.core.wheel.StoneMenus;
 import net.ofatech.supernaturalbloodlines.core.wheel.StoneRules;
 import net.ofatech.supernaturalbloodlines.core.wheel.StoneRules.State;
 import net.ofatech.supernaturalbloodlines.parts.hud.client.HudClientConfig;
@@ -24,9 +25,19 @@ public final class InfinityCompat {
             () -> ReflectiveStoneApi.create(Class::forName), m -> SupernaturalBloodlines.LOGGER.warn(m));
     /** The power each stone was last on (stone ordinal to node id); his server takes the node explicitly, so the choice lives only here. */
     private static final Map<Integer, String> CURRENT = new HashMap<>();
+    private static final StoneEntries.Cache ENTRIES = new StoneEntries.Cache();
     private static long joinedAt;
 
     private InfinityCompat() {
+    }
+
+    /** Resources or the language were reloaded: the cached names and descriptions of his powers are read again. */
+    public static void reload() {
+        StoneApi api = PROBE.api();
+        if (api != null) {
+            api.reload();
+        }
+        ENTRIES.clear();
     }
 
     public static State state() {
@@ -51,7 +62,7 @@ public final class InfinityCompat {
 
     public static List<WheelEntry> entries() {
         StoneApi api = PROBE.api();
-        return api == null ? List.of() : StoneEntries.build(api, CURRENT, joinedAt);
+        return api == null ? List.of() : ENTRIES.get(api, CURRENT, joinedAt);
     }
 
     /** Whether an entry is one of ours while the compat works, so the wheel routes it here and never to our own server (which refuses it). */
@@ -66,13 +77,6 @@ public final class InfinityCompat {
         return n == null ? "" : n.description();
     }
 
-    /** Whether the power an entry is on now has a second option (Shift-click, or Shift + Enter). */
-    public static boolean isDual(WheelEntry e) {
-        StoneApi api = PROBE.api();
-        NodeInfo n = api == null || !owns(e) ? null : StoneEntries.nodeOf(api, e);
-        return n != null && n.isDual();
-    }
-
     public static boolean hasLevels(WheelEntry e) {
         StoneApi api = PROBE.api();
         NodeInfo n = api == null ? null : StoneEntries.nodeOf(api, e);
@@ -82,6 +86,45 @@ public final class InfinityCompat {
     public static boolean use(WheelEntry e, boolean second) {
         StoneApi api = PROBE.api();
         return api != null && StoneActions.use(api, CURRENT, e, second);
+    }
+
+    /** What an input does on the power an entry is on: his menu, his second option sent at once, or {@code PLAIN} (the caller uses the power as usual). */
+    public static StoneMenus.Act route(WheelEntry e, StoneMenus.Input input) {
+        StoneApi api = PROBE.api();
+        return api == null || !owns(e) ? (input == StoneMenus.Input.MENU ? StoneMenus.Act.NOTHING : StoneMenus.Act.PLAIN) : StoneActions.route(api, e, input);
+    }
+
+    public static boolean act(WheelEntry e, StoneMenus.Act act) {
+        StoneApi api = PROBE.api();
+        return api != null && StoneActions.act(api, CURRENT, e, act);
+    }
+
+    /** The extra side-panel rows of the power an entry is on: its second option and menu, with the keys that reach them. */
+    public static List<StoneMenus.Help> help(WheelEntry e) {
+        StoneApi api = PROBE.api();
+        return api == null || !owns(e) ? List.of() : StoneActions.help(api, e);
+    }
+
+    /** The lang suffix of what a plain click on the entry does: a power whose use is its menu says so. */
+    public static String clickWhat(WheelEntry e) {
+        StoneApi api = PROBE.api();
+        NodeInfo n = api == null || !owns(e) ? null : StoneEntries.nodeOf(api, e);
+        return n == null ? "click_use" : StoneMenus.clickWhat(n.menu(), n.menuOnLeft());
+    }
+
+    /** The node the entry is on now, remembered when an aim starts: that is the power the confirmed aim fires. */
+    @Nullable
+    public static String nodeId(WheelEntry e) {
+        StoneApi api = PROBE.api();
+        NodeInfo n = api == null ? null : StoneEntries.nodeOf(api, e);
+        return n == null ? null : n.node();
+    }
+
+    /** Fires the power that was aimed, not the one its stone is on by now. */
+    public static boolean useAimed(PowerRef ref, @Nullable String nodeId, boolean second) {
+        StoneApi api = PROBE.api();
+        String id = ref.id().getPath();
+        return api != null && id.endsWith("_stone") && StoneActions.useNode(api, CURRENT, id.substring(0, id.length() - "_stone".length()), nodeId, second);
     }
 
     public static void cycle(WheelEntry e, int delta) {
@@ -96,16 +139,5 @@ public final class InfinityCompat {
         if (api != null) {
             StoneActions.level(api, e, delta);
         }
-    }
-
-    /** For the aim: the entry of a stone looked up again by reference (its power may have changed while aiming). */
-    @Nullable
-    public static WheelEntry find(PowerRef ref) {
-        for (WheelEntry e : entries()) {
-            if (e.ref().equals(ref)) {
-                return e;
-            }
-        }
-        return null;
     }
 }

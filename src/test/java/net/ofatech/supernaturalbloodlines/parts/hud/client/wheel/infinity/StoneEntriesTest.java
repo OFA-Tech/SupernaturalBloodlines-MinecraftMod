@@ -13,6 +13,7 @@ import net.ofatech.supernaturalbloodlines.core.wheel.LockReason;
 import net.ofatech.supernaturalbloodlines.core.wheel.PowerGroup;
 import net.ofatech.supernaturalbloodlines.core.wheel.PowerKind;
 import net.ofatech.supernaturalbloodlines.core.wheel.PowerSource;
+import net.ofatech.supernaturalbloodlines.core.wheel.StoneMenus;
 import net.ofatech.supernaturalbloodlines.core.wheel.StoneRules;
 import net.ofatech.supernaturalbloodlines.parts.hud.net.WheelEntry;
 import org.junit.jupiter.api.Test;
@@ -85,7 +86,7 @@ class StoneEntriesTest {
     @Test
     void switchStaysOpenAndShowsToggled() {
         FakeStoneApi api = new FakeStoneApi().node(0, "sw", true, true, false, false, false, null);
-        api.nodes.set(0, new NodeInfo(0, "mind", "sw", "Name sw", "", true, true, 0, true, false, false, false, null));
+        api.nodes.set(0, new NodeInfo(0, "mind", "sw", "Name sw", "", true, true, 0, true, false, false, false, null, StoneMenus.Kind.NONE, false));
         WheelEntry mind = stone(build(api, Map.of()), "mind");
         assertEquals(PowerKind.TOGGLE, mind.kind());
         assertTrue(mind.state().on(), "his toggled flag is the glow");
