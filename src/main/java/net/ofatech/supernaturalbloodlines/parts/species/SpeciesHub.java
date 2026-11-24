@@ -48,6 +48,7 @@ public final class SpeciesHub {
         HubSocial.setMoonGift(p -> net.ofatech.supernaturalbloodlines.shared.werewolves.MoonControl.moonBound()
                 && net.ofatech.supernaturalbloodlines.parts.species.pack.PackMoonGift.has(p));
         HubRequests.set(SpeciesHub::requests);
+        net.ofatech.supernaturalbloodlines.shared.supernatural.HubGroups.set(net.ofatech.supernaturalbloodlines.parts.species.group.GroupViews::of);
     }
 
     static HubSocial.Social social(ServerPlayer p) {
@@ -64,7 +65,7 @@ public final class SpeciesHub {
         List<String> names = new ArrayList<>();
         List<Boolean> hidden = new ArrayList<>();
         ancestors(server, sirelines, sireId, names, hidden);
-        List<HubSocial.Member> pack = werewolves() ? pack(p, server) : List.of();
+        List<HubSocial.Member> pack = pack(p, server);
         List<HubSocial.Person> people = new ArrayList<>();
         sire.filter(n -> !n.isEmpty() && sireId != null).ifPresent(n -> people.add(new HubSocial.Person(n, sireId)));
         sirelines.childrenOf(p.getUUID()).forEach(c -> people.add(new HubSocial.Person(c.name(), c.id())));
@@ -84,9 +85,9 @@ public final class SpeciesHub {
         long now = p.serverLevel().getGameTime();
         List<HubRequests.Request> out = new ArrayList<>();
         tokens(out, HubRequests.Kind.SIRE_CALL, SireCall.requests(), p, server, now);
+        tokens(out, HubRequests.Kind.PACK_INVITE, PackCommand.requests(), p, server, now);
+        tokens(out, HubRequests.Kind.ALLY_INVITE, PackCommand.allyRequests(), p, server, now);
         if (werewolves()) {
-            tokens(out, HubRequests.Kind.PACK_INVITE, PackCommand.requests(), p, server, now);
-            tokens(out, HubRequests.Kind.ALLY_INVITE, PackCommand.allyRequests(), p, server, now);
             PackDuel.board().asked(p.getUUID(), now).ifPresent(d -> {
                 String name = PackAccess.nameOf(server, d.challenger());
                 out.add(new HubRequests.Request(HubRequests.Kind.CHALLENGE, d.challenger(), name == null ? "" : name, "", left(d.expires(), now)));
@@ -173,7 +174,7 @@ public final class SpeciesHub {
         return o.has(key) && o.get(key).isJsonPrimitive() ? o.get(key).getAsString() : "";
     }
 
-    private static List<HubSocial.Member> pack(ServerPlayer p, MinecraftServer server) {
+    public static List<HubSocial.Member> pack(ServerPlayer p, MinecraftServer server) {
         PackIndex index = PackIndex.get(p.serverLevel());
         // a member has a leader, an emissary serves one, and anyone else is the leader of their own pack (if it has anyone)
         UUID alpha = index.alphaOf(p.getUUID()).or(() -> index.emissaryAlpha(p.getUUID())).orElse(p.getUUID());

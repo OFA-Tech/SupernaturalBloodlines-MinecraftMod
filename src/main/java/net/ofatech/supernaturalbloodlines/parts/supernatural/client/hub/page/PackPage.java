@@ -9,6 +9,7 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
 import net.ofatech.supernaturalbloodlines.core.bloodline.WolfState;
+import net.ofatech.supernaturalbloodlines.core.group.GroupView;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubPageView;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubScreen;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
@@ -29,25 +30,29 @@ public final class PackPage implements HubPageView {
     public void render(HubScreen.Frame f) {
         HubTheme t = f.theme();
         WolfState wolf = f.view.bloodline().wolf();
-        List<HubSocial.Member> pack = f.view.snapshot().pack();
+        GroupView gv = GroupLabels.view();
+        boolean grp = GroupLabels.active(gv);
+        List<HubSocial.Member> pack = grp ? GroupLabels.members(gv) : f.view.snapshot().pack();
         Rect r = f.region(HubLayout.MAIN);
         int y = f.begin(HubLayout.MAIN);
-        y = PageKit.title(f, Component.translatable(KEY + "title"), r.x(), y, r.w(), t.accent());
+        y = PageKit.title(f, GroupLabels.t(gv, KEY + "title", "title"), r.x(), y, r.w(), t.accent());
         t.drawRule(f.g, r.x(), y + 2, r.w());
-        y = PageKit.wrapped(f, Component.translatable(KEY + "rank", BookPackPage.rankLabel(f, wolf)),
-                r.x(), y + 6, r.w(), t.ink()) + 3;
-        if (BookPackPage.weakLine(wolf).isPresent()) {
+        if (!GroupLabels.neutral(gv)) {
+            y = PageKit.wrapped(f, Component.translatable(KEY + "rank", grp ? GroupLabels.myRank(gv) : BookPackPage.rankLabel(f, wolf)),
+                    r.x(), y + 6, r.w(), t.ink()) + 3;
+        }
+        if (!grp && BookPackPage.weakLine(wolf).isPresent()) {
             y = PageKit.wrapped(f, BookPackPage.weakLine(wolf).get(), r.x(), y, r.w(), t.muted()) + 3;
         }
-        if (BookPackPage.perkLine(f).isPresent()) {
+        if (!grp && BookPackPage.perkLine(f).isPresent()) {
             y = PageKit.wrapped(f, BookPackPage.perkLine(f).get(), r.x(), y, r.w(), BookPackPage.perkColor(t)) + 3;
         }
         y = PageKit.wrapped(f, Component.translatable(KEY + "members").withStyle(ChatFormatting.BOLD), r.x(), y, r.w(), t.accent());
         if (pack.isEmpty()) {
-            y = PageKit.wrapped(f, Component.translatable(KEY + "alone"), r.x() + 4, y, r.w() - 4, t.muted());
+            y = PageKit.wrapped(f, grp ? GroupLabels.alone(gv) : Component.translatable(KEY + "alone"), r.x() + 4, y, r.w() - 4, t.muted());
         }
         for (HubSocial.Member m : pack) {
-            Component rank = Component.translatable(KEY + "member." + m.base()).copy().append(m.sparks() > 1 ? " \u00d7" + m.sparks() : "");
+            Component rank = (grp ? GroupLabels.memberRank(gv, m.base()) : Component.translatable(KEY + "member." + m.base())).copy().append(m.sparks() > 1 ? " \u00d7" + m.sparks() : "");
             int rw = f.font().width(rank);
             f.g.fill(r.x() + 1, y + 2, r.x() + 5, y + 6, m.online() ? 0xFF2f6e4a : 0xFF9a8566);
             String name = LabelFit.cut(m.name(), r.w() - 10 - rw - 4, f.font()::width);
@@ -61,30 +66,34 @@ public final class PackPage implements HubPageView {
             }
             y += PageKit.LINE + 1;
         }
-        y = wolves.render(f, r, y + 2, wolf.lineage() != WolfState.Lineage.NONE, true);
+        if (!grp) {
+            y = wolves.render(f, r, y + 2, wolf.lineage() != WolfState.Lineage.NONE, true);
+        }
         f.end(y);
 
         Rect s = f.region(HubLayout.SIDE);
         int sy = f.begin(HubLayout.SIDE);
         sy = PageKit.title(f, Component.translatable(KEY + "actions"), s.x(), sy, s.w(), t.accent());
         t.drawRule(f.g, s.x(), sy + 2, s.w());
-        sy = SkillsPage.stamp(f, s, sy + 2, "pack:accept", Component.translatable(KEY + "accept"), () -> command("pack accept"));
-        if (!pack.isEmpty()) {
+        String root = GroupLabels.root(gv);
+        sy = SkillsPage.stamp(f, s, sy + 2, "pack:accept", GroupLabels.t(gv, KEY + "accept", "accept"), () -> command(root + " accept"));
+        boolean leads = !pack.isEmpty() && pack.get(0).name().equals(f.view.player().getName().getString());
+        if (GroupLabels.mayLeave(pack, f.view.player().getName().getString())) {
             // leaving takes two presses within 5 seconds: the first only asks
             long now = f.view.player().level().getGameTime();
             boolean asking = now < confirmUntil;
-            sy = SkillsPage.stamp(f, s, sy + 2, "pack:leave", Component.translatable(KEY + (asking ? "leave_confirm" : "leave")), () -> {
+            String leaveName = asking ? "leave_confirm" : "leave";
+            sy = SkillsPage.stamp(f, s, sy + 2, "pack:leave", GroupLabels.t(gv, KEY + leaveName, leaveName), () -> {
                 if (asking) {
                     confirmUntil = 0;
-                    command("pack leave");
+                    command(root + " leave");
                 } else {
                     confirmUntil = now + CONFIRM_TICKS;
                 }
             });
         }
         boolean alpha = wolf.rank() == WolfState.Rank.ALPHA || wolf.rank() == WolfState.Rank.TRUE_ALPHA;
-        boolean leads = !pack.isEmpty() && pack.get(0).name().equals(f.view.player().getName().getString());
-        sy = PackInvite.render(f, s, sy + 6, leads || (pack.isEmpty() && alpha));
+        sy = PackInvite.render(f, s, sy + 6, grp ? gv.viewerRank() == GroupView.LEADER : leads || (pack.isEmpty() && alpha));
         f.end(sy);
     }
 
