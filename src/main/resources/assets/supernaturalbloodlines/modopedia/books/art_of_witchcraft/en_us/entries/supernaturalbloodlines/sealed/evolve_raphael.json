@@ -1,5 +1,5 @@
 {
-  "title": "??? · witch types (II)",
+  "title": "??? · Finn's Notes (II)",
   "icon": {
     "count": 1,
     "id": "minecraft:honeycomb"
@@ -11,7 +11,7 @@
       "components": [
         {
           "template": "modopedia:page/headered_text",
-          "text": "Unlocked by becoming a witch, a siphoner or a tribrid.\n\nThe seal is unbroken.",
+          "text": "Unlocked by reading Finn's Notes, a Torn Page Finn leaves behind.\n\nThe seal is unbroken.",
           "header": "???"
         }
       ]
