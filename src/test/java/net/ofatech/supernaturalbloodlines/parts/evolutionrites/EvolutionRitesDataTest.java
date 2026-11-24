@@ -61,8 +61,9 @@ class EvolutionRitesDataTest {
     }
 
     @Test
-    void thereAreSevenRites() throws IOException {
-        assertEquals(List.of("evolve_deus_sanguis", "evolve_great_sage", "evolve_raphael", "mastery_common", "mastery_extra", "mastery_ultimate", "mastery_unique"), mine());
+    void thereAreEightRites() throws IOException {
+        assertEquals(List.of("evolve_blood_sovereign", "evolve_deus_sanguis", "evolve_great_sage", "evolve_raphael", "mastery_common", "mastery_extra", "mastery_ultimate",
+                "mastery_unique"), mine());
     }
 
     @Test
@@ -113,8 +114,10 @@ class EvolutionRitesDataTest {
             Set<String> needed = new HashSet<>();
             recipe.needs().forEach(n -> needed.add(n.skill()));
             assertTrue(needed.containsAll(recipe.consumes()), name + " consumes a skill it does not require: " + recipe.consumes());
-            // E15: a sacrifice: an EP cost, or the addon's own tribute. Raphael's is the addon's own: Great Sage's evolution forgets Great Sage and Degenerate.
-            assertTrue(recipe.epCost() > 0 || recipe.tier() == Tier.ULTIMATE && !recipe.consumes().isEmpty(), name + " has no sacrifice (E15)");
+            // E15: a sacrifice: an EP cost, or the addon's own tribute: among the circle's items (Ascension's Ultimate Catalyst), or the skills an Ultimate
+            // consumes (Raphael's: Great Sage's evolution forgets Great Sage and Degenerate)
+            assertTrue(recipe.epCost() > 0 || hasTribute(read(ROOT.resolve(RITES).resolve(name + ".json")), recipe)
+                    || recipe.tier() == Tier.ULTIMATE && !recipe.consumes().isEmpty(), name + " has no sacrifice (E15)");
             assertTrue(recipe.tier() != Tier.COMMON, name);
         }
     }
@@ -140,6 +143,57 @@ class EvolutionRitesDataTest {
         assertEquals("ascension", recipe.requiresMod());
         assertTrue(recipe.probe().startsWith("unique.road:com.simplygray.tensuraaddon.AddonSkillConfig#DEUS_SANGUIS_ENABLED"));
         assertEquals(Set.of(net.ofatech.supernaturalbloodlines.core.rite.RiteKind.VAMPIRE), recipe.subjectKinds());
+    }
+
+    /** The addon's own tribute: one of the rite's items is of the recipe's mod and is a catalyst. */
+    private static boolean hasTribute(JsonObject rite, EvolutionRecipe recipe) {
+        for (JsonElement e : rite.getAsJsonArray("items")) {
+            String id = e.getAsJsonObject().get("id").getAsString();
+            if (id.startsWith(recipe.requiresMod() + ":") && id.endsWith("_catalyst")) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    @Test
+    void theBloodSovereignRecipeIsWhatTheSpecSays() throws IOException {
+        JsonObject rite = read(ROOT.resolve(RITES).resolve("evolve_blood_sovereign.json"));
+        EvolutionRecipe recipe = EvolutionRecipeCodec.RECIPE.codec().parse(JsonOps.INSTANCE, rite.getAsJsonObject("factory")).getOrThrow();
+        assertEquals("blood_sovereign", recipe.id());
+        assertEquals(Tier.ULTIMATE, recipe.tier(), "an Ultimate: the lunar eclipse");
+        assertEquals("ascension:blood_sovereign", recipe.grants());
+        assertEquals(net.ofatech.supernaturalbloodlines.core.evolution.GrantForm.PERMANENT, recipe.grantForm(), "as the altar learns it");
+        assertEquals(List.of("ascension:deus_sanguis"), recipe.consumes(), "the altar forgets the Unique, and only that one");
+        assertEquals(1, recipe.needs().size());
+        assertEquals("ascension:deus_sanguis", recipe.needs().get(0).skill());
+        assertTrue(recipe.needs().get(0).mastered(), "the altar asks for the Unique mastered");
+        assertEquals("ascension.awakening", recipe.probe());
+        assertEquals("ascension", recipe.requiresMod());
+        assertTrue(recipe.subjectKinds().isEmpty(), "the road asks for no race of ours (D5)");
+        assertEquals(0.0, recipe.epCost(), "the tribute is the catalyst, not EP (D1)");
+        assertTrue(hasTribute(rite, recipe), "the catalyst is among the circle's items");
+        assertTrue(conditions(rite, "neoforge:mod_loaded", "modid").contains("ascension"));
+        assertEquals(20000, rite.get("power").getAsInt());
+    }
+
+    /** E7: an Ultimate evolution is sealed until the player has read lore; every other evolution is known by kind. */
+    @Test
+    void anUltimateEvolutionIsLoreGatedAndTheOthersAreKindGated() throws IOException {
+        for (String name : mine()) {
+            JsonObject factory = read(ROOT.resolve(RITES).resolve(name + ".json")).getAsJsonObject("factory");
+            if (!factory.get("type").getAsString().equals("supernaturalbloodlines:evolution")) {
+                continue;
+            }
+            Tier tier = EvolutionRecipeCodec.RECIPE.codec().parse(JsonOps.INSTANCE, factory).getOrThrow().tier();
+            RiteUnlockTable.Gate gate = RiteUnlockTable.GATED.get(name);
+            if (tier == Tier.ULTIMATE) {
+                assertTrue(gate.kinds().isEmpty() && !gate.lore().isEmpty(), name + ": an Ultimate rite unlocks only by lore (E7)");
+            } else {
+                assertFalse(gate.kinds().isEmpty(), name + ": a Unique rite unlocks by kind (E7)");
+            }
+        }
+        assertEquals(java.util.Set.of(RiteUnlockTable.FINN), RiteUnlockTable.GATED.get("evolve_blood_sovereign").lore(), "Finn's Notes, the rites of the eclipse (Q4)");
     }
 
     @Test
@@ -183,7 +237,8 @@ class EvolutionRitesDataTest {
     void everyRiteHasATableRowAndBothAdvancementsThatCarryItsConditions() throws IOException {
         for (String name : mine()) {
             assertTrue(RiteUnlockTable.isGated(name), name + " is not in RiteUnlockTable.GATED: D5 says these start sealed in the book");
-            assertFalse(RiteUnlockTable.GATED.get(name).kinds().isEmpty(), name + ": unlocked by kind (the owner's rule for these rites)");
+            RiteUnlockTable.Gate gate = RiteUnlockTable.GATED.get(name);
+            assertFalse(gate.kinds().isEmpty() && gate.lore().isEmpty(), name + ": unlocked by kind (the owner's rule), or by lore for an Ultimate evolution (E7)");
             JsonObject rite = read(ROOT.resolve(RITES).resolve(name + ".json"));
             for (String kind : List.of("known", "sealed")) {
                 JsonObject adv = read(ROOT.resolve(ADV).resolve(kind).resolve(name + ".json"));

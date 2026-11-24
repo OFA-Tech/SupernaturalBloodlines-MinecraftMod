@@ -111,8 +111,9 @@ public final class EvolutionUnlockGameTests {
             GreatSageProbe.roadHook = () -> true;
             RiteUnlocks.reconcile(witch);
             helper.assertTrue(RiteUnlocks.present(witch, "evolve_raphael"), "an open road is not present");
-            helper.assertTrue(RiteUnlocks.done(witch, RiteAdvancements.known("evolve_raphael")) && !RiteUnlocks.done(witch, RiteAdvancements.sealed("evolve_raphael")),
-                    "a witch does not know the rite when the road opens");
+            // an Ultimate is lore-gated (E7): the open road shows the sealed entry until Finn's Notes teach it
+            helper.assertTrue(!RiteUnlocks.done(witch, RiteAdvancements.known("evolve_raphael")) && RiteUnlocks.done(witch, RiteAdvancements.sealed("evolve_raphael")),
+                    "the open road does not show the sealed entry, or a witch knows the rite without Finn's Notes");
         } finally {
             GreatSageProbe.roadHook = null;
             BloodlineAccess.set(witch, BloodlineState.NONE);

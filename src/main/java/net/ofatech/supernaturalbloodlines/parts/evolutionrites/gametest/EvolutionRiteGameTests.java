@@ -510,4 +510,117 @@ public final class EvolutionRiteGameTests {
         }
         helper.succeed();
     }
+
+    /** A fixture probe: a world switch that can be off, and a record of what the rite told it. */
+    private static final class Switch implements net.ofatech.supernaturalbloodlines.parts.evolutionrites.probe.AddonProbe {
+        boolean on = true;
+        int granted;
+
+        @Override
+        public java.util.Optional<String> missingHook() {
+            return java.util.Optional.empty();
+        }
+
+        @Override
+        public boolean roadOpen() {
+            return true;
+        }
+
+        @Override
+        public boolean enabledIn(net.minecraft.server.level.ServerLevel level) {
+            return on;
+        }
+
+        @Override
+        public boolean satisfied(net.minecraft.server.level.ServerPlayer target, EvolutionRecipe recipe) {
+            return true;
+        }
+
+        @Override
+        public void onGranted(net.minecraft.server.level.ServerPlayer target, EvolutionRecipe recipe) {
+            granted++;
+        }
+    }
+
+    private static EvolutionRecipe permanent() {
+        return new EvolutionRecipe("fixture", Tier.UNIQUE, GREAT_SAGE, GrantForm.PERMANENT, List.of(), List.of(), "tensura", "own.sage_great_sage", Set.of(), 1000);
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aPermanentGrantIsAPermanentSkill(GameTestHelper helper) {
+        if (closedByAnAddon(helper)) {
+            helper.succeed();
+            return;
+        }
+        RecordingPlayer target = onTheCircle(helper, true, EP);
+        try {
+            ManasSkill greatSage = SkillAPI.getSkillRegistry().get(ResourceLocation.parse(GREAT_SAGE));
+            var result = EvolutionRiteFactory.grant(target, permanent(), greatSage);
+            helper.assertTrue(result == EvolutionRiteFactory.Grant.DONE, "the result was " + result);
+            var inst = EvoSkills.held(target, greatSage).orElseThrow();
+            helper.assertTrue(!inst.isTemporarySkill() && inst.getRemoveTime() == -1, "the skill is temporary: remove time " + inst.getRemoveTime());
+        } finally {
+            clean(helper, target);
+        }
+        helper.succeed();
+    }
+
+    /** A switch of the addon that belongs to the world closes the rite to the performer with the plain line, and takes nothing (E10 d). */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aWorldSwitchOffClosesTheRiteForThePerformer(GameTestHelper helper) {
+        if (noRite(helper)) {
+            return;
+        }
+        RecordingPlayer caster = performer(helper, Species.WITCH);
+        RecordingPlayer target = onTheCircle(helper, true, EP);
+        Switch fixture = new Switch();
+        fixture.on = false;
+        try {
+            net.ofatech.supernaturalbloodlines.parts.evolutionrites.probe.Probes.overrides = java.util.Map.of(net.ofatech.supernaturalbloodlines.parts.evolutionrites.probe.Probes.OWN_SAGE_GREAT_SAGE, fixture);
+            give(target, SAGE, 500);
+            clearDropped(helper);
+            atNight(helper, true, () -> start(helper, RITE, caster, items()));
+            helper.assertTrue(!has(target, GREAT_SAGE), "a closed road was walked");
+            helper.assertTrue(caster.received("supernaturalbloodlines.refusal.evolution.closed"), "the performer heard " + caster.heard());
+            helper.assertTrue(target.heard().isEmpty() || !target.received(NOT_READY), "the target was told it is not ready: the switch is the world's, not theirs: " + target.heard());
+            helper.assertTrue(EnergyHelper.getBaseMaxEP(target) == EP && fixture.granted == 0, "something was taken");
+            helper.assertTrue(dropped(helper, "minecraft:ender_eye") == 2, "the ingredients were not given back");
+            fixture.on = true;
+            clearDropped(helper);
+            atNight(helper, true, () -> start(helper, RITE, caster, items()));
+            helper.assertTrue(has(target, GREAT_SAGE) || closedByAnAddon(helper), "with the switch on it works again: " + caster.heard() + target.heard());
+        } finally {
+            net.ofatech.supernaturalbloodlines.parts.evolutionrites.probe.Probes.overrides = java.util.Map.of();
+            clean(helper, caster, target);
+        }
+        helper.succeed();
+    }
+
+    /** What the addon's own road writes is written once, after a confirmed learn, and never for a refused or a vetoed one. */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void theAddonsOwnMarkIsWrittenOnlyAfterAConfirmedLearn(GameTestHelper helper) {
+        RecordingPlayer target = onTheCircle(helper, true, EP);
+        ManasSkill greatSage = SkillAPI.getSkillRegistry().get(ResourceLocation.parse(GREAT_SAGE));
+        Switch fixture = new Switch();
+        var veto = (io.github.manasmods.manascore.skill.api.SkillEvents.UnlockSkillEvent) (inst, entity, msg) ->
+                inst.getSkillId().equals(greatSage.getRegistryName()) ? dev.architectury.event.EventResult.interruptFalse() : dev.architectury.event.EventResult.pass();
+        try {
+            io.github.manasmods.manascore.skill.api.SkillEvents.UNLOCK_SKILL.register(veto);
+            var vetoed = EvolutionRiteFactory.grant(target, permanent(), greatSage, java.util.Optional.of(fixture));
+            helper.assertTrue(vetoed == EvolutionRiteFactory.Grant.VETOED && fixture.granted == 0, "a vetoed learn wrote the mark: " + vetoed + ", " + fixture.granted);
+            io.github.manasmods.manascore.skill.api.SkillEvents.UNLOCK_SKILL.unregister(veto);
+            give(target, GREAT_SAGE, -100);
+            var already = EvolutionRiteFactory.grant(target, permanent(), greatSage, java.util.Optional.of(fixture));
+            helper.assertTrue(already == EvolutionRiteFactory.Grant.ALREADY && fixture.granted == 0, "a refused grant wrote the mark: " + already);
+            EvoTestSupport.forgetAll(target);
+            if (!closedByAnAddon(helper)) {
+                var done = EvolutionRiteFactory.grant(target, permanent(), greatSage, java.util.Optional.of(fixture));
+                helper.assertTrue(done == EvolutionRiteFactory.Grant.DONE && fixture.granted == 1, "a confirmed learn wrote the mark " + fixture.granted + " times: " + done);
+            }
+        } finally {
+            io.github.manasmods.manascore.skill.api.SkillEvents.UNLOCK_SKILL.unregister(veto);
+            clean(helper, target);
+        }
+        helper.succeed();
+    }
 }

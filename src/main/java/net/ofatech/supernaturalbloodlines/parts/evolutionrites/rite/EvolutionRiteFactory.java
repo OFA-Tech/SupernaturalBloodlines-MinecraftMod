@@ -75,6 +75,11 @@ public record EvolutionRiteFactory(EvolutionRecipe recipe) implements RiteFactor
      * costs nothing. Tensura's own price for the skill is charged by the learn itself and is not the rite's EP cost.
      */
     public static Grant grant(ServerPlayer target, EvolutionRecipe recipe, ManasSkill skill) {
+        return grant(target, recipe, skill, Optional.empty());
+    }
+
+    /** As {@link #grant(ServerPlayer, EvolutionRecipe, ManasSkill)}; a confirmed grant then lets the addon's probe write what its own road writes ({@link AddonProbe#onGranted}). */
+    public static Grant grant(ServerPlayer target, EvolutionRecipe recipe, ManasSkill skill, Optional<AddonProbe> probe) {
         beforeGrant.run();
         if (EvoSkills.held(target, skill).isPresent()) {
             return Grant.ALREADY;
@@ -82,7 +87,9 @@ public record EvolutionRiteFactory(EvolutionRecipe recipe) implements RiteFactor
         // Tensura charges the skill's own price (from base Max EP) inside its unlock listener, which may run before another listener's veto: a refused learn gives it back
         double epBefore = EnergyHelper.getBaseMaxEP(target);
         var skills = SkillAPI.getSkillsFrom(target);
-        boolean learned = recipe.grantForm() == GrantForm.FREE ? EvoGrant.learnFree(target, skill) : SkillHelper.learnSkill(target, skill);
+        var removeTime = recipe.grantForm().removeTime();
+        boolean learned = recipe.grantForm() == GrantForm.FREE ? EvoGrant.learnFree(target, skill)
+                : removeTime.isPresent() ? SkillHelper.learnSkill(target, skill, removeTime.getAsInt()) : SkillHelper.learnSkill(target, skill);
         if (!learned) {
             EnergyHelper.setBaseMaxEP(target, epBefore);
             return Grant.VETOED;
@@ -102,6 +109,7 @@ public record EvolutionRiteFactory(EvolutionRecipe recipe) implements RiteFactor
         if (recipe.epCost() > 0) {
             EnergyHelper.setBaseMaxEP(target, EnergyHelper.getBaseMaxEP(target) - recipe.epCost());
         }
+        probe.ifPresent(p -> p.onGranted(target, recipe));
         return Grant.DONE;
     }
 
@@ -147,7 +155,7 @@ public record EvolutionRiteFactory(EvolutionRecipe recipe) implements RiteFactor
                 return refuse(caster, target, reason.get());
             }
 
-            switch (grant(target, recipe, grant.get())) {
+            switch (grant(target, recipe, grant.get(), probe)) {
                 case ALREADY -> {
                     return refuse(caster, target, EvolutionRules.Reason.ALREADY);
                 }
@@ -179,7 +187,8 @@ public record EvolutionRiteFactory(EvolutionRecipe recipe) implements RiteFactor
             // Tensura charges its own price for the skill from the same base Max EP inside the learn: both must fit, checked before anything is learned
             boolean enoughEp = grant.isEmpty() || MasteryRules.enoughEp(EnergyHelper.getBaseMaxEP(target) - priceOf(recipe, target, grant.get()), recipe.epCost());
             boolean retired = grant.isPresent() && EvoSkills.retired(level.getServer(), grant.get());
-            return new EvolutionRules.Facts(EvolutionRitesConfig.recipeOpen(recipe.id(), recipe.tier()), Recipes.modLoaded(recipe.requiresMod()), hooks, roadOpen,
+            boolean enabled = EvolutionRitesConfig.recipeOpen(recipe.id(), recipe.tier()) && probe.map(p -> p.enabledIn(level)).orElse(true);
+            return new EvolutionRules.Facts(enabled, Recipes.modLoaded(recipe.requiresMod()), hooks, roadOpen,
                     SeveranceRiteFactory.isWitchType(BloodlineAccess.get(caster).species()), fullMoon, LunarEclipse.active(level.getServer()), caster == target,
                     target.isShiftKeyDown(), holds, kindOk, needs, satisfied, owned, enoughEp, retired);
         }

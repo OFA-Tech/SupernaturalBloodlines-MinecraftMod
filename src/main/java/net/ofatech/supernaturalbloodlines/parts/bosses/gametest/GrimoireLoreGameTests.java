@@ -69,7 +69,8 @@ public final class GrimoireLoreGameTests {
             index.of(BossId.FINN).rewarded = true;
             index.of(BossId.ELIJAH).rewarded = false;
             int fresh = RiteLoreBackfill.backfill(p);
-            helper.assertTrue(fresh == 4, "Finn's reward teaches Esther's and Finn's four rites, not " + fresh + ": " + RiteUnlocks.known(p));
+            int expected = 4 + (RiteUnlocks.present(p, "evolve_blood_sovereign") ? 1 : 0); // Finn's Notes also teach the Blood Sovereign where Ascension is installed
+            helper.assertTrue(fresh == expected, "Finn's reward teaches Esther's and Finn's rites (" + expected + "), not " + fresh + ": " + RiteUnlocks.known(p));
             helper.assertTrue(RiteUnlocks.done(p, RiteAdvancements.known("rite_of_linking")) && RiteUnlocks.done(p, RiteAdvancements.known("rite_of_the_broken_line")), "Finn's lore is not known");
             helper.assertTrue(!RiteUnlocks.done(p, RiteAdvancements.known("rite_of_cloaking")) && !RiteUnlocks.done(p, RiteAdvancements.known("rite_of_the_cure")), "a boss that was not rewarded taught its lore");
             helper.assertTrue(p.count("supernaturalbloodlines.rites.learned") == 1, "four rites were not one line: " + p.heard());
