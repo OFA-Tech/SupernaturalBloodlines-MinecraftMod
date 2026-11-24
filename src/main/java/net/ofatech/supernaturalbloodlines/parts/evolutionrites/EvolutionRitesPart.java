@@ -37,6 +37,7 @@ public final class EvolutionRitesPart {
         NeoForge.EVENT_BUS.addListener(net.neoforged.bus.api.EventPriority.LOWEST, (RegisterCommandsEvent e) -> MasteryCommand.register(e.getDispatcher()));
         modBus.addListener((RegisterGameTestsEvent e) -> {
             e.register(EvolutionHookProbeGameTests.class);
+            e.register(net.ofatech.supernaturalbloodlines.parts.evolutionrites.gametest.FreeGrantGameTests.class);
             e.register(EvolutionRiteGameTests.class);
             e.register(EvolutionUnlockGameTests.class);
             e.register(MasteryGameTests.class);
