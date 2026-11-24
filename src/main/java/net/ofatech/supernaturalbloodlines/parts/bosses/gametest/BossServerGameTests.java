@@ -152,7 +152,7 @@ public final class BossServerGameTests {
             helper.assertTrue(BuiltInRegistries.ITEM.containsKey(ResourceLocation.fromNamespaceAndPath(NS, id)), "the item " + id + " is not registered");
         }
         helper.assertTrue(!loads("net.minecraft.client.Minecraft"), "client classes are present in this run, so it proves nothing");
-        for (String client : new String[] {"BeastRenderer", "SpiritRenderer", "HumanoidBossRenderer"}) {
+        for (String client : new String[] {"ShiftRenderer", "SpiritRenderer", "HumanoidBossRenderer", "MorphPlayerModel"}) {
             helper.assertTrue(!loads("net.ofatech.supernaturalbloodlines.parts.bosses.client." + client), "the renderer " + client + " loads on the server");
         }
         helper.assertTrue(loads("net.ofatech.supernaturalbloodlines.parts.bosses.director.BeastDirector") && loads("net.ofatech.supernaturalbloodlines.parts.bosses.entity.BeastEvents")

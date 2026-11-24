@@ -157,7 +157,9 @@ public final class BeastGameTests {
     private static BeastEntity beast(GameTestHelper helper, BossTestRig rig) {
         host(helper);
         helper.assertTrue(BeastDirector.change(helper.getLevel()), "the Host did not change");
-        return (BeastEntity) body(rig);
+        BeastEntity beast = (BeastEntity) body(rig);
+        beast.completeMorph(); // these tests are about the Beast, not its change (MorphGameTests is)
+        return beast;
     }
 
     private static void hit(LivingEntity e, DamageSource by, float amount) {
