@@ -265,6 +265,11 @@ public final class WardHomeGameTests {
         TalkingDuelist witch = beside(helper);
         try {
             species(witch, Species.WITCH);
+            BlockPos altar = RiteTestSupport.centre(helper);
+            ArtifactsConfig.override("ward_radius", 16);
+            ClaimGuard.install((level, pos, owner) -> (pos.getX() >> 4) == (altar.getX() >> 4));
+            refuse(helper, witch, "the neighbouring chunk is claimed");
+            helper.assertTrue(wardsOf(helper, witch) == 0, "ward overlapped a foreign claim");
             ClaimGuard.install((level, pos, owner) -> owner.equals(witch.getUUID()));
             RiteTestSupport.start(helper, "rite_of_the_ward", witch, wardItems());
             helper.assertTrue(wardsOf(helper, witch) == 1, "the owner's own claim refused her");

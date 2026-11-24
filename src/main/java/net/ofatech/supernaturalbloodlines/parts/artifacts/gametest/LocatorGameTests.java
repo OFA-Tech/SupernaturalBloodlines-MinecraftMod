@@ -170,8 +170,7 @@ public final class LocatorGameTests {
         TalkingDuelist other = person(helper, 20, -20);
         try {
             BloodlineAccess.set(witch, BloodlineState.NONE.toBuilder().species(Species.WITCH).build());
-            // the target is never looked at: a human, a vampire (a different species), somebody who is not here at all, and a villager's id all attune alike
-            for (UUID target : new UUID[] {human.getUUID(), UUID.randomUUID(), new UUID(0, 1)}) {
+            for (UUID target : new UUID[] {human.getUUID()}) {
                 RiteTestSupport.clearDropped(helper);
                 RiteTestSupport.start(helper, "rite_of_the_locator", witch, with(taglock(target)));
                 helper.assertTrue(compasses(helper).size() == 1, "a target of this kind was refused");
@@ -182,6 +181,10 @@ public final class LocatorGameTests {
             RiteTestSupport.start(helper, "rite_of_the_locator", witch, with(taglock(other.getUUID())));
             helper.assertTrue(compasses(helper).size() == 1, "an Original's taglock was refused");
             helper.assertTrue(witch.countOnActionBar(LocatorRiteFactory.WONT_ANSWER) == 0, "an Original's taglock got the refusal line");
+            RiteTestSupport.clearDropped(helper);
+            RiteTestSupport.start(helper, "rite_of_the_locator", witch, with(taglock(UUID.randomUUID())));
+            helper.assertTrue(compasses(helper).isEmpty(), "an absent target attuned the compass");
+            helper.assertTrue(witch.countOnActionBar("supernaturalbloodlines.gene.refusal.owner_away") == 1, "the caster was not told the owner is away");
 
             fails(helper, witch, "rite_of_the_locator_hybrid_blood", with(new ItemStack(RiteTestSupport.item(NS + ":hybrid_blood"))), "a bottle with no blood in it");
             net.ofatech.supernaturalbloodlines.parts.species.SpeciesConfig.overrideLocator("locator_enabled", false);

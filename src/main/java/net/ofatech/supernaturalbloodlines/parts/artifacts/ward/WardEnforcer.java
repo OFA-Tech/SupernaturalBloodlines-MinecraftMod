@@ -14,6 +14,7 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.entity.EntityLeaveLevelEvent;
+import net.neoforged.neoforge.event.entity.EntityTeleportEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
 import net.neoforged.neoforge.event.server.ServerStoppedEvent;
 import net.neoforged.neoforge.event.tick.EntityTickEvent;
@@ -42,6 +43,8 @@ public final class WardEnforcer {
     private static final Map<UUID, Long> TOLD = new ConcurrentHashMap<>();
     private static final Map<UUID, Long> ALERTED = new ConcurrentHashMap<>();
     private static final Map<String, Set<UUID>> TOLERATED = new ConcurrentHashMap<>();
+    private static final net.minecraft.tags.TagKey<net.minecraft.world.entity.EntityType<?>> BOSSES = net.minecraft.tags.TagKey.create(
+            net.minecraft.core.registries.Registries.ENTITY_TYPE, net.minecraft.resources.ResourceLocation.parse("supernaturalbloodlines:snap_immune"));
 
     private WardEnforcer() {
     }
@@ -63,6 +66,8 @@ public final class WardEnforcer {
             TOLD.remove(e.getEntity().getUUID());
         });
         NeoForge.EVENT_BUS.addListener((ServerStoppedEvent e) -> reset());
+        NeoForge.EVENT_BUS.addListener((EntityTeleportEvent.EnderPearl e) -> blockTeleport(e));
+        NeoForge.EVENT_BUS.addListener((EntityTeleportEvent.ChorusFruit e) -> blockTeleport(e));
     }
 
     @VisibleForTesting
@@ -84,7 +89,7 @@ public final class WardEnforcer {
 
     /** Whether {@code ward} turns this entity away. */
     static boolean blocks(WardTable.Ward ward, LivingEntity entity) {
-        if (!(entity instanceof Player) && !ArtifactsConfig.wardAffectsMobs()) {
+        if (entity.getType().is(BOSSES) || (!(entity instanceof Player) && !ArtifactsConfig.wardAffectsMobs())) {
             return false;
         }
         boolean spectator = entity instanceof Player p && (p.isCreative() || p.isSpectator());
@@ -155,6 +160,7 @@ public final class WardEnforcer {
     }
 
     private static void push(ServerLevel level, LivingEntity entity, WardTable.Ward ward) {
+        entity.stopRiding();
         WardRules.Box box = ward.box();
         WardRules.Dir way = WardRules.pushDirection(box, entity.getX(), entity.getZ());
         MountainAsh.pushBack(entity, new Vec3(way.x(), 0, way.z()));
@@ -191,22 +197,46 @@ public final class WardEnforcer {
         }
     }
 
-    /** The fallback of the push: to just outside the nearest face, at the first height with room, else where it stands. */
+    /** Try each face, then nearby columns; never move an entity without a safe landing. */
     private static void moveOut(ServerLevel level, LivingEntity entity, WardRules.Box box) {
-        WardRules.Point out = WardRules.exitPoint(box, entity.getX(), entity.getZ());
-        double dx = out.x() - entity.getX();
-        double dz = out.z() - entity.getZ();
-        for (int dy : new int[] {0, 1, -1, 2, -2, 3, -3}) {
-            AABB moved = entity.getBoundingBox().move(dx, dy, dz);
-            if (level.noCollision(entity, moved)) {
-                double y = entity.getY() + dy;
-                if (entity instanceof ServerPlayer player) {
-                    player.teleportTo(out.x(), y, out.z());
-                } else {
-                    entity.moveTo(out.x(), y, out.z(), entity.getYRot(), entity.getXRot());
+        entity.stopRiding();
+        int[] heights = WardRules.heightOffsets(WardRules.SAFE_DOWN, WardRules.SAFE_UP);
+        for (int margin = 1; margin <= 4; margin++) {
+            for (WardRules.Point out : WardRules.exitPoints(box, entity.getX(), entity.getZ(), margin)) {
+                for (int dy : heights) {
+                    double y = Math.floor(entity.getY()) + dy;
+                    if (!safeLanding(level, entity, out.x(), y, out.z())) continue;
+                    if (entity instanceof ServerPlayer player) {
+                        player.teleportTo(out.x(), y, out.z());
+                    } else {
+                        entity.moveTo(out.x(), y, out.z(), entity.getYRot(), entity.getXRot());
+                    }
+                    entity.fallDistance = 0;
+                    return;
                 }
-                return;
             }
+        }
+    }
+
+    private static boolean safeLanding(ServerLevel level, LivingEntity entity, double x, double y, double z) {
+        var feet = net.minecraft.core.BlockPos.containing(x, y, z);
+        var floor = feet.below();
+        if (level.isOutsideBuildHeight(floor) || !level.hasChunkAt(feet) || !level.getWorldBorder().isWithinBounds(feet)) return false;
+        if (!level.getBlockState(floor).isFaceSturdy(level, floor, net.minecraft.core.Direction.UP) || !level.getFluidState(floor).isEmpty()) return false;
+        AABB moved = entity.getBoundingBox().move(x - entity.getX(), y - entity.getY(), z - entity.getZ());
+        return level.noCollision(entity, moved) && !level.containsAnyLiquid(moved) && !blockedAt(level, entity, x, y, z);
+    }
+
+    private static boolean blockedAt(ServerLevel level, LivingEntity entity, double x, double y, double z) {
+        return WardIndex.get(level).table().standingIn(dimension(level)).stream()
+                .anyMatch(ward -> ward.box().contains(x, y, z) && blocks(ward, entity));
+    }
+
+    private static void blockTeleport(EntityTeleportEvent event) {
+        if (event.getEntity() instanceof LivingEntity entity && entity.level() instanceof ServerLevel level
+                && blockedAt(level, entity, event.getTargetX(), event.getTargetY(), event.getTargetZ())) {
+            event.setCanceled(true);
+            if (entity instanceof ServerPlayer player) tell(player, level.getGameTime());
         }
     }
 

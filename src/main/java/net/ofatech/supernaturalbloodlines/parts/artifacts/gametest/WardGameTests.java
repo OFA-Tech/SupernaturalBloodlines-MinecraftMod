@@ -127,6 +127,55 @@ public final class WardGameTests {
     }
 
     @GameTest(template = "tall", templateNamespace = NS)
+    public static void ridersAreDismountedBeforeThePush(GameTestHelper helper) {
+        var owner = person(helper, -2, -2);
+        var rider = vampire(helper, 1, 0);
+        var pig = new net.minecraft.world.entity.animal.Pig(EntityType.PIG, helper.getLevel());
+        var boat = new net.minecraft.world.entity.vehicle.Boat(EntityType.BOAT, helper.getLevel());
+        try {
+            ward(helper, owner, HALF);
+            for (var mount : java.util.List.of(pig, boat)) {
+                mount.setPos(rider.position());
+                helper.assertTrue(rider.startRiding(mount, true), "could not mount " + mount);
+                helper.assertTrue(WardEnforcer.checkNow(rider), "rider not blocked");
+                helper.assertFalse(rider.isPassenger(), "rider was pushed while still mounted");
+            }
+        } finally {
+            rider.stopRiding();
+            clean(helper, owner, rider);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "tall", templateNamespace = NS)
+    public static void revokedVampireFindsDryFloorBelowOnAnotherFace(GameTestHelper helper) {
+        var owner = person(helper, -2, -2);
+        var rider = vampire(helper, 1, 0);
+        BlockPos c = centre(helper);
+        BlockPos dry = c.offset(-HALF - 1, -3, 0);
+        BlockPos lava = c.offset(HALF + 2, -1, 0);
+        var level = helper.getLevel();
+        var original = rider.position();
+        var oldDry = level.getBlockState(dry);
+        var oldLava = level.getBlockState(lava);
+        try {
+            ArtifactsConfig.override("ward_expel_seconds", 1);
+            ward(helper, owner, HALF);
+            invite(helper, owner, rider);
+            helper.assertTrue(net.ofatech.supernaturalbloodlines.parts.artifacts.ward.WardService.uninvite(owner, rider.getUUID().toString()) == null, "revoke failed");
+            level.setBlock(lava, Blocks.LAVA.defaultBlockState(), 3);
+            level.setBlock(dry, Blocks.STONE.defaultBlockState(), 3);
+            for (int i = 0; i < 4; i++) WardEnforcer.checkNow(rider);
+            helper.assertTrue(rider.getX() < original.x && rider.getY() == dry.getY() + 1, "did not land on the dry lower floor: " + rider.position());
+        } finally {
+            level.setBlock(dry, oldDry, 3);
+            level.setBlock(lava, oldLava, 3);
+            clean(helper, owner, rider);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "tall", templateNamespace = NS)
     public static void aDoorWardKeepsTheDoorShutForAnUninvitedVampire(GameTestHelper helper) {
         TalkingDuelist owner = person(helper, -4, -4);
         TalkingDuelist vamp = vampire(helper, 4, 0);

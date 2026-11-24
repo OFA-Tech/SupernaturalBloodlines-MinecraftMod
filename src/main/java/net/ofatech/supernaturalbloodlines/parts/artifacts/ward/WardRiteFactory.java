@@ -84,7 +84,8 @@ public record WardRiteFactory(WardRules.Kind mode) implements RiteFactory {
                     && BloodlineAccess.get(caster).species().witchType()
                     && WardRules.mayOwn(Supernatural.isVampiric(owner))
                     && centre.isPresent()
-                    && (!ArtifactsConfig.wardUseClaims() || ClaimGuard.allows(level, centre.get(), owner.getUUID()));
+                    && (!ArtifactsConfig.wardUseClaims() || ClaimGuard.allowsBox(level, centre.get(),
+                            kind == WardRules.Kind.AREA ? ArtifactsConfig.wardRadius() : 1, owner.getUUID()));
             WardIndex index = WardIndex.get(level);
             Optional<net.ofatech.supernaturalbloodlines.core.ward.WardTable.Ward> ward = allowed
                     ? index.add(kind, WardEnforcer.dimension(level), centre.get().getX(), centre.get().getY(), centre.get().getZ(),

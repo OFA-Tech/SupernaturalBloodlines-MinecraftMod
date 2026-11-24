@@ -25,10 +25,8 @@ import net.ofatech.supernaturalbloodlines.shared.species.LocatorTargets;
 
 /**
  * The Rites of the Locator (R315, R317, R318, R325): a witch-type caster attunes a Vampire Compass to the owner of a taglock, or to whoever a sealed bottle
- * of blood was taken from. The rite never looks at the target: not whether they are online, nor what they are. The only things that make it fail are the
- * switch, a caster who is not a witch type, a source that names nobody (a bottle with no blood in it) and a server with no species part, and every one of
- * them is the same line at the same cost (the ingredients and the altar's power are spent), so a failure cannot say anything about a person. The target
- * is stored sealed on the compass; when the target is online they are told, once, that somebody is looking for them (no name, no place).
+ * of blood was taken from. The target must be online, but the rite never checks their species.
+ * Their identity is sealed on the compass and they are told once that somebody is looking for them.
  */
 public record LocatorRiteFactory(boolean blood) implements RiteFactory {
     public static final ResourceLocation ID = ResourceLocation.fromNamespaceAndPath(SupernaturalBloodlines.MODID, "locator");
@@ -94,6 +92,14 @@ public record LocatorRiteFactory(boolean blood) implements RiteFactory {
             if (!works) {
                 caster.displayClientMessage(Component.translatable(WONT_ANSWER), true);
                 return false; // not cancelled: the rest of the ingredients and the power are spent, whatever the reason
+            }
+            UUID owner = target.orElseThrow();
+            if (level.getServer().getPlayerList().getPlayer(owner) == null
+                    && level.getServer().getAllLevels().iterator().hasNext()
+                    && java.util.stream.StreamSupport.stream(level.getServer().getAllLevels().spliterator(), false)
+                            .noneMatch(world -> world.getPlayerByUUID(owner) instanceof ServerPlayer)) {
+                caster.displayClientMessage(Component.translatable("supernaturalbloodlines.gene.refusal.owner_away"), true);
+                return false;
             }
             long until = level.getGameTime() + settings.get().minutes() * 1200L;
             ItemStack attuned = compass.get().copy();

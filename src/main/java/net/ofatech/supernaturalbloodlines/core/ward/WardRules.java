@@ -110,4 +110,52 @@ public final class WardRules {
     public static int clampRadius(int r) {
         return Math.max(1, Math.min(MAX_RADIUS, r));
     }
+
+    /** The upper ends of the config ranges {@code ward_max_per_owner} and {@code ward_max_invites}: the hub payload's caps are these, so no setting can outgrow it. */
+    public static final int MAX_PER_OWNER_LIMIT = 16;
+    public static final int MAX_INVITES_LIMIT = 64;
+    /** The same two people may not be invited again, or withdrawn and invited again, sooner than this (a message each time). */
+    public static final long INVITE_COOLDOWN_TICKS = 200;
+    /** How far below, and above, the spot of a vampire that is moved out a safe place is looked for: three blocks is the most a fall does no harm from. */
+    public static final int SAFE_DOWN = 3;
+    public static final int SAFE_UP = 8;
+
+    /** Every flat point just outside the box, nearest face first (west, east, north, south on a tie). */
+    public static java.util.List<Point> exitPoints(Box b, double x, double z, double margin) {
+        double[] distance = {x - b.minX(), b.maxX() - x, z - b.minZ(), b.maxZ() - z};
+        Point[] points = {new Point(b.minX() - margin, z), new Point(b.maxX() + margin, z), new Point(x, b.minZ() - margin), new Point(x, b.maxZ() + margin)};
+        Integer[] order = {0, 1, 2, 3};
+        java.util.Arrays.sort(order, java.util.Comparator.comparingDouble(i -> distance[i]));
+        java.util.List<Point> out = new java.util.ArrayList<>();
+        for (int i : order) {
+            out.add(points[i]);
+        }
+        return out;
+    }
+
+    /** The height offsets tried for a safe spot: where it stands, then downwards, then upwards. */
+    public static int[] heightOffsets(int down, int up) {
+        int[] out = new int[1 + down + up];
+        int n = 1;
+        for (int d = 1; d <= down; d++) {
+            out[n++] = -d;
+        }
+        for (int u = 1; u <= up; u++) {
+            out[n++] = u;
+        }
+        return out;
+    }
+
+    public record Chunk(int x, int z) {}
+
+    /** Every chunk the box overlaps (R301: the claims are read for all of them, not for the altar's). */
+    public static java.util.List<Chunk> chunksOf(Box b) {
+        java.util.List<Chunk> out = new java.util.ArrayList<>();
+        for (int x = Math.floorDiv(b.cx() - b.half(), 16); x <= Math.floorDiv(b.cx() + b.half(), 16); x++) {
+            for (int z = Math.floorDiv(b.cz() - b.half(), 16); z <= Math.floorDiv(b.cz() + b.half(), 16); z++) {
+                out.add(new Chunk(x, z));
+            }
+        }
+        return out;
+    }
 }

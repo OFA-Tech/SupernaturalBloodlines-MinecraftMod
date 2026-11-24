@@ -46,6 +46,16 @@ public final class ClaimGuard {
         return mod == null || mod.allows(level.getServer(), level.dimension().location(), pos, owner);
     }
 
+    public static boolean allowsBox(ServerLevel level, BlockPos centre, int half, UUID owner) {
+        var box = new net.ofatech.supernaturalbloodlines.core.ward.WardRules.Box(centre.getX(), centre.getY(), centre.getZ(), half);
+        for (var chunk : net.ofatech.supernaturalbloodlines.core.ward.WardRules.chunksOf(box)) {
+            if (!allows(level, new BlockPos(chunk.x() << 4, centre.getY(), chunk.z() << 4), owner)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     @Nullable
     private static synchronized Opac opac() {
         if (!tried) {
@@ -54,6 +64,9 @@ public final class ClaimGuard {
                 opac = new Opac();
             } catch (ReflectiveOperationException | LinkageError missing) {
                 opac = null;
+                if (net.neoforged.fml.ModList.get().isLoaded("openpartiesandclaims")) {
+                    SupernaturalBloodlines.LOGGER.warn("The ward claim check is off: Open Parties and Claims hooks could not be loaded", missing);
+                }
             }
         }
         return opac;

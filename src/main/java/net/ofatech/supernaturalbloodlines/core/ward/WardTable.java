@@ -99,12 +99,22 @@ public final class WardTable {
         return wards.isEmpty();
     }
 
-    /** The standing wards of one dimension (what the enforcement tick reads; an empty list costs nothing). */
+    private final Map<String, List<Ward>> standingCache = new java.util.HashMap<>();
+
+    /**
+     * The standing wards of one dimension (what the enforcement tick reads for every living entity: the list is kept per dimension and rebuilt only
+     * after a ward is raised, dropped or falls; an empty table costs nothing).
+     */
     public List<Ward> standingIn(String dimension) {
         if (wards.isEmpty()) {
             return List.of();
         }
-        return wards.values().stream().filter(w -> !w.fallen() && w.dimension().equals(dimension)).toList();
+        return standingCache.computeIfAbsent(dimension, d -> wards.values().stream().filter(w -> !w.fallen() && w.dimension().equals(d)).toList());
+    }
+
+    /** A ward changed in a way the per-dimension lists must see ({@link Ward#setFallen} from outside the table). */
+    public void changed() {
+        standingCache.clear();
     }
 
     public Optional<Ward> get(String id) {
@@ -114,6 +124,7 @@ public final class WardTable {
     /** Puts a ward in as it was saved. */
     public void restore(Ward ward) {
         wards.put(ward.id(), ward);
+        changed();
     }
 
     public int countStanding(UUID owner) {
@@ -134,6 +145,7 @@ public final class WardTable {
         }
         Ward ward = new Ward(id, kind, dimension, x, y, z, half, owner);
         wards.put(id, ward);
+        changed();
         return Optional.of(ward);
     }
 
@@ -144,7 +156,23 @@ public final class WardTable {
             return false;
         }
         wards.remove(id);
+        changed();
         return true;
+    }
+
+    /** Operators only (the caller has checked): removes the ward whoever owns it. */
+    public Optional<Ward> dropAny(String id) {
+        Optional<Ward> gone = Optional.ofNullable(wards.remove(id));
+        changed();
+        return gone;
+    }
+
+    /** Operators only: removes every ward of {@code owner} and returns how many. */
+    public int dropAllOf(UUID owner) {
+        int before = wards.size();
+        wards.values().removeIf(w -> w.owner().equals(owner));
+        changed();
+        return before - wards.size();
     }
 
     public List<Ward> standingOf(UUID owner) {
@@ -201,6 +229,7 @@ public final class WardTable {
                 n++;
             }
         }
+        changed();
         return n;
     }
 }
