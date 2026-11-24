@@ -16,7 +16,18 @@ A witch-type performer (witch, siphoner, heretic, tribrid) opens a road to a ski
 - [x] Book: category "Evolution Rites", eight sealed entries (seven by kind, the Blood Sovereign by lore) unlocked by kind (witch, siphoner, tribrid; a vampire also learns Deus Sanguis).
 - [x] 19b: the Raphael merge, the dormant Raphael rite, free grants and the retired-skill check.
 - [x] **19c (plan `docs/superpowers/plans/2026-11-23-plan-19c-ascension.md`): Blood Sovereign** (`evolve_blood_sovereign`, Ultimate, lunar eclipse, only with Ascension): Deus Sanguis, mastered, to `ascension:blood_sovereign`, learned with `GrantForm.PERMANENT` (`learnSkill(..., -1)`, as the altar does), Deus Sanguis forgotten after a confirmed learn. **Ascension's own requirements, asked live by `AscensionProbe` (`ascension.awakening`)**: the game rule `doAscensionUltimate`, Max EP at or above `AddonConfig.AWAKENING_MIN_EP` (5,000,000 by default, `>=`), a true Hero or true Demon Lord, and the wait since the last awakening (`AWAKENING_COOLDOWN_MINUTES`, counted in game ticks like the altar). The tribute is the Ultimate Catalyst (`ascension:ultimate_catalyst`) among the circle's items, so the rite has no EP cost of its own; it gives no bonus Max EP and no witness share (those are the altar's rewards, and a rite must not be easier than the road). A completed rite writes the altar's own tag `ascension:last_awakening_tick`, so the two roads share one cooldown. The rule closes the rite to the performer as `closed`. Lore-gated (Finn's Notes). No `subject_kinds` (Ascension asks for no race). The Bloodfiend race mapping stays in 19d.
-- [ ] 19d: the other Uniques and the race links.
+- [x] **19d (plan `docs/superpowers/plans/2026-11-23-plan-19d-others-and-races.md`):**
+  - **Four Uniques.** Each is full-moon, default grant form, consumes nothing and needs nothing, costs `ep_cost` 200,000, and is kind-gated. Each rite file and its two advancements carry `neoforge:mod_loaded` for its addon.
+    - `evolve_great_mage` (`ascension:great_mage`) and `evolve_king_of_curses` (`ascension:king_of_curses`): their probe reads Ascension's own `AddonSkillConfig` switch.
+    - `evolve_butcher` (`mysticism:butcher`, target must be werewolf-kind; a werewolf also learns the rite exists) and `evolve_imitator` (`stextras:imitator`): these addons have no on/off switch, so the probe is `unique.no_switch`.
+  - **Race links** (`core.rite.RaceLinks`, read through the `TensuraRaceId` seam that species_tensura installs). They only add rite kinds; faction, species and apex offers are untouched.
+    - **Vampire-kind:** Ascension's five Bloodfiends.
+    - **Werewolf-kind:** Mysticism's `direwolf` and every `mysticism:*_spirit_wolf`. Not the fang, frost, scorch, star, tempest, guitar or divine wolf lines.
+  - **Vampire apex tier:** `blood_noble`, `elder_bloodfiend` and `progenitor_bloodfiend` join it (`ApexLines.VAMPIRE`). Blood noble is the chain's third tier, like the vampire lord.
+  - **Ascension's kitsune branch** is not linked, and the Beastfolk line stays keyed by id.
+  - **Addon undead:** our race tag `supernaturalbloodlines:addon_undead` (Ascension's lich, elder lich, lich king, undead skeleton; every entry optional) is read by `RaceTags.isUndeadOrDaemon` next to Tensura's own tags, which are not touched. No installed addon adds a race to `tensura:undead`.
+  - **Retired skills** (Rebalanced's `retired` tag) are never granted, and a data test pins it.
+  - Mixin budget: 0 of 3 used.
 
 ## The Raphael merge (19b)
 
