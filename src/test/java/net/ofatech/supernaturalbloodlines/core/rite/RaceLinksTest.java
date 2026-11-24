@@ -13,7 +13,15 @@ import java.util.TreeSet;
 import org.junit.jupiter.api.Test;
 
 class RaceLinksTest {
-    private static final Path IDS = Path.of("docs/superpowers/research/tensura-addons/ids");
+    private static final Path IDS = root().resolve("docs/superpowers/research/tensura-addons/ids");
+
+    private static Path root() {
+        Path base = Path.of("").toAbsolutePath();
+        while (!Files.isDirectory(base.resolve("src/main/java"))) {
+            base = base.getParent();
+        }
+        return base;
+    }
 
     /** The ids of a research list ({@code id | name} per line). */
     private static List<String> ids(String file) throws IOException {

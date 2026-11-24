@@ -28,6 +28,26 @@ public final class EvolutionUnlockGameTests {
         return helper.getLevel().getServer().getAdvancements().get(ResourceLocation.parse(id)) != null;
     }
 
+    /** The rite kinds read the player's Tensura race through the seam species_tensura installs (19d): a linked race adds its kind, any other adds nothing. */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aLinkedTensuraRaceAddsItsRiteKind(GameTestHelper helper) {
+        var p = net.ofatech.supernaturalbloodlines.parts.species.gametest.LineTestPlayer.createWithAdvancements(helper);
+        String[] race = {"ascension:blood_noble"};
+        var old = net.ofatech.supernaturalbloodlines.shared.species.TensuraRaceId.swap(who -> who == p ? race[0] : "");
+        try {
+            var kinds = RiteUnlocks.kindsOf(p);
+            helper.assertTrue(kinds.contains(net.ofatech.supernaturalbloodlines.core.rite.RiteKind.VAMPIRE), "a Bloodfiend is not vampire-kind: " + kinds);
+            race[0] = "mysticism:magic_spirit_wolf";
+            kinds = RiteUnlocks.kindsOf(p);
+            helper.assertTrue(kinds.contains(net.ofatech.supernaturalbloodlines.core.rite.RiteKind.WEREWOLF), "a spirit wolf is not werewolf-kind: " + kinds);
+            race[0] = "tensura:human";
+            helper.assertTrue(RiteUnlocks.kindsOf(p).isEmpty(), "a plain Tensura race added a kind: " + RiteUnlocks.kindsOf(p));
+        } finally {
+            net.ofatech.supernaturalbloodlines.shared.species.TensuraRaceId.install(old);
+        }
+        helper.succeed();
+    }
+
     @GameTest(template = "empty", templateNamespace = NS)
     public static void aWitchKnowsTheRitesFromBeingOneAndAHumanSeesThemSealed(GameTestHelper helper) {
         if (EvoTestSupport.skipped(helper, RITE)) {

@@ -71,6 +71,28 @@ public final class EvolutionAscensionGameTests {
         return stacks(CATALYST, 1, EP, 1, "enchanted:spirit_of_otherwhere", 1);
     }
 
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void bloodfiendRacesQualifyAsVampiresForRites(GameTestHelper helper) {
+        if (skipped(helper)) {
+            return;
+        }
+        var target = onTheCircle(helper, true, RICH);
+        try {
+            var race = io.github.manasmods.manascore.race.api.RaceAPI.getRaceFrom(target);
+            for (String id : List.of("tensura:human", "ascension:fledgling_bloodfiend", "ascension:kindred_bloodfiend",
+                    "ascension:elder_bloodfiend", "ascension:progenitor_bloodfiend", "ascension:blood_noble")) {
+                race.setRace(ResourceLocation.parse(id), false);
+                helper.assertTrue(race.getRace().orElseThrow().getRaceId().toString().equals(id), "fixture did not set race " + id);
+                boolean vampire = net.ofatech.supernaturalbloodlines.parts.species.unlock.RiteUnlocks.kindsOf(target)
+                        .contains(net.ofatech.supernaturalbloodlines.core.rite.RiteKind.VAMPIRE);
+                helper.assertTrue(vampire == id.startsWith("ascension:"), "incorrect vampire rite kind for " + id);
+            }
+        } finally {
+            clean(helper, target);
+        }
+        helper.succeed();
+    }
+
     /** A target who meets every requirement of the road: Deus Sanguis mastered, a true Hero, rich in EP. */
     private static RecordingPlayer ready(GameTestHelper helper, double baseEp) {
         RecordingPlayer t = onTheCircle(helper, true, baseEp);
