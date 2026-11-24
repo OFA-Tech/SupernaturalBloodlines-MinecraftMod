@@ -56,8 +56,13 @@ public final class CovenCommand {
 
     public static LiteralArgumentBuilder<CommandSourceStack> vote() {
         return Commands.literal("vote")
-                .then(Commands.literal("yes").executes(c -> run(c, CovenGovernance.vote(self(c), true))))
-                .then(Commands.literal("no").executes(c -> run(c, CovenGovernance.vote(self(c), false))));
+                .then(Commands.literal("yes").then(kind().executes(c -> run(c, CovenGovernance.vote(self(c), true, StringArgumentType.getString(c, "kind"))))))
+                .then(Commands.literal("no").then(kind().executes(c -> run(c, CovenGovernance.vote(self(c), false, StringArgumentType.getString(c, "kind"))))));
+    }
+
+    private static com.mojang.brigadier.builder.RequiredArgumentBuilder<net.minecraft.commands.CommandSourceStack, String> kind() {
+        return Commands.argument("kind", StringArgumentType.word())
+                .suggests((c, b) -> net.minecraft.commands.SharedSuggestionProvider.suggest(java.util.Arrays.stream(net.ofatech.supernaturalbloodlines.core.group.coven.VoteKind.values()).map(net.ofatech.supernaturalbloodlines.core.group.coven.VoteKind::id), b));
     }
 
     /** Sets the level the player's rites may ask of them; stored per player. */

@@ -35,6 +35,7 @@ import net.ofatech.supernaturalbloodlines.gametest.TestPlayers.TalkingDuelist;
 import net.ofatech.supernaturalbloodlines.parts.species.gametest.CovenCostGameTests.Circle;
 import net.ofatech.supernaturalbloodlines.parts.species.group.GroupIndex;
 import net.ofatech.supernaturalbloodlines.parts.species.group.GroupsConfig;
+import net.ofatech.supernaturalbloodlines.parts.species.group.circle.CircleStage;
 import net.ofatech.supernaturalbloodlines.parts.species.group.circle.LinkWindow;
 import net.ofatech.supernaturalbloodlines.parts.species.pack.PackIndex;
 import net.ofatech.supernaturalbloodlines.parts.species.rite.NightWatchRiteFactory;
@@ -255,6 +256,49 @@ public final class CovenRiteGameTests {
         helper.succeed();
     }
 
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void nightWatchByDayIsRefusedBeforeAnythingIsPaidOrStamped(GameTestHelper helper) {
+        Circle c = circleAt(helper, new BlockPos(8, 1, 8), 7);
+        ServerLevel level = helper.getLevel();
+        long before = level.getDayTime();
+        level.setDayTime(before - Math.floorMod(before, 24000L) + 6000);
+        try {
+            cast(helper, c, "night_watch", nightItems());
+            helper.assertTrue(RiteManager.getRiteAt(level, c.chalk()) == null, "Night Watch was raised by day");
+            helper.assertTrue(told(c.anchor(), net.ofatech.supernaturalbloodlines.parts.species.rite.NightWatchRiteFactory.DAY), "no word that it needs the night: " + c.anchor().countOnActionBar(net.ofatech.supernaturalbloodlines.parts.species.rite.NightWatchRiteFactory.DAY));
+            helper.assertTrue(dropped(helper, "minecraft:bell") == 1, "the items did not come back");
+            for (TalkingDuelist m : c.all()) {
+                helper.assertTrue(GroupIndex.get(level).channelOf(m.getUUID()) == null, "a member paid for a rite that never started");
+            }
+            UUID group = GroupIndex.get(level).existingGroupOf(net.ofatech.supernaturalbloodlines.parts.species.group.circle.CircleLink.covenOf(c.anchor())).orElseThrow();
+            helper.assertTrue(GroupIndex.get(level).cooldownUntil(group, "night_watch") == 0, "the cooldown was stamped for a rite that never started");
+        } finally {
+            level.setDayTime(before);
+            done(helper, c);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void withCovensOffAnExistingCircleLinksNothingAndCastsNoGrandRite(GameTestHelper helper) {
+        Circle c = circleAt(helper, new BlockPos(8, 1, 8), 3);
+        ServerLevel level = helper.getLevel();
+        try {
+            int solo = CovenCostGameTests.soloBill(helper, c, c.anchor().getUUID(), 6000);
+            int staged = CovenCostGameTests.begin(helper, c, c.anchor().getUUID(), 6000, true);
+            helper.assertTrue(CircleStage.current() != null && CircleStage.size() == 3 && staged < solo, "the control: a circle with covens on should split the bill");
+            helper.assertTrue(net.ofatech.supernaturalbloodlines.parts.species.rite.GrandGate.check(level, c.anchor().getUUID(), "fete_des_benedictions", 0).isEmpty(), "the control: the gate should open for a circle of three");
+            GroupsConfig.override("covens_enabled", false);
+            helper.assertTrue(net.ofatech.supernaturalbloodlines.parts.species.rite.GrandGate.check(level, c.anchor().getUUID(), "fete_des_benedictions", 0).orElse("").equals(CIRCLE), "the gate opened for a coven while covens are off");
+            RiteCost.discard();
+            int off = CovenCostGameTests.begin(helper, c, c.anchor().getUUID(), 6000, true);
+            helper.assertTrue(CircleStage.current() == null && off == solo, "a circle was planned while covens are off: altar " + off + ", solo " + solo);
+        } finally {
+            GroupsConfig.override("covens_enabled", null);
+            done(helper, c);
+        }
+        helper.succeed();
+    }
     @GameTest(template = "empty", templateNamespace = NS)
     public static void nightWatchSavesItsRadius(GameTestHelper helper) {
         Circle c = circleAt(helper, new BlockPos(8, 1, 8), 7);

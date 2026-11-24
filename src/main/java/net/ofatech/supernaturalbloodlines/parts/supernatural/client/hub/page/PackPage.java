@@ -77,7 +77,9 @@ public final class PackPage implements HubPageView {
         sy = PageKit.title(f, Component.translatable(KEY + "actions"), s.x(), sy, s.w(), t.accent());
         t.drawRule(f.g, s.x(), sy + 2, s.w());
         String root = GroupLabels.root(gv);
-        sy = SkillsPage.stamp(f, s, sy + 2, "pack:accept", GroupLabels.t(gv, KEY + "accept", "accept"), () -> command(root + " accept"));
+        if (BookPackPage.mayAccept(gv, grp)) {
+            sy = SkillsPage.stamp(f, s, sy + 2, "pack:accept", GroupLabels.t(gv, KEY + "accept", "accept"), () -> command(root + " accept"));
+        }
         boolean leads = !pack.isEmpty() && pack.get(0).name().equals(f.view.player().getName().getString());
         if (GroupLabels.mayLeave(pack, f.view.player().getName().getString())) {
             // leaving takes two presses within 5 seconds: the first only asks

@@ -45,7 +45,7 @@ public final class CircleCost {
      */
     public static int stage(ServerLevel level, UUID caster, BlockPos chalk, @Nullable RiteType type, int altarBill) {
         CircleStage.set(null);
-        if (!GroupsConfig.linkEnabled()) {
+        if (!GroupsConfig.linkEnabled() || !GroupsConfig.covensEnabled()) {
             return altarBill;
         }
         CircleLink.Session session = CircleLink.current(level, chalk, caster);

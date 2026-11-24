@@ -271,6 +271,27 @@ public final class CovenCircleGameTests {
     }
 
     @GameTest(template = "empty", templateNamespace = NS)
+    public static void withCovensOffNoCircleOpensOrIsJoined(GameTestHelper helper) {
+        TalkingDuelist w = witch(helper, 1.5);
+        TalkingDuelist h1 = human(helper, 2.0);
+        online(w, h1);
+        try {
+            chalkAt(helper, 2);
+            helper.assertTrue(join(w, h1) && CircleLink.open(w) == null, "the circle did not open with covens on");
+            GroupsConfig.override("covens_enabled", false);
+            var joined = CircleLink.join(h1, null);
+            helper.assertTrue(joined != null && key(joined).equals("supernaturalbloodlines.coven.err.covens_off"), "a call was answered while covens are off: " + (joined == null ? "joined" : key(joined)));
+            helper.assertTrue(CircleLink.close(w) == null, "the anchor could not close");
+            var open = CircleLink.open(w);
+            helper.assertTrue(open != null && key(open).equals("supernaturalbloodlines.coven.err.covens_off"), "a circle opened while covens are off: " + (open == null ? "opened" : key(open)));
+        } finally {
+            GroupsConfig.override("covens_enabled", null);
+            tidy(helper, w, h1);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
     public static void idleCirclesClose(GameTestHelper helper) {
         TalkingDuelist w = witch(helper, 1.5);
         TalkingDuelist h = human(helper, 2.5);

@@ -21,7 +21,7 @@ class CovenTextTest {
         for (String s : List.of("tier", "tier.tip", "shunned", "circle_title", "circle_names", "meter", "meter_full", "meter_refill", "meter.tip", "consent", "share", "share_worst",
                 "share_unknown", "votes_title", "no_vote", "vote_counts", "vote_mine.yes", "vote_mine.no", "vote_electors", "vote_yes", "vote_no", "elders_title",
                 "elder_add", "elder_add.what", "elder_remove", "elder_remove.what", "shun", "shun.what", "shun.body", "call_regent", "call_regent.what", "call_regent.body",
-                "link_open", "link_close", "link_join", "link_leave", "f.names", "f.channel", "f.channel_value", "f.share")) {
+                "link_open", "link_close", "link_join", "link_leave", "f.names", "f.channel", "f.channel_value", "f.share", "vote_tip")) {
             k.add(H + s);
         }
         for (int i = 0; i <= 3; i++) {
@@ -38,6 +38,7 @@ class CovenTextTest {
         for (VoteKind v : VoteKind.values()) {
             k.add(H + "vote." + v.id());
         }
+        k.add("supernaturalbloodlines.hub.home.hours");
         for (String s : List.of("join", "yes", "no")) {
             k.add("supernaturalbloodlines.hub.home.answer." + s);
         }
@@ -121,14 +122,34 @@ class CovenTextTest {
     }
 
     @Test
-    void aCircleCallCarriesItsTokenAndAVoteDoesNot() {
+    void aCircleCallAndAVoteBothCarryTheirCardsOwnToken() {
         var call = HomePage.answers(net.ofatech.supernaturalbloodlines.shared.supernatural.HubRequests.Kind.CIRCLE_CALL);
         assertEquals(1, call.size());
         assertEquals("C3", call.get(0).rowId());
         assertTrue(call.get(0).usesToken());
         var vote = HomePage.answers(net.ofatech.supernaturalbloodlines.shared.supernatural.HubRequests.Kind.GROUP_VOTE);
         assertEquals(List.of("C9", "C10"), vote.stream().map(HomePage.Answer::rowId).toList());
-        assertTrue(vote.stream().noneMatch(HomePage.Answer::usesToken));
+        assertTrue(vote.stream().allMatch(HomePage.Answer::usesToken), "a vote card must name the vote it answers");
+    }
+
+    @Test
+    void aVoteClockOverAnHourIsShownInHours() {
+        var day = (net.minecraft.network.chat.contents.TranslatableContents) HomePage.clock(24 * 3600).getContents();
+        assertEquals("supernaturalbloodlines.hub.home.hours", day.getKey());
+        assertEquals(24, day.getArgs()[0]);
+        assertEquals(2, ((net.minecraft.network.chat.contents.TranslatableContents) HomePage.clock(3601).getContents()).getArgs()[0]);
+        assertEquals("1:05", HomePage.clock(65).getString());
+        assertEquals("59:59", HomePage.clock(3599).getString());
+    }
+
+    @Test
+    void acceptIsOfferedOnlyForAnInvitationToSomeoneWhoCanTakeIt() {
+        assertTrue(!BookPackPage.mayAccept(false, true, GroupView.LEADER), "a Regent without an invitation was offered Accept");
+        assertTrue(!BookPackPage.mayAccept(false, true, GroupView.NOT_IN));
+        assertTrue(BookPackPage.mayAccept(true, true, GroupView.NOT_IN));
+        assertTrue(BookPackPage.mayAccept(true, true, GroupView.LEADER), "a leader who is invited may take it (they bring their members)");
+        assertTrue(!BookPackPage.mayAccept(true, true, GroupView.MEMBER), "a member of a group was offered Accept");
+        assertTrue(!BookPackPage.mayAccept(true, true, GroupView.ELDER));
     }
 
     private static List<String> ids(List<CovenCards.Act> acts) {

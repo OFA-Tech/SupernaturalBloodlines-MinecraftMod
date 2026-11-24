@@ -61,7 +61,7 @@ public final class CovenGovernance {
 
     @Nullable
     private static Ctx ctx(ServerPlayer p) {
-        UUID leader = CircleLink.covenOf(p);
+        UUID leader = GroupsConfig.covensEnabled() ? CircleLink.covenOf(p) : null;
         if (leader == null) {
             return null;
         }
@@ -202,6 +202,9 @@ public final class CovenGovernance {
         if (nominee == null) {
             return CovenText.error("not_member", word);
         }
+        if (nominee.equals(p.getUUID())) {
+            return CovenText.error("self");
+        }
         if (!CovenRules.mayCallElection(c.roleOf(p.getUUID()), c.roleOf(nominee), c.groups.cooldownUntil(c.group, ELECTION), PackIndex.now())) {
             return CovenText.error(c.roleOf(nominee) != Role.ELDER ? "nominee_not_elder" : "election_cooldown");
         }
@@ -239,8 +242,9 @@ public final class CovenGovernance {
         }
     }
 
+    /** Answers the open vote of this kind (the card's own token): one vote of a kind is open per coven, so the kind names the ballot. */
     @Nullable
-    public static Component vote(ServerPlayer p, boolean yes) {
+    public static Component vote(ServerPlayer p, boolean yes, String kindId) {
         Ctx c = ctx(p);
         if (c == null) {
             return CircleLink.notACoven(p);
@@ -248,7 +252,8 @@ public final class CovenGovernance {
         if (!c.electors().contains(p.getUUID())) {
             return CovenText.error("not_elector");
         }
-        Vote open = c.groups.openVotes(c.group).stream().filter(v -> !v.ballots.containsKey(p.getUUID())).findFirst().orElse(null);
+        VoteKind kind = VoteKind.parse(kindId).orElse(null);
+        Vote open = kind == null ? null : c.groups.openVote(c.group, kind).filter(v -> !v.ballots.containsKey(p.getUUID())).orElse(null);
         if (open == null) {
             return CovenText.error("no_vote");
         }

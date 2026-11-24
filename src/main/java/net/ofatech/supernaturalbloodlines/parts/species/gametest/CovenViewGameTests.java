@@ -126,7 +126,7 @@ public final class CovenViewGameTests {
             helper.assertTrue(r.vote().get().electors() == 3 && r.vote().get().yes() == 1 && r.vote().get().no() == 0 && r.vote().get().mine() == CovenView.Ballot.YES, "regent: " + r.vote());
             CovenView a = CovenViews.of(e1);
             helper.assertTrue(a.vote().get().yes() == 1 && a.vote().get().mine() == CovenView.Ballot.NONE, "an elder who has not voted sees the regent's ballot: " + a.vote());
-            helper.assertTrue(CovenGovernance.vote(e1, false) == null, "the elder could not vote");
+            helper.assertTrue(CovenGovernance.vote(e1, false, "shun") == null, "the elder could not vote");
             CovenView after = CovenViews.of(regent);
             helper.assertTrue(after.vote().get().no() == 1 && after.vote().get().mine() == CovenView.Ballot.YES, "the count did not move: " + after.vote());
             CovenView plain = CovenViews.of(target);

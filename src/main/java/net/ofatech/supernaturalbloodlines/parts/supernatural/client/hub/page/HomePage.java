@@ -46,7 +46,7 @@ public final class HomePage implements HubPageView {
             case COMPULSION -> List.of(new Answer("discount", "B5", true, true), new Answer("follow", "B6", true, false));
             case DUEL -> List.of();
             case CIRCLE_CALL -> List.of(new Answer("join", "C3", true, true));
-            case GROUP_VOTE -> List.of(new Answer("yes", "C9", false, true), new Answer("no", "C10", false, false));
+            case GROUP_VOTE -> List.of(new Answer("yes", "C9", true, true), new Answer("no", "C10", true, false));
         };
     }
 
@@ -176,10 +176,16 @@ public final class HomePage implements HubPageView {
         PEAK.keySet().retainAll(keep);
     }
 
+    /** A request's time left: m:ss, but whole hours (rounded up) once it is over an hour, as a coven vote's day is. */
+    static Component clock(int seconds) {
+        return seconds >= 3600 ? Component.translatable(KEY + "hours", (seconds + 3599) / 3600) : Component.literal(seconds / 60 + ":" + String.format("%02d", seconds % 60));
+    }
+
     private int card(HubScreen.Frame f, Rect r, int y, HubRequests.Request q) {
         HubTheme t = f.theme();
         String id = "stage:request:" + q.kind() + ":" + q.token() + q.from();
-        Component what = Component.translatable("supernaturalbloodlines.hub.request.kind." + q.kind().name().toLowerCase(Locale.ROOT));
+        Component what = q.kind() == HubRequests.Kind.GROUP_VOTE ? Component.translatable(CovenCards.KEY + "vote." + q.token(), q.fromName())
+                : Component.translatable("supernaturalbloodlines.hub.request.kind." + q.kind().name().toLowerCase(Locale.ROOT));
         int ticks = RequestsClient.ticksLeft(q);
         int left = (ticks + 19) / 20;
         int peak = PEAK.merge(q.token() + q.from(), ticks, Math::max);
@@ -189,7 +195,7 @@ public final class HomePage implements HubPageView {
         boolean named = !q.fromName().isEmpty() && !q.from().equals(HubRequests.NOBODY);
         int face = 16;
         int tx = named ? x + face + 4 : x;
-        Component clock = Component.literal(left / 60 + ":" + String.format("%02d", left % 60));
+        Component clock = clock(left);
         int cw = f.font().width(clock);
         int ty = y + 3;
         if (named) {

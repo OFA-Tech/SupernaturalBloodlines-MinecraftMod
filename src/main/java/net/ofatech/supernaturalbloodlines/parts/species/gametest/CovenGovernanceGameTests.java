@@ -129,12 +129,12 @@ public final class CovenGovernanceGameTests {
             helper.assertTrue(CovenGovernance.elderAdd(c.regent(), target) == null, "the vote did not open");
             helper.assertTrue(!isElder(helper, c.members().get(0)), "the Regent alone made an Elder in an electorate of three");
             helper.assertTrue(groups(helper).openVotes(groupOf(helper, c)).size() == 1, "no vote is open");
-            helper.assertTrue(CovenGovernance.vote(c.elders().get(0), true) == null, "an Elder could not vote");
+            helper.assertTrue(CovenGovernance.vote(c.elders().get(0), true, "elder_add") == null, "an Elder could not vote");
             helper.assertTrue(!isElder(helper, c.members().get(0)), "the vote ended before everyone voted");
-            helper.assertTrue(CovenGovernance.vote(c.elders().get(1), false) == null, "the second Elder could not vote");
+            helper.assertTrue(CovenGovernance.vote(c.elders().get(1), false, "elder_add") == null, "the second Elder could not vote");
             helper.assertTrue(isElder(helper, c.members().get(0)), "two of three is a majority");
             helper.assertTrue(groups(helper).openVotes(groupOf(helper, c)).isEmpty(), "the vote stayed open");
-            var outsider = CovenGovernance.vote(c.members().get(0), true);
+            var outsider = CovenGovernance.vote(c.members().get(0), true, "elder_add");
             helper.assertTrue(outsider != null, "somebody who is not an elector voted");
         } finally {
             tidy(helper, c);
@@ -199,12 +199,12 @@ public final class CovenGovernanceGameTests {
         try {
             CovenGovernance.elderAdd(c.regent(), name(c.members().get(0)));
             var vote = groups(helper).openVotes(groupOf(helper, c)).get(0);
-            helper.assertTrue(CovenGovernance.vote(c.elders().get(0), true) == null, "the first ballot");
-            var again = CovenGovernance.vote(c.elders().get(0), false);
+            helper.assertTrue(CovenGovernance.vote(c.elders().get(0), true, "elder_add") == null, "the first ballot");
+            var again = CovenGovernance.vote(c.elders().get(0), false, "elder_add");
             helper.assertTrue(again != null && key(again).equals("supernaturalbloodlines.coven.err.no_vote"), "a second ballot was taken: " + key(again));
             helper.assertTrue(!groups(helper).ballot(vote, c.elders().get(0).getUUID(), false), "the index took a second ballot");
             helper.assertTrue(vote.yes() == 2 && vote.no() == 0, "the count changed: " + vote.yes() + "/" + vote.no());
-            var again2 = CovenGovernance.vote(c.regent(), false);
+            var again2 = CovenGovernance.vote(c.regent(), false, "elder_add");
             helper.assertTrue(again2 != null && vote.yes() == 2, "the caller changed their ballot");
         } finally {
             tidy(helper, c);
@@ -220,7 +220,7 @@ public final class CovenGovernanceGameTests {
             helper.assertTrue(PackCommand.leave(c.members().get(0)) == null, "the subject could not leave");
             CovenGovernance.sweep(helper.getLevel().getServer());
             helper.assertTrue(groups(helper).openVotes(groupOf(helper, c)).isEmpty(), "the vote about somebody who left is still open");
-            helper.assertTrue(CovenGovernance.vote(c.elders().get(0), true) != null, "a ballot was taken on a cancelled vote");
+            helper.assertTrue(CovenGovernance.vote(c.elders().get(0), true, "elder_add") != null, "a ballot was taken on a cancelled vote");
             helper.assertTrue(!isElder(helper, c.members().get(0)), "the one who left became an Elder");
         } finally {
             tidy(helper, c);
@@ -289,10 +289,10 @@ public final class CovenGovernanceGameTests {
             TalkingDuelist target = c.members().get(0);
             helper.assertTrue(CovenGovernance.shun(c.regent(), name(target)) == null, "no shunning");
             var invite = PackCommand.invite(otherRegent, target);
-            helper.assertTrue(invite != null && key(invite).equals("supernaturalbloodlines.group.target_shunned.coven"), "another coven could invite a shunned witch: " + key(invite));
+            helper.assertTrue(invite == null, "an invitation to a shunned witch said something other coven leaders could read: " + (invite == null ? "" : key(invite)));
             String old = PackCommand.requests().open(otherRegent.getUUID(), target.getUUID(), helper.getLevel().getGameTime());
             var accept = PackCommand.accept(target, old);
-            helper.assertTrue(accept != null && key(accept).equals("supernaturalbloodlines.group.shunned.coven"), "an old token was accepted: " + key(accept));
+            helper.assertTrue(accept != null && key(accept).equals("supernaturalbloodlines.group.refused.coven"), "a shunned witch was not refused with the generic refusal: " + (accept == null ? "joined" : key(accept)));
             helper.assertTrue(!PackIndex.get(helper.getLevel()).inPack(target.getUUID()), "the shunned one joined");
             clock[0] += GroupsConfig.shunDays() * 24L * 3_600_000L + 1;
             helper.assertTrue(join(otherRegent, target), "the ban did not end after shun_days");
@@ -300,6 +300,84 @@ public final class CovenGovernanceGameTests {
             tidy(helper, c);
             clean(helper, otherRegent);
             PackIndex.overrideClock(null);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aLeaderWhoWouldBringAShunnedWitchIsRefusedLikeAnyRefusal(GameTestHelper helper) {
+        Coven c = coven(helper, 0, 2);
+        TalkingDuelist other = witch(helper, 6.0);
+        online(append(c.all(), other));
+        try {
+            TalkingDuelist target = c.members().get(0);
+            helper.assertTrue(CovenGovernance.shun(c.regent(), name(target)) == null, "no shunning");
+            PackIndex packs = PackIndex.get(helper.getLevel());
+            helper.assertTrue(packs.join(other.getUUID(), target.getUUID()), "the shunned witch could not join the other group, the test cannot go on");
+            String token = PackCommand.requests().open(c.regent().getUUID(), other.getUUID(), helper.getLevel().getGameTime());
+            var refused = PackCommand.accept(other, token);
+            helper.assertTrue(refused != null && key(refused).equals("supernaturalbloodlines.group.refused.coven"), "a leader brought a shunned witch into the coven or got a telling answer: " + (refused == null ? "joined" : key(refused)));
+            helper.assertTrue(!packs.betasOf(c.regent().getUUID()).contains(other.getUUID()), "the leader joined");
+        } finally {
+            tidy(helper, c);
+            clean(helper, other);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void anElderCannotNominateThemself(GameTestHelper helper) {
+        Coven c = coven(helper, 2, 0);
+        try {
+            var self = CovenGovernance.callElection(c.elders().get(0), name(c.elders().get(0)));
+            helper.assertTrue(self != null && key(self).equals("supernaturalbloodlines.coven.err.self"), "an Elder nominated themself: " + (self == null ? "called" : key(self)));
+            helper.assertTrue(GroupIndex.get(helper.getLevel()).openVotes(GroupIndex.get(helper.getLevel()).existingGroupOf(c.regent().getUUID()).orElseThrow()).isEmpty(), "a vote opened");
+        } finally {
+            tidy(helper, c);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aVoteIsAnsweredByItsKindNotByAge(GameTestHelper helper) {
+        Coven c = coven(helper, 2, 1);
+        try {
+            helper.assertTrue(CovenGovernance.elderAdd(c.regent(), name(c.members().get(0))) == null, "the first vote did not open");
+            helper.assertTrue(CovenGovernance.shun(c.regent(), name(c.members().get(0))) == null, "the second vote did not open");
+            GroupIndex groups = GroupIndex.get(helper.getLevel());
+            UUID group = groups.existingGroupOf(c.regent().getUUID()).orElseThrow();
+            var elder = c.elders().get(0);
+            helper.assertTrue(CovenGovernance.vote(elder, false, "shun") == null, "the Elder could not answer the shunning");
+            var shun = groups.openVote(group, net.ofatech.supernaturalbloodlines.core.group.coven.VoteKind.SHUN).orElseThrow();
+            var add = groups.openVote(group, net.ofatech.supernaturalbloodlines.core.group.coven.VoteKind.ELDER_ADD).orElseThrow();
+            helper.assertTrue(Boolean.FALSE.equals(shun.ballots.get(elder.getUUID())), "the ballot did not land on the shunning");
+            helper.assertTrue(!add.ballots.containsKey(elder.getUUID()), "the older vote took the ballot meant for the other");
+            var again = CovenGovernance.vote(elder, true, "shun");
+            helper.assertTrue(again != null && key(again).equals("supernaturalbloodlines.coven.err.no_vote"), "a second ballot on the same vote was taken");
+            var wrong = CovenGovernance.vote(elder, true, "nothing");
+            helper.assertTrue(wrong != null && key(wrong).equals("supernaturalbloodlines.coven.err.no_vote"), "a kind that is not a vote took a ballot");
+            helper.assertTrue(CovenGovernance.vote(elder, true, "elder_add") == null && Boolean.TRUE.equals(add.ballots.get(elder.getUUID())), "the other vote could not be answered by its own kind");
+        } finally {
+            tidy(helper, c);
+        }
+        helper.succeed();
+    }
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void withCovensOffTheGovernanceActionsRefuse(GameTestHelper helper) {
+        Coven c = coven(helper, 2, 1);
+        try {
+            helper.assertTrue(CovenGovernance.elderAdd(c.regent(), name(c.members().get(0))) == null, "the control: the vote did not open");
+            GroupsConfig.override("covens_enabled", false);
+            String off = "supernaturalbloodlines.coven.err.covens_off";
+            for (var r : List.of(CovenGovernance.elderAdd(c.regent(), name(c.members().get(0))), CovenGovernance.elderRemove(c.regent(), name(c.elders().get(0))),
+                    CovenGovernance.shun(c.regent(), name(c.members().get(0))), CovenGovernance.callElection(c.elders().get(0), name(c.elders().get(1))),
+                    CovenGovernance.vote(c.elders().get(0), true, "elder_add"))) {
+                helper.assertTrue(r != null && key(r).equals(off), "a governance action ran while covens are off: " + (r == null ? "done" : key(r)));
+            }
+            helper.assertTrue(CovenGovernance.cardsFor(c.elders().get(0)).isEmpty(), "a vote card was offered while covens are off");
+        } finally {
+            GroupsConfig.override("covens_enabled", null);
+            tidy(helper, c);
         }
         helper.succeed();
     }
@@ -350,7 +428,7 @@ public final class CovenGovernanceGameTests {
         try {
             TalkingDuelist nominee = c.elders().get(1);
             helper.assertTrue(CovenGovernance.callElection(c.elders().get(0), name(nominee)) == null, "no election");
-            helper.assertTrue(CovenGovernance.vote(nominee, true) == null && CovenGovernance.vote(c.regent(), false) == null, "the ballots were refused");
+            helper.assertTrue(CovenGovernance.vote(nominee, true, "regent") == null && CovenGovernance.vote(c.regent(), false, "regent") == null, "the ballots were refused");
             PackIndex packs = PackIndex.get(helper.getLevel());
             helper.assertTrue(packs.isLeader(nominee.getUUID()) && !packs.isLeader(c.regent().getUUID()), "the lead did not move");
             helper.assertTrue(isElder(helper, c.regent()), "the old Regent is not an Elder");
@@ -371,8 +449,8 @@ public final class CovenGovernanceGameTests {
         try {
             TalkingDuelist nominee = c.elders().get(1);
             CovenGovernance.callElection(c.elders().get(0), name(nominee));
-            CovenGovernance.vote(nominee, true);
-            CovenGovernance.vote(c.regent(), false);
+            CovenGovernance.vote(nominee, true, "regent");
+            CovenGovernance.vote(c.regent(), false, "regent");
             helper.assertTrue(PackIndex.get(helper.getLevel()).isLeader(nominee.getUUID()), "the first election did not pass");
             var again = CovenGovernance.callElection(c.elders().get(0), name(c.regent()));
             helper.assertTrue(again != null && key(again).equals("supernaturalbloodlines.coven.err.election_cooldown"), "a second election in the cooldown: " + key(again));
@@ -406,9 +484,9 @@ public final class CovenGovernanceGameTests {
             helper.assertTrue(cards(c.regent()) == 0, "the caller has a card for their own vote");
             helper.assertTrue(cards(c.elders().get(0)) == 1 && cards(c.elders().get(1)) == 1, "the electors have no card");
             helper.assertTrue(cards(c.members().get(0)) == 0, "a plain member has a card");
-            CovenGovernance.vote(c.elders().get(0), true);
+            CovenGovernance.vote(c.elders().get(0), true, "elder_add");
             helper.assertTrue(cards(c.elders().get(0)) == 0 && cards(c.elders().get(1)) == 1, "a card is for somebody who has not voted");
-            CovenGovernance.vote(c.elders().get(1), true);
+            CovenGovernance.vote(c.elders().get(1), true, "elder_add");
             helper.assertTrue(cards(c.elders().get(0)) == 0 && cards(c.elders().get(1)) == 0, "the cards stayed after the vote ended");
         } finally {
             tidy(helper, c);

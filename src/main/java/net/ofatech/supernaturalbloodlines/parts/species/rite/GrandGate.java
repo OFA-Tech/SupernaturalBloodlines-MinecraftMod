@@ -39,7 +39,7 @@ public final class GrandGate {
             return Optional.of(OFF);
         }
         ServerPlayer p = level.getPlayerByUUID(caster) instanceof ServerPlayer sp ? sp : null;
-        UUID leader = p == null ? null : CircleLink.covenOf(p);
+        UUID leader = p == null || !GroupsConfig.covensEnabled() ? null : CircleLink.covenOf(p);
         int need = GrandRites.minCircle(rite, fileMin, GroupsConfig.tier1Members(), GroupsConfig.tier2Members(), GroupsConfig.tier3Members());
         if (leader == null || CircleStage.size() < need) {
             return Optional.of(CIRCLE);

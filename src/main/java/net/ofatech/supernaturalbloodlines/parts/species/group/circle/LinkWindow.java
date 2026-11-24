@@ -67,6 +67,14 @@ public final class LinkWindow {
         LIVE.put(staged.anchor(), new Live(staged.anchor(), members, staged.dimension(), staged.chalk(), PackIndex.now(), new WeakReference<>(running)));
     }
 
+    /** A member who left the coven, was kicked or shunned owes nothing more: they leave every live link; the link of an anchor who left is over. */
+    public static void drop(UUID member) {
+        LIVE.remove(member);
+        for (Live live : LIVE.values()) {
+            live.members().remove(member);
+        }
+    }
+
     @Nullable
     public static Live liveOf(UUID anchor) {
         return LIVE.get(anchor);
@@ -117,20 +125,19 @@ public final class LinkWindow {
         }
         long now = PackIndex.now();
         GroupIndex groups = GroupIndex.get(dead.serverLevel());
-        for (UUID memberId : live.members()) {
+        UUID coven = CircleLink.covenOf(dead);
+        for (UUID memberId : List.copyOf(live.members())) {
             ServerPlayer member = memberId.equals(id) ? null : find(server, memberId);
-            if (member == null || !member.isAlive()) {
+            // someone who left, was kicked or shunned since the rite started is no longer in the coven: the link is no longer theirs
+            if (member == null || !member.isAlive() || coven == null || !coven.equals(CircleLink.covenOf(member))) {
                 continue;
             }
             if (GroupsConfig.linkDeathLethal()) {
                 member.hurt(member.damageSources().genericKill(), Float.MAX_VALUE);
             } else {
-                float damage = Math.min(member.getMaxHealth() * GroupsConfig.linkDeathDamagePercent() / 100.0f, member.getHealth() - 1.0f);
                 member.addEffect(new MobEffectInstance(MobEffects.WEAKNESS, 5 * 60 * 20, 1));
                 member.addEffect(new MobEffectInstance(MobEffects.DIG_SLOWDOWN, 5 * 60 * 20, 0));
-                if (damage > 0) {
-                    member.hurt(member.damageSources().magic(), damage);
-                }
+                Pain.hurt(member, member.getMaxHealth() * GroupsConfig.linkDeathDamagePercent() / 100.0f);
             }
             groups.setChannel(memberId, 0, now, CircleCost.capacityOf(member));
             if (GroupsConfig.linkShakenMinutes() > 0) {

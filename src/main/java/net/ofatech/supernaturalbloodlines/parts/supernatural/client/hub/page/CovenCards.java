@@ -23,7 +23,7 @@ import org.jetbrains.annotations.Nullable;
  * views the server pushed; every button runs a row of {@code AdminCommands} (C1 to C10, P8), so the server checks it again. A pack's page never gets here.
  */
 public final class CovenCards {
-    private static final String KEY = PageKit.HUB + "coven.";
+    static final String KEY = PageKit.HUB + "coven.";
     private static final long CONFIRM_TICKS = 100;
 
     private CovenCards() {
@@ -222,8 +222,9 @@ public final class CovenCards {
         Component yes = Component.translatable(KEY + "vote_yes");
         Component no = Component.translatable(KEY + "vote_no");
         Flow.Result flow = Flow.wrap(new Rect(r.x(), y + 2, r.w(), 0), List.of(PageWidgets.widthOf(f.font(), yes), PageWidgets.widthOf(f.font(), no)), PageWidgets.H, PageWidgets.GAP);
-        PageWidgets.button(f, "coven:vote_yes", flow.rects().get(0), yes, true, true, null, () -> HubClient.runCommand("C9", List.of()));
-        PageWidgets.button(f, "coven:vote_no", flow.rects().get(1), no, true, false, null, () -> HubClient.runCommand("C10", List.of()));
+        Component about = Component.translatable(KEY + "vote." + v.kind().id(), v.subjectName());
+        PageWidgets.button(f, "coven:vote_yes", flow.rects().get(0), yes, true, true, Component.translatable(KEY + "vote_tip", about, yes), () -> HubClient.runCommand("C9", List.of(v.kind().id())));
+        PageWidgets.button(f, "coven:vote_no", flow.rects().get(1), no, true, false, Component.translatable(KEY + "vote_tip", about, no), () -> HubClient.runCommand("C10", List.of(v.kind().id())));
         return flow.bottom() + 2;
     }
 

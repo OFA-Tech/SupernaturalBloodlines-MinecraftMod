@@ -94,6 +94,9 @@ public final class CircleLink {
     }
 
     public static Component notACoven(ServerPlayer p) {
+        if (!GroupsConfig.covensEnabled()) {
+            return CovenText.error("covens_off");
+        }
         PackIndex packs = PackIndex.get(p.serverLevel());
         return GroupText.error(Groups.typeOf(p), packs.inPack(p.getUUID()) ? "wrong_type" : "no_group");
     }
@@ -145,7 +148,7 @@ public final class CircleLink {
     /** A button pressed: the anchor opens a circle at the chalk they stand at and calls the coven's members within 32 blocks. */
     @Nullable
     public static Component open(ServerPlayer anchor) {
-        UUID coven = covenOf(anchor);
+        UUID coven = GroupsConfig.covensEnabled() ? covenOf(anchor) : null;
         if (coven == null) {
             return notACoven(anchor);
         }
@@ -207,7 +210,7 @@ public final class CircleLink {
     /** {@code token} is what the call card sent; null answers the newest call. */
     @Nullable
     public static Component join(ServerPlayer p, @Nullable String token) {
-        UUID coven = covenOf(p);
+        UUID coven = GroupsConfig.covensEnabled() ? covenOf(p) : null;
         if (coven == null) {
             return notACoven(p);
         }
@@ -269,6 +272,7 @@ public final class CircleLink {
 
     /** One member goes (left the coven, was kicked or shunned, logged out); the circle stays. The anchor going closes it. */
     public static void dropMember(MinecraftServer server, UUID member, boolean tell) {
+        LinkWindow.drop(member);
         Session s = of(member);
         if (s == null) {
             return;

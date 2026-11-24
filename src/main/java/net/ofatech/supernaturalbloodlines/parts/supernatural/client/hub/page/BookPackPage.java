@@ -209,10 +209,18 @@ public final class BookPackPage implements HubPageView {
     private boolean grp;
     private List<HubSocial.Member> members = List.of();
 
-    /** A leader of a group is not offered "Accept" as the main action: theirs is the group's own (invite, the circle), unless an invitation really is waiting for them. */
+    /** "Accept" is drawn only for someone an invitation really is waiting for, who is not in a group or leads one (a leader brings their members along): a leader's main action is the group's own (invite, the circle). */
+    static boolean mayAccept(GroupView gv, boolean grp) {
+        boolean invited = net.ofatech.supernaturalbloodlines.parts.supernatural.client.RequestsClient.requests().stream().anyMatch(q -> q.kind() == net.ofatech.supernaturalbloodlines.shared.supernatural.HubRequests.Kind.PACK_INVITE);
+        return mayAccept(invited, grp, gv.viewerRank());
+    }
+
+    static boolean mayAccept(boolean invited, boolean grp, byte viewerRank) {
+        return invited && (!grp || viewerRank == GroupView.NOT_IN || viewerRank == GroupView.LEADER);
+    }
+
     private boolean leaderFirst() {
-        return grp && gv.viewerRank() == GroupView.LEADER
-                && net.ofatech.supernaturalbloodlines.parts.supernatural.client.RequestsClient.requests().stream().noneMatch(q -> q.kind() == net.ofatech.supernaturalbloodlines.shared.supernatural.HubRequests.Kind.PACK_INVITE);
+        return !mayAccept(gv, grp);
     }
 
     private Component t(String packKey, String name, Object... args) {
@@ -353,7 +361,6 @@ public final class BookPackPage implements HubPageView {
             int sy = r.bottom() - BookKit.SEAL;
             if (leaderFirst()) {
                 PackInvite.buttons(f, new Rect(r.x(), sy + 2, r.w(), PageWidgets.H), sy + 2, mayInvite);
-                BookKit.link(f, "pack:accept", t(KEY + "accept", "accept"), r.x(), sy + 24, List.of(t(KEY + "accept", "accept")), () -> BloodlinePage.command(cmd("accept")));
             } else {
                 BookKit.seal(f, "pack:accept", Component.translatable(BOOK + "accept"), true, r.x(), sy, () -> BloodlinePage.command(cmd("accept")),
                         List.of(t(KEY + "accept", "accept")));
@@ -399,7 +406,9 @@ public final class BookPackPage implements HubPageView {
                 d.field(Component.translatable(KEY + "role"), t(KEY + "leader", "leader"));
             }
         }
-        d.action("accept", t(KEY + "accept", "accept"), !leaderFirst(), true, () -> BloodlinePage.command(cmd("accept")));
+        if (!leaderFirst()) {
+            d.action("accept", t(KEY + "accept", "accept"), true, true, () -> BloodlinePage.command(cmd("accept")));
+        }
         if (canKick(f, pack, chosen)) {
             d.action(new Detail.Action("kick", t(KEY + "kick", "kick"), false, true, null,
                     new Detail.Confirm(t(KEY + "kick_title", "kick_title", chosen.name()), t(KEY + "kick_body", "kick_body")),

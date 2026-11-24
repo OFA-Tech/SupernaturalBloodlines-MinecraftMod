@@ -40,6 +40,26 @@ class CirclePlanTest {
     }
 
     @Test
+    void anAnchorWhoIsDroppedMakesItASoloCastNobodyElsePaysFor() {
+        List<CirclePlan.Member> ms = circle(3, 3000, 3000, Consent.NONE);
+        ms.set(0, member(0, 0, 3000, Consent.NONE, HUGE_EP));
+        CirclePlan.Result r = CirclePlan.plan(4500, 0, ms, SHARE, 10);
+        assertEquals(4500, r.altarPays(), "the altar must charge the whole bill");
+        assertTrue(r.shares().isEmpty(), "the others paid for a rite the anchor does not share in");
+        assertEquals(CirclePlan.DropReason.NEEDS_CONSENT, r.dropped().get(0).reason());
+        assertEquals(id(0), r.dropped().get(0).id());
+    }
+
+    @Test
+    void aDroppedMemberWhoIsNotTheAnchorStillLeavesTheRestLinked() {
+        List<CirclePlan.Member> ms = circle(4, 3000, 3000, Consent.NONE);
+        ms.set(2, member(2, 0, 3000, Consent.NONE, HUGE_EP));
+        CirclePlan.Result r = CirclePlan.plan(4500, 0, ms, SHARE, 10);
+        assertEquals(3, r.shares().size());
+        assertTrue(!r.shares().containsKey(id(2)));
+    }
+
+    @Test
     void threeShareAFortyFiveHundredBillClean() {
         CirclePlan.Result r = CirclePlan.plan(4500, 0, circle(3, 3000, 3000, Consent.NONE), SHARE, 10);
         assertEquals(1350, r.altarPays());
@@ -62,7 +82,7 @@ class CirclePlanTest {
         CirclePlan.Result none = CirclePlan.plan(15000, 0, circle(3, 3000, 3000, Consent.NONE), SHARE, 10);
         assertTrue(none.shares().isEmpty());
         assertEquals(15000, none.altarPays());
-        assertEquals(2, none.dropped().size());
+        assertEquals(1, none.dropped().size(), "the anchor is dropped first and that ends the plan");
     }
 
     @Test
@@ -107,9 +127,9 @@ class CirclePlanTest {
     @Test
     void aMemberOverTheHardCapIsDroppedAndTheRestRecomputed() {
         List<CirclePlan.Member> list = new ArrayList<>(circle(3, 20000, 20000, Consent.DAMAGE));
-        list.set(0, member(0, 0, 100, Consent.DAMAGE, HUGE_EP));
+        list.set(1, member(1, 0, 100, Consent.DAMAGE, HUGE_EP));
         CirclePlan.Result r = CirclePlan.plan(30000, 0, list, SHARE, 10);
-        assertEquals(List.of(new CirclePlan.Dropped(id(0), CirclePlan.DropReason.TOO_HEAVY)), r.dropped());
+        assertEquals(List.of(new CirclePlan.Dropped(id(1), CirclePlan.DropReason.TOO_HEAVY)), r.dropped());
         assertEquals(2, r.shares().size());
         r.shares().values().forEach(s -> assertEquals(10500, s.power()));
     }
@@ -127,9 +147,9 @@ class CirclePlanTest {
     @Test
     void consentNosebleedDropsADamageMember() {
         List<CirclePlan.Member> list = circle(4, 0, 5000, Consent.DAMAGE);
-        list.set(0, member(0, 0, 5000, Consent.NOSEBLEED, HUGE_EP));
+        list.set(1, member(1, 0, 5000, Consent.NOSEBLEED, HUGE_EP));
         CirclePlan.Result r = CirclePlan.plan(20000, 0, list, SHARE, 10);
-        assertEquals(List.of(new CirclePlan.Dropped(id(0), CirclePlan.DropReason.NEEDS_CONSENT)), r.dropped());
+        assertEquals(List.of(new CirclePlan.Dropped(id(1), CirclePlan.DropReason.NEEDS_CONSENT)), r.dropped());
         assertEquals(3, r.shares().size());
     }
 
@@ -164,8 +184,9 @@ class CirclePlanTest {
 
     @Test
     void recomputeConvergesInAtMostThirteenPasses() {
-        List<CirclePlan.Member> list = List.of(member(0, 199, 1000, Consent.DAMAGE, HUGE_EP), member(1, 599, 1000, Consent.DAMAGE, HUGE_EP),
-                member(2, 999, 1000, Consent.DAMAGE, HUGE_EP), member(3, 1000, 1000, Consent.DAMAGE, HUGE_EP));
+        // the anchor is the last one here: the others fall away one pass at a time and the anchor is left alone
+        List<CirclePlan.Member> list = List.of(new CirclePlan.Member(id(0), 199, 1000, Consent.DAMAGE, HUGE_EP, false), new CirclePlan.Member(id(1), 599, 1000, Consent.DAMAGE, HUGE_EP, false),
+                new CirclePlan.Member(id(2), 999, 1000, Consent.DAMAGE, HUGE_EP, false), new CirclePlan.Member(id(3), 1000, 1000, Consent.DAMAGE, HUGE_EP, true));
         CirclePlan.Result r = CirclePlan.plan(4800, 0, list, 1.0, 10);
         assertEquals(List.of(id(0), id(1), id(2)), r.dropped().stream().map(CirclePlan.Dropped::id).toList());
         assertEquals(4, r.passes());

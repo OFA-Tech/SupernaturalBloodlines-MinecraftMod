@@ -27,10 +27,7 @@ public final class Strain {
             level.sendParticles(new DustParticleOptions(new Vector3f(0.8f, 0.04f, 0.04f), 1.0f), member.getX(), member.getEyeY() - 0.2, member.getZ(), 12, 0.15, 0.1, 0.15, 0.0);
         }
         if (share.zone() == ChannelMeter.Zone.DAMAGE) {
-            float hp = Math.min(ChannelMeter.damageHp(share.overdraw(), cap), member.getHealth() - 1.0f);
-            if (hp > 0) {
-                member.hurt(member.damageSources().magic(), hp);
-            }
+            Pain.hurt(member, ChannelMeter.damageHp(share.overdraw(), cap));
         }
     }
 }

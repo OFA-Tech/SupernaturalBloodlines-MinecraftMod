@@ -28,6 +28,7 @@ import net.ofatech.supernaturalbloodlines.parts.species.group.circle.CircleStage
 public record NightWatchRiteFactory(int minCircle) implements RiteFactory {
     public static final ResourceLocation ID = ResourceLocation.fromNamespaceAndPath(SupernaturalBloodlines.MODID, "night_watch");
     public static final String STARTED = "supernaturalbloodlines.rite.grand.night_watch_started";
+    public static final String DAY = "supernaturalbloodlines.rite.grand.night_watch_day";
     public static final MapCodec<NightWatchRiteFactory> CODEC = RecordCodecBuilder.mapCodec(i -> i.group(
             Codec.INT.optionalFieldOf("min_circle", 0).forGetter(NightWatchRiteFactory::minCircle)).apply(i, NightWatchRiteFactory::new));
     /** Night ends when the day's tick leaves this range. */
@@ -70,6 +71,13 @@ public record NightWatchRiteFactory(int minCircle) implements RiteFactory {
 
         @Override
         protected boolean onStart(RiteParams params) {
+            if (!isNight(level.getDayTime())) {
+                // nothing is paid and no cooldown is stamped: the rite cancels itself
+                if (level.getPlayerByUUID(params.caster) instanceof ServerPlayer caster) {
+                    caster.displayClientMessage(Component.translatable(DAY), true);
+                }
+                return cancel();
+            }
             String id = GrandGate.idOf(level, type);
             Optional<String> refused = GrandGate.check(level, params.caster, id, minCircle);
             if (refused.isPresent()) {

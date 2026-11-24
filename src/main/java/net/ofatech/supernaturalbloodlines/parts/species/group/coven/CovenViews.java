@@ -93,12 +93,21 @@ public final class CovenViews {
         return n != null ? n : id.toString().substring(0, 8);
     }
 
-    private static int worstPower(ServerLevel level) {
-        int worst = 0;
-        for (RiteType t : level.registryAccess().registryOrThrow(EData.RITE_TYPES_REGISTRY)) {
-            worst = Math.max(worst, t.getPower());
+    private static Object worstFor;
+    private static int worstCached;
+
+    /** The dearest rite's power: the registry is walked once per registry, not on every push. */
+    private static synchronized int worstPower(ServerLevel level) {
+        var registry = level.registryAccess().registryOrThrow(EData.RITE_TYPES_REGISTRY);
+        if (worstFor != registry) {
+            int worst = 0;
+            for (RiteType t : registry) {
+                worst = Math.max(worst, t.getPower());
+            }
+            worstFor = registry;
+            worstCached = worst;
         }
-        return worst;
+        return worstCached;
     }
 
     private static Optional<CovenView.Vote> vote(ServerPlayer p, GroupIndex groups, UUID leader, long now) {
@@ -114,7 +123,10 @@ public final class CovenViews {
                 electors.add(id);
             }
         }
-        for (GroupIndex.Vote v : groups.openVotes(group)) {
+        List<GroupIndex.Vote> open = groups.openVotes(group);
+        // the first vote the viewer has not answered comes first, so a card never shows a ballot already cast while another waits
+        GroupIndex.Vote shown = open.stream().filter(v -> !v.ballots.containsKey(p.getUUID())).findFirst().orElse(open.isEmpty() ? null : open.get(0));
+        for (GroupIndex.Vote v : shown == null ? List.<GroupIndex.Vote>of() : List.of(shown)) {
             int yes = (int) electors.stream().filter(id -> Boolean.TRUE.equals(v.ballots.get(id))).count();
             int no = (int) electors.stream().filter(id -> Boolean.FALSE.equals(v.ballots.get(id))).count();
             Boolean mine = v.ballots.get(p.getUUID());

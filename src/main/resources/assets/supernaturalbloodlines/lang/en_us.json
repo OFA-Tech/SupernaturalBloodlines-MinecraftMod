@@ -2517,8 +2517,6 @@
   "supernaturalbloodlines.hub.coven.shun": "Call a shunning vote",
   "supernaturalbloodlines.hub.coven.vote_yes": "Yes",
   "supernaturalbloodlines.hub.coven.vote_no": "No",
-  "supernaturalbloodlines.group.target_shunned.coven": "%s has been shunned by a coven and cannot join one yet.",
-  "supernaturalbloodlines.group.shunned.coven": "You have been shunned and cannot join a coven yet.",
   "supernaturalbloodlines.coven.err.regent_only": "Only the Regent can do that.",
   "supernaturalbloodlines.coven.err.elder_only": "Only an Elder can call for a new Regent.",
   "supernaturalbloodlines.coven.err.not_member": "%s is not in your coven.",
@@ -2649,5 +2647,9 @@
   "supernaturalbloodlines.hub.coven.f.names": "In the circle",
   "supernaturalbloodlines.hub.coven.f.channel": "Your channel",
   "supernaturalbloodlines.hub.coven.f.share": "Your share",
-  "supernaturalbloodlines.hub.coven.f.channel_value": "%s of %s. %s"
+  "supernaturalbloodlines.hub.coven.f.channel_value": "%s of %s. %s",
+  "supernaturalbloodlines.hub.home.hours": "%s h",
+  "supernaturalbloodlines.hub.coven.vote_tip": "%s %s",
+  "supernaturalbloodlines.coven.err.covens_off": "Covens are switched off on this server.",
+  "supernaturalbloodlines.rite.grand.night_watch_day": "The Night Watch can only be raised at night."
 }

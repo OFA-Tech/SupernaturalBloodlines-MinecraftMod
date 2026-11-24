@@ -80,6 +80,10 @@ public final class CirclePlan {
             if (worst != null) {
                 dropped.add(worst);
                 UUID gone = worst.id();
+                // the one who casts is the circle: without them it is a solo cast, and nobody else pays for a rite they do not hold
+                if (left.stream().anyMatch(m -> m.anchor() && m.id().equals(gone))) {
+                    return new Result(altarBill, Map.of(), List.copyOf(dropped), passes);
+                }
                 left.removeIf(m -> m.id().equals(gone));
                 continue;
             }

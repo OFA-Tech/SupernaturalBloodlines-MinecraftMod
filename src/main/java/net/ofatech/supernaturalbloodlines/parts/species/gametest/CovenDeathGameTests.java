@@ -30,6 +30,7 @@ import net.ofatech.supernaturalbloodlines.parts.species.group.GroupIndex;
 import net.ofatech.supernaturalbloodlines.parts.species.group.GroupsConfig;
 import net.ofatech.supernaturalbloodlines.parts.species.group.circle.CircleLink;
 import net.ofatech.supernaturalbloodlines.parts.species.group.circle.LinkWindow;
+import net.ofatech.supernaturalbloodlines.parts.species.pack.PackCommand;
 import net.ofatech.supernaturalbloodlines.parts.species.pack.PackIndex;
 import net.ofatech.supernaturalbloodlines.parts.species.witch.RiteCost;
 
@@ -166,6 +167,100 @@ public final class CovenDeathGameTests {
         helper.succeed();
     }
 
+    private static final java.util.function.Consumer<net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent> MULTIPLY = e -> e.setAmount(e.getAmount() * 100);
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aMemberWhoLeftOrWasKickedIsNotHurtByTheAnchorsDeath(GameTestHelper helper) {
+        Circle c = circle(helper, 4);
+        try {
+            startRite(helper, c);
+            TalkingDuelist left = c.others().get(0);
+            TalkingDuelist kicked = c.others().get(1);
+            TalkingDuelist stays = c.others().get(2);
+            helper.assertTrue(PackCommand.leave(left) == null, "the member could not leave");
+            helper.assertTrue(PackCommand.kick(c.anchor(), kicked.getUUID(), "kicked") == null, "the member could not be kicked");
+            helper.assertTrue(!LinkWindow.liveOf(c.anchor().getUUID()).members().contains(left.getUUID()) && !LinkWindow.liveOf(c.anchor().getUUID()).members().contains(kicked.getUUID()), "a leaver is still in the live link");
+            fall(c.anchor());
+            for (TalkingDuelist gone : List.of(left, kicked)) {
+                helper.assertTrue(gone.getHealth() == gone.getMaxHealth() && !gone.hasEffect(MobEffects.WEAKNESS), "someone who was no longer in the coven was hurt");
+                helper.assertTrue(!CircleLink.shaken(gone.getUUID()), "someone who was no longer in the coven was shaken");
+                var row = GroupIndex.get(helper.getLevel()).channelOf(gone.getUUID());
+                helper.assertTrue(row == null || row.value() != 0, "someone who was no longer in the coven had their meter emptied");
+            }
+            helper.assertTrue(stays.getHealth() == stays.getMaxHealth() - 12, "the member who stayed was not hurt: " + stays.getHealth());
+        } finally {
+            done(helper, c);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aMemberWhoLeftAndCameBackIsNotLinkedAnyMore(GameTestHelper helper) {
+        Circle c = circle(helper, 3);
+        try {
+            startRite(helper, c);
+            TalkingDuelist back = c.others().get(0);
+            helper.assertTrue(PackCommand.leave(back) == null, "the member could not leave");
+            helper.assertTrue(GroupTestKit.join(c.anchor(), back), "the member could not come back");
+            fall(c.anchor());
+            helper.assertTrue(back.getHealth() == back.getMaxHealth(), "a member who left after the rite and came back was hurt: " + back.getHealth());
+            helper.assertTrue(c.others().get(1).getHealth() == c.others().get(1).getMaxHealth() - 12, "the member who stayed was not hurt");
+        } finally {
+            done(helper, c);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aMemberTakenOutOfTheCovenWithoutTheCircleHookIsStillNotHurt(GameTestHelper helper) {
+        Circle c = circle(helper, 3);
+        try {
+            startRite(helper, c);
+            TalkingDuelist out = c.others().get(0);
+            PackIndex.get(helper.getLevel()).leaveVoluntarily(out.getUUID());
+            helper.assertTrue(LinkWindow.liveOf(c.anchor().getUUID()).members().contains(out.getUUID()), "the test needs the link to still list them");
+            fall(c.anchor());
+            helper.assertTrue(out.getHealth() == out.getMaxHealth() && !out.hasEffect(MobEffects.WEAKNESS), "a member no longer in the coven was hurt: " + out.getHealth());
+        } finally {
+            done(helper, c);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void anotherModsDamageMultiplierCannotKillAMemberOfTheLink(GameTestHelper helper) {
+        Circle c = circle(helper, 3);
+        NeoForge.EVENT_BUS.addListener(MULTIPLY);
+        try {
+            startRite(helper, c);
+            c.others().forEach(m -> m.setHealth(5));
+            fall(c.anchor());
+            for (TalkingDuelist m : c.others()) {
+                helper.assertTrue(m.isAlive() && m.getHealth() == 1.0f, "a damage multiplier killed a linked member (or the hit was lost): " + m.getHealth());
+            }
+        } finally {
+            NeoForge.EVENT_BUS.unregister(MULTIPLY);
+            done(helper, c);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void strainPainCannotBeMultipliedIntoADeath(GameTestHelper helper) {
+        Circle c = circle(helper, 3);
+        NeoForge.EVENT_BUS.addListener(MULTIPLY);
+        try {
+            TalkingDuelist m = c.others().get(0);
+            m.setHealth(3);
+            var share = new net.ofatech.supernaturalbloodlines.core.group.circle.CirclePlan.Share(4000, 0, net.ofatech.supernaturalbloodlines.core.group.circle.ChannelMeter.Zone.DAMAGE, 3000);
+            net.ofatech.supernaturalbloodlines.parts.species.group.circle.Strain.apply(m, share, 3000);
+            helper.assertTrue(m.isAlive() && m.getHealth() == 1.0f, "strain killed a member through a damage multiplier: " + m.getHealth());
+        } finally {
+            NeoForge.EVENT_BUS.unregister(MULTIPLY);
+            done(helper, c);
+        }
+        helper.succeed();
+    }
     @GameTest(template = "empty", templateNamespace = NS)
     public static void anOfflineOrDeadMemberIsSkipped(GameTestHelper helper) {
         Circle c = circle(helper, 4);
