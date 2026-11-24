@@ -254,7 +254,7 @@ public final class CovenGovernance {
         }
         c.groups.ballot(open, p.getUUID(), yes);
         p.sendSystemMessage(CovenText.of("vote_counted"));
-        HubRequests.changed(p);
+        refreshCards(c);
         resolve(c, open);
         return null;
     }

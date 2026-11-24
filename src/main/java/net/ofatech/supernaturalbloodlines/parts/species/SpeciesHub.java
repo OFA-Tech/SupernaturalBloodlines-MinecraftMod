@@ -49,6 +49,7 @@ public final class SpeciesHub {
                 && net.ofatech.supernaturalbloodlines.parts.species.pack.PackMoonGift.has(p));
         HubRequests.set(SpeciesHub::requests);
         net.ofatech.supernaturalbloodlines.shared.supernatural.HubGroups.set(net.ofatech.supernaturalbloodlines.parts.species.group.GroupViews::of);
+        net.ofatech.supernaturalbloodlines.shared.supernatural.HubCoven.set(net.ofatech.supernaturalbloodlines.parts.species.group.coven.CovenViews::of);
     }
 
     static HubSocial.Social social(ServerPlayer p) {
