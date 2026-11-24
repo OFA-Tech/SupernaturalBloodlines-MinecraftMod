@@ -1,0 +1,43 @@
+{
+    "neoforge:conditions": [
+        {
+            "type": "supernaturalbloodlines:part_enabled",
+            "part": "evolutionRites"
+        },
+        {
+            "type": "neoforge:mod_loaded",
+            "modid": "ascension"
+        }
+    ],
+    "items": [
+        {
+            "id": "minecraft:lapis_block",
+            "count": 2
+        },
+        {
+            "id": "minecraft:enchanted_book",
+            "count": 1
+        },
+        {
+            "id": "minecraft:amethyst_shard",
+            "count": 4
+        },
+        {
+            "id": "enchanted:spirit_of_otherwhere",
+            "count": 1
+        }
+    ],
+    "shapes": {
+        "enchanted:medium_circle": "enchanted:nether_chalk"
+    },
+    "power": 9000,
+    "factory": {
+        "type": "supernaturalbloodlines:evolution",
+        "recipe": "great_mage",
+        "tier": "unique",
+        "grants": "ascension:great_mage",
+        "requires_mod": "ascension",
+        "probe": "unique.road:com.simplygray.tensuraaddon.AddonSkillConfig#GREAT_MAGE_ENABLED",
+        "ep_cost": 200000.0
+    }
+}

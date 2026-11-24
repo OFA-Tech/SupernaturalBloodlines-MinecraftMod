@@ -319,7 +319,7 @@ Modify: `core/Part.java`, `shared/admin/AdminEntries.java`, `core/rite/RiteUnloc
 
 ---
 
-## Outline: 19b Great Sage and FoxAblaze (a plan of its own is written when 19a is merged)
+## Outline: 19b Great Sage and FoxAblaze (written in full: [2026-11-23-plan-19b-great-sage-foxablaze.md](2026-11-23-plan-19b-great-sage-foxablaze.md))
 
 Gate: none open (Q1 decided as the Raphael merge, D14; Q7 decided yes). Branch `feature/plan-19b-great-sage-fox`. Mixin budget of the part stays **0 of 3**.
 1. Hook probe rows for `CapstoneGate` (`eligible`, `available`, `OBTAINABLE`), `GreatSageGameRules.holdsRaphael`/`ADDON_RAPHAELS`, `RaphaelFusion.isEligibleRace`/`isOwnedByOther`, FoxAblaze's game rule and `ITrulyUnique`, `SkillEvents.UNLOCK_SKILL`; re-read the changed classes if a version moved.

@@ -41,6 +41,8 @@ public final class SpeciesTensuraPart {
         }
         SpeciesEligibility.setCheck(TensuraHumanLikeCheck.INSTANCE);
         TensuraSupernatural.register();
+        net.ofatech.supernaturalbloodlines.shared.species.TensuraRaceId.install(p -> io.github.manasmods.manascore.race.api.RaceAPI.getRaceFrom(p).getRace()
+                .map(r -> r.getRaceId().toString()).orElse(""));
         LayerQuery.install(SpeciesLayer::treatedAsUndeadForBridge, SpeciesLayer::isApexVampireType);
         SpeciesLayer.register();
         if (ModList.get().isLoaded("werewolves")) {

@@ -1,0 +1,9 @@
+{
+  "replace": false,
+  "values": [
+    { "id": "ascension:lich", "required": false },
+    { "id": "ascension:elder_lich", "required": false },
+    { "id": "ascension:lich_king", "required": false },
+    { "id": "ascension:undead_skeleton", "required": false }
+  ]
+}

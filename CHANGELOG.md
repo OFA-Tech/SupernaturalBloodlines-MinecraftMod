@@ -30,6 +30,25 @@ Delete `supernaturalbloodlines_groups.dat`. The pack file `supernaturalbloodline
 
 ### Verified
 - Unit tests 2,499 pass. The 12-run GameTest matrix passes in every run (1,994 with everything on; 1,456 with `-PnoWerewolves -PnoCurios`; 30 with `-PnoLinkedMods`; 494, 1,871, 1,826, 1,844, 1,984, 1,825, 1,978, 1,667 and 382 for the part-off runs). 16 mutants of the groups rules, all caught.
+## Unreleased (plan 19d: the other Tensura addons and the race links)
+
+- **Four more evolution rites.** Each is a Unique and needs a full moon. A witch-type performer works it for a consenting target, and it costs 200,000 base Max EP, taken after the learn:
+  - **Great Mage** and **King of Curses**, with Ascension installed. Ascension's own switch for each skill still decides.
+  - **Butcher**, with Mysticism installed, for a werewolf.
+  - **Imitator**, with Slime Throne Extras installed.
+
+  Each rite exists only when its addon is installed. With Mysticism installed, its Soul Energy price still applies to the learn.
+- **Race links for the rites.** Ascension's five Bloodfiend races count as vampires, and Mysticism's direwolf and its twelve spirit wolves count as werewolves. This covers who a rite accepts and which rites a player learns, but leaves faction and species alone. A Blood Noble (Ascension's third Bloodfiend tier) or higher is at the vampire apex tier, like a Vampire Lord.
+- **Addon undead.** Ascension's lich, elder lich, lich king and undead skeleton follow our undead rules through our own race tag `supernaturalbloodlines:addon_undead`. Tensura's own undead tag is not changed. No other addon puts a race in `tensura:undead`.
+- Mysticism 2.2, Slime Throne Extras 2.1, Tensura Horizons 0.31 and Kumo Desu ga 2.0.3 are now tested versions. Other versions load with a warning.
+- No network protocol change and no new setting: the rites use the part's existing per-recipe switches.
+- **Rolling back:** a granted skill is an ordinary Tensura skill and stays. The rite files and their unlock advancements go away.
+
+## Unreleased (plan 19b: Raphael)
+
+- With FoxAblaze installed, learning Great Sage's Raphael redirects to FoxAblaze's, subject to its single-owner rule. The Rite of Raphael stays dormant until Great Sage opens its own road.
+- A refused Great Sage evolution can reset the mastery of Great Sage and Degenerate: the redirect attempts to restore missing skills at default mastery.
+- Disabling `evolutionRites` removes the redirect and rite. It does not undo prior login conversions. No network protocol change.
 
 ## Unreleased (skill wheel, phase W4: the wheel screen)
 
@@ -73,6 +92,23 @@ Turn `hide_covered_keys` or `hud_enabled` off in the hub (Settings) and every co
 ### Rolling back
 - **Roll the server and every client back together** (the network version goes back to 2). The saved `wheel_clock` is dropped by an older build, which is harmless: it only held a cooldown of at most a few minutes. With both settings off the wheel lists every side and no key is stopped.
 
+## Unreleased (plan 19c: the Rite of the Blood Sovereign)
+
+### Added
+- **Rite of the Blood Sovereign** (`evolve_blood_sovereign`, only with Ascension installed): on a night of the lunar eclipse a witch-type performer opens the road from **Deus Sanguis to Blood Sovereign** for the consenting target on the circle (or for herself). **Ascension's own requirements stand**, read live from the addon: the game rule `doAscensionUltimate`, Max EP at or above its threshold (5,000,000 by default), a true Hero or true Demon Lord, Deus Sanguis held and mastered, and the wait since the last awakening. It costs an Ultimate Catalyst, a nether star, a spirit of otherwhere and altar power; Deus Sanguis is given up, as the altar does. **It gives no bonus Max EP and no witness share**: those stay the altar's. Learned permanently (`GrantForm.PERMANENT`, remove time -1). Sealed in the book until the player has read Finn's Notes.
+- **The rite and the Awakening Altar share one cooldown**: a completed rite writes the altar's own tag, so an awakening by either road makes the other wait.
+- **`GrantForm.PERMANENT`** for the recipe data and two probe seams (`enabledIn` for a world switch such as a game rule, `onGranted` for what the addon's own road writes).
+- A refusal says nothing about the target to the performer (a human, a hybrid, a vampire with no Deus Sanguis, a target short of EP all read the same); the game rule off closes the rite to the performer only.
+
+### Changed
+- Finn's Notes teach the Blood Sovereign too where Ascension is installed (two older tests counted two and four rites; they now follow the rite being there).
+- No network version, payload or setting changed (the existing `ultimate_rites_enabled` and `disabled_recipes` govern it).
+
+### Rolling back
+- A granted Blood Sovereign is an ordinary Tensura skill and stays; the rite file and its two unlock advancements go away, so nothing is known or sealed. The awakening tag a rite wrote stays on the player and keeps the altar waiting for at most its own cooldown. Nothing to migrate.
+
+### Not verified
+- A real eclipse rite with a real Ascension altar next to it on a client (the book entry and the circle look), and Skill Books' price hooks on `ascension:blood_sovereign`.
 ## Unreleased (plan 19a: the evolution rites engine and the Rite of Mastery)
 
 ### Added
