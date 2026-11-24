@@ -1,5 +1,6 @@
 package net.ofatech.supernaturalbloodlines.parts.evolutionrites.probe;
 
+import java.util.List;
 import java.util.Optional;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -31,5 +32,15 @@ public interface AddonProbe {
     /** Whether the single-owner rule of the addon (FoxAblaze, 19b) says another player owns the skill. */
     default boolean ownedByOther(ServerPlayer target, EvolutionRecipe recipe) {
         return false;
+    }
+
+    /** A skill id to grant instead of the recipe's own (the merged Raphael: FoxAblaze's when it is installed). Empty: the recipe's own. */
+    default Optional<String> grantOverride() {
+        return Optional.empty();
+    }
+
+    /** Skill ids that count as already holding the grant (either Raphael). */
+    default List<String> alsoHolds() {
+        return List.of();
     }
 }

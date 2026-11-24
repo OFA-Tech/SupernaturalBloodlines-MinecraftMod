@@ -84,7 +84,7 @@ See the table in [README.md](README.md). Verified: Skill Obtain's handler (`hand
 7. Skill Trainer in depth, and Infinity Stones, Re:Zero, Magicule Engineering and NEB (hashed only).
 8. Rebalanced 3.2.17's rest: the nested rebalance jars other than Great Sage, FoxAblaze, Ascension, Mysticism and core, and the effect of `tensura_rebalance_core` on `SkillHelper.learnSkill`.
 
-9. For the Raphael merge: whether Tensura's own unlock listener registers an owner in `ITrulyUnique` for a gifted FoxAblaze instance; the order in which `UNLOCK_SKILL` listeners run; the target method of FoxAblaze's `GreatSageCielAccessMixin`; whether anything in Great Sage's client (`RaphaelScreen`, `RaphaelShader`) is opened only by its own Raphael id (no `holdsRaphael`/`ADDON_RAPHAELS` reference was found in them, so they may be keyed to the Great Sage id).
+9. For the Raphael merge, still unverified: cross-mod `UNLOCK_SKILL` listener order, the target method of FoxAblaze's `GreatSageCielAccessMixin`, and whether `RaphaelScreen` or `RaphaelShader` only recognizes Great Sage's own ID. Ownership was verified in 19b: FoxAblaze's `RaphaelSkill.onLearnSkill` writes the Raphael and Ciel owners to `ITrulyUnique` when its game rule is on; the merge does not write the registry itself.
 
 ## How the plan re-checks
 

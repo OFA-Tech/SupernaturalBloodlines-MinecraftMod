@@ -59,7 +59,8 @@ class EvolutionRecipeCodecTest {
         assertTrue(decode("{ " + base + ", \"tier\": \"mythic\" }").error().isPresent());
         assertTrue(decode("{ " + base + ", \"tier\": \"common\" }").error().isPresent(), "a Common skill is only for the Rite of Mastery");
         assertTrue(decode("{ " + base + ", \"tier\": \"unique\", \"subject_kinds\": [\"dragon\"] }").error().isPresent());
-        assertTrue(decode("{ " + base + ", \"tier\": \"unique\", \"grant_form\": \"free\" }").error().isPresent(), "FREE arrives with 19b");
+        assertTrue(decode("{ " + base + ", \"tier\": \"unique\", \"grant_form\": \"free\" }").error().isEmpty(), "FREE arrived with 19b");
+        assertTrue(decode("{ " + base + ", \"tier\": \"unique\", \"grant_form\": \"permanent\" }").error().isPresent(), "PERMANENT arrives with 19c");
     }
 
     @Test
