@@ -15,7 +15,8 @@ public final class Probes {
     private static final Logger LOGGER = LoggerFactory.getLogger("supernaturalbloodlines");
 
     private static final Set<String> WARNED = ConcurrentHashMap.newKeySet();
-    private static final Map<String, AddonProbe> FIXED = Map.of(OWN_SAGE_GREAT_SAGE, new OwnProbe());
+    public static final String GREAT_SAGE_RAPHAEL = "greatsage.raphael";
+    private static final Map<String, AddonProbe> FIXED = Map.of(OWN_SAGE_GREAT_SAGE, new OwnProbe(), GREAT_SAGE_RAPHAEL, new GreatSageProbe());
 
     private Probes() {
     }

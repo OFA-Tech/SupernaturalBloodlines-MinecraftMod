@@ -38,6 +38,7 @@ public final class EvolutionRitesPart {
         modBus.addListener((RegisterGameTestsEvent e) -> {
             e.register(EvolutionHookProbeGameTests.class);
             e.register(net.ofatech.supernaturalbloodlines.parts.evolutionrites.gametest.FreeGrantGameTests.class);
+            e.register(net.ofatech.supernaturalbloodlines.parts.evolutionrites.gametest.RaphaelProbeGameTests.class);
             e.register(EvolutionRiteGameTests.class);
             e.register(EvolutionUnlockGameTests.class);
             e.register(MasteryGameTests.class);
