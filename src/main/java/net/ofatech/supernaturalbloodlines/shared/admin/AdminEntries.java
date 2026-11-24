@@ -255,6 +255,36 @@ public final class AdminEntries {
             all.add(SettingEntry.of(GROUPS_FILE, gr, key, BOOL));
         }
         all.add(SettingEntry.of(GROUPS_FILE, gr, "max_members", INT));
+        all.add(SettingEntry.of(GROUPS_FILE, gr, "link_enabled", BOOL));
+        all.add(SettingEntry.of(GROUPS_FILE, gr, "link_member_share", DOUBLE));
+        all.add(SettingEntry.of(GROUPS_FILE, gr, "channel_cap", INT));
+        all.add(SettingEntry.of(GROUPS_FILE, gr, "channel_other_factor", DOUBLE));
+        all.add(SettingEntry.of(GROUPS_FILE, gr, "channel_regen_minutes", INT));
+        all.add(SettingEntry.of(GROUPS_FILE, gr, "ep_keep_percent", INT));
+        all.add(SettingEntry.of(GROUPS_FILE, gr, "potency_max_bonus", DOUBLE));
+        all.add(SettingEntry.of(GROUPS_FILE, gr, "potency_falloff", DOUBLE));
+        all.add(SettingEntry.of(GROUPS_FILE, gr, "tier1_members", INT));
+        all.add(SettingEntry.of(GROUPS_FILE, gr, "tier2_members", INT));
+        all.add(SettingEntry.of(GROUPS_FILE, gr, "tier3_members", INT));
+        all.add(SettingEntry.of(GROUPS_FILE, gr, "link_window_seconds", INT));
+        all.add(SettingEntry.of(GROUPS_FILE, gr, "link_death_damage_percent", INT));
+        all.add(SettingEntry.of(GROUPS_FILE, gr, "link_death_lethal", BOOL));
+        all.add(SettingEntry.of(GROUPS_FILE, gr, "link_shaken_minutes", INT));
+        all.add(SettingEntry.of(GROUPS_FILE, gr, "elder_min_days", INT));
+        all.add(SettingEntry.of(GROUPS_FILE, gr, "members_per_elder", INT));
+        all.add(SettingEntry.of(GROUPS_FILE, gr, "vote_hours", INT));
+        all.add(SettingEntry.of(GROUPS_FILE, gr, "election_cooldown_days", INT));
+        all.add(SettingEntry.of(GROUPS_FILE, gr, "shun_days", INT));
+        all.add(SettingEntry.of(GROUPS_FILE, gr, "moonlight_ring_enabled", BOOL));
+        all.add(SettingEntry.of(GROUPS_FILE, gr, "sun_ring_forge_enabled", BOOL));
+        all.add(SettingEntry.of(GROUPS_FILE, gr, "sun_ring_day_walker_only", BOOL));
+        all.add(SettingEntry.of(GROUPS_FILE, gr, "mastery_ultimate_circle", INT));
+        all.add(SettingEntry.of(GROUPS_FILE, gr, "grand_rites_enabled", BOOL));
+        all.add(SettingEntry.of(GROUPS_FILE, gr, "grand_rite_cooldown_hours", INT));
+        all.add(SettingEntry.of(GROUPS_FILE, gr, "grand_rite_radius", INT));
+        all.add(SettingEntry.of(GROUPS_FILE, gr, "fete_minutes", INT));
+        all.add(SettingEntry.of(GROUPS_FILE, gr, "harvest_xp_levels", INT));
+        all.add(SettingEntry.of(GROUPS_FILE, gr, "harvest_max_blocks", INT));
         ALL = List.copyOf(all);
     }
 
