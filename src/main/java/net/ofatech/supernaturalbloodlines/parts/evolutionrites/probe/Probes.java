@@ -13,12 +13,14 @@ import org.slf4j.LoggerFactory;
 public final class Probes {
     public static final String OWN_SAGE_GREAT_SAGE = "own.sage_great_sage";
     public static final String ASCENSION_AWAKENING = "ascension.awakening";
+    /** A Unique whose addon has no on/off switch for it (Mysticism's Butcher, Slime Throne Extras' Imitator): the road is open whenever the addon is loaded. */
+    public static final String UNIQUE_NO_SWITCH = "unique.no_switch";
     private static final Logger LOGGER = LoggerFactory.getLogger("supernaturalbloodlines");
 
     private static final Set<String> WARNED = ConcurrentHashMap.newKeySet();
     public static final String GREAT_SAGE_RAPHAEL = "greatsage.raphael";
-    private static final Map<String, AddonProbe> FIXED = Map.of(OWN_SAGE_GREAT_SAGE, new OwnProbe(), GREAT_SAGE_RAPHAEL, new GreatSageProbe(),
-            ASCENSION_AWAKENING, new AscensionProbe());
+    private static final Map<String, AddonProbe> FIXED = Map.of(OWN_SAGE_GREAT_SAGE, new OwnProbe(), UNIQUE_NO_SWITCH, new OwnProbe(),
+            GREAT_SAGE_RAPHAEL, new GreatSageProbe(), ASCENSION_AWAKENING, new AscensionProbe());
 
     private Probes() {
     }

@@ -18,7 +18,9 @@ public final class ApexLines {
             "tensura:elf_saint", "tensura:divine_elf", "tensura:merfolk_saint", "tensura:divine_fish",
             // Tensura Horizons puts one more rung between the saint and the divine race of the elf, dwarf and merfolk lines; a player on it is past the saint tier
             "tensurahorizons:ascendant_elf", "tensurahorizons:runeforged_dwarf", "tensurahorizons:tide_sovereign");
-    public static final Set<String> VAMPIRE = Set.of("tensura:vampire_lord", "tensura:divine_vampire");
+    /** Ascension's Bloodfiend chain is fledgling, kindred, blood noble, elder, progenitor: the blood noble is its third tier, like the vampire lord (plan 19d). */
+    public static final Set<String> VAMPIRE = Set.of("tensura:vampire_lord", "tensura:divine_vampire",
+            "ascension:blood_noble", "ascension:elder_bloodfiend", "ascension:progenitor_bloodfiend");
     public static final Set<String> BEASTFOLK = Set.of("tensura:spirit_beast", "tensura:divine_beast");
 
     /** The namespace of our own apex races, which are past every line's tier. */

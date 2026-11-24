@@ -17,6 +17,13 @@ public final class RaceTags {
     public static final TagKey<ManasRace> BITABLE = TagKey.create(RaceAPI.getRaceRegistryKey(),
             ResourceLocation.fromNamespaceAndPath(SupernaturalBloodlines.MODID, "bitable"));
 
+    /**
+     * Ours: undead races of other addons that no addon puts in {@code tensura:undead} (Ascension's liches and undead skeleton, plan 19d). They follow our
+     * undead rules; Tensura's own tag is left alone, so Tensura's mechanics for them are unchanged.
+     */
+    public static final TagKey<ManasRace> ADDON_UNDEAD = TagKey.create(RaceAPI.getRaceRegistryKey(),
+            ResourceLocation.fromNamespaceAndPath(SupernaturalBloodlines.MODID, "addon_undead"));
+
     private RaceTags() {}
 
     private static TagKey<ManasRace> of(String path) {
@@ -28,6 +35,6 @@ public final class RaceTags {
     }
 
     public static boolean isUndeadOrDaemon(@Nullable ManasRaceInstance race) {
-        return race != null && (race.is(UNDEAD) || race.is(DAEMON));
+        return race != null && (race.is(UNDEAD) || race.is(DAEMON) || race.is(ADDON_UNDEAD));
     }
 }

@@ -73,8 +73,8 @@ final class RitesBook {
                     List.of("curse_magicule_drain", "curse_skill_seal", "magicule_offering", "purification", "purification_holy_water")),
             new Cat("evolutions", "Evolution Rites", "minecraft:nether_star",
                     "Rites that open a road to a skill that already exists, and bring one to mastery.",
-                    List.of("evolve_great_sage", "evolve_deus_sanguis", "evolve_blood_sovereign", "evolve_raphael", "mastery_common", "mastery_extra", "mastery_unique",
-                            "mastery_ultimate")));
+                    List.of("evolve_great_sage", "evolve_deus_sanguis", "evolve_great_mage", "evolve_king_of_curses", "evolve_butcher", "evolve_imitator",
+                            "evolve_blood_sovereign", "evolve_raphael", "mastery_common", "mastery_extra", "mastery_unique", "mastery_ultimate")));
 
     /** The book entry's icon. Only {@code minecraft:} items: an icon from a mod that is not there would drop the whole entry. */
     static final Map<String, String> ICON = Map.ofEntries(
@@ -94,7 +94,8 @@ final class RitesBook {
             Map.entry("vampire_compass", "minecraft:compass"), Map.entry("ward_of_daylight", "minecraft:sunflower"),
             Map.entry("ward_of_return", "minecraft:totem_of_undying"), Map.entry("ward_of_the_moon", "minecraft:amethyst_shard"),
             Map.entry("werewolf_brother", "minecraft:beef"), Map.entry("evolve_great_sage", "minecraft:ender_eye"), Map.entry("evolve_deus_sanguis", "minecraft:redstone_block"), Map.entry("evolve_blood_sovereign", "minecraft:nether_star"),
-            Map.entry("evolve_raphael", "minecraft:nether_star"),
+            Map.entry("evolve_raphael", "minecraft:nether_star"), Map.entry("evolve_great_mage", "minecraft:enchanted_book"),
+            Map.entry("evolve_king_of_curses", "minecraft:wither_skeleton_skull"), Map.entry("evolve_butcher", "minecraft:beef"), Map.entry("evolve_imitator", "minecraft:echo_shard"),
             Map.entry("mastery_common", "minecraft:diamond_block"), Map.entry("mastery_extra", "minecraft:echo_shard"), Map.entry("mastery_unique", "minecraft:nether_star"),
             Map.entry("mastery_ultimate", "minecraft:dragon_breath"));
 
@@ -139,6 +140,8 @@ final class RitesBook {
             Map.entry("blood_offering", "Blood Offering"), Map.entry("hybrid_blood", "Hybrid's Blood"),
             Map.entry("rite_of_the_frequency", "The Frequency"), Map.entry("rite_of_the_valet_pike", "The Valet Pike"),
             Map.entry("evolve_great_sage", "The Great Sage"), Map.entry("evolve_deus_sanguis", "Deus Sanguis"), Map.entry("evolve_blood_sovereign", "Blood Sovereign"), Map.entry("mastery_common", "Mastery: Common"),
+            Map.entry("evolve_great_mage", "The Great Mage"), Map.entry("evolve_king_of_curses", "King of Curses"), Map.entry("evolve_butcher", "The Butcher"),
+            Map.entry("evolve_imitator", "The Imitator"),
             Map.entry("mastery_extra", "Mastery: Extra"), Map.entry("mastery_unique", "Mastery: Unique"), Map.entry("mastery_ultimate", "Mastery: Ultimate"));
 
     static String header(String path, String name) {
@@ -301,7 +304,7 @@ final class RitesBook {
         return "??? \u00b7 " + orList(parts);
     }
 
-    private static final String[] NUMERALS = {"I", "II", "III", "IV", "V", "VI"};
+    private static final String[] NUMERALS = {"I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X", "XI", "XII"};
 
     /**
      * The list labels of one category, no two alike: rites that are learned the same way (two of Esther's, the two curses) get a numeral in the order of

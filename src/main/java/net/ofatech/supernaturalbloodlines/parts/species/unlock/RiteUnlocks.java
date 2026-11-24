@@ -98,7 +98,7 @@ public final class RiteUnlocks {
     public static Set<RiteKind> kindsOf(ServerPlayer p) {
         var faction = VampirismAPI.factionPlayerHandler(p).getCurrentFaction();
         boolean wolfLineage = BloodlineAccess.get(p).wolf().lineage() != WolfState.Lineage.NONE;
-        return RiteKinds.of(BloodlineAccess.get(p).species(), faction == VReference.VAMPIRE_FACTION,
+        return RiteKinds.of(BloodlineAccess.get(p).species(), net.ofatech.supernaturalbloodlines.shared.species.TensuraRaceId.of(p), faction == VReference.VAMPIRE_FACTION,
                 VampirismSupernatural.isWerewolf(p) || wolfLineage, faction == VReference.HUNTER_FACTION);
     }
 

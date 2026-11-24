@@ -61,9 +61,46 @@ class EvolutionRitesDataTest {
     }
 
     @Test
-    void thereAreEightRites() throws IOException {
-        assertEquals(List.of("evolve_blood_sovereign", "evolve_deus_sanguis", "evolve_great_sage", "evolve_raphael", "mastery_common", "mastery_extra", "mastery_ultimate",
-                "mastery_unique"), mine());
+    void thereAreTwelveRites() throws IOException {
+        assertEquals(List.of("evolve_blood_sovereign", "evolve_butcher", "evolve_deus_sanguis", "evolve_great_mage", "evolve_great_sage", "evolve_imitator",
+                "evolve_king_of_curses", "evolve_raphael", "mastery_common", "mastery_extra", "mastery_ultimate", "mastery_unique"), mine());
+    }
+
+    /** Plan 19d: the four Uniques of the other addons (spec 8.4): their addon, their probe (the addon's switch, or none), and only Butcher asks for a kind. */
+    @Test
+    void everyUniqueOfPlan19dNamesItsAddonItsProbeAndItsKinds() throws IOException {
+        String a = "unique.road:com.simplygray.tensuraaddon.AddonSkillConfig#";
+        Object[][] table = {
+                {"great_mage", "ascension:great_mage", "ascension", a + "GREAT_MAGE_ENABLED", Set.of()},
+                {"king_of_curses", "ascension:king_of_curses", "ascension", a + "KING_OF_CURSES_ENABLED", Set.of()},
+                {"butcher", "mysticism:butcher", "mysticism", "unique.no_switch", Set.of(net.ofatech.supernaturalbloodlines.core.rite.RiteKind.WEREWOLF)},
+                {"imitator", "stextras:imitator", "stextras", "unique.no_switch", Set.of()},
+        };
+        for (Object[] row : table) {
+            JsonObject rite = read(ROOT.resolve(RITES).resolve("evolve_" + row[0] + ".json"));
+            EvolutionRecipe r = EvolutionRecipeCodec.RECIPE.codec().parse(JsonOps.INSTANCE, rite.getAsJsonObject("factory")).getOrThrow();
+            assertEquals(row[1], r.grants(), row[0].toString());
+            assertEquals(row[2], r.requiresMod(), row[0].toString());
+            assertEquals(row[3], r.probe(), row[0].toString());
+            assertEquals(row[4], r.subjectKinds(), row[0].toString());
+            assertEquals(Tier.UNIQUE, r.tier(), row[0].toString());
+            assertEquals(net.ofatech.supernaturalbloodlines.core.evolution.GrantForm.DEFAULT, r.grantForm(), row[0].toString());
+            assertTrue(r.consumes().isEmpty() && r.needs().isEmpty(), row[0] + " keeps nothing and needs nothing: a new road");
+            assertTrue(r.epCost() > 0, row[0] + " has no sacrifice (E15)");
+        }
+    }
+
+    /** Rebalanced retires these skills (its {@code retired} tag, read for 19d); no rite may grant one (D3). */
+    @Test
+    void noRecipeGrantsARetiredSkill() throws IOException {
+        Set<String> retired = Set.of("foxablazeultimate:azathoth", "foxablazeultimate:beelzebub", "foxablazeultimate:beelzebuth", "foxablazeultimate:velgrynd",
+                "beelzebub", "beelzebuth", "mysticism:embryo", "trnightmare:imitator");
+        for (String name : mine()) {
+            JsonObject factory = read(ROOT.resolve(RITES).resolve(name + ".json")).getAsJsonObject("factory");
+            if (factory.has("grants")) {
+                assertFalse(retired.contains(factory.get("grants").getAsString()), name + " grants a retired skill");
+            }
+        }
     }
 
     @Test

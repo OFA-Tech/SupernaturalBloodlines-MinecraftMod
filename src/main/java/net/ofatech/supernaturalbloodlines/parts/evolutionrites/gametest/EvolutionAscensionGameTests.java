@@ -71,6 +71,49 @@ public final class EvolutionAscensionGameTests {
         return stacks(CATALYST, 1, EP, 1, "enchanted:spirit_of_otherwhere", 1);
     }
 
+    /** Plan 19d: Ascension's liches and undead skeleton follow our undead rules through our own tag; a Bloodfiend is not undead. */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void ascensionLichesAreUndeadForOurRules(GameTestHelper helper) {
+        if (skipped(helper)) {
+            return;
+        }
+        var target = onTheCircle(helper, true, RICH);
+        try {
+            var race = io.github.manasmods.manascore.race.api.RaceAPI.getRaceFrom(target);
+            for (String id : List.of("ascension:lich", "ascension:elder_lich", "ascension:lich_king", "ascension:undead_skeleton", "ascension:blood_noble", "tensura:human")) {
+                race.setRace(ResourceLocation.parse(id), false);
+                helper.assertTrue(race.getRace().orElseThrow().getRaceId().toString().equals(id), "fixture did not set race " + id);
+                boolean undead = net.ofatech.supernaturalbloodlines.shared.tensura.RaceTags.isUndeadOrDaemon(race.getRace().orElse(null));
+                helper.assertTrue(undead == (id.contains("lich") || id.contains("undead")), "incorrect undead reading for " + id);
+            }
+        } finally {
+            clean(helper, target);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void bloodfiendRacesQualifyAsVampiresForRites(GameTestHelper helper) {
+        if (skipped(helper)) {
+            return;
+        }
+        var target = onTheCircle(helper, true, RICH);
+        try {
+            var race = io.github.manasmods.manascore.race.api.RaceAPI.getRaceFrom(target);
+            for (String id : List.of("tensura:human", "ascension:fledgling_bloodfiend", "ascension:kindred_bloodfiend",
+                    "ascension:elder_bloodfiend", "ascension:progenitor_bloodfiend", "ascension:blood_noble")) {
+                race.setRace(ResourceLocation.parse(id), false);
+                helper.assertTrue(race.getRace().orElseThrow().getRaceId().toString().equals(id), "fixture did not set race " + id);
+                boolean vampire = net.ofatech.supernaturalbloodlines.parts.species.unlock.RiteUnlocks.kindsOf(target)
+                        .contains(net.ofatech.supernaturalbloodlines.core.rite.RiteKind.VAMPIRE);
+                helper.assertTrue(vampire == id.startsWith("ascension:"), "incorrect vampire rite kind for " + id);
+            }
+        } finally {
+            clean(helper, target);
+        }
+        helper.succeed();
+    }
+
     /** A target who meets every requirement of the road: Deus Sanguis mastered, a true Hero, rich in EP. */
     private static RecordingPlayer ready(GameTestHelper helper, double baseEp) {
         RecordingPlayer t = onTheCircle(helper, true, baseEp);

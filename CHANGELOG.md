@@ -1,5 +1,19 @@
 # Changelog
 
+## Unreleased (plan 19d: the other Tensura addons and the race links)
+
+- **Four more evolution rites.** Each is a Unique and needs a full moon. A witch-type performer works it for a consenting target, and it costs 200,000 base Max EP, taken after the learn:
+  - **Great Mage** and **King of Curses**, with Ascension installed. Ascension's own switch for each skill still decides.
+  - **Butcher**, with Mysticism installed, for a werewolf.
+  - **Imitator**, with Slime Throne Extras installed.
+
+  Each rite exists only when its addon is installed. With Mysticism installed, its Soul Energy price still applies to the learn.
+- **Race links for the rites.** Ascension's five Bloodfiend races count as vampires, and Mysticism's direwolf and its twelve spirit wolves count as werewolves. This covers who a rite accepts and which rites a player learns, but leaves faction and species alone. A Blood Noble (Ascension's third Bloodfiend tier) or higher is at the vampire apex tier, like a Vampire Lord.
+- **Addon undead.** Ascension's lich, elder lich, lich king and undead skeleton follow our undead rules through our own race tag `supernaturalbloodlines:addon_undead`. Tensura's own undead tag is not changed. No other addon puts a race in `tensura:undead`.
+- Mysticism 2.2, Slime Throne Extras 2.1, Tensura Horizons 0.31 and Kumo Desu ga 2.0.3 are now tested versions. Other versions load with a warning.
+- No network protocol change and no new setting: the rites use the part's existing per-recipe switches.
+- **Rolling back:** a granted skill is an ordinary Tensura skill and stays. The rite files and their unlock advancements go away.
+
 ## Unreleased (plan 19b: Raphael)
 
 - With FoxAblaze installed, learning Great Sage's Raphael redirects to FoxAblaze's, subject to its single-owner rule. The Rite of Raphael stays dormant until Great Sage opens its own road.

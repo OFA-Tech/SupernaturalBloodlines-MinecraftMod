@@ -63,6 +63,11 @@ public final class RiteUnlockTable {
         // plan 19: the evolution rites and the Rite of Mastery, sealed in the book and known by kind (D5, D15): a witch type works them, a vampire learns that Deus Sanguis exists
         kind(m, "evolve_great_sage", RiteKind.WITCH, RiteKind.SIPHONER, RiteKind.TRIBRID);
         kind(m, "evolve_deus_sanguis", RiteKind.WITCH, RiteKind.SIPHONER, RiteKind.TRIBRID, RiteKind.VAMPIRE);
+        // plan 19d: the other addons' Uniques; a werewolf also learns that Butcher exists
+        kind(m, "evolve_great_mage", RiteKind.WITCH, RiteKind.SIPHONER, RiteKind.TRIBRID);
+        kind(m, "evolve_king_of_curses", RiteKind.WITCH, RiteKind.SIPHONER, RiteKind.TRIBRID);
+        kind(m, "evolve_butcher", RiteKind.WITCH, RiteKind.SIPHONER, RiteKind.TRIBRID, RiteKind.WEREWOLF);
+        kind(m, "evolve_imitator", RiteKind.SIPHONER, RiteKind.WITCH, RiteKind.TRIBRID);
         // the Ultimates: sealed until Finn's Notes, "the rites of the eclipse" (E7, Q4)
         lore(m, "evolve_blood_sovereign", FINN);
         lore(m, "evolve_raphael", FINN);
