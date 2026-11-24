@@ -232,7 +232,7 @@ For each online clanmate within 32 blocks who is in the same sireline as you (yo
 
 ### 7.4 Rings (R273)
 
-Day Walker is about the sun. A **coven-forged Sun Ring** (a rite performed by a coven circle with tier 1, output the existing `sun_ring`; *plan 20b builds it as its own rite file, `coven_sun_ring`, at half the power (3000), with no new component*) binds through `ward_of_daylight` at `sun_ring_discount_percent` (50%) of its power, only for a Day Walker of a clan (*plan 20b: switch `sun_ring_day_walker_only`, default false until the Day Walker rank exists in 20c; see its open question 1*). Everyone else binds a plain Sun Ring at the full 6000 as today. Decided on PR #83 (Q4).
+Day Walker is about the sun. A **coven-forged Sun Ring** (a rite performed by a coven circle with tier 1, output the existing `sun_ring`; *plan 20b builds it as its own rite file, `coven_sun_ring`, at half the power (3000), with no new component*) binds through `ward_of_daylight` at `sun_ring_discount_percent` (50%) of its power, only for a Day Walker of a clan (*plan 20b: switch `sun_ring_day_walker_only`, default false until the Day Walker rank exists in 20c; owner answer of 2026-11-24, recorded in plan 20b*). Everyone else binds a plain Sun Ring at the full 6000 as today. Decided on PR #83 (Q4).
 
 ### 7.5 Exile (R276), no Garden
 
