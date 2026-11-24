@@ -30,14 +30,14 @@ class WheelPanelTextTest {
     void aSecondFrameWithNothingChangedWrapsAndMeasuresNothing() {
         String description = "Devour a target to copy its body and skills. The mode picks what it does.";
         WheelPanelText.Lines first = frame(description, "");
-        List<WheelPanelText.HelpRow> helpFirst = WheelPanelText.help(FONT, this::measure, List.of("Click", "Right-click"), List.of("use", "slot"));
+        List<WheelPanelText.HelpRow> helpFirst = WheelPanelText.help(FONT, this::measure, this::measure, 126, List.of("Click", "Right-click"), List.of("use", "slot"));
         int w1 = WheelPanelText.width(FONT, "12 s", this::measure);
         int measuredAfterFirst = measured.get();
         int missesAfterFirst = WheelPanelText.misses();
         assertTrue(measuredAfterFirst > 0, "the first frame has to measure");
         for (int i = 0; i < 3; i++) {
             assertEquals(first, frame(description, ""));
-            assertEquals(helpFirst, WheelPanelText.help(FONT, this::measure, List.of("Click", "Right-click"), List.of("use", "slot")));
+            assertEquals(helpFirst, WheelPanelText.help(FONT, this::measure, this::measure, 126, List.of("Click", "Right-click"), List.of("use", "slot")));
             assertEquals(w1, WheelPanelText.width(FONT, "12 s", this::measure));
         }
         assertEquals(measuredAfterFirst, measured.get(), "a later frame measured text again");
@@ -96,4 +96,24 @@ class WheelPanelTextTest {
         assertTrue(locked.lock().size() >= 1 && locked.lock().size() <= 2, "the lock text takes one or two lines: " + locked.lock());
         assertTrue(frame("", "").description().isEmpty());
     }
-}
+
+    @Test
+    void helpRowsAreCutToWhatIsLeftOfThePanelWidthAfterTheKey() {
+        WheelPanelText.clear();
+        // 6 px a letter, a bold key 7: "Shift-click" is 77 + 5 and "second option" would be 78 more, 160 on a 126 px panel
+        List<WheelPanelText.HelpRow> rows = WheelPanelText.help(FONT, s -> s.length() * 7, s -> s.length() * 6, 126, List.of("Shift-click", "Click"), List.of("second option", "use"));
+        assertTrue(rows.get(0).whatX() + rows.get(0).what().length() * 6 <= 126, "cut to the panel: " + rows.get(0));
+        assertTrue(rows.get(0).what().length() < "second option".length());
+        assertEquals("use", rows.get(1).what(), "a row that fits is left alone");
+    }
+
+    @Test
+    void theStandardHelpRowsAlwaysFitAndTheExtrasGoFromTheEndWhenAMaximalLockedPanelWouldNotHoldThem() {
+        int bottom = 187; // the panel's last row: 196 high, 9 of padding
+        int top = 49;
+        assertEquals(4, WheelPanelText.helpRows(4, bottom, top, 2, 2), "the four rows of every other power always fit");
+        assertEquals(6, WheelPanelText.helpRows(6, bottom, top, 0, 0), "a power with no modes and no lock holds all six");
+        assertEquals(6, WheelPanelText.helpRows(6, bottom, top, 2, 0));
+        assertEquals(5, WheelPanelText.helpRows(6, bottom, top, 2, 2), "two mode lines and a two-line lock box leave room for five: the keys row goes");
+        assertEquals(4, WheelPanelText.helpRows(6, bottom, top + 20, 2, 2), "two cover lines as well: never below the standard four");
+    }}

@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import net.minecraft.Util;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.narration.NarratedElementType;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
@@ -17,6 +18,7 @@ import net.ofatech.supernaturalbloodlines.core.wheel.GestureMachine;
 import net.ofatech.supernaturalbloodlines.core.wheel.GestureMachine.Effect;
 import net.ofatech.supernaturalbloodlines.core.wheel.GestureMachine.Input;
 import net.ofatech.supernaturalbloodlines.core.wheel.HoldPlan;
+import net.ofatech.supernaturalbloodlines.core.wheel.KeyOpen;
 import net.ofatech.supernaturalbloodlines.core.wheel.PowerGroup;
 import net.ofatech.supernaturalbloodlines.core.wheel.PowerKind;
 import net.ofatech.supernaturalbloodlines.core.wheel.PowerRef;
@@ -39,6 +41,7 @@ import net.ofatech.supernaturalbloodlines.core.wheel.WheelRules;
 import net.ofatech.supernaturalbloodlines.parts.hud.client.HudClientConfig;
 import net.ofatech.supernaturalbloodlines.parts.hud.client.HudKeys;
 import net.ofatech.supernaturalbloodlines.parts.hud.client.wheel.infinity.InfinityCompat;
+import net.ofatech.supernaturalbloodlines.parts.hud.client.wheel.infinity.StoneView;
 import net.ofatech.supernaturalbloodlines.parts.hud.net.WheelEntry;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.Radial.Dir;
 import net.ofatech.supernaturalbloodlines.shared.hud.ClientIcons;
@@ -133,6 +136,7 @@ public final class WheelScreen extends Screen {
         WheelActions.view(net.ofatech.supernaturalbloodlines.core.wheel.WheelViewState.Viewer.WHEEL, false);
         heldByMouse = null;
         heldByKey = -1;
+        keyOpen.clear();
         WheelPanelText.clear();
         WheelStrings.clear();
         WheelInput.screenClosed(machine);
@@ -263,7 +267,7 @@ public final class WheelScreen extends Screen {
         WheelEntry power = entryAt(shown);
         long now = minecraft.level == null ? 0 : minecraft.level.getGameTime();
         WheelRenderer.Picker picker = picked != null ? picker(picked, mouseX, mouseY) : null;
-        WheelRenderer.draw(g, font, new WheelRenderer.Frame(layout, model, open, page, shown, power, hasAltDown() || DevWheel.alt, pal, kit, now, picker, WheelActions::slotOf));
+        WheelRenderer.draw(g, font, new WheelRenderer.Frame(layout, model, open, page, shown, power, hasAltDown() || DevWheel.alt, pal, kit, now, picker, WheelActions::slotOf, Util.getMillis() < noticeUntil ? notice : ""));
     }
 
     private void closePicker() {
@@ -324,6 +328,7 @@ public final class WheelScreen extends Screen {
             return false;
         }
         boolean started = WheelActions.use(e, modeOf(e), secondOption);
+        sayProblem();
         if (started && minecraft.screen != this) {
             return true; // one of Infinity's own screens opened over the wheel: it is closed already, and closing again would close his
         }
@@ -357,8 +362,40 @@ public final class WheelScreen extends Screen {
     private void menu(WheelEntry e) {
         if (e != null && !refused(e)) {
             WheelActions.stone(e, StoneMenus.Input.MENU);
+            sayProblem();
         }
     }
+
+    /** What a key press asked for that opens one of Infinity's screens: done when the key is let go, see {@link KeyOpen}. */
+    private record Pending(WheelEntry entry, StoneMenus.Input input) {
+    }
+
+    private final KeyOpen<Pending> keyOpen = new KeyOpen<>();
+
+    private void openNow(Pending p) {
+        if (minecraft.screen != this || refused(p.entry())) {
+            return;
+        }
+        if (p.input() == StoneMenus.Input.MENU) {
+            WheelActions.stone(p.entry(), StoneMenus.Input.MENU);
+        } else {
+            WheelActions.use(p.entry(), modeOf(p.entry()), p.input() == StoneMenus.Input.SECOND);
+        }
+        sayProblem();
+    }
+
+    /** What went wrong with a stone input (no menu there, his screen could not open) is said on the screen and to the narrator. */
+    private void sayProblem() {
+        String problem = WheelActions.takeProblem();
+        if (problem != null) {
+            notice = WheelRenderer.text("notice." + problem);
+            noticeUntil = Util.getMillis() + 3500;
+            minecraft.getNarrator().sayNow(Component.literal(notice));
+        }
+    }
+
+    private String notice = "";
+    private long noticeUntil;
 
     private int lastKey = -1;
     /** Shift + left click: the second option of a power that has one. Set only while that one click is being handled. */
@@ -436,11 +473,17 @@ public final class WheelScreen extends Screen {
             case GLFW.GLFW_KEY_DOWN -> arrow(Dir.DOWN);
             case GLFW.GLFW_KEY_TAB -> tab(hasShiftDown());
             case GLFW.GLFW_KEY_ENTER, GLFW.GLFW_KEY_KP_ENTER, GLFW.GLFW_KEY_SPACE -> {
-                if (heldByKey == key) {
-                    return true; // key repeat of the press that is holding a power
+                if (heldByKey == key || keyOpen.waiting(key)) {
+                    return true; // key repeat of the press that is holding a power, or waiting to open one of his screens
                 }
-                if (hasControlDown()) {
-                    menu(entryAt(active())); // Ctrl + Enter is the keyboard's middle click
+                StoneMenus.Input input = hasControlDown() ? StoneMenus.Input.MENU : hasShiftDown() ? StoneMenus.Input.SECOND : StoneMenus.Input.USE;
+                WheelEntry onKey = entryAt(active());
+                if (onKey != null && !onKey.state().locked() && StoneMenus.opensScreen(InfinityCompat.route(onKey, input))) {
+                    keyOpen.press(key, new Pending(onKey, input)); // his screen confirms on Enter: it opens when the key is let go, or the held key's repeat would confirm it
+                    return true;
+                }
+                if (input == StoneMenus.Input.MENU) {
+                    menu(onKey); // Ctrl + Enter is the keyboard's middle click
                     return true;
                 }
                 lastKey = key;
@@ -459,6 +502,11 @@ public final class WheelScreen extends Screen {
     public boolean keyReleased(int key, int scan, int mods) {
         if (HudKeys.WHEEL.matches(key, scan)) {
             gUp();
+            return true;
+        }
+        var opening = keyOpen.release(key);
+        if (opening.isPresent()) {
+            openNow(opening.get());
             return true;
         }
         if (heldByKey == key) {
@@ -686,19 +734,15 @@ public final class WheelScreen extends Screen {
         List<String> lines = WheelNarration.lines(WheelRenderer.modName(source), groups.isEmpty() ? "" : WheelRenderer.text("group." + e.group().name().toLowerCase(Locale.ROOT)),
                 e.name().getString(), e.coverNote().getString(), WheelDescriptions.of(e), e.modeNames().size() > 1 ? e.modeName().getString() : "", state, lock, open.page() * WheelLayout.PAGE_SIZE + h.index() + 1, pageTotal,
                 open.page() + 1, layout.pageCount(), (key, args) -> Component.translatable(key, args).getString());
-        List<StoneMenus.Help> extra = InfinityCompat.help(e);
-        if (!extra.isEmpty() || InfinityCompat.clickWhat(e).equals("click_destination")) {
+        StoneView view = InfinityCompat.view(e);
+        List<String> extra = StoneMenus.narration(view.clickWhat(), view.help());
+        if (!extra.isEmpty()) {
             lines = new java.util.ArrayList<>(lines);
-            if (InfinityCompat.clickWhat(e).equals("click_destination")) {
-                lines.add(WheelRenderer.text("help.narrate_click_destination"));
+            String ctrl = StoneMenus.ctrl(Minecraft.ON_OSX, true);
+            for (String suffix : extra) {
+                lines.add(WheelRenderer.text("help." + suffix, ctrl));
             }
-            for (StoneMenus.Help row : extra) {
-                if (!row.narrate().isEmpty()) {
-                    lines.add(WheelRenderer.text("help." + row.narrate()));
-                }
-            }
-        }
-        out.add(NarratedElementType.TITLE, Component.literal(String.join(", ", lines)));
+        }        out.add(NarratedElementType.TITLE, Component.literal(String.join(", ", lines)));
     }
 
     /** For the development screenshots: the state of a frame (the pointer and the picker) without a real mouse. */

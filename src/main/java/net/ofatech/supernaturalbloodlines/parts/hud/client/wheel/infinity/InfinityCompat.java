@@ -3,6 +3,7 @@ package net.ofatech.supernaturalbloodlines.parts.hud.client.wheel.infinity;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import net.minecraft.client.resources.language.I18n;
 import net.neoforged.fml.ModList;
 import net.ofatech.supernaturalbloodlines.SupernaturalBloodlines;
 import net.ofatech.supernaturalbloodlines.core.wheel.PowerRef;
@@ -21,8 +22,10 @@ import org.jetbrains.annotations.Nullable;
  */
 public final class InfinityCompat {
     static final String MOD = "infinity";
+    /** A failure after the probe: an action is logged once, a failed read of his powers turns the compat off (the probe, so his key is given back on the next tick). */
+    private static final StoneFailures FAILURES = new StoneFailures(m -> SupernaturalBloodlines.LOGGER.warn(m), why -> InfinityCompat.PROBE.broke(why));
     private static final InfinityProbe PROBE = new InfinityProbe(() -> ModList.get().isLoaded(MOD), HudClientConfig::infinityCompat,
-            () -> ReflectiveStoneApi.create(Class::forName), m -> SupernaturalBloodlines.LOGGER.warn(m));
+            () -> ReflectiveStoneApi.create(Class::forName, FAILURES), m -> SupernaturalBloodlines.LOGGER.warn(m));
     /** The power each stone was last on (stone ordinal to node id); his server takes the node explicitly, so the choice lives only here. */
     private static final Map<Integer, String> CURRENT = new HashMap<>();
     private static final StoneEntries.Cache ENTRIES = new StoneEntries.Cache();
@@ -74,7 +77,12 @@ public final class InfinityCompat {
     public static String description(WheelEntry e) {
         StoneApi api = PROBE.api();
         NodeInfo n = api == null ? null : StoneEntries.nodeOf(api, e);
-        return n == null ? "" : n.description();
+        if (n != null) {
+            return n.description();
+        }
+        // the entries that are no stone (Pray, soul control) say what they do in our own lang file
+        String key = "supernaturalbloodlines.wheel.infinity." + e.ref().id().getPath() + ".desc";
+        return I18n.exists(key) ? I18n.get(key) : "";
     }
 
     public static boolean hasLevels(WheelEntry e) {
@@ -99,19 +107,11 @@ public final class InfinityCompat {
         return api != null && StoneActions.act(api, CURRENT, e, act);
     }
 
-    /** The extra side-panel rows of the power an entry is on: its second option and menu, with the keys that reach them. */
-    public static List<StoneMenus.Help> help(WheelEntry e) {
+    /** What the side panel and the narrator say about the power an entry is on: its click row and its extra rows, read from the entry's power once. */
+    public static StoneView view(WheelEntry e) {
         StoneApi api = PROBE.api();
-        return api == null || !owns(e) ? List.of() : StoneActions.help(api, e);
+        return api == null || !owns(e) ? StoneView.NONE : StoneActions.view(api, e);
     }
-
-    /** The lang suffix of what a plain click on the entry does: a power whose use is its menu says so. */
-    public static String clickWhat(WheelEntry e) {
-        StoneApi api = PROBE.api();
-        NodeInfo n = api == null || !owns(e) ? null : StoneEntries.nodeOf(api, e);
-        return n == null ? "click_use" : StoneMenus.clickWhat(n.menu(), n.menuOnLeft());
-    }
-
     /** The node the entry is on now, remembered when an aim starts: that is the power the confirmed aim fires. */
     @Nullable
     public static String nodeId(WheelEntry e) {

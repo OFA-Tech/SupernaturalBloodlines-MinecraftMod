@@ -8,12 +8,15 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Callable;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.neoforged.neoforge.network.PacketDistributor;
 import net.ofatech.supernaturalbloodlines.core.wheel.StoneMenus;
+import net.ofatech.supernaturalbloodlines.core.wheel.StoneRules;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -76,6 +79,11 @@ public final class ReflectiveStoneApi implements StoneApi {
     private final Constructor<?> destinationCtor;
     private final Constructor<?> constructCtor;
     private final Constructor<?> quickSlotsCtor;
+    private final Method isHeldBy;
+    private final Constructor<?> prayCtor;
+    @Nullable
+    private final Method gatherLocked;
+    private final StoneFailures failures;
     @Nullable
     private final Field soulState;
     @Nullable
@@ -93,7 +101,8 @@ public final class ReflectiveStoneApi implements StoneApi {
                              StoneMenus.Kind menu, boolean menuOnLeft) {
     }
 
-    private ReflectiveStoneApi(ClassFinder f) throws Missing {
+    private ReflectiveStoneApi(ClassFinder f, StoneFailures failures) throws Missing {
+        this.failures = failures;
         Class<?> wheelClientState = cls(f, "wheel.WheelClientState");
         Class<?> payloadState = cls(f, "wheel.WheelPayloads$State");
         Class<?> payloadEntry = cls(f, "wheel.WheelPayloads$Entry");
@@ -144,6 +153,18 @@ public final class ReflectiveStoneApi implements StoneApi {
         destinationCtor = ctor(destination, int.class, String.class, boolean.class, int.class);
         constructCtor = ctor(construct);
         quickSlotsCtor = ctor(quickSlots);
+        // his wheel key prays when no stone is carried: his GatherClient.onWheelKey, whose condition and packet this repeats
+        isHeldBy = method(stone, "isHeldBy", Player.class);
+        prayCtor = ctor(cls(f, "skill.ability.extra.space.GatherNet$Pray"));
+        Method lockedProbe = null;
+        try {
+            // package-private in his class: read only to match his condition, and treated as "not locked" when it is not there
+            lockedProbe = cls(f, "skill.ability.extra.space.client.GatherClient").getDeclaredMethod("isLocked");
+            lockedProbe.setAccessible(true);
+        } catch (Missing | ReflectiveOperationException | RuntimeException | LinkageError none) {
+            lockedProbe = null;
+        }
+        gatherLocked = lockedProbe;
         Field state = null;
         Method mode = null;
         Constructor<?> action = null;
@@ -167,7 +188,12 @@ public final class ReflectiveStoneApi implements StoneApi {
 
     /** Resolves everything once; throws {@link Missing} naming the first thing that is not as expected. */
     public static ReflectiveStoneApi create(ClassFinder f) throws Missing {
-        return new ReflectiveStoneApi(f);
+        return new ReflectiveStoneApi(f, StoneFailures.NONE);
+    }
+
+    /** As {@link #create(ClassFinder)}, with where run-time failures go: an action that fails is logged once, a read of his powers that fails turns the compat off. */
+    public static ReflectiveStoneApi create(ClassFinder f, StoneFailures failures) throws Missing {
+        return new ReflectiveStoneApi(f, failures);
     }
 
     private static Class<?> cls(ClassFinder f, String name) throws Missing {
@@ -245,6 +271,8 @@ public final class ReflectiveStoneApi implements StoneApi {
             seenNodes = List.copyOf(out);
             return seenNodes;
         } catch (ReflectiveOperationException | RuntimeException | LinkageError e) {
+            // his state was not what the probe verified: the stones cannot be listed, so the compat is off (his wheel key comes back) rather than empty with his key covered
+            failures.broken("reading his wheel state", e);
             return List.of();
         }
     }
@@ -300,64 +328,90 @@ public final class ReflectiveStoneApi implements StoneApi {
         PacketDistributor.sendToServer((CustomPacketPayload) payload);
     }
 
+    /** Sends a payload; false (and one warning for {@code what}) when it could not be built or sent. */
+    private boolean sendIt(String what, Callable<Object> payload) {
+        try {
+            send(payload.call());
+            return true;
+        } catch (Exception | LinkageError e) {
+            failures.failed(what, e);
+            return false;
+        }
+    }
+
     @Override
     public void use(int stone, String node, int phase) {
-        try {
-            send(useCtor.newInstance(stone, node, phase));
-        } catch (ReflectiveOperationException | RuntimeException | LinkageError ignored) {
-            // his classes changed after the probe: nothing sent, nothing broken
-        }
+        sendIt("Use", () -> useCtor.newInstance(stone, node, phase));
     }
 
     @Override
     public void setLevel(int stone, String node, int delta) {
-        try {
-            send(settingCtor.newInstance(stone, node, delta));
-        } catch (ReflectiveOperationException | RuntimeException | LinkageError ignored) {
-            // see use
-        }
+        sendIt("Setting", () -> settingCtor.newInstance(stone, node, delta));
     }
 
-    private static void show(Object screen) {
-        Minecraft.getInstance().setScreen((Screen) screen);
-    }
-
-    @Override
-    public void openDestination(int stone, String node, boolean movesTarget) {
+    private boolean show(String what, Callable<Object> screen) {
         try {
-            show(destinationCtor.newInstance(stone, node, movesTarget, (int) call(stoneColor, stones()[stone])));
-        } catch (ReflectiveOperationException | RuntimeException | LinkageError ignored) {
-            // see use
+            Minecraft.getInstance().setScreen((Screen) screen.call());
+            return true;
+        } catch (Exception | LinkageError e) {
+            failures.failed(what, e);
+            return false;
         }
     }
 
     @Override
-    public void openConstruct() {
-        try {
-            show(constructCtor.newInstance());
-        } catch (ReflectiveOperationException | RuntimeException | LinkageError ignored) {
-            // see use
-        }
+    public boolean openDestination(int stone, String node, boolean movesTarget) {
+        return show("his destination screen", () -> destinationCtor.newInstance(stone, node, movesTarget, (int) call(stoneColor, stones()[stone])));
     }
 
     @Override
-    public void openQuickSlots() {
-        try {
-            show(quickSlotsCtor.newInstance());
-        } catch (ReflectiveOperationException | RuntimeException | LinkageError ignored) {
-            // see use
-        }
+    public boolean openConstruct() {
+        return show("his construct screen", () -> constructCtor.newInstance());
     }
 
     @Override
-    public void requestChoiceMenu(int stone, String node) {
+    public boolean openQuickSlots() {
+        return show("his quick slots screen", () -> quickSlotsCtor.newInstance());
+    }
+
+    @Override
+    public boolean requestChoiceMenu(int stone, String node) {
         try {
             call(requestMenu, null, stone, node);
-        } catch (ReflectiveOperationException | RuntimeException | LinkageError ignored) {
-            // see use
+            return true;
+        } catch (ReflectiveOperationException | RuntimeException | LinkageError e) {
+            failures.failed("his choice menu request", e);
+            return false;
         }
     }
 
+    @Override
+    public boolean prayShown() {
+        Minecraft mc = Minecraft.getInstance();
+        Player player = mc == null ? null : mc.player;
+        if (player == null) {
+            return false;
+        }
+        try {
+            boolean locked = gatherLocked != null && (boolean) call(gatherLocked, null);
+            boolean holds = false;
+            for (Object s : stones()) {
+                if ((boolean) call(isHeldBy, s, player)) {
+                    holds = true;
+                    break;
+                }
+            }
+            return StoneRules.prayShown(true, locked, holds);
+        } catch (ReflectiveOperationException | RuntimeException | LinkageError e) {
+            failures.failed("reading whether a stone is carried", e);
+            return false;
+        }
+    }
+
+    @Override
+    public boolean pray() {
+        return sendIt("Pray", () -> prayCtor.newInstance());
+    }
     @Override
     public boolean soulSupported() {
         return soulState != null;
@@ -380,10 +434,6 @@ public final class ReflectiveStoneApi implements StoneApi {
         if (soulActionCtor == null) {
             return;
         }
-        try {
-            send(soulActionCtor.newInstance(action, 0));
-        } catch (ReflectiveOperationException | RuntimeException | LinkageError ignored) {
-            // see use
-        }
+        sendIt("soul action", () -> soulActionCtor.newInstance(action, 0));
     }
 }

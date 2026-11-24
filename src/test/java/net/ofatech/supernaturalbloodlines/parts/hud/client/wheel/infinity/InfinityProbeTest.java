@@ -13,7 +13,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import net.ofatech.supernaturalbloodlines.core.wheel.StoneRules.State;
-import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.Test;
 
 class InfinityProbeTest {
@@ -112,8 +111,7 @@ class InfinityProbeTest {
     /** Against the real jar of the version this was written for, when it is there (a developer's machine); CI has none and skips. */
     @Test
     void theReflectedShapesAreHisRealOnes() throws Exception {
-        File jar = new File(System.getProperty("infinity.jar", "C:\\Users\\caiom\\AppData\\Local\\Temp\\opencode\\compat-tensura\\jars\\infinity-stones-tensura-8.0.0-alpha.6.jar"));
-        Assumptions.assumeTrue(jar.isFile(), "no Infinity Stones jar here");
+        File jar = InfinityJar.get();
         try (URLClassLoader loader = new URLClassLoader(new URL[] {jar.toURI().toURL()}, getClass().getClassLoader())) {
             ReflectiveStoneApi api = ReflectiveStoneApi.create(name -> Class.forName(name, false, loader));
             assertNotNull(api);

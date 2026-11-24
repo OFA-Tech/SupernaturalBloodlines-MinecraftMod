@@ -354,6 +354,12 @@ tasks.named('runSafeShots') { dependsOn 'prepareSafeShots' }
 
 tasks.named('test') {
     useJUnitPlatform()
+    // -PinfinityJar=<path to the Infinity Stones jar>: the tests that run against his real classes use it, and fail (not skip) when it is not a file. Without it they look at a
+    // developer's default path and skip when it is not there.
+    if (project.hasProperty('infinityJar')) {
+        systemProperty 'infinity.jar', project.property('infinityJar').toString()
+        systemProperty 'infinity.jar.required', 'true'
+    }
 }
 
 tasks.withType(JavaCompile).configureEach {

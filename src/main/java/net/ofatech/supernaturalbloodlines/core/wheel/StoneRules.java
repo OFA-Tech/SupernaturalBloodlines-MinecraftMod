@@ -72,6 +72,14 @@ public final class StoneRules {
     }
 
     /**
+     * His wheel key also prays: with no stone carried (and not locked in a Spiritual Gathering as one of the gathered) the key sends his {@code GatherNet.Pray}. Our wheel shows
+     * a Pray entry in exactly that case, since his key is covered while the compat works. His own condition, in his {@code GatherClient.onWheelKey}.
+     */
+    public static boolean prayShown(boolean playerPresent, boolean gatheredAndLocked, boolean holdsAStone) {
+        return playerPresent && !gatheredAndLocked && !holdsAStone;
+    }
+
+    /**
      * His wheel key is covered while the compat works: every stone power, his menus included, is then on our wheel. With the compat off (his mod missing, the setting, a
      * class we cannot read) his wheel is the only way to use a stone, so its key must work.
      */

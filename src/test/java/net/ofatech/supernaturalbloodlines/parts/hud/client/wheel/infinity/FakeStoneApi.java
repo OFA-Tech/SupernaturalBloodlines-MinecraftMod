@@ -12,6 +12,8 @@ final class FakeStoneApi implements StoneApi {
     long receivedAt = 10_000;
     boolean soulSupported = true;
     int soulMode;
+    boolean prayShown;
+    boolean failOpens;
 
     static final String[] STONES = {"mind", "power", "space", "reality", "soul", "time"};
 
@@ -55,23 +57,38 @@ final class FakeStoneApi implements StoneApi {
     }
 
     @Override
-    public void openDestination(int stone, String node, boolean movesTarget) {
+    public boolean openDestination(int stone, String node, boolean movesTarget) {
         calls.add("destination " + stone + " " + node + " " + movesTarget);
+        return !failOpens;
     }
 
     @Override
-    public void openConstruct() {
+    public boolean openConstruct() {
         calls.add("construct");
+        return !failOpens;
     }
 
     @Override
-    public void openQuickSlots() {
+    public boolean openQuickSlots() {
         calls.add("quick");
+        return !failOpens;
     }
 
     @Override
-    public void requestChoiceMenu(int stone, String node) {
+    public boolean requestChoiceMenu(int stone, String node) {
         calls.add("choice " + stone + " " + node);
+        return !failOpens;
+    }
+
+    @Override
+    public boolean prayShown() {
+        return prayShown;
+    }
+
+    @Override
+    public boolean pray() {
+        calls.add("pray");
+        return true;
     }
 
     @Override

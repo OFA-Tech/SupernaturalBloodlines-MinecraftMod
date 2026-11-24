@@ -99,4 +99,11 @@ class StoneRulesTest {
             assertFalse(StoneRules.soulControlKeyCovered(s, true), s.name());
         }
     }
-}
+
+    @Test
+    void theWheelKeyPraysOnlyForAPlayerWithNoStoneWhoIsNotLockedInAGathering() {
+        assertTrue(StoneRules.prayShown(true, false, false));
+        assertFalse(StoneRules.prayShown(true, false, true), "a stone is carried: his key opens the wheel");
+        assertFalse(StoneRules.prayShown(true, true, false), "locked in a gathering: his key does nothing");
+        assertFalse(StoneRules.prayShown(false, false, false), "no player");
+    }}

@@ -48,6 +48,17 @@ public final class InfinityProbe {
         return state() == State.ACTIVE ? api : null;
     }
 
+    /**
+     * His classes passed the probe and then failed at run time (a read of his state threw): one warning, and the state is OFF_BROKEN from now on, so the stones come back as
+     * Tensura skills and his own wheel key is given back on the next tick. A later call changes nothing.
+     */
+    public void broke(String why) {
+        if (!broken) {
+            broken = true;
+            warn.accept("Infinity Stones compat off: " + why);
+        }
+    }
+
     private void resolve() {
         if (resolved) {
             return;

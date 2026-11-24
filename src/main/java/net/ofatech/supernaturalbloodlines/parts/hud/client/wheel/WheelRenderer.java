@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import net.minecraft.ChatFormatting;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
@@ -25,6 +26,7 @@ import net.ofatech.supernaturalbloodlines.core.wheel.WheelModel;
 import net.ofatech.supernaturalbloodlines.core.wheel.WheelPalette;
 import net.ofatech.supernaturalbloodlines.parts.hud.client.HudKeys;
 import net.ofatech.supernaturalbloodlines.parts.hud.client.wheel.infinity.InfinityCompat;
+import net.ofatech.supernaturalbloodlines.parts.hud.client.wheel.infinity.StoneView;
 import net.ofatech.supernaturalbloodlines.parts.hud.net.WheelEntry;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.Icons;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.KitSprites;
@@ -44,7 +46,7 @@ import net.ofatech.supernaturalbloodlines.shared.hud.HudKit;
 final class WheelRenderer {
     /** Everything one frame needs. {@code power} is the entry under the pointer or focus, {@code slots} the picker's slots when it is open. */
     record Frame(Layout layout, WheelModel<WheelEntry> model, WheelModel.Open open, List<WheelEntry> page, WheelLayout.Hit hover, WheelEntry power, boolean alt, WheelPalette pal,
-                 HudKit kit, long gameTime, Picker picker, java.util.function.Function<WheelEntry, String> slotOf) {
+                 HudKit kit, long gameTime, Picker picker, java.util.function.Function<WheelEntry, String> slotOf, String notice) {
     }
 
     record Picker(WheelEntry entry, Cell anchor, List<SlotPicker.Slot> slots, List<WheelEntry> holds, int hoverSlot, boolean none) {
@@ -149,6 +151,7 @@ final class WheelRenderer {
         pageControls(g, font, f);
         panel(g, font, f);
         hints(g, font, f);
+        notice(g, font, f);
         if (f.alt()) {
             modeLists(g, font, f);
         }
@@ -302,10 +305,10 @@ final class WheelRenderer {
         if (e == null) {
             String head = source == null ? text("hint.open") : modName(source);
             g.drawString(font, WheelStrings.bold(cut(font, head, w)), x, y, pal.ink(), false);
-            helpLines(g, font, f, x, rows - 4 * 10, helpText(f));
+            helpLines(g, font, x, rows - 4 * 10, w, f, helpText(f, StoneView.NONE));
             return;
         }
-        HelpText help = helpText(f);
+        HelpText help = helpText(f, InfinityCompat.view(e));
         int hl = help.keys().size();
         boolean modes = e.modeNames().size() > 1;
         String where = modName(source) + (e.group() == net.ofatech.supernaturalbloodlines.core.wheel.PowerGroup.MAIN || f.model().groups(source).isEmpty() ? ""
@@ -313,6 +316,14 @@ final class WheelRenderer {
         WheelPanelText.Lines t = WheelPanelText.lines(font, font::width, w, p.y() + 49, rows - (hl + 2) * 10, WheelStrings.of(e.name()), where, WheelStrings.of(e.coverNote()), text("kind." + e.kind().name().toLowerCase(Locale.ROOT)),
                 WheelDescriptions.of(e), modes ? text("panel.mode", e.state().mode() + 1, e.modeNames().size(), WheelStrings.of(e.modeName())) : "",
                 e.state().locked() ? reason(e.state().lock()) : "");
+        int fit = WheelPanelText.helpRows(hl, rows, p.y() + 49 + t.cover().size() * WheelPanelText.LINE, t.mode().size(), t.lock().size());
+        if (fit < hl) { // a locked power with modes and the most extra rows would run the lock box into the slot row: the lowest priority rows go
+            help = help.first(fit);
+            hl = fit;
+            t = WheelPanelText.lines(font, font::width, w, p.y() + 49, rows - (hl + 2) * 10, WheelStrings.of(e.name()), where, WheelStrings.of(e.coverNote()), text("kind." + e.kind().name().toLowerCase(Locale.ROOT)),
+                    WheelDescriptions.of(e), modes ? text("panel.mode", e.state().mode() + 1, e.modeNames().size(), WheelStrings.of(e.modeName())) : "",
+                    e.state().locked() ? reason(e.state().lock()) : "");
+        }
         g.drawString(font, WheelStrings.bold(t.name()), x, y, pal.ink(), false);
         y += 11;
         g.drawString(font, t.where(), x, y, pal.muted(), false);
@@ -362,7 +373,7 @@ final class WheelRenderer {
         } else {
             g.drawString(font, "-", x + 46, masteryY, pal.ink(), false);
         }
-        helpLines(g, font, f, x, rows - hl * 10, help);
+        helpLines(g, font, x, rows - hl * 10, w, f, help);
     }
     private static String slotText(WheelEntry e, Frame f) {
         String s = f.slotOf().apply(e);
@@ -375,32 +386,45 @@ final class WheelRenderer {
 
     /** The help rows: click, right click, scroll or Alt, then the closing row, or a stone power's own rows (its second option and menus, with their keys) in its place. */
     private record HelpText(List<String> keys, List<String> whats) {
+        HelpText first(int n) {
+            return new HelpText(keys.subList(0, n), whats.subList(0, n));
+        }
     }
 
-    private static HelpText helpText(Frame f) {
+    private static HelpText helpText(Frame f, StoneView view) {
         boolean paged = f.page().size() > 0 && f.layout().pageCount() > 1;
-        List<StoneMenus.Help> extra = f.power() == null ? List.of() : InfinityCompat.help(f.power());
+        String ctrl = StoneMenus.ctrl(Minecraft.ON_OSX, false);
         List<String> keys = new ArrayList<>(List.of(text("help.click"), text("help.right"), paged ? text("help.scroll") : text("help.alt")));
-        List<String> whats = new ArrayList<>(List.of(text("help." + (f.power() == null ? "click_use" : InfinityCompat.clickWhat(f.power()))), text("help.right_slot"),
-                paged ? text("help.scroll_page") : text("help.alt_mode")));
-        if (extra.isEmpty()) {
+        List<String> whats = new ArrayList<>(List.of(text("help." + view.clickWhat()), text("help.right_slot"), paged ? text("help.scroll_page") : text("help.alt_mode")));
+        if (view.help().isEmpty()) {
             keys.add(text("help.close_keys"));
             whats.add(text("help.close"));
         }
-        for (StoneMenus.Help h : extra) {
-            keys.add(text("help." + h.key()));
-            whats.add(text("help." + h.what()));
+        for (StoneMenus.Help h : view.help()) {
+            keys.add(text("help." + h.key(), ctrl));
+            whats.add(text("help." + h.what(), ctrl));
         }
         return new HelpText(keys, whats);
     }
 
-    private static void helpLines(GuiGraphics g, Font font, Frame f, int x, int y, HelpText help) {
-        List<WheelPanelText.HelpRow> rows = WheelPanelText.help(font, s -> font.width(WheelStrings.bold(s)), help.keys(), help.whats());
+    private static void helpLines(GuiGraphics g, Font font, int x, int y, int width, Frame f, HelpText help) {
+        List<WheelPanelText.HelpRow> rows = WheelPanelText.help(font, s -> font.width(WheelStrings.bold(s)), font::width, width, help.keys(), help.whats());
         for (WheelPanelText.HelpRow row : rows) {
             g.drawString(font, WheelStrings.bold(row.key()), x, y, f.pal().ink(), false);
             g.drawString(font, row.what(), x + row.whatX(), y, f.pal().muted(), false);
             y += 10;
         }
+    }
+
+    /** A line the screen says for a moment (no menu on this power, his screen could not open): a pill under the key hints, as the HUD under the wheel is hidden. */
+    private static void notice(GuiGraphics g, Font font, Frame f) {
+        if (f.notice().isEmpty()) {
+            return;
+        }
+        Cell a = f.layout().altHint();
+        int w = w(font, f.notice()) + 16;
+        UiKit.draw(g, f.kit(), Part.HUD_PILL, a.x(), a.y() + 17, w, a.h());
+        g.drawString(font, f.notice(), a.x() + 8, a.y() + 20, UiKit.labelOver(f.kit(), Part.HUD_PILL, f.pal().hintInk()), false);
     }
     private static void hints(GuiGraphics g, Font font, Frame f) {
         Cell h = f.layout().gHint();

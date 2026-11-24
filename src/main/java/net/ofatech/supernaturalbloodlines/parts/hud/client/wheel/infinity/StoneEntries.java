@@ -24,6 +24,8 @@ import org.jetbrains.annotations.Nullable;
 public final class StoneEntries {
     static final String MOD = "infinity";
     public static final ResourceLocation SOUL_CONTROL = ResourceLocation.fromNamespaceAndPath(MOD, "soul_control");
+    /** Where his wheel key prays to the Space Stone holder while no stone is carried: his key is covered, so the prayer is an entry. */
+    public static final ResourceLocation PRAY = ResourceLocation.fromNamespaceAndPath(MOD, "pray");
     private static final int SOUL_STONE = 4;
 
     private StoneEntries() {
@@ -41,6 +43,7 @@ public final class StoneEntries {
         private long joinedAt;
         private boolean soulSupported;
         private int soulMode;
+        private boolean prayShown;
         private List<WheelEntry> built = List.of();
         private int builds;
 
@@ -50,7 +53,8 @@ public final class StoneEntries {
             long r = api.receivedAt();
             boolean s = api.soulSupported();
             int m = api.soulMode();
-            if (nodes != null && joined == joinedAt && r == receivedAt && m == soulMode && s == soulSupported && h.equals(holding) && nodes.equals(n) && current.equals(now)) {
+            boolean p = api.prayShown();
+            if (nodes != null && p == prayShown && joined == joinedAt && r == receivedAt && m == soulMode && s == soulSupported && h.equals(holding) && nodes.equals(n) && current.equals(now)) {
                 return built;
             }
             nodes = List.copyOf(n);
@@ -60,6 +64,7 @@ public final class StoneEntries {
             joinedAt = joined;
             soulSupported = s;
             soulMode = m;
+            prayShown = p;
             built = build(api, now, joined);
             builds++;
             return built;
@@ -103,6 +108,9 @@ public final class StoneEntries {
         if (!soulAdded && soul != null) {
             out.add(soul);
         }
+        if (api.prayShown()) {
+            out.add(prayEntry());
+        }
         return out;
     }
 
@@ -113,6 +121,12 @@ public final class StoneEntries {
         }
         return new WheelEntry(new PowerRef(PowerSource.INFINITY, SOUL_CONTROL), PowerGroup.MAIN, PowerKind.INSTANT, Component.translatable("supernaturalbloodlines.wheel.infinity.soul_control"),
                 Component.empty(), List.of(), icon("soul"), PowerState.READY, false, -1f);
+    }
+
+    /** Never locked or stale: it needs none of his state, only that no stone is carried. The Space Stone icon, as it is the Space Stone holder who hears the prayer. */
+    private static WheelEntry prayEntry() {
+        return new WheelEntry(new PowerRef(PowerSource.INFINITY, PRAY), PowerGroup.MAIN, PowerKind.INSTANT, Component.translatable("supernaturalbloodlines.wheel.infinity.pray"),
+                Component.empty(), List.of(), icon("space"), PowerState.READY, false, -1f);
     }
 
     private static ResourceLocation icon(String key) {

@@ -14,7 +14,7 @@ public final class StoneActions {
     }
 
     /**
-     * Uses what the entry stands for: the soul control entry sends his possession action, a stone sends his {@code Use} for its current power (phase 1 stops a running
+     * Uses what the entry stands for: the soul control entry sends his possession action, Pray sends his prayer (only while it is shown), a stone sends his {@code Use} for its current power (phase 1 stops a running
      * channel, 2 is the second option of a dual power, 0 the plain use). Returns false when nothing was sent.
      */
     public static boolean use(StoneApi api, Map<Integer, String> current, WheelEntry e, boolean second) {
@@ -25,6 +25,9 @@ public final class StoneActions {
             }
             api.soulAction(action);
             return true;
+        }
+        if (e.ref().id().equals(StoneEntries.PRAY)) {
+            return api.prayShown() && api.pray();
         }
         NodeInfo n = StoneEntries.nodeOf(api, e);
         if (n == null) {
@@ -54,7 +57,7 @@ public final class StoneActions {
     /** What an input does on the entry's current power (his rules, {@link StoneMenus#route}); a plain use for anything that is not a stone power. */
     public static StoneMenus.Act route(StoneApi api, WheelEntry e, StoneMenus.Input input) {
         NodeInfo n = StoneEntries.nodeOf(api, e);
-        return n == null ? (input == StoneMenus.Input.MENU ? StoneMenus.Act.NOTHING : StoneMenus.Act.PLAIN) : StoneMenus.route(n.menu(), n.menuOnLeft(), input);
+        return n == null ? (input == StoneMenus.Input.MENU ? StoneMenus.Act.NOTHING : StoneMenus.Act.PLAIN) : StoneMenus.route(n.menu(), n.menuOnLeft(), n.isDual(), input);
     }
 
     /** Carries out a menu act: opens his screen (the caller has nothing else to do, the screen replaced the wheel) or sends his request. False for a plain use or nothing. */
@@ -64,10 +67,18 @@ public final class StoneActions {
             return false;
         }
         switch (act) {
-            case OPEN_DESTINATION -> api.openDestination(n.stone(), n.node(), n.menu() == StoneMenus.Kind.DESTINATION_TARGET);
-            case OPEN_CONSTRUCT -> api.openConstruct();
-            case OPEN_QUICK_SLOTS -> api.openQuickSlots();
-            case OPEN_CHOICE -> api.requestChoiceMenu(n.stone(), n.node());
+            case OPEN_DESTINATION -> {
+                return api.openDestination(n.stone(), n.node(), n.menu() == StoneMenus.Kind.DESTINATION_TARGET);
+            }
+            case OPEN_CONSTRUCT -> {
+                return api.openConstruct();
+            }
+            case OPEN_QUICK_SLOTS -> {
+                return api.openQuickSlots();
+            }
+            case OPEN_CHOICE -> {
+                return api.requestChoiceMenu(n.stone(), n.node());
+            }
             case SECOND_AT_ONCE -> send(api, current, n, true);
             default -> {
                 return false;
@@ -76,12 +87,11 @@ public final class StoneActions {
         return true;
     }
 
-    /** The extra help rows of the entry's current power; empty when it has no second option and no menu. */
-    public static List<StoneMenus.Help> help(StoneApi api, WheelEntry e) {
+    /** What the panel and the narrator say about the entry's current power, from one read of it. */
+    public static StoneView view(StoneApi api, WheelEntry e) {
         NodeInfo n = StoneEntries.nodeOf(api, e);
-        return n == null ? List.of() : StoneMenus.help(n.menu(), n.isDual());
+        return n == null ? StoneView.NONE : new StoneView(StoneMenus.clickWhat(n.menu(), n.menuOnLeft()), StoneMenus.help(n.menu(), n.menuOnLeft(), n.isDual()));
     }
-
     /** Alt + click: the next (or previous) unlocked power of the stone, round the list; locked powers are not in it. */
     public static void cycle(StoneApi api, Map<Integer, String> current, WheelEntry e, int delta) {
         NodeInfo n = StoneEntries.nodeOf(api, e);

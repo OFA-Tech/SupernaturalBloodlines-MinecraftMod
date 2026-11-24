@@ -52,11 +52,16 @@ public final class StoneMenus {
         return kind == Kind.DESTINATION || kind == Kind.DESTINATION_TARGET;
     }
 
-    /** What an input does on a power of this kind. {@code menuOnLeft}: the power's plain use is the destination menu itself (his Teleport GUI). */
-    public static Act route(Kind kind, boolean menuOnLeft, Input input) {
+    /**
+     * What an input does on a power of this kind. {@code menuOnLeft}: the power's menu is on every button of his wheel but the middle one too (his Teleport GUI), so use and
+     * the second option both open it. {@code dual}: only a dual power has a second option, so only it skips the aim of a choice-menu power.
+     */
+    public static Act route(Kind kind, boolean menuOnLeft, boolean dual, Input input) {
         return switch (input) {
             case USE -> isDestination(kind) && menuOnLeft ? Act.OPEN_DESTINATION : Act.PLAIN;
-            case SECOND -> kind == Kind.WILL ? Act.OPEN_CONSTRUCT : kind == Kind.CHOICE ? Act.SECOND_AT_ONCE : Act.PLAIN;
+            case SECOND -> kind == Kind.WILL ? Act.OPEN_CONSTRUCT
+                    : isDestination(kind) && menuOnLeft ? Act.OPEN_DESTINATION
+                    : kind == Kind.CHOICE && dual ? Act.SECOND_AT_ONCE : Act.PLAIN;
             case MENU -> switch (kind) {
                 case DESTINATION, DESTINATION_TARGET -> Act.OPEN_DESTINATION;
                 case WILL -> Act.OPEN_QUICK_SLOTS;
@@ -66,28 +71,49 @@ public final class StoneMenus {
         };
     }
 
+    /** Whether the act replaces the screen that is up with one of his: from a key it waits for the key's release, or the held key's repeat would reach his screen. */
+    public static boolean opensScreen(Act act) {
+        return act == Act.OPEN_DESTINATION || act == Act.OPEN_CONSTRUCT || act == Act.OPEN_QUICK_SLOTS;
+    }
+
     /** The lang suffix of what the plain click row says: a power whose use is its menu says so. */
     public static String clickWhat(Kind kind, boolean menuOnLeft) {
         return isDestination(kind) && menuOnLeft ? "click_destination" : "click_use";
     }
 
-    /**
-     * The extra help rows of a power, in order: the second option (Shift-click) when it has one, his middle click when it has a menu, and the keys of both when there is a
-     * menu. Empty for a power with neither (the closing row stays).
-     */
-    public static List<Help> help(Kind kind, boolean dual) {
-        List<Help> out = new ArrayList<>();
-        boolean second = kind == Kind.WILL || kind == Kind.CHOICE || dual;
-        boolean menu = kind != Kind.NONE;
-        if (second) {
-            String what = switch (kind) {
-                case WILL -> "second_construct";
-                case CHOICE -> "second_at_once";
-                default -> "dual_what";
-            };
-            out.add(new Help("dual_key", what, kind == Kind.WILL ? "narrate_second_construct" : kind == Kind.CHOICE ? "narrate_second_at_once" : "dual"));
+    /** What the Ctrl key is called: Command on a Mac, where the game's "Ctrl" is that key. {@code spoken} is for the narrator. */
+    public static String ctrl(boolean mac, boolean spoken) {
+        return mac ? (spoken ? "Command" : "Cmd") : (spoken ? "Control" : "Ctrl");
+    }
+
+    /** The lang suffixes of the narrator's lines for a stone power's extra inputs: its click when that opens a menu, then one line per extra row that has one. */
+    public static List<String> narration(String clickWhat, List<Help> help) {
+        List<String> out = new ArrayList<>();
+        if ("click_destination".equals(clickWhat)) {
+            out.add("narrate_click_destination");
         }
-        if (menu) {
+        for (Help h : help) {
+            if (!h.narrate().isEmpty()) {
+                out.add(h.narrate());
+            }
+        }
+        return out;
+    }
+
+    /**
+     * The extra help rows of a power, in order of priority: the second option (Shift-click) when it has one, his middle click when it has a menu, and the keys of both when
+     * there is a menu. Empty for a power with neither (the closing row stays). A row that does not fit is dropped from the end.
+     */
+    public static List<Help> help(Kind kind, boolean menuOnLeft, boolean dual) {
+        List<Help> out = new ArrayList<>();
+        boolean destinationSecond = isDestination(kind) && menuOnLeft;
+        boolean second = kind == Kind.WILL || destinationSecond || dual;
+        if (second) {
+            String what = kind == Kind.WILL ? "second_construct" : destinationSecond ? "menu_destination" : kind == Kind.CHOICE ? "second_at_once" : "dual_what";
+            String narrate = kind == Kind.WILL ? "narrate_second_construct" : destinationSecond ? "narrate_second_destination" : kind == Kind.CHOICE ? "narrate_second_at_once" : "dual";
+            out.add(new Help("dual_key", what, narrate));
+        }
+        if (kind != Kind.NONE) {
             String what = switch (kind) {
                 case WILL -> "menu_quick";
                 case CHOICE -> "menu_choice";

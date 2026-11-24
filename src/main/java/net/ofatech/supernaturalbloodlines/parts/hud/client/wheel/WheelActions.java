@@ -93,12 +93,22 @@ public final class WheelActions {
      */
     public static StoneMenus.Act stone(WheelEntry e, StoneMenus.Input input) {
         StoneMenus.Act act = InfinityCompat.route(e, input);
-        if (act != StoneMenus.Act.PLAIN && act != StoneMenus.Act.NOTHING) {
-            InfinityCompat.act(e, act);
+        if (act == StoneMenus.Act.NOTHING) {
+            problem = "no_menu";
+        } else if (act != StoneMenus.Act.PLAIN && !InfinityCompat.act(e, act)) {
+            problem = "unavailable";
         }
         return act;
     }
 
+    /** What went wrong with the last stone input, for the screen to say (a lang suffix under {@code wheel.notice.}): "no_menu" or "unavailable". Read once, then forgotten. */
+    public static String takeProblem() {
+        String p = problem;
+        problem = null;
+        return p;
+    }
+
+    private static String problem;
     private static final net.ofatech.supernaturalbloodlines.core.wheel.WheelViewState VIEW = new net.ofatech.supernaturalbloodlines.core.wheel.WheelViewState();
 
     /** Tells the server whether a screen that lists the powers is open (it only sends the catalogue to a viewer): the wheel and the hub share one request. */
@@ -121,9 +131,10 @@ public final class WheelActions {
         }
         last().set(e.ref(), mode);
         if (InfinityCompat.owns(e)) {
+            problem = null;
             StoneMenus.Act act = stone(e, second ? StoneMenus.Input.SECOND : StoneMenus.Input.USE);
             if (act != StoneMenus.Act.PLAIN) {
-                return act != StoneMenus.Act.NOTHING;
+                return problem == null;
             }
         }
         if (InfinityCompat.owns(e) && e.kind() != PowerKind.AIMED) {

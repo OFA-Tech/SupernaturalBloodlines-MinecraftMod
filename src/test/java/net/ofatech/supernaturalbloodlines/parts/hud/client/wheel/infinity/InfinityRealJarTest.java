@@ -16,7 +16,6 @@ import net.minecraft.locale.Language;
 import net.minecraft.network.chat.FormattedText;
 import net.minecraft.util.FormattedCharSequence;
 import net.ofatech.supernaturalbloodlines.core.wheel.StoneMenus.Kind;
-import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -27,9 +26,7 @@ class InfinityRealJarTest {
     private static final String ROOT = "com.infinitystones.tensura.";
 
     private static File jar() {
-        File jar = new File(System.getProperty("infinity.jar", "C:\\Users\\caiom\\AppData\\Local\\Temp\\opencode\\compat-tensura\\jars\\infinity-stones-tensura-8.0.0-alpha.6.jar"));
-        Assumptions.assumeTrue(jar.isFile(), "no Infinity Stones jar here");
-        return jar;
+        return InfinityJar.get();
     }
 
     /** Stone ordinals of his enum: MIND, POWER, SPACE, REALITY, SOUL, TIME. */
@@ -146,4 +143,45 @@ class InfinityRealJarTest {
             inject(before);
         }
     }
-}
+
+    @Test
+    void hisPrayerClassIsRequiredSoWithoutItTheCompatIsOffAndHisKeyComesBack() throws Exception {
+        try (URLClassLoader loader = new URLClassLoader(new URL[] {jar().toURI().toURL()}, getClass().getClassLoader())) {
+            try {
+                ReflectiveStoneApi.create(name -> {
+                    if (name.endsWith("GatherNet$Pray")) {
+                        throw new ClassNotFoundException(name);
+                    }
+                    return Class.forName(name, false, loader);
+                });
+            } catch (ReflectiveStoneApi.Missing missing) {
+                assertTrue(missing.getMessage().contains("GatherNet$Pray"), missing.getMessage());
+                return;
+            }
+            throw new AssertionError("without GatherNet$Pray the stones' key would leave a player with no stone no way to pray");
+        }
+    }
+
+    @Test
+    void withNoPlayerThereIsNoPrayerShownAndNothingFailsAtRunTime() throws Exception {
+        try (URLClassLoader loader = new URLClassLoader(new URL[] {jar().toURI().toURL()}, getClass().getClassLoader())) {
+            List<String> broke = new java.util.ArrayList<>();
+            ReflectiveStoneApi api = ReflectiveStoneApi.create(name -> Class.forName(name, false, loader), new StoneFailures(m -> { }, broke::add));
+            assertFalse(api.prayShown(), "no player in a unit test: nothing to pray for");
+            assertTrue(broke.isEmpty());
+        }
+    }
+
+    @Test
+    void aStateTheProbeDidNotExpectTurnsTheCompatOffInsteadOfLeavingItEmptyAndHisKeyCovered() throws Exception {
+        try (URLClassLoader loader = new URLClassLoader(new URL[] {jar().toURI().toURL()}, getClass().getClassLoader())) {
+            List<String> broke = new java.util.ArrayList<>();
+            ReflectiveStoneApi api = ReflectiveStoneApi.create(name -> Class.forName(name, false, loader), new StoneFailures(m -> { }, broke::add));
+            setState(loader, "", entry(loader, 99, "teleport_gui")); // a stone ordinal his enum does not have
+            assertTrue(api.nodes().isEmpty());
+            assertEquals(1, broke.size(), "the failure is reported to the probe: " + broke);
+            setState(loader, "", entry(loader, 2, "teleport_gui"));
+            assertEquals(1, api.nodes().size(), "a state that reads is read as before (the probe, not the api, decides to stay off)");
+            assertEquals(1, broke.size());
+        }
+    }}

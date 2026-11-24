@@ -92,8 +92,11 @@ class StoneMenuActionsTest {
         current.put(2, "teleport_gui");
         WheelEntry onGui = StoneEntries.build(api, current, 1_000).get(0);
         assertEquals(Act.OPEN_DESTINATION, StoneActions.route(api, onGui, Input.USE));
-        assertEquals(List.of("menu_key/menu_destination", "keys_key/keys_menu"), StoneActions.help(api, onGui).stream().map(h -> h.key() + "/" + h.what()).toList());
-        assertEquals(List.of(), StoneActions.help(api, onFirst));
+        StoneView view = StoneActions.view(api, onGui);
+        assertEquals("click_destination", view.clickWhat());
+        assertEquals(List.of("dual_key/menu_destination", "menu_key/menu_destination", "keys_key/keys_both"), view.help().stream().map(h -> h.key() + "/" + h.what()).toList(),
+                "his right click opens it too, so Shift-click has a row");
+        assertEquals(StoneView.NONE, StoneActions.view(api, onFirst));
     }
 
     @Test
@@ -171,4 +174,28 @@ class StoneMenuActionsTest {
         current.put(0, "b");
         assertEquals(1, cache.get(api, current, 1_000).get(0).state().mode(), "the map the cache compares to is its own copy, not the live one");
     }
-}
+
+    @Test
+    void aScreenThatCouldNotOpenIsReportedNotSilentlyDropped() {
+        FakeStoneApi api = new FakeStoneApi().menu(3, "will_construct", false, true, Kind.WILL, false);
+        api.failOpens = true;
+        WheelEntry e = stone(api, "reality");
+        assertFalse(StoneActions.act(api, new HashMap<>(), e, Act.OPEN_CONSTRUCT));
+        assertFalse(StoneActions.act(api, new HashMap<>(), e, Act.OPEN_QUICK_SLOTS));
+        api.failOpens = false;
+        assertTrue(StoneActions.act(api, new HashMap<>(), e, Act.OPEN_QUICK_SLOTS));
+    }
+
+    @Test
+    void aChoiceMenuPowerWithNoSecondOptionAimsOnShiftToo() {
+        FakeStoneApi api = new FakeStoneApi().menu(0, "suggestion", true, false, Kind.CHOICE, false);
+        WheelEntry e = stone(api, "mind");
+        assertEquals(Act.PLAIN, StoneActions.route(api, e, Input.SECOND), "his alt needs isDual");
+        assertEquals(List.of("choice 0 suggestion"), run(api, e, Input.MENU));
+    }
+
+    @Test
+    void shiftClickOnTheTeleportGuiOpensItsScreenToo() {
+        FakeStoneApi api = new FakeStoneApi().menu(2, "teleport_gui", false, false, Kind.DESTINATION, true);
+        assertEquals(List.of("destination 2 teleport_gui false"), run(api, stone(api, "space"), Input.SECOND));
+    }}
