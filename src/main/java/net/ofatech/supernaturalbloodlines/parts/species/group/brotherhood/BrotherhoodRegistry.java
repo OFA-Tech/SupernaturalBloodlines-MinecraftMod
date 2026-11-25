@@ -32,8 +32,16 @@ public final class BrotherhoodRegistry {
         });
         net.ofatech.supernaturalbloodlines.parts.species.hunter.HunterInstinct.onSense(BrotherhoodSight::share);
         net.ofatech.supernaturalbloodlines.parts.species.hunter.MarkTracker.onDeathResolved(Codes::onResolved);
+        net.ofatech.supernaturalbloodlines.parts.species.hunter.MarkTracker.onDeathResolved(BrotherhoodCurse::onResolved);
+        net.ofatech.supernaturalbloodlines.parts.species.hunter.HunterCurse.onLift(id -> {
+            var server = net.neoforged.neoforge.server.ServerLifecycleHooks.getCurrentServer();
+            if (server != null) {
+                net.ofatech.supernaturalbloodlines.parts.species.group.GroupIndex.get(server.overworld()).clearCurse(id);
+            }
+        });
         NeoForge.EVENT_BUS.addListener((PlayerEvent.PlayerLoggedInEvent e) -> {
             if (e.getEntity() instanceof ServerPlayer p) {
+                BrotherhoodCurse.expire(p.server);
                 onMarkChanged(p);
             }
         });
@@ -65,6 +73,7 @@ public final class BrotherhoodRegistry {
     /** Every online member's recorded mark is refreshed, and every brotherhood's lead is checked. */
     public static void sweep(MinecraftServer server) {
         PackIndex packs = PackIndex.get(server.overworld());
+        BrotherhoodCurse.expire(server);
         net.ofatech.supernaturalbloodlines.parts.species.group.GroupIndex.get(server.overworld()).pruneCode(PackIndex.now(),
                 net.ofatech.supernaturalbloodlines.parts.species.group.GroupsConfig.codeStrikesDays() * 24L * 3_600_000L);
         for (UUID leader : List.copyOf(packs.leaders())) {
