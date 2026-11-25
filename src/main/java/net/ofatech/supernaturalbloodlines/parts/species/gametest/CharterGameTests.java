@@ -696,6 +696,20 @@ public final class CharterGameTests {
     }
 
     @GameTest(template = "empty", templateNamespace = NS, timeoutTicks = 100)
+    public static void aStackOfALiveClanWithNoRowIsDustAndNothingThrows(GameTestHelper helper) {
+        Clan c = clan(helper);
+        try {
+            c.a().getInventory().add(Charters.stack(UUID.randomUUID(), groupOf(helper, c.leader())));
+            helper.assertTrue(groups(helper).charterOf(groupOf(helper, c.leader())).isEmpty(), "setup: the clan has a row");
+            scan(helper, c.leader(), c.a(), c.b());
+            helper.assertTrue(held(c.a()) == 0 && groups(helper).charterOf(groupOf(helper, c.leader())).isEmpty(), "a stack of this clan with no row survived or made a row");
+        } finally {
+            done(helper, c.all());
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS, timeoutTicks = 100)
     public static void aCharterOfADeadClanIsDust(GameTestHelper helper) {
         Clan c = clan(helper);
         try {
@@ -723,7 +737,7 @@ public final class CharterGameTests {
             helper.assertTrue(Charters.reforge(c.leader()) == null, "the reforge was refused");
             UUID newId = row(helper, c.leader()).id();
             helper.assertTrue(!newId.equals(old.get(SpeciesRegistries.CHARTER_ID.get())), "the id did not change");
-            c.a().getInventory().add(old);
+            c.a().getInventory().add(old.copy()); // Inventory.add empties the stack it is given, so a second add of the same object adds nothing
             scan(helper, c.leader(), c.a(), c.b());
             helper.assertTrue(held(c.a()) == 0 && held(c.leader()) == 1 && newId.equals(firstCharter(c.leader()).get(SpeciesRegistries.CHARTER_ID.get())), "the old Charter survived the reforge");
             take(c.leader());
