@@ -468,6 +468,8 @@ public final class GroupIndex extends SavedData {
             retire(group);
         } else {
             ids.put(newLeader, group);
+            // "the head stored it" is about the head who did: a new head inherits a stored Charter, not the old head's forfeit
+            charters.computeIfPresent(group, (g, r) -> r.byHead() ? new CharterRow(r.id(), r.holder(), r.state(), r.forgedAt(), r.seenAt(), r.entity(), r.lostAt(), false) : r);
         }
         setDirty();
     }

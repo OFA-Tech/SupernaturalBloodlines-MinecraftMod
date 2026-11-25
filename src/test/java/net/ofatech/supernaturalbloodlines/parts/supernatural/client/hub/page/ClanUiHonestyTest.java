@@ -90,7 +90,8 @@ class ClanUiHonestyTest {
         }
         String page = java.nio.file.Files.readString(at.resolve("src/main/java/net/ofatech/supernaturalbloodlines/parts/supernatural/client/hub/page/BookPackPage.java"));
         assertTrue(page.contains("ringColor(slot.member().role().color(), slot.alpha(), ringBackground(t))"), "the portrait ring is the checked colour at its own opacity");
-        assertFalse(page.contains("<< 24)"), "no alpha is put on a ring after the contrast was checked");
+        assertFalse(java.util.regex.Pattern.compile("<<\\s*24").matcher(page).find(), "no alpha is put on a colour of this page after its contrast was checked (the whole page is scanned)");
+        assertFalse(page.contains("slot.alpha() * 255"), "no alpha is computed for a ring on this page");
     }
 
     @Test

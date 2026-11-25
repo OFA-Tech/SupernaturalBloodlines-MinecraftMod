@@ -74,6 +74,7 @@ public final class ContestGameTests {
         CLOCK[0] = 20_000_000_000L;
         PackIndex.overrideClock(() -> CLOCK[0]);
         Contests.overrideDayTime(() -> DAYTIME[0]);
+        Contests.overrideServerTicks(() -> 1_000_000);
         if (noMinimum) {
             GroupsConfig.override("challenger_min_days", 0);
         }
@@ -165,7 +166,8 @@ public final class ContestGameTests {
             helper.assertTrue(row.phase() == ContestRow.Phase.PENDING && row.challenger().equals(c.a().getUUID()), "the row is " + row);
             List<HubRequests.Request> cards = HubRequests.of(c.leader()).stream().filter(r -> r.kind() == HubRequests.Kind.CHARTER_CONTEST).toList();
             helper.assertTrue(cards.size() == 1 && cards.get(0).ticksLeft() > 0 && cards.get(0).token().isEmpty(), "the card is " + cards);
-            helper.assertTrue(c.leader().received(CLAN + "challenged") && c.a().received(CLAN + "challenged") && c.b().received(CLAN + "challenged"), "somebody was not told");
+            helper.assertTrue(c.leader().received(CLAN + "challenged_head") && c.a().received(CLAN + "challenged") && c.b().received(CLAN + "challenged"), "somebody was not told");
+            helper.assertTrue(!c.leader().received(CLAN + "challenged") && !c.a().received(CLAN + "challenged_head"), "the head's own line (with the rule) went to the clan, or the clan's to the head");
         } finally {
             done(helper, c.all());
         }
@@ -330,6 +332,7 @@ public final class ContestGameTests {
             ContestRow row = contest(helper, c.leader()).orElseThrow();
             helper.assertTrue(row.startedDayTime() == 17_000L && row.startedAt() == CLOCK[0], "the row is " + row);
             helper.assertTrue(c.a().received(CLAN + "contest_started") && c.b().received(CLAN + "contest_started"), "the clan was not told");
+            helper.assertTrue(c.leader().received(CLAN + "contest_started_head") && !c.leader().received(CLAN + "contest_started"), "the head was not told the rule of keeping the Charter on them");
             helper.assertTrue(HubRequests.of(c.leader()).stream().noneMatch(r -> r.kind() == HubRequests.Kind.CHARTER_CONTEST), "the card stayed after the accept");
         } finally {
             done(helper, c.all());
@@ -447,6 +450,51 @@ public final class ContestGameTests {
             Contests.tick(server(helper), DAYTIME[0]);
             helper.assertTrue(groups(helper).contestOf(gone).isEmpty(), "the row stayed");
             helper.assertTrue(c.a().received(CLAN + "contest_void"), "the challenger was not told it was called off");
+        } finally {
+            done(helper, c.all());
+        }
+        helper.succeed();
+    }
+
+    // ---- round 3 ----
+
+    @GameTest(template = "empty", templateNamespace = NS, timeoutTicks = 100)
+    public static void aForfeitOfAHeadWhoLostTheLeadDoesNotFollowTheNextHead(GameTestHelper helper) {
+        Clan c = ready(helper);
+        try {
+            groups(helper).setRank(c.b().getUUID(), GroupRank.DAY_WALKER);
+            headStores(helper, c);
+            helper.assertTrue(Contests.challenge(c.a()) == null && Contests.accept(c.leader()) == null, "setup: the first contest");
+            midnight(helper);
+            helper.assertTrue(leaderOf(helper, c.b()).equals(c.a().getUUID()), "setup: the challenger did not win the forfeit");
+            UUID group = group(helper, c.a());
+            helper.assertTrue(!groups(helper).charterOf(group).orElseThrow().byHead(), "the row still says the old head stored it, though the clan has a new head");
+            groups(helper).clearCooldown(group, Contests.COOLDOWN_KEY);
+            DAYTIME[0] = 17_000L;
+            helper.assertTrue(Contests.challenge(c.b()) == null, "setup: the second challenge");
+            helper.assertTrue(!contest(helper, c.a()).orElseThrow().headStored(), "the new head was treated as the one who stored the Charter");
+            helper.assertTrue(Contests.accept(c.a()) == null, "setup: the second accept");
+            midnight(helper);
+            helper.assertTrue(leaderOf(helper, c.b()).equals(c.a().getUUID()), "the new head lost the clan for a Charter an old head stored");
+        } finally {
+            emptyChest(helper);
+            done(helper, c.all());
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS, timeoutTicks = 100)
+    public static void noContestResolvesInTheFirstMinuteAfterTheServerStarted(GameTestHelper helper) {
+        Clan c = ready(helper);
+        try {
+            begin(helper, c, c.a());
+            pass(c.leader(), c.a());
+            Contests.overrideServerTicks(() -> 1_199);
+            midnight(helper);
+            helper.assertTrue(contest(helper, c.leader()).isPresent() && leaderOf(helper, c.b()).equals(c.leader().getUUID()), "a contest resolved in the first minute of the server");
+            Contests.overrideServerTicks(() -> 1_200);
+            Contests.tick(server(helper), DAYTIME[0]);
+            helper.assertTrue(leaderOf(helper, c.b()).equals(c.a().getUUID()), "the contest did not resolve once the minute was over");
         } finally {
             done(helper, c.all());
         }

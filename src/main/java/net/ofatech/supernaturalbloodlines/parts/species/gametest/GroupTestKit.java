@@ -79,6 +79,7 @@ public final class GroupTestKit {
         PackIndex.overrideClock(null);
         net.ofatech.supernaturalbloodlines.parts.species.group.clan.CharterScan.overridePlayers(null);
         net.ofatech.supernaturalbloodlines.parts.species.group.clan.Contests.overrideDayTime(null);
+        net.ofatech.supernaturalbloodlines.parts.species.group.clan.Contests.overrideServerTicks(null);
         net.ofatech.supernaturalbloodlines.parts.species.group.clan.SharedFeeding.reset();
         net.ofatech.supernaturalbloodlines.parts.species.group.clan.ClanViews.overrideNames(null);
         net.ofatech.supernaturalbloodlines.parts.species.group.clan.SirelineBonuses.overridePlayers(null);

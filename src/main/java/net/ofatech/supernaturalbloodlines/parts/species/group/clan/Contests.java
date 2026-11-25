@@ -36,7 +36,10 @@ import org.jetbrains.annotations.Nullable;
  */
 public final class Contests {
     public static final String COOLDOWN_KEY = "contest";
+    /** A contest is not resolved in the first minute of a server: downtime past its wall-clock limit must not hand a win to whoever is there when it starts. */
+    static final int SETTLE_TICKS = 1200;
     private static LongSupplier dayTimeOverride;
+    private static java.util.function.IntSupplier serverTicksOverride;
     private static boolean resolving;
     private static boolean registered;
 
@@ -46,6 +49,15 @@ public final class Contests {
     /** For tests: pins the overworld day time the contests read; null restores the world's. */
     public static void overrideDayTime(LongSupplier supplier) {
         dayTimeOverride = supplier;
+    }
+
+    /** For tests: pins the server tick count the first-minute rule reads; null restores the server's. */
+    public static void overrideServerTicks(java.util.function.IntSupplier supplier) {
+        serverTicksOverride = supplier;
+    }
+
+    private static int serverTicks(MinecraftServer server) {
+        return serverTicksOverride != null ? serverTicksOverride.getAsInt() : server.getTickCount();
     }
 
     static long dayTime(MinecraftServer server) {
@@ -99,6 +111,14 @@ public final class Contests {
         return noDecline(p);
     }
 
+    /** The clan hears {@code key}; the head, who has a rule to keep, hears {@code headKey}. */
+    private static void tellClanAndHead(MinecraftServer server, UUID leader, String key, String headKey, String arg) {
+        for (UUID id : PackIndex.get(server.overworld()).roster(leader)) {
+            PackMembers.tell(server, id, id.equals(leader) ? headKey : key, arg);
+        }
+        Charters.refresh(server, leader);
+    }
+
     private static void tellAll(MinecraftServer server, UUID leader, String key, String arg) {
         Charters.tellClan(server, leader, key, arg);
         Charters.refresh(server, leader);
@@ -149,7 +169,7 @@ public final class Contests {
         }
         boolean headStored = groups.charterOf(clan.group()).filter(r -> r.state() == CharterState.STORED && r.byHead()).isPresent();
         groups.setContest(clan.group(), new ContestRow(p.getUUID(), ContestRow.Phase.PENDING, now, now + GroupsConfig.contestAcceptMinutes() * 60_000L, 0, 0, headStored));
-        tellAll(server, clan.leader(), ClanText.key("challenged"), ClanDiscipline.name(server, p.getUUID()));
+        tellClanAndHead(server, clan.leader(), ClanText.key("challenged"), ClanText.key("challenged_head"), ClanDiscipline.name(server, p.getUUID()));
         return null;
     }
 
@@ -176,7 +196,7 @@ public final class Contests {
         long now = PackIndex.now();
         groups.setContest(group, new ContestRow(pending.challenger(), ContestRow.Phase.RUNNING, pending.openedAt(), pending.acceptBy(), now, dayTime(server), pending.headStored()));
         groups.setCooldown(group, COOLDOWN_KEY, now + GroupsConfig.contestCooldownDays() * ClanTime.DAY);
-        tellAll(server, leader, ClanText.key("contest_started"), "");
+        tellClanAndHead(server, leader, ClanText.key("contest_started"), ClanText.key("contest_started_head"), "");
     }
 
     /** Ends a contest with no winner and no new cooldown. */
@@ -233,7 +253,8 @@ public final class Contests {
                 voidContest(server, leader, group);
                 continue;
             }
-            if (ContestRules.due(row.startedDayTime(), dayTime, row.startedAt(), now, GroupsConfig.contestMinMinutes(), GroupsConfig.contestMaxHours())) {
+            if (serverTicks(server) >= SETTLE_TICKS
+                    && ContestRules.due(row.startedDayTime(), dayTime, row.startedAt(), now, GroupsConfig.contestMinMinutes(), GroupsConfig.contestMaxHours())) {
                 resolve(server, leader, group);
             }
         }
