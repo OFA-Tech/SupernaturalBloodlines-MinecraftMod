@@ -413,7 +413,7 @@ public final class CovenGovernance {
         }
         boolean changed = false;
         for (Vote v : c.groups.openVotes(c.group)) {
-            if (member.equals(v.subject) || member.equals(v.caller)) {
+            if (member.equals(v.subject)) {
                 c.groups.cancelVote(v);
                 changed = true;
             } else {

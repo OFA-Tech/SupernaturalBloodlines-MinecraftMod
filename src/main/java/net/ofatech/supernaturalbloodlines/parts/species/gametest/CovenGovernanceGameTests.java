@@ -752,4 +752,23 @@ public final class CovenGovernanceGameTests {
         }
         helper.succeed();
     }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aCallerWhoLeavesDoesNotVoidTheVote(GameTestHelper helper) {
+        Coven c = coven(helper, 2, 1);
+        try {
+            TalkingDuelist caller = c.elders().get(0);
+            TalkingDuelist subject = c.members().get(0);
+            helper.assertTrue(CovenGovernance.shun(caller, name(subject)) == null, "the shunning did not open");
+            helper.assertTrue(PackCommand.leave(caller) == null, "the caller could not leave");
+            var open = groups(helper).openVotes(groupOf(helper, c));
+            helper.assertTrue(open.size() == 1 && open.get(0).kind == VoteKind.SHUN, "the caller leaving voided the vote: " + open.size());
+            helper.assertTrue(!open.get(0).ballots.containsKey(caller.getUUID()), "the ballot of the one who left was kept");
+            helper.assertTrue(CovenGovernance.vote(c.regent(), true, "shun") == null && CovenGovernance.vote(c.elders().get(1), true, "shun") == null, "the electors could not vote");
+            helper.assertTrue(!PackIndex.get(helper.getLevel()).inPack(subject.getUUID()), "the vote with the new electorate did not pass");
+        } finally {
+            tidy(helper, c);
+        }
+        helper.succeed();
+    }
 }
