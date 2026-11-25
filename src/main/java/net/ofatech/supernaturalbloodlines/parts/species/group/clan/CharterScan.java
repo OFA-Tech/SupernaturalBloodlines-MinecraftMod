@@ -30,6 +30,22 @@ import net.ofatech.supernaturalbloodlines.parts.species.pack.PackIndex;
  * not a shulker box or any other container item. Sightings are collected first and the inventories edited after, so the loop never edits what it reads.
  */
 public final class CharterScan {
+    private static final long DAY = 24L * 60 * 60 * 1000;
+
+    private static boolean entityLoaded(MinecraftServer server, CharterRow row) {
+        if (row.entity().isEmpty()) {
+            return false;
+        }
+        for (ServerLevel level : server.getAllLevels()) {
+            if (level.getEntity(row.entity().get()) != null) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /** A held Charter is seen again (and its row rewritten) only when its last sighting is this old. */
+    static final long STALE = 60L * 60 * 1000;
     private static Supplier<List<ServerPlayer>> players;
     private static boolean warned;
 
@@ -130,7 +146,9 @@ public final class CharterScan {
             groups.contestOf(group).filter(GroupIndex.ContestRow::headStored).ifPresent(c ->
                     groups.setContest(group, new GroupIndex.ContestRow(c.challenger(), c.phase(), c.openedAt(), c.acceptBy(), c.startedAt(), c.startedDayTime(), false)));
             if (Charters.isMember(server, keep.player().getUUID(), group)) {
-                writes.put(group, new CharterRow(row.id(), Optional.of(keep.player().getUUID()), CharterState.HELD, row.forgedAt(), now, Optional.empty(), 0));
+                boolean same = row.state() == CharterState.HELD && row.holder().filter(keep.player().getUUID()::equals).isPresent() && row.entity().isEmpty();
+                long seen = same && now - row.seenAt() < STALE ? row.seenAt() : now;
+                writes.put(group, new CharterRow(row.id(), Optional.of(keep.player().getUUID()), CharterState.HELD, row.forgedAt(), seen, Optional.empty(), 0));
             } else {
                 strip.add(keep);
             }
@@ -157,15 +175,24 @@ public final class CharterScan {
                     Charters.tellClan(server, leader, ClanText.key("charter_lost"));
                 }
             }
+            if (row.state() == CharterState.DROPPED && !entityLoaded(server, row) && now - row.seenAt() >= GroupsConfig.charterLostDays() * DAY) {
+                // its entity is in no loaded level and nothing has seen it for the days (a world that lost it, a jar that never knew the item): it is lost like any other
+                row = new CharterRow(row.id(), Optional.empty(), CharterState.LOST, row.forgedAt(), row.seenAt(), Optional.empty(), now);
+                Charters.tellClan(server, leader, ClanText.key("charter_lost"));
+            }
             if (!row.equals(e.getValue())) {
                 writes.put(group, row);
             }
         }
 
         writes.forEach((group, row) -> {
-            if (!groups.charterOf(group).filter(row::equals).isPresent()) {
+            CharterRow old = groups.charterOf(group).orElse(null);
+            if (!row.equals(old)) {
                 groups.setCharter(group, row);
-                Charters.refresh(server, leaderOf.get(group));
+                // only a change of state or holder is news to the clan; a refreshed seenAt is not
+                if (old == null || old.state() != row.state() || !old.holder().equals(row.holder())) {
+                    Charters.refresh(server, leaderOf.get(group));
+                }
             }
         });
         for (Found f : dust) {

@@ -47,7 +47,11 @@ final class CharterGuard {
         }
         GroupIndex groups = GroupIndex.get(level.getServer().overworld());
         Optional<CharterRow> row = Charters.rowOf(groups, item.getItem());
-        if (row.isEmpty() || row.get().state() == CharterState.LOST) {
+        if (row.isEmpty()) {
+            e.setCanceled(true); // a Charter no row stands behind (a clan that is gone, an old copy, a made-up stack) never enters the world
+            return;
+        }
+        if (row.get().state() == CharterState.LOST) {
             return;
         }
         item.setInvulnerable(true);

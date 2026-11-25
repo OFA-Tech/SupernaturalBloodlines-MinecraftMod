@@ -328,6 +328,41 @@ public final class CharterGameTests {
     }
 
     @GameTest(template = "empty", templateNamespace = NS, timeoutTicks = 100)
+    public static void aHeldCharterIsNotRewrittenOrPushedEveryScan(GameTestHelper helper) {
+        long[] now = {5_000_000_000L};
+        PackIndex.overrideClock(() -> now[0]);
+        Clan c = clan(helper);
+        try {
+            forged(helper, c);
+            scan(helper, c.leader(), c.a(), c.b());
+            CharterRow first = row(helper, c.leader());
+            int pushes = Charters.refreshes();
+            for (int i = 0; i < 5; i++) {
+                now[0] += 2_000;
+                scan(helper, c.leader(), c.a(), c.b());
+            }
+            helper.assertTrue(row(helper, c.leader()).equals(first), "the row was rewritten while nothing changed: " + row(helper, c.leader()));
+            helper.assertTrue(Charters.refreshes() == pushes, "the clan was pushed " + (Charters.refreshes() - pushes) + " times while nothing changed");
+            now[0] += HOUR;
+            scan(helper, c.leader(), c.a(), c.b());
+            helper.assertTrue(row(helper, c.leader()).seenAt() == now[0] && row(helper, c.leader()).state() == CharterState.HELD, "the stale seenAt was not refreshed after an hour");
+            helper.assertTrue(Charters.refreshes() == pushes, "refreshing seenAt pushed the clan");
+            pass(c.leader(), c.a());
+            scan(helper, c.leader(), c.a(), c.b());
+            helper.assertTrue(row(helper, c.leader()).holder().equals(Optional.of(c.a().getUUID())) && Charters.refreshes() > pushes, "a change of holder was not written and pushed");
+        } finally {
+            done(helper, c.all());
+        }
+        helper.succeed();
+    }
+
+    private static void pass(TalkingDuelist from, TalkingDuelist to) {
+        ItemStack s = firstCharter(from);
+        from.getInventory().items.set(from.getInventory().findSlotMatchingItem(s), ItemStack.EMPTY);
+        to.getInventory().add(s);
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS, timeoutTicks = 100)
     public static void theOffhandCounts(GameTestHelper helper) {
         Clan c = clan(helper);
         try {
@@ -421,6 +456,49 @@ public final class CharterGameTests {
             CharterRow row = row(helper, c.leader());
             helper.assertTrue(row.state() == CharterState.DROPPED && row.entity().equals(Optional.of(e.getUUID())), "the row is " + row);
             helper.assertTrue(e.isInvulnerable(), "the dropped Charter is hurtable");
+        } finally {
+            done(helper, c.all());
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS, timeoutTicks = 100)
+    public static void aDroppedRowWhoseEntityIsGoneAndOldGoesLost(GameTestHelper helper) {
+        long[] now = {5_000_000_000L};
+        PackIndex.overrideClock(() -> now[0]);
+        Clan c = clan(helper);
+        try {
+            ItemStack stack = forged(helper, c).copy();
+            take(c.leader());
+            ItemEntity e = new ItemEntity(helper.getLevel(), c.leader().getX(), c.leader().getY(), c.leader().getZ(), stack);
+            e.setNoGravity(true);
+            helper.getLevel().addFreshEntity(e);
+            now[0] += 30 * 24 * HOUR;
+            scan(helper, c.leader(), c.a(), c.b());
+            helper.assertTrue(row(helper, c.leader()).state() == CharterState.DROPPED, "a dropped Charter whose entity is in the world went lost: " + row(helper, c.leader()));
+            CharterRow r = row(helper, c.leader());
+            groups(helper).setCharter(groupOf(helper, c.leader()), new CharterRow(r.id(), Optional.empty(), CharterState.DROPPED, r.forgedAt(), r.seenAt(), Optional.of(UUID.randomUUID()), 0));
+            now[0] -= 29 * 24 * HOUR;
+            scan(helper, c.leader(), c.a(), c.b());
+            helper.assertTrue(row(helper, c.leader()).state() == CharterState.DROPPED, "a gone entity went lost before the days: " + row(helper, c.leader()));
+            now[0] += 29 * 24 * HOUR;
+            scan(helper, c.leader(), c.a(), c.b());
+            helper.assertTrue(row(helper, c.leader()).state() == CharterState.LOST && row(helper, c.leader()).lostAt() == now[0], "a gone entity of an old row did not go lost: " + row(helper, c.leader()));
+            helper.assertTrue(c.leader().received(CLAN + "charter_lost"), "the clan was not told");
+        } finally {
+            done(helper, c.all());
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS, timeoutTicks = 100)
+    public static void aCharterEntityWhoseRowIsGoneIsRemovedWhenItJoins(GameTestHelper helper) {
+        Clan c = clan(helper);
+        try {
+            ItemEntity stale = new ItemEntity(helper.getLevel(), c.leader().getX(), c.leader().getY(), c.leader().getZ(), Charters.stack(UUID.randomUUID(), groupOf(helper, c.leader())));
+            helper.assertTrue(!helper.getLevel().addFreshEntity(stale) || stale.isRemoved(), "an entity with no row joined the world");
+            ItemEntity ofNoClan = new ItemEntity(helper.getLevel(), c.leader().getX(), c.leader().getY(), c.leader().getZ(), Charters.stack(UUID.randomUUID(), UUID.randomUUID()));
+            helper.assertTrue(!helper.getLevel().addFreshEntity(ofNoClan) || ofNoClan.isRemoved(), "an entity of a clan that does not exist joined the world");
         } finally {
             done(helper, c.all());
         }

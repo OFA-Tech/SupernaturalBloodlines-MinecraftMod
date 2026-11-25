@@ -73,7 +73,15 @@ public final class Charters {
         }
     }
 
+    private static int refreshes;
+
+    /** How many times the clan was pushed (a test reads it to see that a quiet scan pushes nothing). */
+    public static int refreshes() {
+        return refreshes;
+    }
+
     public static void refresh(MinecraftServer server, UUID leader) {
+        refreshes++;
         PackIndex packs = PackIndex.get(server.overworld());
         List<UUID> all = new ArrayList<>(packs.betasOf(leader));
         all.add(leader);
