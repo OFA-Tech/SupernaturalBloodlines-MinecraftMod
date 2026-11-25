@@ -100,8 +100,9 @@ public final class GroupsConfig {
     private static final Whole CHARTER_MIN_MEMBERS = whole("charter_min_members", 3, 2, 50, "Members (the leader counted) a clan needs to forge a Charter and to challenge for it.");
     private static final Whole CHARTER_LOST_DAYS = whole("charter_lost_days", 7, 1, 365, "Days a Charter can go unseen before it counts as lost and the leader may reforge it.");
     private static final ModConfigSpec.ConfigValue<List<? extends String>> CHARTER_FORGE_COST = B
-            .comment("What forging or reforging a Charter takes from the leader: one item id per line, optionally =count (minecraft:gold_ingot=5). A bad or unknown line is skipped; nothing valid left means the default; an empty list is free.")
-            .defineList("charter_forge_cost", CharterCost.DEFAULT, () -> "minecraft:gold_block", o -> o instanceof String);
+            .comment("What forging or reforging a Charter takes from the leader: one item id per line, optionally =count (minecraft:gold_ingot=5). A bad or unknown line is skipped; nothing valid left, or an empty list, means the default.")
+            .define("charter_forge_cost", (java.util.function.Supplier<List<? extends String>>) () -> CharterCost.DEFAULT,
+                    o -> o instanceof List<?> l && CharterCost.acceptable(l.stream().map(String::valueOf).toList()) && l.stream().allMatch(e -> e instanceof String));
     private static final Whole CHALLENGER_MIN_DAYS = whole("challenger_min_days", 7, 0, 365, "Real days in a clan before a Day Walker can challenge for the Charter.");
     private static final Whole CONTEST_COOLDOWN_DAYS = whole("contest_cooldown_days", 7, 0, 365, "Days between two contests of one clan, counted from the start of the last.");
     private static final Whole CONTEST_ACCEPT_MINUTES = whole("contest_accept_minutes", 10, 1, 120, "Minutes the leader has to accept a challenge; if they stay online the contest starts anyway.");

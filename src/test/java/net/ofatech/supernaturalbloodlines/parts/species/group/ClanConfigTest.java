@@ -111,6 +111,18 @@ class ClanConfigTest {
     }
 
     @Test
+    void anEmptyForgeCostIsRefusedByTheSpecAndTheAdminCheck() {
+        CommentedConfig empty = new TomlParser().parse("charter_forge_cost = []\n");
+        GroupsConfig.SPEC.correct(empty);
+        assertEquals(CharterCost.DEFAULT, empty.get("charter_forge_cost"), "a stored empty list was kept");
+        CommentedConfig fine = new TomlParser().parse("charter_forge_cost = [\"minecraft:diamond\"]\n");
+        GroupsConfig.SPEC.correct(fine);
+        assertEquals(List.of("minecraft:diamond"), fine.get("charter_forge_cost"));
+        assertFalse(CharterCost.acceptable(List.of()), "the admin check takes an empty list");
+        assertTrue(CharterCost.acceptable(List.of("minecraft:diamond")));
+    }
+
+    @Test
     void forgeCostParses() {
         List<String> warned = new ArrayList<>();
         List<CharterCost.Entry> two = CharterCost.parse(CharterCost.DEFAULT, id -> true, warned::add);
@@ -121,7 +133,9 @@ class ClanConfigTest {
         assertEquals(3, warned.size(), "one warning for each skipped entry: " + warned);
         warned.clear();
         assertEquals(two, CharterCost.parse(List.of("minecraft:nope", "junk"), id -> false, warned::add), "a list that parses to nothing falls back to the default");
-        assertEquals(List.of(), CharterCost.parse(List.of(), id -> true, warned::add), "an empty list is free");
+        warned.clear();
+        assertEquals(two, CharterCost.parse(List.of(), id -> true, warned::add), "an empty list is no longer free: it is the default");
+        assertEquals(1, warned.size(), "an empty list is warned about once");
         GroupsConfig.override("charter_forge_cost", List.of("minecraft:diamond=2"));
         assertEquals(List.of(new CharterCost.Entry("minecraft:diamond", 2)), GroupsConfig.charterForgeCost(id -> true));
     }

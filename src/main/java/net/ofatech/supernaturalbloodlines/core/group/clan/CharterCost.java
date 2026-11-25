@@ -33,10 +33,16 @@ public final class CharterCost {
         return DEFAULT.stream().map(line -> parseLine(line).orElseThrow()).toList();
     }
 
-    /** An empty list is free; every bad or unknown line is skipped with one warning; a list that leaves nothing is the default. */
+    /** A Charter always costs something: an empty list is refused here, by the config spec and by the Admin row. */
+    public static boolean acceptable(List<String> lines) {
+        return !lines.isEmpty();
+    }
+
+    /** An empty list is the default (never free); every bad or unknown line is skipped with one warning; a list that leaves nothing is the default. */
     public static List<Entry> parse(List<String> lines, Predicate<String> known, Consumer<String> warn) {
         if (lines.isEmpty()) {
-            return List.of();
+            warn.accept("charter_forge_cost: an empty list is not allowed, the default is used");
+            return defaults();
         }
         List<Entry> out = new ArrayList<>();
         for (String line : lines) {
