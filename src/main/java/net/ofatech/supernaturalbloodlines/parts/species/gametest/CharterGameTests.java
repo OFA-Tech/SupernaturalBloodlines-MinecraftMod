@@ -471,6 +471,26 @@ public final class CharterGameTests {
     }
 
     @GameTest(template = "empty", templateNamespace = NS, timeoutTicks = 100)
+    public static void aCharterDroppedLongAfterItWasLastSeenIsSeenWhenItJoins(GameTestHelper helper) {
+        long[] now = {5_000_000_000L};
+        PackIndex.overrideClock(() -> now[0]);
+        Clan c = clan(helper);
+        try {
+            ItemStack stack = forged(helper, c).copy();
+            take(c.leader());
+            now[0] += 40 * 24 * HOUR; // no scan has run since: the row's last sighting is 40 days old
+            ItemEntity e = new ItemEntity(helper.getLevel(), c.leader().getX(), c.leader().getY(), c.leader().getZ(), stack);
+            e.setNoGravity(true);
+            helper.getLevel().addFreshEntity(e);
+            CharterRow r = row(helper, c.leader());
+            helper.assertTrue(r.state() == CharterState.DROPPED && r.seenAt() == now[0], "a Charter that was just dropped was not seen: " + r);
+        } finally {
+            done(helper, c.all());
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS, timeoutTicks = 100)
     public static void aDroppedCharterThatJoinsTheWorldAgainIsSeen(GameTestHelper helper) {
         long[] now = {5_000_000_000L};
         PackIndex.overrideClock(() -> now[0]);
