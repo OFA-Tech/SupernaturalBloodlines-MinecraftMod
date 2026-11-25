@@ -156,6 +156,8 @@ public final class AdminCommands {
             row("C13", "group promote <player>", 0, Ui.HUB_BUTTON, "PACK"),
             row("C14", "group demote <player>", 0, Ui.HUB_BUTTON, "PACK"),
             row("C15", "group exile <player>", 0, Ui.HUB_BUTTON, "PACK"),
+            row("C16", "group charter forge", 0, Ui.HUB_BUTTON, "PACK"),
+            row("C17", "group charter reforge", 0, Ui.HUB_BUTTON, "PACK"),
             row("W1", "ward invite <player>", 0, Ui.HUB_BUTTON, "PATH"),
             row("W2", "ward uninvite <player>", 0, Ui.HUB_BUTTON, "PATH"),
             row("W3", "ward drop <ward>", 0, Ui.HUB_BUTTON, "PATH"),

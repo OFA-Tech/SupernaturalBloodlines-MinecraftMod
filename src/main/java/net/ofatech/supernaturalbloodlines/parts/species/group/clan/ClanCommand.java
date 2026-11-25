@@ -40,6 +40,12 @@ public final class ClanCommand {
         return Commands.literal("exile").then(member(ClanDiscipline::exile));
     }
 
+    public static LiteralArgumentBuilder<CommandSourceStack> charter() {
+        return Commands.literal("charter")
+                .then(Commands.literal("forge").executes(c -> run(c, Charters.forge(self(c)))))
+                .then(Commands.literal("reforge").executes(c -> run(c, Charters.reforge(self(c)))));
+    }
+
     private static ServerPlayer self(CommandContext<CommandSourceStack> c) throws CommandSyntaxException {
         return c.getSource().getPlayerOrException();
     }

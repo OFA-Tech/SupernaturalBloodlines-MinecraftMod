@@ -70,6 +70,7 @@ public final class GroupCommand {
                 .then(net.ofatech.supernaturalbloodlines.parts.species.group.clan.ClanCommand.promote())
                 .then(net.ofatech.supernaturalbloodlines.parts.species.group.clan.ClanCommand.demote())
                 .then(net.ofatech.supernaturalbloodlines.parts.species.group.clan.ClanCommand.exile())
+                .then(net.ofatech.supernaturalbloodlines.parts.species.group.clan.ClanCommand.charter())
                 .then(Commands.literal("info").executes(c -> info(c.getSource(), self(c))))
                 .then(Commands.literal("challenge")
                         .then(Commands.literal("accept").executes(c -> run(c, challenge(self(c), null, p -> PackDuel.accept(p)))))

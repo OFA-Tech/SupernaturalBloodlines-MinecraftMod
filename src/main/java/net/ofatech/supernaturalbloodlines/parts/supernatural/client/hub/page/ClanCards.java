@@ -33,7 +33,24 @@ public final class ClanCards {
         if (!applies(gv)) {
             return y;
         }
+        y = charter(f, r, y + 4, gv);
         return members(f, r, y + 4, gv, chosen);
+    }
+
+    /** The head's two Charter controls; the card with the Charter's state arrives with the clan view. */
+    private static int charter(HubScreen.Frame f, Rect r, int y, GroupView gv) {
+        if (gv.viewerRank() != GroupView.LEADER) {
+            return y;
+        }
+        y = charterButton(f, r, y, "charter_forge", "clan:charter_forge", () -> HubClient.runCommand("C16", List.of()));
+        return charterButton(f, r, y, "charter_reforge", "clan:charter_reforge", () -> HubClient.runCommand("C17", List.of()));
+    }
+
+    private static int charterButton(HubScreen.Frame f, Rect r, int y, String name, String id, Runnable press) {
+        Component label = Component.translatable(KEY + name);
+        Rect rect = new Rect(r.x(), y, Math.min(r.w(), PageWidgets.widthOf(f.font(), label)), PageWidgets.H);
+        PageWidgets.described(f, id, rect, label, true, false, Component.translatable(KEY + name + ".what"), press);
+        return rect.bottom() + 3;
     }
 
     /** What the head may do with the member picked in the ledger: the same rules as the member's Profile. */

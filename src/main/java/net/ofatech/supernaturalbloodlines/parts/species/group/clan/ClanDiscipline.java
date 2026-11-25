@@ -47,7 +47,7 @@ public final class ClanDiscipline {
 
     /** The refusal when the player is not in a clan or clans are off, else null. */
     @Nullable
-    private static Component gate(ServerPlayer p) {
+    public static Component gate(ServerPlayer p) {
         ServerLevel level = p.serverLevel();
         PackIndex packs = PackIndex.get(level);
         if (!packs.inPack(p.getUUID())) {

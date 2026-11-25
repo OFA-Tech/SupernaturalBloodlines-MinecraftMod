@@ -33,7 +33,9 @@ public final class GroupButtons {
             Map.entry("vote no", "coven:vote_no"),
             Map.entry("promote", "clan:promote"),
             Map.entry("demote", "clan:demote"),
-            Map.entry("exile", "clan:exile"));
+            Map.entry("exile", "clan:exile"),
+            Map.entry("charter forge", "clan:charter_forge"),
+            Map.entry("charter reforge", "clan:charter_reforge"));
 
     /** The lang key of what each control says. */
     public static final Map<String, String> LABELS = Map.ofEntries(
@@ -59,7 +61,9 @@ public final class GroupButtons {
             Map.entry("coven:vote_no", GroupLabels.HUB + "coven.vote_no"),
             Map.entry("clan:promote", GroupLabels.HUB + "clan.promote"),
             Map.entry("clan:demote", GroupLabels.HUB + "clan.demote"),
-            Map.entry("clan:exile", GroupLabels.HUB + "clan.exile"));
+            Map.entry("clan:exile", GroupLabels.HUB + "clan.exile"),
+            Map.entry("clan:charter_forge", GroupLabels.HUB + "clan.charter_forge"),
+            Map.entry("clan:charter_reforge", GroupLabels.HUB + "clan.charter_reforge"));
 
     /** The coven controls whose card is drawn by plan 20b Task 12; until then they are registered and not yet on a page. */
     public static final Set<String> NOT_DRAWN_YET = Set.of();
