@@ -247,6 +247,10 @@ public final class PackCommand {
         if (index.alphaOf(target.getUUID()).isPresent() || PackAccess.wolf(target).packAlpha() != null) {
             return GroupText.error(type, "target_in_group", name(target));
         }
+        UUID ownGroup = GroupIndex.get(alpha.serverLevel()).existingGroupOf(alpha.getUUID()).orElse(null);
+        if (ownGroup != null && GroupGate.bringsExiled(alpha.server, target.getUUID(), ownGroup)) {
+            return net.ofatech.supernaturalbloodlines.parts.species.group.clan.ClanText.error("exiled_still", name(target));
+        }
         long now = alpha.serverLevel().getGameTime();
         target.sendSystemMessage(inviteMessage(net.ofatech.supernaturalbloodlines.shared.supernatural.ProfileLink.name(name(alpha), alpha.getUUID()), REQUESTS.open(alpha.getUUID(), target.getUUID(), now), index.betasOf(target.getUUID()).size(), type));
         alpha.sendSystemMessage(GroupText.of(type, "invited", name(target)));
@@ -321,6 +325,11 @@ public final class PackCommand {
         }
         // a shunned witch, or a leader who would bring one, is refused with the one refusal everything else has: nothing says who is shunned
         if (type == GroupType.COVEN && GroupGate.bringsShunned(p.server, p.getUUID())) {
+            return GroupText.error(type, "refused");
+        }
+        // an exiled member, or a leader who would bring one, is refused the same generic way
+        UUID joinedGroup = GroupIndex.get(p.serverLevel()).existingGroupOf(leader).orElse(null);
+        if (joinedGroup != null && GroupGate.bringsExiled(p.server, p.getUUID(), joinedGroup)) {
             return GroupText.error(type, "refused");
         }
         // the cap counts everybody who would be in the group afterwards: the joiner, and the members a joining leader brings

@@ -363,6 +363,17 @@ public final class GroupIndex extends SavedData {
         setDirty();
     }
 
+    /** Takes one cooldown away (a rank mark that no longer applies). */
+    public void clearCooldown(UUID group, String key) {
+        Map<String, Long> m = cooldowns.get(group);
+        if (m != null && m.remove(key) != null) {
+            if (m.isEmpty()) {
+                cooldowns.remove(group);
+            }
+            setDirty();
+        }
+    }
+
     /** 0 when there is none. */
     public long cooldownUntil(UUID group, String key) {
         Map<String, Long> m = cooldowns.get(group);
@@ -452,6 +463,8 @@ public final class GroupIndex extends SavedData {
         cooldowns.remove(group);
         charters.remove(group);
         contests.remove(group);
+        // an exile bars one clan by its group id: it ends with the clan
+        bans.remove(group.toString());
     }
 
     /** Forgets the ranks of people who are in no group. */

@@ -189,6 +189,19 @@ class GroupIndexClanTest {
     }
 
     @Test
+    void aDissolvedClanForgetsItsExilesAndAMarkCanBeCleared() {
+        GroupIndex g = new GroupIndex();
+        UUID group = g.groupOf(A);
+        g.ban(group.toString(), M, 9_000);
+        g.setCooldown(group, "nodw:" + M, Long.MAX_VALUE);
+        g.clearCooldown(group, "nodw:" + M);
+        assertEquals(0, g.cooldownUntil(group, "nodw:" + M));
+        g.clearCooldown(group, "never-set");
+        g.drop(A);
+        assertEquals(0, g.banUntil(group.toString(), M), "an exile ends with the clan");
+    }
+
+    @Test
     void pruneDoesNotDeleteADormantCharter() {
         GroupIndex g = new GroupIndex();
         UUID group = g.ensure(A, GroupType.PACK, 1);

@@ -77,7 +77,7 @@ public final class GroupTestKit {
         GroupIndex groups = GroupIndex.get(helper.getLevel());
         SireCall.overridePlayerLookup(null);
         PackIndex.overrideClock(null);
-        for (String k : List.of("groups_enabled", "clans_enabled", "covens_enabled", "open_founding", "max_members")) {
+        for (String k : List.of("groups_enabled", "clans_enabled", "covens_enabled", "open_founding", "max_members", "daywalker_days", "exile_days", "charter_enabled", "charter_min_members", "challenger_min_days", "contest_cooldown_days", "feed_share_enabled", "sireline_bonus_percent", "sun_ring_day_walker_only")) {
             GroupsConfig.override(k, null);
         }
         for (ServerPlayer p : players) {

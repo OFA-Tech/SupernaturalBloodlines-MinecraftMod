@@ -386,6 +386,10 @@ public final class ProfilePage implements HubPageView {
             gv.members().stream().filter(m -> m.id().filter(route.id()::equals).isPresent()).findFirst().ifPresent(m ->
                     CovenCards.actionsFor(gv.viewerRank(), m.rank(), false, true).forEach(a -> list.add(new ProfileActions.Action(a.id(), ProfileActions.Kind.COMMAND, a.row(), true, false, true, null, a.confirm()))));
         }
+        if (ClanCards.applies(gv) && !isSelf) {
+            gv.members().stream().filter(m -> m.id().filter(route.id()::equals).isPresent()).findFirst().ifPresent(m ->
+                    ClanCards.actionsFor(gv.viewerRank(), m.rank(), false, true).forEach(a -> list.add(new ProfileActions.Action(a.id(), ProfileActions.Kind.COMMAND, a.row(), true, false, true, null, a.confirm()))));
+        }
         return new ActionView(list, sub, route.id(), npc);
     }
 }

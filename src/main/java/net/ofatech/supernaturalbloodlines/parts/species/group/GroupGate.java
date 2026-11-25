@@ -56,6 +56,16 @@ public final class GroupGate {
         return shunned(server, leader) || PackIndex.get(server.overworld()).betasOf(leader).stream().anyMatch(id -> shunned(server, id));
     }
 
+    /** Whether an exile from the group still bars the player (bans are kept by the group's id, so they follow the lead). */
+    public static boolean exiled(net.minecraft.server.MinecraftServer server, UUID group, UUID player) {
+        return net.ofatech.supernaturalbloodlines.core.group.clan.ExileRules.bars(GroupIndex.get(server.overworld()).banUntil(group.toString(), player), PackIndex.now());
+    }
+
+    /** Whether the joiner, or anybody they would bring along as their members, is still exiled from the group. */
+    public static boolean bringsExiled(net.minecraft.server.MinecraftServer server, UUID joiner, UUID group) {
+        return exiled(server, group, joiner) || PackIndex.get(server.overworld()).betasOf(joiner).stream().anyMatch(id -> exiled(server, group, id));
+    }
+
     /** {@link #canLead} and room for one more member. */
     public static Optional<String> canInvite(ServerPlayer p) {
         Optional<String> lead = canLead(p);
