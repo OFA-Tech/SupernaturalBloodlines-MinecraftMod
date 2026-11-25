@@ -26,7 +26,6 @@ import net.ofatech.supernaturalbloodlines.core.bloodline.Species;
 import net.ofatech.supernaturalbloodlines.core.boss.BossId;
 import net.ofatech.supernaturalbloodlines.gametest.TestPlayers;
 import net.ofatech.supernaturalbloodlines.gametest.TestPlayers.TalkingDuelist;
-import net.ofatech.supernaturalbloodlines.parts.bosses.director.BossDirector;
 import net.ofatech.supernaturalbloodlines.parts.bosses.director.BossIndex;
 import net.ofatech.supernaturalbloodlines.parts.bosses.entity.KolEntity;
 import net.ofatech.supernaturalbloodlines.parts.species.group.GroupIndex;
@@ -70,7 +69,7 @@ public final class KolShadowGameTests {
     }
 
     private static Optional<KolEntity> kol(GameTestHelper helper, ServerPlayer target) {
-        return BossDirector.spawnKol(helper.getLevel(), target, helper.absolutePos(new BlockPos(2, 1, 2)));
+        return BossTestRig.placeKol(helper, target);
     }
 
     private static void finish(GameTestHelper helper, Optional<KolEntity> kol, ServerPlayer... players) {
@@ -259,7 +258,7 @@ public final class KolShadowGameTests {
         Bh g = bh(helper);
         Optional<KolEntity> k = Optional.empty();
         try {
-            k = BossDirector.spawnKol(helper.getLevel(), null, helper.absolutePos(new BlockPos(2, 1, 2)));
+            k = BossTestRig.placeKol(helper, null);
             helper.assertTrue(k.isPresent() && warnings(g.leader()) == 0 && warnings(g.a()) == 0 && warnings(g.b()) == 0, "a spawn with no target warned somebody (the debug command does this)");
         } finally {
             finish(helper, k, g.all());

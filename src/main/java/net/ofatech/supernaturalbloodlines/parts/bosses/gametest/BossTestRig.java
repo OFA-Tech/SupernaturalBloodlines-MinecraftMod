@@ -125,7 +125,11 @@ final class BossTestRig implements AutoCloseable {
 
     /** Kol, made the way the director makes him (no prey), standing 2 blocks into the test. */
     net.ofatech.supernaturalbloodlines.parts.bosses.entity.KolEntity spawnKol() {
-        return BossDirector.spawnKol(helper.getLevel(), null, helper.absolutePos(new BlockPos(2, 1, 2))).orElseThrow();
+        return placeKol(helper, null).orElseThrow();
+    }
+
+    static java.util.Optional<net.ofatech.supernaturalbloodlines.parts.bosses.entity.KolEntity> placeKol(GameTestHelper helper, ServerPlayer target) {
+        return BossDirector.spawnKol(helper.getLevel(), target, helper.absolutePos(new BlockPos(2, 1, 2)));
     }
 
     /** Finn, made the way the director makes him (no target), standing 2 blocks into the test, at the start of his ritual. */

@@ -114,6 +114,7 @@ public final class BrotherhoodScopeGameTests {
             helper.assertTrue(join(brother, b) && join(witch, c) && join(vamp, d), "the groups could not be made");
             helper.assertTrue(applies(helper, brother, b) && applies(helper, brother, brother), "the same member in a brotherhood: no");
             helper.assertTrue(!applies(helper, witch, c) && !applies(helper, vamp, d), "the same member in a coven or a clan: yes");
+            helper.assertTrue(!applies(helper, brother, c), "a fitting member of another group received this brotherhood's perks");
         } finally {
             clean(helper, brother, b, witch, c, vamp, d);
         }

@@ -31,7 +31,7 @@ public final class BrotherhoodViews {
         }
         boolean fits = BrotherhoodScope.fits(p);
         boolean perks = GroupsConfig.brotherhoodPerksOn();
-        if (!fits || !perks) {
+        if (!BrotherhoodScope.appliesTo(level, b.leader(), p)) {
             return new BrotherhoodView(true, fits, perks, 0, 0, false, 0, 0, false, false, 0, 0, 0, false);
         }
         PackIndex packs = PackIndex.get(level);

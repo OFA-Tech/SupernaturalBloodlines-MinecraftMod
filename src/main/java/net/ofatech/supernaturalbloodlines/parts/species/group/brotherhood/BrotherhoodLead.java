@@ -39,7 +39,7 @@ public final class BrotherhoodLead {
             ServerPlayer p = SireCall.player(server, id);
             boolean online = p != null;
             candidates.add(new LeadByMark.Candidate(id, online ? BrotherhoodMarks.of(p) : BrotherhoodMarks.recorded(level, id), online,
-                    online && BrotherhoodScope.fits(p), Codes.isBreaker(server, id), packs.inPackSince(id).orElse(Long.MAX_VALUE)));
+                    online && BrotherhoodScope.appliesTo(level, leader, p), Codes.isBreaker(server, id), packs.inPackSince(id).orElse(Long.MAX_VALUE)));
         }
         Optional<UUID> next = LeadByMark.pick(leader, leaderMark, candidates);
         if (next.isEmpty()) {

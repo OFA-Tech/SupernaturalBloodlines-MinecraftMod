@@ -59,6 +59,7 @@ public final class BrotherhoodScope {
 
     /** Brotherhood perks are on, the group is a brotherhood and this member fits it. */
     public static boolean appliesTo(ServerLevel level, UUID leader, ServerPlayer member) {
-        return ScopeRules.appliesTo(typeOf(level, leader), GroupsConfig.brotherhoodPerksOn(), fits(member));
+        return PackIndex.get(level).leaderOf(member.getUUID()).equals(leader)
+                && ScopeRules.appliesTo(typeOf(level, leader), GroupsConfig.brotherhoodPerksOn(), fits(member));
     }
 }
