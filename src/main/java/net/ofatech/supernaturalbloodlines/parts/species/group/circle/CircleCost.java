@@ -65,10 +65,11 @@ public final class CircleCost {
             }
             String left = !p.isAlive() ? "hurt" : !CircleSites.inside(chalk, p) ? "away" : p.getHealth() < p.getMaxHealth() * 0.5f ? "hurt" : null;
             if (left != null) {
-                p.sendSystemMessage(CovenText.of("link_dropped." + left));
                 if (id.equals(session.anchor())) {
+                    p.sendSystemMessage(CovenText.of("link_dropped.anchor_" + left));
                     return altarBill;
                 }
+                p.sendSystemMessage(CovenText.of("link_dropped." + left));
                 continue;
             }
             int cap = capacityOf(p);

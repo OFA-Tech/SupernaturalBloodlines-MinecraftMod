@@ -273,6 +273,8 @@ public final class CovenCostGameTests {
             RiteCost.commit();
             helper.assertTrue(bill == solo && c.all().stream().allMatch(p -> meter(helper, p.getUUID()) == null),
                     "an ineligible anchor split the solo bill " + solo + " and left " + bill + " for the altar");
+            helper.assertTrue(c.anchor().received("supernaturalbloodlines.coven.link_dropped.anchor_hurt") && !c.anchor().received("supernaturalbloodlines.coven.link_dropped.hurt"),
+                    "the hurt anchor was not told the rite is charged to them alone: " + c.anchor().received());
         } finally {
             tidy(helper, c.array());
         }
