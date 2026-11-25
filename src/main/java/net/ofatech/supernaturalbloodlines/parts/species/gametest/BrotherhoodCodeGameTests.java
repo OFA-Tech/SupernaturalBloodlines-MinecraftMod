@@ -456,14 +456,18 @@ public final class BrotherhoodCodeGameTests {
         Bh g = bh(helper, 20);
         TalkingDuelist other = GroupTestKit.hunter(helper, 4.5);
         TalkingDuelist wicca = GroupTestKit.witch(helper, 5.5);
-        online(g.leader(), g.a(), g.b(), other, wicca);
+        TalkingDuelist otherMate = GroupTestKit.human(helper, 6.5);
+        TalkingDuelist wiccaMate = GroupTestKit.human(helper, 7.5);
+        online(g.leader(), g.a(), g.b(), other, wicca, otherMate, wiccaMate);
         try {
+            // both groups exist before the expulsion, so a bar written to every group would reach them
+            helper.assertTrue(join(other, otherMate) && join(wicca, wiccaMate), "no other groups");
             expel(helper, g);
-            online(g.leader(), g.a(), g.b(), other, wicca);
+            online(g.leader(), g.a(), g.b(), other, wicca, otherMate, wiccaMate);
             helper.assertTrue(join(other, g.a()) && Groups.typeOf(g.a()) == GroupType.BROTHERHOOD, "could not join another brotherhood");
             helper.assertTrue(PackCommand.leave(g.a()) == null && join(wicca, g.a()) && Groups.typeOf(g.a()) == GroupType.COVEN, "could not join a coven");
         } finally {
-            finish(helper, g, other, wicca);
+            finish(helper, g, other, wicca, otherMate, wiccaMate);
         }
         helper.succeed();
     }

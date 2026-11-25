@@ -253,6 +253,23 @@ public final class KolShadowGameTests {
     }
 
     @GameTest(template = "empty", templateNamespace = NS)
+    public static void aTargetWhoDoesNotFitWarnsNobody(GameTestHelper helper) {
+        Bh g = bh(helper);
+        TalkingDuelist vampire = human(helper, 4.5);
+        online(g.leader(), g.a(), g.b(), vampire);
+        Optional<KolEntity> k = Optional.empty();
+        try {
+            helper.assertTrue(join(g.leader(), vampire), "the vampire could not join");
+            VampirismAPI.factionPlayerHandler(vampire).setFactionAndLevel(VReference.VAMPIRE_FACTION, 1);
+            k = kol(helper, vampire);
+            helper.assertTrue(warnings(g.leader()) == 0 && warnings(g.a()) == 0 && warnings(g.b()) == 0, "the brothers were warned about a member who does not fit");
+        } finally {
+            finish(helper, k, g.leader(), g.a(), g.b(), vampire);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
     public static void aSpawnWithNoTargetWarnsNobody(GameTestHelper helper) {
         Bh g = bh(helper);
         Optional<KolEntity> k = Optional.empty();

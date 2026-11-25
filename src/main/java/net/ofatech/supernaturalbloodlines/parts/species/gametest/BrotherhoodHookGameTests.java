@@ -323,6 +323,8 @@ public final class BrotherhoodHookGameTests {
         ServerPlayer human = TestPlayers.createMortal(helper);
         ServerPlayer fought100 = TestPlayers.createMortal(helper);
         ServerPlayer fought300 = TestPlayers.createMortal(helper);
+        ServerPlayer foughtAtEdge = TestPlayers.createMortal(helper);
+        ServerPlayer foughtPastEdge = TestPlayers.createMortal(helper);
         ServerPlayer witch = TestPlayers.createMortal(helper);
         ServerPlayer siphoner = TestPlayers.createMortal(helper);
         ServerPlayer vampire = HunterMarkGameTests.vampire(helper);
@@ -335,6 +337,10 @@ public final class BrotherhoodHookGameTests {
             fought100.tickCount += 100;
             fought300.setLastHurtMob(killer);
             fought300.tickCount += 300;
+            foughtAtEdge.setLastHurtMob(killer);
+            foughtAtEdge.tickCount += net.ofatech.supernaturalbloodlines.parts.species.pack.Innocence.FIGHT_WINDOW;
+            foughtPastEdge.setLastHurtMob(killer);
+            foughtPastEdge.tickCount += net.ofatech.supernaturalbloodlines.parts.species.pack.Innocence.FIGHT_WINDOW + 1;
             record Row(String name, LivingEntity victim, boolean innocent, boolean prey) {
             }
             List<Row> table = new ArrayList<>(List.of(
@@ -342,6 +348,8 @@ public final class BrotherhoodHookGameTests {
                     new Row("human", human, true, false),
                     new Row("human who hit the killer 100 ticks ago", fought100, false, false),
                     new Row("human who hit the killer 300 ticks ago", fought300, true, false),
+                    new Row("human who hit the killer exactly the window ago", foughtAtEdge, false, false),
+                    new Row("human who hit the killer one tick past the window", foughtPastEdge, true, false),
                     new Row("witch who did not fight", witch, true, false),
                     new Row("siphoner who did not fight", siphoner, true, false),
                     new Row("vampire", vampire, true, true),

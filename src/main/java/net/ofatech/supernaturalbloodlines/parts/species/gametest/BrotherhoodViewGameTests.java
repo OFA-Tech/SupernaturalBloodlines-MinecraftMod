@@ -28,6 +28,7 @@ import net.ofatech.supernaturalbloodlines.parts.species.group.GroupIndex.Breaker
 import net.ofatech.supernaturalbloodlines.parts.species.group.GroupViews;
 import net.ofatech.supernaturalbloodlines.parts.species.group.GroupsConfig;
 import net.ofatech.supernaturalbloodlines.parts.species.group.brotherhood.BrotherhoodArms;
+import net.ofatech.supernaturalbloodlines.parts.species.group.brotherhood.BrotherhoodLead;
 import net.ofatech.supernaturalbloodlines.parts.species.group.brotherhood.BrotherhoodViews;
 import net.ofatech.supernaturalbloodlines.parts.species.group.brotherhood.Codes;
 import net.ofatech.supernaturalbloodlines.parts.species.pack.PackIndex;
@@ -274,10 +275,12 @@ public final class BrotherhoodViewGameTests {
         Bh g = bh(helper, 2);
         try {
             BloodlineAccess.set(g.a(), hof(0));
-            PUSHED.clear();
-            // the lead moves by a mark that passes the leader's, with the mark rows already recorded: only the lead's own push is left to see
-            GroupIndex.get(helper.getLevel()).setMark(g.a().getUUID(), 0);
+            // the higher mark is recorded while lead by mark is off, so the mark's own push happens before the pages are watched
+            GroupsConfig.override("lead_by_mark", false);
             BloodlineAccess.set(g.b(), hof(5));
+            GroupsConfig.override("lead_by_mark", null);
+            PUSHED.clear();
+            BrotherhoodLead.check(helper.getLevel().getServer(), g.b().getUUID());
             helper.assertTrue(PackIndex.get(helper.getLevel()).isLeader(g.b().getUUID()), "setup: the lead did not move");
             long leaders = PUSHED.stream().filter(g.leader().getUUID()::equals).count();
             helper.assertTrue(PUSHED.contains(g.a().getUUID()) && PUSHED.contains(g.b().getUUID()) && leaders >= 1, "the lead change did not refresh every page");
