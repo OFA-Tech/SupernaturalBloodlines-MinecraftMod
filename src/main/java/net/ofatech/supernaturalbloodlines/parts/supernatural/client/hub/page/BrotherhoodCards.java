@@ -41,7 +41,8 @@ final class BrotherhoodCards {
         if (step >= 2 && f.whole(y, 5) && y >= f.clipTop()) {
             for (int i = 0; i < count; i++) {
                 int x = r.x() + 8 + i * step;
-                f.g.fill(x, y, x + step - 1, y + 3, i < mark ? f.theme().ink() : f.theme().muted());
+                // an empty pip is a low line, so filled and empty differ by shape whatever the theme's colours
+                f.g.fill(x, i < mark ? y : y + 2, x + step - 1, y + 3, i < mark ? f.theme().ink() : f.theme().muted());
             }
         }
         return y + 5;
