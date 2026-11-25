@@ -72,7 +72,7 @@ public final class MarkTracker {
     }
 
     /** R81: vampires and werewolf types. Species wins over faction, so a witch or siphoner is never prey. */
-    static boolean isPrey(Entity e) {
+    public static boolean isPrey(Entity e) {
         if (e instanceof Player p) {
             Species s = BloodlineAccess.get(p).species();
             if (s == Species.WITCH || s == Species.SIPHONER) {
@@ -113,7 +113,8 @@ public final class MarkTracker {
     }
 
     /** Who gets the credit: the damage source, else the vanilla kill credit, else the attacker that put the victim into the dying state. */
-    private static Entity killerOf(LivingEntity victim, DamageSource source) {
+    @VisibleForTesting
+    public static Entity killerOf(LivingEntity victim, DamageSource source) {
         Entity killer = source.getEntity();
         if (killer == null) {
             killer = victim.getKillCredit();

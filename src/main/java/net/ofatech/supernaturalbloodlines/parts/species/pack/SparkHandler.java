@@ -110,7 +110,7 @@ public final class SparkHandler {
     static final int FIGHT_WINDOW = 200;
 
     /** A villager, or a player who was not fighting the killer (did not hit them in the last 10 seconds). */
-    static boolean isInnocent(ServerPlayer killer, LivingEntity victim) {
+    public static boolean isInnocent(ServerPlayer killer, LivingEntity victim) {
         if (victim instanceof Villager) {
             return true;
         }

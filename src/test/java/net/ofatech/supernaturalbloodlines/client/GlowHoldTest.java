@@ -56,6 +56,18 @@ class GlowHoldTest {
     }
 
     @Test
+    void anIdOfAnEntityNotInTheLevelIsNeverWrittenAndOnlyExpires() {
+        GlowHold h = new GlowHold();
+        h.hold(List.of(7), 100);
+        h.missing(7, 10);
+        h.missing(7, 99);
+        assertEquals(List.of(7), h.ids(), "an entity this client has not loaded keeps its hold until it expires");
+        assertTrue(h.frame(3, true, 50), "an entity that is not held is left alone");
+        h.missing(7, 100);
+        assertTrue(h.isEmpty());
+    }
+
+    @Test
     void anAbsentEntityIsForgottenOnlyWhenItExpires() {
         GlowHold h = new GlowHold();
         h.hold(List.of(7, 8), 100);
