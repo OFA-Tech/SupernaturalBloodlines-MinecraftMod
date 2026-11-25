@@ -14,6 +14,7 @@ import net.ofatech.supernaturalbloodlines.shared.hub.HubTheme;
 import net.ofatech.supernaturalbloodlines.shared.hub.Rect;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.Detail;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.LineColors;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.PackRing;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.RingLabels;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.TextCache;
@@ -447,6 +448,15 @@ public final class BookPackPage implements HubPageView {
         f.detail(d.build());
     }
 
+    /** A rank ring's colour, opaque, and at least 3:1 against what it is drawn on (the Grimoire's paper, the Blood Moon's sky). */
+    static int ringColor(int roleColor, int background) {
+        return LineColors.atLeast(0xFF000000 | (roleColor & 0xFFFFFF), 0xFF000000 | (background & 0xFFFFFF), LineColors.MIN_RATIO);
+    }
+
+    private int ringBackground(HubTheme t) {
+        return style == Style.MOON ? LineColors.MOON_SKY_TOP : t.paper();
+    }
+
     /** The viewer's own ring round the emblem in the centre, in the colour of their own rank: the legend names it, so the page must show it. */
     private void ownRing(HubScreen.Frame f, int cx, int cy, int radius) {
         String base = switch (gv.viewerRank()) {
@@ -455,7 +465,7 @@ public final class BookPackPage implements HubPageView {
             case GroupView.ELDER -> "elder";
             default -> "member";
         };
-        int color = 0xFF000000 | (GroupLabels.role(gv.type(), base).color() & 0xFFFFFF);
+        int color = ringColor(GroupLabels.role(gv.type(), base).color(), ringBackground(f.theme()));
         for (int dy = -radius; dy <= radius; dy++) {
             int outer = (int) Math.round(Math.sqrt((double) radius * radius - (double) dy * dy));
             int inner = Math.abs(dy) >= radius - 1 ? -1 : (int) Math.round(Math.sqrt((double) (radius - 2) * (radius - 2) - (double) dy * dy));
@@ -554,7 +564,7 @@ public final class BookPackPage implements HubPageView {
         int named_i = 0;
         for (PackRing.Slot slot : ring.slots()) {
             int size = slot.size();
-            int color = (slot.member().role().color() & 0xFFFFFF) | ((int) (slot.alpha() * 255) << 24);
+            int color = (ringColor(slot.member().role().color(), ringBackground(t)) & 0xFFFFFF) | ((int) (slot.alpha() * 255) << 24);
             BookKit.portrait(f.g, slot.member().id(), slot.x(), slot.y(), size, color, t.paper());
             if (named) {
                 Rect at = where.get(named_i++);

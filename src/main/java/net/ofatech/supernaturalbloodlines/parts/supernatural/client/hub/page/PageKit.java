@@ -131,7 +131,7 @@ final class PageKit {
 
     /** A title in the theme's font when it can be, else at 1.5x when it fits the width, else at 1x. Returns the y under it. */
     static int title(HubScreen.Frame f, Component c, int x, int y, int w, int color) {
-        return title(f, c, x, y, w, color, 14);
+        return title(f, c, x, y, w, color, f.theme().titleFont() != null ? net.ofatech.supernaturalbloodlines.shared.hub.kit.TitleFont.HEIGHT : 14);
     }
 
     /** {@link #title} that is drawn only when {@code room} pixels from {@code y} are whole inside the clip (a heading wants its rule and a line of text under it). */

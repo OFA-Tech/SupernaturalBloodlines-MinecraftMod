@@ -6,6 +6,7 @@ import java.util.UUID;
 import net.minecraft.network.chat.Component;
 import net.ofatech.supernaturalbloodlines.core.group.GroupType;
 import net.ofatech.supernaturalbloodlines.core.group.GroupView;
+import net.ofatech.supernaturalbloodlines.core.group.clan.ClanView;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.ClanClient;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubClient;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubScreen;
@@ -34,8 +35,21 @@ public final class ClanCards {
         if (!applies(gv)) {
             return y;
         }
+        if (loading(ClanClient.view())) {
+            return PageKit.wrapped(f, Component.translatable(KEY + "loading"), r.x(), y, r.w(), f.theme().muted());
+        }
         y = plan(f, r, y, ClanPlan.of(ClanClient.view(), gv.viewerRank()));
         return members(f, r, y + 4, gv, chosen);
+    }
+
+    /** True while the server has not yet sent the viewer's clan: the cards wait instead of drawing an empty clan. */
+    static boolean loading(ClanView v) {
+        return !v.inClan();
+    }
+
+    /** The lang key of the reason a grey button is grey, drawn as a line under it; empty when there is nothing to say. */
+    static java.util.Optional<String> reasonLine(ClanPlan.Button b) {
+        return !b.enabled() && !b.why().isEmpty() ? java.util.Optional.of(KEY + b.why()) : java.util.Optional.empty();
     }
 
     static Component words(String key, List<Object> args) {
@@ -65,6 +79,10 @@ public final class ClanCards {
             String row = b.row();
             PageWidgets.described(f, b.id(), rect, label, b.enabled(), b.primary(), tip, () -> HubClient.runCommand(row, List.of()));
             y = rect.bottom() + 1;
+            java.util.Optional<String> reason = reasonLine(b);
+            if (reason.isPresent()) {
+                y = PageKit.wrapped(f, Component.translatable(reason.get()), r.x(), y + 1, r.w(), t.muted());
+            }
         }
         return y;
     }
