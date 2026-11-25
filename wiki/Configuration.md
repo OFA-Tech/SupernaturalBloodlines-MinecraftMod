@@ -310,7 +310,7 @@ Part of the species part. All on the Admin page (section Groups).
 | `elder_min_days` | 3 | Days in the coven before an Elder. |
 | `members_per_elder` | 4 | One Elder seat per this many members. |
 | `vote_hours` | 24 | Hours a vote stays open. |
-| `election_cooldown_days` | 7 | Days between two calls for a new Regent. |
+| `election_cooldown_days` | 7 | Days a coven waits after a vote for a new Regent ends (passed or failed) before it can call another. A cancelled vote starts no wait. |
 | `shun_days` | 7 | Days a shunned witch cannot join any coven. |
 | `moonlight_ring_enabled` | true | A circle of three can forge a Moon Ring. |
 | `sun_ring_forge_enabled` | true | A circle of three can forge a Sun Ring at half power. |

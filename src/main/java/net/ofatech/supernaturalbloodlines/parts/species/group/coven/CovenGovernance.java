@@ -204,8 +204,10 @@ public final class CovenGovernance {
         if (nominee.equals(p.getUUID())) {
             return CovenText.error("self");
         }
-        if (!CovenRules.mayCallElection(c.roleOf(p.getUUID()), c.roleOf(nominee), c.groups.cooldownUntil(c.group, ELECTION), PackIndex.now())) {
-            return CovenText.error(c.roleOf(nominee) != Role.ELDER ? "nominee_not_elder" : "election_cooldown");
+        long cooldownUntil = c.groups.cooldownUntil(c.group, ELECTION);
+        long now = PackIndex.now();
+        if (!CovenRules.mayCallElection(c.roleOf(p.getUUID()), c.roleOf(nominee), cooldownUntil, now)) {
+            return c.roleOf(nominee) != Role.ELDER ? CovenText.error("nominee_not_elder") : CovenText.error("election_cooldown", Math.max(1, (cooldownUntil - now + DAY - 1) / DAY));
         }
         return open(c, VoteKind.REGENT, nominee);
     }
@@ -229,9 +231,6 @@ public final class CovenGovernance {
         }
         long now = PackIndex.now();
         Vote v = c.groups.openVote(c.group, kind, subject, c.p.getUUID(), now, c.index.inPackSince(subject).orElse(Long.MIN_VALUE));
-        if (kind == VoteKind.REGENT) {
-            c.groups.setCooldown(c.group, ELECTION, now + GroupsConfig.electionCooldownDays() * DAY);
-        }
         c.groups.ballot(v, c.p.getUUID(), true);
         tellElectors(c, "vote_opened", kind, subject);
         refreshCards(c);
@@ -318,6 +317,9 @@ public final class CovenGovernance {
             return;
         }
         c.groups.closeVote(v);
+        if (v.kind == VoteKind.REGENT) {
+            c.groups.setCooldown(c.group, ELECTION, now + GroupsConfig.electionCooldownDays() * DAY);
+        }
         if (result == VoteTally.Result.PASSED) {
             apply(c, v.kind, v.subject, v.caller);
         } else {

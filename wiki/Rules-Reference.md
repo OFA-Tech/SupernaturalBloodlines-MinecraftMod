@@ -196,7 +196,7 @@ Details are on [Tensura integration](Tensura-Integration#apex-evolutions).
 | **R258** | Consent is yours alone and the hub shows each member only their own meter, consent and ballot. |
 | **R259** | Votes: Regent and Elders, a strict majority once all voted or 24 hours passed; fewer than three electors: the Regent decides. |
 | **R260** | A shunning vote removes a member for 7 days. |
-| **R261** | An Elder can call for a new Regent naming an Elder; one call per 7 days. |
+| **R261** | An Elder can call for a new Regent naming an Elder; one call per 7 days, counted from the end of the vote. |
 | **R262** | A circle of three forges a Moon Ring for a werewolf of a pack, for half the silver. |
 | **R263** | A circle of three forges a Sun Ring at half power. |
 | **R264** | Fete des Benedictions: Luck I and Regeneration I near the chalk. |

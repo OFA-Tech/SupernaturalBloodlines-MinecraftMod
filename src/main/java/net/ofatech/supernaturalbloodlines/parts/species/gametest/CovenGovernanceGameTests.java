@@ -637,13 +637,22 @@ public final class CovenGovernanceGameTests {
         Coven c = coven(helper, 2, 0);
         try {
             TalkingDuelist nominee = c.elders().get(1);
+            UUID group = groupOf(helper, c);
+            long day = 24L * 3_600_000L;
             CovenGovernance.callElection(c.elders().get(0), name(nominee));
+            helper.assertTrue(groups(helper).cooldownUntil(group, CovenGovernance.ELECTION) == 0, "the cooldown started when the election was called");
+            clock[0] += day / 2;
             CovenGovernance.vote(nominee, true, "regent");
             CovenGovernance.vote(c.regent(), false, "regent");
             helper.assertTrue(PackIndex.get(helper.getLevel()).isLeader(nominee.getUUID()), "the first election did not pass");
+            long resolved = clock[0];
+            helper.assertTrue(groups(helper).cooldownUntil(group, CovenGovernance.ELECTION) == resolved + GroupsConfig.electionCooldownDays() * day,
+                    "the cooldown did not start when the vote resolved: " + groups(helper).cooldownUntil(group, CovenGovernance.ELECTION));
             var again = CovenGovernance.callElection(c.elders().get(0), name(c.regent()));
             helper.assertTrue(again != null && key(again).equals("supernaturalbloodlines.coven.err.election_cooldown"), "a second election in the cooldown: " + key(again));
-            clock[0] += GroupsConfig.electionCooldownDays() * 24L * 3_600_000L + 1;
+            clock[0] = resolved + GroupsConfig.electionCooldownDays() * day - 1;
+            helper.assertTrue(CovenGovernance.callElection(c.elders().get(0), name(c.regent())) != null, "an election one tick before the cooldown ends");
+            clock[0] += 1;
             helper.assertTrue(CovenGovernance.callElection(c.elders().get(0), name(c.regent())) == null, "no election after the cooldown");
         } finally {
             tidy(helper, c);
@@ -722,6 +731,22 @@ public final class CovenGovernanceGameTests {
                 helper.assertTrue(elector.count(void_) == 1, "an elector was not told once that the vote was void: " + elector.count(void_));
             }
             helper.assertTrue(!subject.received(void_), "somebody who is no elector was told");
+        } finally {
+            tidy(helper, c);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aVoidedElectionStartsNoCooldown(GameTestHelper helper) {
+        Coven c = coven(helper, 3, 0);
+        try {
+            UUID group = groupOf(helper, c);
+            helper.assertTrue(CovenGovernance.callElection(c.elders().get(0), name(c.elders().get(1))) == null, "the election did not open");
+            helper.assertTrue(PackCommand.leave(c.elders().get(1)) == null, "the nominee could not leave");
+            helper.assertTrue(groups(helper).openVotes(group).isEmpty(), "the vote about somebody who left is still open");
+            helper.assertTrue(groups(helper).cooldownUntil(group, CovenGovernance.ELECTION) == 0, "a cancelled election started the cooldown");
+            helper.assertTrue(CovenGovernance.callElection(c.elders().get(0), name(c.elders().get(2))) == null, "a cancelled election blocked the next call");
         } finally {
             tidy(helper, c);
         }
