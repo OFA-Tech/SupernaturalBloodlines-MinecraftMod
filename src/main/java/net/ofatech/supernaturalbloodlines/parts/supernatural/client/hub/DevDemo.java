@@ -136,13 +136,51 @@ final class DevDemo {
         if (type == net.ofatech.supernaturalbloodlines.core.group.GroupType.COVEN) {
             coven(me);
         }
+        byte viewer = net.ofatech.supernaturalbloodlines.core.group.GroupView.LEADER;
+        if (type == net.ofatech.supernaturalbloodlines.core.group.GroupType.CLAN) {
+            viewer = clan();
+        }
         net.ofatech.supernaturalbloodlines.parts.supernatural.client.GroupClient.demo(new net.ofatech.supernaturalbloodlines.core.group.GroupView(type, true,
-                net.ofatech.supernaturalbloodlines.core.group.GroupView.LEADER, me, 4, List.of(
+                viewer, me, 4, List.of(
                         new net.ofatech.supernaturalbloodlines.core.group.GroupView.Row(me, "leader", none, true, Optional.of(v.player().getUUID())),
                         new net.ofatech.supernaturalbloodlines.core.group.GroupView.Row("Rowan", second, secondRank, true, Optional.of(id("Group|mate"))),
                         new net.ofatech.supernaturalbloodlines.core.group.GroupView.Row("Mira", "member", none, true, Optional.of(id("Mira"))),
                         new net.ofatech.supernaturalbloodlines.core.group.GroupView.Row("Cass", "member", none, false, Optional.of(id("Cass"))),
                         new net.ofatech.supernaturalbloodlines.core.group.GroupView.Row("Scott", "ally", none, true, Optional.of(id("Scott"))))));
+    }
+
+    /**
+     * {@code .demo.clan=<rank>:<state>}: the clan card for the demo clan. Rank {@code head}, {@code day} or {@code night}; state {@code none} (no Charter, can forge), {@code few}
+     * (no Charter, cannot), {@code held}, {@code stored}, {@code dropped}, {@code lost}, {@code lostwait}, {@code pending} (a challenge waits), {@code running}, {@code may}
+     * (a Day Walker may challenge), {@code cooldown}, {@code young} (too new). Returns the rank for the group view. Development only.
+     */
+    private static byte clan() {
+        String[] spec = System.getProperty("supernaturalbloodlines.devshots.demo.clan", "head:none").split(":");
+        String rank = spec[0];
+        String state = spec.length > 1 ? spec[1] : "none";
+        byte viewer = rank.equals("day") ? net.ofatech.supernaturalbloodlines.core.group.GroupView.DAY_WALKER : rank.equals("night") ? net.ofatech.supernaturalbloodlines.core.group.GroupView.MEMBER
+                : net.ofatech.supernaturalbloodlines.core.group.GroupView.LEADER;
+        byte charter = switch (state) {
+            case "none", "few" -> net.ofatech.supernaturalbloodlines.core.group.clan.ClanView.CHARTER_NONE;
+            case "stored" -> net.ofatech.supernaturalbloodlines.core.group.clan.ClanView.CHARTER_STORED;
+            case "dropped" -> net.ofatech.supernaturalbloodlines.core.group.clan.ClanView.CHARTER_DROPPED;
+            case "lost", "lostwait" -> net.ofatech.supernaturalbloodlines.core.group.clan.ClanView.CHARTER_LOST;
+            default -> net.ofatech.supernaturalbloodlines.core.group.clan.ClanView.CHARTER_HELD;
+        };
+        var holder = new net.ofatech.supernaturalbloodlines.core.group.clan.ClanView.Charter(charter, charter == net.ofatech.supernaturalbloodlines.core.group.clan.ClanView.CHARTER_HELD ? "Rowan" : "", false,
+                state.equals("none"), state.equals("lostwait") ? 7200 : 0);
+        byte phase = state.equals("pending") ? net.ofatech.supernaturalbloodlines.core.group.clan.ClanView.CONTEST_PENDING : state.equals("running")
+                ? net.ofatech.supernaturalbloodlines.core.group.clan.ClanView.CONTEST_RUNNING : net.ofatech.supernaturalbloodlines.core.group.clan.ClanView.CONTEST_NONE;
+        int why = state.equals("cooldown") ? 7 : state.equals("young") ? 2 : 0;
+        var contest = new net.ofatech.supernaturalbloodlines.core.group.clan.ClanView.Contest(phase, phase == 0 ? "" : "Rowan", phase == net.ofatech.supernaturalbloodlines.core.group.clan.ClanView.CONTEST_PENDING ? 540 : 0,
+                state.equals("cooldown") ? 4 : 0, viewer == net.ofatech.supernaturalbloodlines.core.group.GroupView.DAY_WALKER && state.equals("may"), why,
+                viewer == net.ofatech.supernaturalbloodlines.core.group.GroupView.LEADER && state.equals("pending"));
+        net.ofatech.supernaturalbloodlines.parts.supernatural.client.ClanClient.demo(new net.ofatech.supernaturalbloodlines.core.group.clan.ClanView(true, viewer == net.ofatech.supernaturalbloodlines.core.group.GroupView.MEMBER ? 6 : 30,
+                viewer == net.ofatech.supernaturalbloodlines.core.group.GroupView.MEMBER ? 8 : -1, holder, contest, true, 10, 2, 6));
+        net.ofatech.supernaturalbloodlines.parts.supernatural.client.RequestsClient.demo(state.equals("pending") && viewer == net.ofatech.supernaturalbloodlines.core.group.GroupView.LEADER
+                ? List.of(new net.ofatech.supernaturalbloodlines.shared.supernatural.HubRequests.Request(net.ofatech.supernaturalbloodlines.shared.supernatural.HubRequests.Kind.CHARTER_CONTEST, id("Group|mate"), "Rowan", "", 540 * 20))
+                : List.of());
+        return viewer;
     }
 
     /**

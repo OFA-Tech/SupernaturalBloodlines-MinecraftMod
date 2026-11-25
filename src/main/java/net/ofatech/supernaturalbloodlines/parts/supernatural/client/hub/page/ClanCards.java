@@ -6,6 +6,7 @@ import java.util.UUID;
 import net.minecraft.network.chat.Component;
 import net.ofatech.supernaturalbloodlines.core.group.GroupType;
 import net.ofatech.supernaturalbloodlines.core.group.GroupView;
+import net.ofatech.supernaturalbloodlines.parts.supernatural.client.ClanClient;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubClient;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubScreen;
 import net.ofatech.supernaturalbloodlines.shared.hub.HubTheme;
@@ -33,38 +34,48 @@ public final class ClanCards {
         if (!applies(gv)) {
             return y;
         }
-        y = charter(f, r, y + 4, gv);
-        y = contest(f, r, y, gv);
+        y = plan(f, r, y + 4, ClanPlan.of(ClanClient.view(), gv.viewerRank()));
         return members(f, r, y + 4, gv, chosen);
     }
 
-    /** The head's two Charter controls; the card with the Charter's state arrives with the clan view. */
-    private static int charter(HubScreen.Frame f, Rect r, int y, GroupView gv) {
-        if (gv.viewerRank() != GroupView.LEADER) {
-            return y;
+    /** The four rows the cards run, spelled out so the hub's reference check can see each one. */
+    private static void run(String row) {
+        switch (row) {
+            case "C11" -> HubClient.runCommand("C11", List.of());
+            case "C12" -> HubClient.runCommand("C12", List.of());
+            case "C16" -> HubClient.runCommand("C16", List.of());
+            case "C17" -> HubClient.runCommand("C17", List.of());
+            default -> { }
         }
-        y = charterButton(f, r, y, "charter_forge", "clan:charter_forge", () -> HubClient.runCommand("C16", List.of()));
-        return charterButton(f, r, y, "charter_reforge", "clan:charter_reforge", () -> HubClient.runCommand("C17", List.of()));
     }
 
-    /** A Day Walker challenges; the head accepts (there is no decline). The Home card answers with the same row. */
-    private static int contest(HubScreen.Frame f, Rect r, int y, GroupView gv) {
-        if (gv.viewerRank() == GroupView.DAY_WALKER) {
-            return charterButton(f, r, y, "challenge", "pack:challenge", () -> HubClient.runCommand("C11", List.of()));
+    static Component words(String key, List<Object> args) {
+        return Component.translatable(key, args.stream().map(a -> a instanceof ClanPlan.Key k ? Component.translatable(k.key()) : a).toArray());
+    }
+
+    private static int plan(HubScreen.Frame f, Rect r, int y, ClanPlan.Plan plan) {
+        HubTheme t = f.theme();
+        for (ClanPlan.Line l : plan.lines()) {
+            Component text = words(l.key(), l.args());
+            if (l.tone() == ClanPlan.Tone.TITLE) {
+                y = PageKit.title(f, text, r.x(), y + 2, r.w(), t.accent());
+                t.drawRule(f.g, r.x(), y + 2, r.w());
+                y += 6;
+            } else {
+                int color = l.tone() == ClanPlan.Tone.INK ? t.ink() : l.tone() == ClanPlan.Tone.WARN ? PageWidgets.warn(t) : t.muted();
+                y = PageKit.wrapped(f, text, r.x(), y, r.w(), color);
+            }
         }
-        if (gv.viewerRank() == GroupView.LEADER) {
-            return charterButton(f, r, y, "accept", "pack:duel_accept", () -> HubClient.runCommand("C12", List.of()));
+        for (ClanPlan.Button b : plan.buttons()) {
+            Component label = Component.translatable(KEY + b.label());
+            Rect rect = new Rect(r.x(), y + 2, Math.min(r.w(), PageWidgets.widthOf(f.font(), label)), PageWidgets.H);
+            Component tip = Component.translatable(KEY + (b.why().isEmpty() ? b.tip() : b.why()));
+            String row = b.row();
+            PageWidgets.described(f, b.id(), rect, label, b.enabled(), b.primary(), tip, () -> run(row));
+            y = rect.bottom() + 1;
         }
         return y;
     }
-
-    private static int charterButton(HubScreen.Frame f, Rect r, int y, String name, String id, Runnable press) {
-        Component label = Component.translatable(KEY + name);
-        Rect rect = new Rect(r.x(), y, Math.min(r.w(), PageWidgets.widthOf(f.font(), label)), PageWidgets.H);
-        PageWidgets.described(f, id, rect, label, true, false, Component.translatable(KEY + name + ".what"), press);
-        return rect.bottom() + 3;
-    }
-
     /** What the head may do with the member picked in the ledger: the same rules as the member's Profile. */
     private static int members(HubScreen.Frame f, Rect r, int y, GroupView gv, @Nullable HubSocial.Member chosen) {
         HubTheme t = f.theme();
