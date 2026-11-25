@@ -445,6 +445,77 @@ public final class CharterGameTests {
     }
 
     @GameTest(template = "empty", templateNamespace = NS, timeoutTicks = 100)
+    public static void aDroppedCharterInALoadedChunkIsSeenSoALongRestartDoesNotLoseIt(GameTestHelper helper) {
+        long[] now = {5_000_000_000L};
+        PackIndex.overrideClock(() -> now[0]);
+        Clan c = clan(helper);
+        try {
+            ItemStack stack = forged(helper, c).copy();
+            take(c.leader());
+            ItemEntity e = new ItemEntity(helper.getLevel(), c.leader().getX(), c.leader().getY(), c.leader().getZ(), stack);
+            e.setNoGravity(true);
+            helper.getLevel().addFreshEntity(e);
+            now[0] += 29 * 24 * HOUR;
+            scan(helper, c.leader(), c.a(), c.b());
+            CharterRow seen = row(helper, c.leader());
+            helper.assertTrue(seen.state() == CharterState.DROPPED && seen.seenAt() == now[0], "a dropped Charter in the world was not seen: " + seen);
+            // the server restarts: the entity is not known to the row any more, and two days pass
+            groups(helper).setCharter(groupOf(helper, c.leader()), new CharterRow(seen.id(), Optional.empty(), CharterState.DROPPED, seen.forgedAt(), seen.seenAt(), Optional.of(UUID.randomUUID()), 0));
+            now[0] += 2 * 24 * HOUR;
+            scan(helper, c.leader(), c.a(), c.b());
+            helper.assertTrue(row(helper, c.leader()).state() == CharterState.DROPPED, "a Charter seen two days ago was lost: " + row(helper, c.leader()));
+        } finally {
+            done(helper, c.all());
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS, timeoutTicks = 100)
+    public static void aDroppedCharterThatJoinsTheWorldAgainIsSeen(GameTestHelper helper) {
+        long[] now = {5_000_000_000L};
+        PackIndex.overrideClock(() -> now[0]);
+        Clan c = clan(helper);
+        try {
+            ItemStack stack = forged(helper, c).copy();
+            take(c.leader());
+            CharterRow forgedRow = row(helper, c.leader());
+            UUID entityId = UUID.randomUUID();
+            groups(helper).setCharter(groupOf(helper, c.leader()), new CharterRow(forgedRow.id(), Optional.empty(), CharterState.DROPPED, forgedRow.forgedAt(), forgedRow.seenAt(), Optional.of(entityId), 0));
+            now[0] += 40 * 24 * HOUR;
+            // the chunk it sits in loads again: the same entity joins the world, 40 days after anybody saw it
+            ItemEntity again = new ItemEntity(helper.getLevel(), c.leader().getX(), c.leader().getY(), c.leader().getZ(), stack.copy());
+            again.setNoGravity(true);
+            again.setUUID(entityId);
+            helper.getLevel().addFreshEntity(again);
+            helper.assertTrue(row(helper, c.leader()).seenAt() == now[0], "a Charter that joined the world was not seen: " + row(helper, c.leader()));
+            helper.assertTrue(row(helper, c.leader()).state() == CharterState.DROPPED, "it was lost on joining: " + row(helper, c.leader()));
+        } finally {
+            done(helper, c.all());
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS, timeoutTicks = 100)
+    public static void aCharterEntityOfAGroupWhoseRowWasSkippedOnLoadIsLeftAlone(GameTestHelper helper) {
+        Clan c = clan(helper);
+        try {
+            CharterRow r = row(helper, forgedLeader(helper, c));
+            UUID group = groupOf(helper, c.leader());
+            groups(helper).clearCharter(group); // what a damaged row skipped on load looks like: the group is there, its row is not
+            ItemEntity kept = new ItemEntity(helper.getLevel(), c.leader().getX(), c.leader().getY(), c.leader().getZ(), Charters.stack(r.id(), group));
+            helper.assertTrue(helper.getLevel().addFreshEntity(kept) && !kept.isRemoved(), "a Charter of a clan whose row was only unreadable was removed");
+        } finally {
+            done(helper, c.all());
+        }
+        helper.succeed();
+    }
+
+    private static TalkingDuelist forgedLeader(GameTestHelper helper, Clan c) {
+        forged(helper, c);
+        return c.leader();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS, timeoutTicks = 100)
     public static void aCharterThatIsDroppedByItsHolderIsDropped(GameTestHelper helper) {
         Clan c = clan(helper);
         try {
@@ -477,7 +548,7 @@ public final class CharterGameTests {
             scan(helper, c.leader(), c.a(), c.b());
             helper.assertTrue(row(helper, c.leader()).state() == CharterState.DROPPED, "a dropped Charter whose entity is in the world went lost: " + row(helper, c.leader()));
             CharterRow r = row(helper, c.leader());
-            groups(helper).setCharter(groupOf(helper, c.leader()), new CharterRow(r.id(), Optional.empty(), CharterState.DROPPED, r.forgedAt(), r.seenAt(), Optional.of(UUID.randomUUID()), 0));
+            groups(helper).setCharter(groupOf(helper, c.leader()), new CharterRow(r.id(), Optional.empty(), CharterState.DROPPED, r.forgedAt(), r.forgedAt(), Optional.of(UUID.randomUUID()), 0));
             now[0] -= 29 * 24 * HOUR;
             scan(helper, c.leader(), c.a(), c.b());
             helper.assertTrue(row(helper, c.leader()).state() == CharterState.DROPPED, "a gone entity went lost before the days: " + row(helper, c.leader()));
@@ -495,8 +566,9 @@ public final class CharterGameTests {
     public static void aCharterEntityWhoseRowIsGoneIsRemovedWhenItJoins(GameTestHelper helper) {
         Clan c = clan(helper);
         try {
+            forged(helper, c);
             ItemEntity stale = new ItemEntity(helper.getLevel(), c.leader().getX(), c.leader().getY(), c.leader().getZ(), Charters.stack(UUID.randomUUID(), groupOf(helper, c.leader())));
-            helper.assertTrue(!helper.getLevel().addFreshEntity(stale) || stale.isRemoved(), "an entity with no row joined the world");
+            helper.assertTrue(!helper.getLevel().addFreshEntity(stale) || stale.isRemoved(), "an old copy (another id) of a clan's Charter joined the world");
             ItemEntity ofNoClan = new ItemEntity(helper.getLevel(), c.leader().getX(), c.leader().getY(), c.leader().getZ(), Charters.stack(UUID.randomUUID(), UUID.randomUUID()));
             helper.assertTrue(!helper.getLevel().addFreshEntity(ofNoClan) || ofNoClan.isRemoved(), "an entity of a clan that does not exist joined the world");
         } finally {
@@ -935,7 +1007,9 @@ public final class CharterGameTests {
             lose(helper, c, now[0]);
             now[0] += 24 * HOUR - 60_000;
             giveCost(c.leader());
-            said(helper, Charters.reforge(c.leader()), ERR + "charter_reforge_wait", "reforged inside the wait");
+            Component waiting = Charters.reforge(c.leader());
+            said(helper, waiting, ERR + "charter_reforge_wait", "reforged inside the wait");
+            helper.assertTrue("1 min".equals(((net.minecraft.network.chat.contents.TranslatableContents) waiting.getContents()).getArgs()[0].toString()), "the wait was not said in a unit: " + waiting);
             helper.assertTrue(c.leader().getInventory().countItem(Items.GOLD_BLOCK) == 1, "the cost was taken");
             said(helper, Charters.reforge(c.a()), ERR + "leader_only", "a member reforged");
         } finally {

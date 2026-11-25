@@ -48,7 +48,12 @@ final class CharterGuard {
         GroupIndex groups = GroupIndex.get(level.getServer().overworld());
         Optional<CharterRow> row = Charters.rowOf(groups, item.getItem());
         if (row.isEmpty()) {
-            e.setCanceled(true); // a Charter no row stands behind (a clan that is gone, an old copy, a made-up stack) never enters the world
+            UUID of = item.getItem().get(net.ofatech.supernaturalbloodlines.parts.species.SpeciesRegistries.CHARTER_GROUP.get());
+            // a clan that is gone, or a clan whose Charter has another id (an old copy, a made-up stack), never enters the world; a clan with no row at all
+            // is a row that was unreadable on load: that is not this stack's doing, so it is left alone
+            if (of == null || groups.leaderOfGroup(of).isEmpty() || groups.charterOf(of).isPresent()) {
+                e.setCanceled(true);
+            }
             return;
         }
         if (row.get().state() == CharterState.LOST) {
@@ -58,10 +63,14 @@ final class CharterGuard {
         item.setUnlimitedLifetime();
         UUID group = item.getItem().get(net.ofatech.supernaturalbloodlines.parts.species.SpeciesRegistries.CHARTER_GROUP.get());
         CharterRow r = row.get();
+        long now = PackIndex.now();
         if (r.state() == CharterState.DROPPED && r.entity().filter(item.getUUID()::equals).isPresent()) {
+            if (now - r.seenAt() >= CharterScan.STALE) {
+                groups.setCharter(group, new CharterRow(r.id(), Optional.empty(), CharterState.DROPPED, r.forgedAt(), now, r.entity(), 0)); // its chunk loaded again: seen
+            }
             return;
         }
-        groups.setCharter(group, new CharterRow(r.id(), Optional.empty(), CharterState.DROPPED, r.forgedAt(), r.seenAt(), Optional.of(item.getUUID()), 0));
+        groups.setCharter(group, new CharterRow(r.id(), Optional.empty(), CharterState.DROPPED, r.forgedAt(), now, Optional.of(item.getUUID()), 0));
     }
 
     private static void onLeave(EntityLeaveLevelEvent e) {
