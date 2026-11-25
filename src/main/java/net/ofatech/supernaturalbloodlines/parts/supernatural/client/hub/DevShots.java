@@ -317,10 +317,12 @@ public final class DevShots {
         }
         // the pointer in the screen's corner, so no stray tooltip is in the picture
         parkCursor(mc, 0, 0);
-        // dev only: the screen after the wheel (.scroll=true) or after the keyboard moved the focus to a target (.focus=<id>)
+        // Dev only: the bottom (.scroll=true), a percent down (.scrollAt=50), or a focused target.
         if (wait == SETTLE_TICKS - 6 && mc.screen instanceof HubScreen hs) {
-            if (Boolean.getBoolean(PROPERTY + ".scroll")) {
-                hs.devScrollToEnd();
+            int defaultScroll = Boolean.getBoolean(PROPERTY + ".scroll") ? 100 : 0;
+            int scrollAt = Integer.getInteger(PROPERTY + ".scrollAt", defaultScroll);
+            if (scrollAt > 0) {
+                hs.devScroll(Math.min(100, scrollAt));
             }
             String focusId = System.getProperty(PROPERTY + ".focus");
             if (focusId != null && !focusId.isBlank()) {
