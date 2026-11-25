@@ -170,7 +170,8 @@ public final class CovenGovernanceGameTests {
             helper.assertTrue(CovenGovernance.elderAdd(c.regent(), name(subject)) == null, "the proposal did not open");
             clock[0] += GroupsConfig.voteHours() * 3_600_000L;
             var late = CovenGovernance.vote(c.elders().get(0), true, "elder_add");
-            helper.assertTrue(late != null && !isElder(helper, subject), "a ballot at the deadline passed the appointment");
+            helper.assertTrue(late != null && key(late).equals("supernaturalbloodlines.coven.err.vote_expired") && !isElder(helper, subject),
+                    "a ballot at the deadline passed the appointment or the refusal did not say the vote closed at its deadline: " + key(late));
             helper.assertTrue(groups(helper).openVotes(groupOf(helper, c)).isEmpty(), "the elapsed vote was not resolved");
         } finally {
             tidy(helper, c);
@@ -325,7 +326,7 @@ public final class CovenGovernanceGameTests {
             var vote = groups(helper).openVotes(groupOf(helper, c)).get(0);
             helper.assertTrue(CovenGovernance.vote(c.elders().get(0), true, "elder_add") == null, "the first ballot");
             var again = CovenGovernance.vote(c.elders().get(0), false, "elder_add");
-            helper.assertTrue(again != null && key(again).equals("supernaturalbloodlines.coven.err.no_vote"), "a second ballot was taken: " + key(again));
+            helper.assertTrue(again != null && key(again).equals("supernaturalbloodlines.coven.err.vote_answered"), "a second ballot was taken or not named: " + key(again));
             helper.assertTrue(!groups(helper).ballot(vote, c.elders().get(0).getUUID(), false), "the index took a second ballot");
             helper.assertTrue(vote.yes() == 2 && vote.no() == 0, "the count changed: " + vote.yes() + "/" + vote.no());
             var again2 = CovenGovernance.vote(c.regent(), false, "elder_add");
@@ -352,8 +353,9 @@ public final class CovenGovernanceGameTests {
             var replacement = groups.openVote(group, VoteKind.ELDER_ADD).orElseThrow();
             helper.assertTrue(fresh.equals(net.ofatech.supernaturalbloodlines.parts.species.group.coven.CovenViews.of(elector).vote().orElseThrow().token()),
                     "the Group card names a different proposal from Home");
-            helper.assertTrue(CovenGovernance.vote(elector, true, stale) != null && !replacement.ballots.containsKey(elector.getUUID()),
-                    "an old Home card voted on the replacement");
+            var old = CovenGovernance.vote(elector, true, stale);
+            helper.assertTrue(old != null && key(old).equals("supernaturalbloodlines.coven.err.vote_gone") && !replacement.ballots.containsKey(elector.getUUID()),
+                    "an old Home card voted on the replacement or was not told it was replaced: " + key(old));
             helper.assertTrue(CovenGovernance.vote(elector, true, fresh) == null && replacement.ballots.containsKey(elector.getUUID()),
                     "the current card could not answer its own proposal");
         } finally {
@@ -540,7 +542,7 @@ public final class CovenGovernanceGameTests {
             helper.assertTrue(Boolean.FALSE.equals(shun.ballots.get(elder.getUUID())), "the ballot did not land on the shunning");
             helper.assertTrue(!add.ballots.containsKey(elder.getUUID()), "the older vote took the ballot meant for the other");
             var again = CovenGovernance.vote(elder, true, "shun");
-            helper.assertTrue(again != null && key(again).equals("supernaturalbloodlines.coven.err.no_vote"), "a second ballot on the same vote was taken");
+            helper.assertTrue(again != null && key(again).equals("supernaturalbloodlines.coven.err.vote_answered"), "a second ballot on the same vote was taken or not named: " + key(again));
             var wrong = CovenGovernance.vote(elder, true, "nothing");
             helper.assertTrue(wrong != null && key(wrong).equals("supernaturalbloodlines.coven.err.no_vote"), "a kind that is not a vote took a ballot");
             helper.assertTrue(CovenGovernance.vote(elder, true, "elder_add") == null && Boolean.TRUE.equals(add.ballots.get(elder.getUUID())), "the other vote could not be answered by its own kind");
@@ -683,5 +685,24 @@ public final class CovenGovernanceGameTests {
 
     private static long cards(ServerPlayer p) {
         return HubRequests.of(p).stream().filter(r -> r.kind() == HubRequests.Kind.GROUP_VOTE && r.ticksLeft() > 0).count();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aClosedProposalIsNamedByItsCardAndATypedKindFindsNone(GameTestHelper helper) {
+        Coven c = coven(helper, 2, 1);
+        try {
+            helper.assertTrue(key(CovenGovernance.vote(c.elders().get(0), true, "shun")).equals("supernaturalbloodlines.coven.err.no_vote"), "a typed kind with no vote open was not 'no vote'");
+            helper.assertTrue(CovenGovernance.elderAdd(c.regent(), name(c.members().get(0))) == null, "the proposal did not open");
+            String token = CovenGovernance.cardsFor(c.elders().get(0)).getFirst().token();
+            helper.assertTrue(CovenGovernance.vote(c.elders().get(0), true, token) == null && CovenGovernance.vote(c.elders().get(1), true, token) == null, "the ballots were refused");
+            helper.assertTrue(groups(helper).openVotes(groupOf(helper, c)).isEmpty(), "the vote stayed open");
+            var closed = CovenGovernance.vote(c.elders().get(0), true, token);
+            helper.assertTrue(closed != null && key(closed).equals("supernaturalbloodlines.coven.err.vote_gone"), "a card of a closed vote: " + key(closed));
+            var typed = CovenGovernance.vote(c.elders().get(0), true, "elder_add");
+            helper.assertTrue(typed != null && key(typed).equals("supernaturalbloodlines.coven.err.no_vote"), "a typed kind with nothing open: " + key(typed));
+        } finally {
+            tidy(helper, c);
+        }
+        helper.succeed();
     }
 }

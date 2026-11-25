@@ -256,16 +256,25 @@ public final class CovenGovernance {
             return CovenText.error("not_elector");
         }
         VoteKind kind = VoteKind.ofAnswer(answer).orElse(null);
-        Vote open = kind == null ? null : c.groups.openVote(c.group, kind)
-                .filter(v -> answer.equals(v.kind.id()) || answer.equals(v.kind.token(v.id)))
-                .filter(v -> !v.ballots.containsKey(p.getUUID())).orElse(null);
+        boolean named = answer.indexOf('.') >= 0;
+        Vote open = kind == null ? null : c.groups.openVote(c.group, kind).orElse(null);
         if (open == null) {
-            return CovenText.error("no_vote");
+            return CovenText.error(kind != null && named ? "vote_gone" : "no_vote");
+        }
+        if (!answer.equals(open.kind.id()) && !answer.equals(open.kind.token(open.id))) {
+            return CovenText.error("vote_gone");
+        }
+        if (open.ballots.containsKey(p.getUUID())) {
+            return CovenText.error("vote_answered");
         }
         long now = PackIndex.now();
-        if (voteDeadline(open) <= now || !stillValid(c, open)) {
+        if (!stillValid(c, open)) {
             resolve(c, open, now);
-            return CovenText.error("no_vote");
+            return CovenText.error("vote_gone");
+        }
+        if (voteDeadline(open) <= now) {
+            resolve(c, open, now);
+            return CovenText.error("vote_expired");
         }
         c.groups.ballot(open, p.getUUID(), yes);
         p.sendSystemMessage(CovenText.of("vote_counted"));
@@ -289,6 +298,7 @@ public final class CovenGovernance {
         }
         if (!stillValid(c, v)) {
             c.groups.cancelVote(v);
+
             refreshCards(c);
             return;
         }
