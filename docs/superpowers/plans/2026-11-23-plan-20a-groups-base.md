@@ -318,7 +318,7 @@ Gate: 19a merged (the two EP sites exist on `main`); 20a merged; spec questions 
 9. **Hub**: the Circle card (open/join/leave, consent selector, share preview with the worst case), the votes card, Elder marks, tier badge, the coven ring art role set; `GroupButtons.IDS` grows, `GroupUiCoverageTest` still passes; hidden shots in the three themes.
 10. Admin rows (21), lang, `SPECIES-RULES.md` R250 to R269, CHANGELOG with "Rolling back" (config switch `link_enabled`; shares already paid are gone, they never persist a debt), matrix 1 to 12, mutants (member share not split, altar paid in full when linked, charge before commit, death penalty skipped, consent ignored, a dropped member still charged, potency not diminishing, tier off by one, vote majority off by one).
 
-## Outline: 20c Clans (a plan of its own is written when 20b is merged; the owner decided Q5 on PR #83)
+## Outline: 20c Clans (the full plan is [2026-11-24-plan-20c-clans.md](2026-11-24-plan-20c-clans.md); the outline below is kept as written, the plan corrects it)
 
 Gate: 20a merged (20b is needed only for the coven-forged Sun Ring in step 8); Q5 (the Charter contest) decided on PR #83. Branch `feature/plan-20c-clan`. Rules R270 to R289. Mixin budget: **0**. Admin rows: +16.
 1. **Read before building:** the sireline index API (`parts/species/sireline`, `parts/species/line`) for "same sireline"; `Detectors.onDrinkBlood` and whether a `none()`-context shared feed counts for tasks (**spec 13 items 4, 5**); the NeoForge 21.1.x `ItemEntityPickupEvent.Pre` signature (**item 3**); `VampirismAPI.vampirePlayer(Player)` for a non-vampire (returns null or an empty optional?).
