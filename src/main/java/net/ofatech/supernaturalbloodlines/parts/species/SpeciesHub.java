@@ -50,6 +50,7 @@ public final class SpeciesHub {
         HubRequests.set(SpeciesHub::requests);
         net.ofatech.supernaturalbloodlines.shared.supernatural.HubGroups.set(net.ofatech.supernaturalbloodlines.parts.species.group.GroupViews::of);
         net.ofatech.supernaturalbloodlines.shared.supernatural.HubCoven.set(net.ofatech.supernaturalbloodlines.parts.species.group.coven.CovenViews::of);
+        net.ofatech.supernaturalbloodlines.shared.supernatural.HubClan.set(net.ofatech.supernaturalbloodlines.parts.species.group.clan.ClanViews::of);
     }
 
     static HubSocial.Social social(ServerPlayer p) {
