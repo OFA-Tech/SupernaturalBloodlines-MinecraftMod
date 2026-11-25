@@ -265,7 +265,7 @@ public final class BookPackPage implements HubPageView {
         }
         int y = BookKit.head(f, ledgerRegion, t(KEY + "title", "title"), t(BOOK + "subtitle", "subtitle"));
         if (!GroupLabels.neutral(gv)) {
-            y = PageKit.title(f, Component.translatable(KEY + "rank", grp ? GroupLabels.myRank(gv) : rankLabel(f, wolf)), r.x(), y, r.w(), t.accent());
+            y = PageKit.title(f, Component.translatable(KEY + "rank", grp ? GroupLabels.myRank(gv, f.view.player().getUUID()) : rankLabel(f, wolf)), r.x(), y, r.w(), t.accent());
         }
         if (!grp && weakLine(wolf).isPresent()) {
             y = PageKit.wrapped(f, weakLine(wolf).get(), r.x(), y, r.w(), t.muted()) + 2;
@@ -276,6 +276,7 @@ public final class BookPackPage implements HubPageView {
         if (pack.isEmpty()) {
             y = PageKit.wrapped(f, grp ? GroupLabels.alone(gv) : Component.translatable(KEY + "alone"), r.x(), y + 2, r.w(), t.muted());
         }
+        y = BrotherhoodCards.since(f, r, y, gv);
         for (HubSocial.Member m : pack) {
             Component rank = rankName(m);
             // the first of the list leads the pack: a small gold crown before the name
@@ -317,7 +318,7 @@ public final class BookPackPage implements HubPageView {
             if (drawn && f.focused(id)) {
                 KitDraw.focusRing(f.g, hit, t.focusColor());
             }
-            y += stacked ? 21 : 11;
+            y = BrotherhoodCards.pips(f, r, y + (stacked ? 21 : 11), gv, m);
         }
         if (!grp) {
             y = wolves.render(f, r, y + 2, wolf.lineage() != WolfState.Lineage.NONE, false);
@@ -326,6 +327,7 @@ public final class BookPackPage implements HubPageView {
         }
         y = CovenCards.render(f, r, y, gv, chosen, style == Style.TENSURA);
         y = ClanCards.render(f, r, y, gv, chosen);
+        y = BrotherhoodCards.render(f, r, y, gv);
         t.drawRule(f.g, r.x(), y + 3, r.w());
         y += 9;
         if (style == Style.BOOK && chosen != null) {
@@ -365,6 +367,8 @@ public final class BookPackPage implements HubPageView {
                 : leads(f, pack) || (pack.isEmpty() && (wolf.rank() == WolfState.Rank.ALPHA || wolf.rank() == WolfState.Rank.TRUE_ALPHA));
         if (style != Style.BOOK) {
             y = PackInvite.render(f, r, y + 2, mayInvite);
+        } else if (BrotherhoodCards.applies(gv) && !mayInvite) {
+            y = PageKit.wrapped(f, t(KEY + "invite_why", "invite_why"), r.x(), y + 2, r.w(), t.muted());
         }
         f.end(y);
         if (style == Style.BOOK) {
@@ -411,7 +415,7 @@ public final class BookPackPage implements HubPageView {
         Detail.Builder d = Detail.of(title).body(body);
         if (style == Style.TENSURA) {
             if (!GroupLabels.neutral(gv)) {
-                d.field(Component.translatable(KEY + "rank", grp ? GroupLabels.myRank(gv) : rankLabel(f, wolf)), Component.empty());
+                d.field(Component.translatable(KEY + "rank", grp ? GroupLabels.myRank(gv, f.view.player().getUUID()) : rankLabel(f, wolf)), Component.empty());
             }
             if (chosen != null && !pack.isEmpty() && chosen == pack.get(0) && !chosen.base().equals("ally")) {
                 d.field(Component.translatable(KEY + "role"), t(KEY + "leader", "leader"));
@@ -526,7 +530,7 @@ public final class BookPackPage implements HubPageView {
             ownRing(f, cx, cy, inner + 2);
         }
         Component you = Component.translatable(BOOK + "you", f.view.player().getName(),
-                grp ? GroupLabels.myRank(gv) : Component.translatable(KEY + "rank." + wolf.rank().name().toLowerCase(Locale.ROOT)));
+                grp ? GroupLabels.myRank(gv, f.view.player().getUUID()) : Component.translatable(KEY + "rank." + wolf.rank().name().toLowerCase(Locale.ROOT)));
         PackRing.Layout ring = PackRing.layout(members, cx, cy, radius, face);
         // the line under the model is for a ring with room: where a face stands in its way it is left out (the ledger has the rank)
         int yw = BookKit.smallWidth(f, you.getString());

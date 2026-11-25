@@ -136,6 +136,10 @@ final class DevDemo {
         if (type == net.ofatech.supernaturalbloodlines.core.group.GroupType.COVEN) {
             coven(me);
         }
+        if (type == net.ofatech.supernaturalbloodlines.core.group.GroupType.BROTHERHOOD) {
+            brotherhood(v, me);
+            return;
+        }
         byte viewer = net.ofatech.supernaturalbloodlines.core.group.GroupView.LEADER;
         if (type == net.ofatech.supernaturalbloodlines.core.group.GroupType.CLAN) {
             viewer = clan();
@@ -158,6 +162,41 @@ final class DevDemo {
                         new net.ofatech.supernaturalbloodlines.core.group.GroupView.Row("Mira", "member", none, true, Optional.of(id("Mira"))),
                         new net.ofatech.supernaturalbloodlines.core.group.GroupView.Row("Cass", "member", none, false, Optional.of(id("Cass"))),
                         new net.ofatech.supernaturalbloodlines.core.group.GroupView.Row("Scott", "ally", none, true, Optional.of(id("Scott"))))));
+    }
+
+    /** {@code .demo.brotherhood=<mark>:<state>}, for the hidden Group page captures. */
+    private static void brotherhood(HubView v, String me) {
+        String[] spec = System.getProperty("supernaturalbloodlines.devshots.demo.brotherhood", "8:member").split(":");
+        int mark = Integer.parseInt(spec[0]);
+        String state = spec.length > 1 ? spec[1] : "member";
+        boolean head = state.equals("leader");
+        boolean fits = !state.equals("not_fit");
+        boolean on = !state.equals("off");
+        boolean visible = fits && on;
+        boolean complete = state.equals("complete") || mark == 20;
+        int strikes = switch (state) {
+            case "strike1" -> 1;
+            case "strike2", "breaker" -> 2;
+            default -> 0;
+        };
+        boolean breaker = state.equals("breaker");
+        int nearby = visible && !breaker && !state.equals("alone") ? 2 : 0;
+        var type = net.ofatech.supernaturalbloodlines.core.group.GroupType.BROTHERHOOD;
+        var none = net.ofatech.supernaturalbloodlines.core.group.GroupRank.NONE;
+        String leader = head ? me : "Rowan";
+        var leaderId = head ? v.player().getUUID() : id("Rowan");
+        net.ofatech.supernaturalbloodlines.parts.supernatural.client.GroupClient.demo(new net.ofatech.supernaturalbloodlines.core.group.GroupView(
+                type, true, head ? net.ofatech.supernaturalbloodlines.core.group.GroupView.LEADER : net.ofatech.supernaturalbloodlines.core.group.GroupView.MEMBER,
+                leader, 4, List.of(
+                        new net.ofatech.supernaturalbloodlines.core.group.GroupView.Row(leader, "leader", none, true, Optional.of(leaderId)),
+                        new net.ofatech.supernaturalbloodlines.core.group.GroupView.Row(head ? "Rowan" : me, state.equals("potential") ? "potential" : "member",
+                                none, true, Optional.of(head ? id("Rowan") : v.player().getUUID())),
+                        new net.ofatech.supernaturalbloodlines.core.group.GroupView.Row("Mira", "member", none, true, Optional.of(id("Mira"))),
+                        new net.ofatech.supernaturalbloodlines.core.group.GroupView.Row("Cass", "member", none, false, Optional.of(id("Cass"))))));
+        net.ofatech.supernaturalbloodlines.parts.supernatural.client.BrotherhoodClient.demo(
+                new net.ofatech.supernaturalbloodlines.core.group.brotherhood.BrotherhoodView(true, fits, on, visible ? mark : 0,
+                        visible ? head ? mark : complete ? 20 : Math.max(12, mark) : 0, visible && complete,
+                        nearby, nearby * 3, visible, visible, visible ? strikes : 0, visible ? 3 : 0, breaker ? 43_200 : 0, visible));
     }
 
     /**

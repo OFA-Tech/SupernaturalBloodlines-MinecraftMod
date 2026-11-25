@@ -38,7 +38,7 @@ public final class PackPage implements HubPageView {
         y = PageKit.title(f, GroupLabels.t(gv, KEY + "title", "title"), r.x(), y, r.w(), t.accent());
         t.drawRule(f.g, r.x(), y + 2, r.w());
         if (!GroupLabels.neutral(gv)) {
-            y = PageKit.wrapped(f, Component.translatable(KEY + "rank", grp ? GroupLabels.myRank(gv) : BookPackPage.rankLabel(f, wolf)),
+            y = PageKit.wrapped(f, Component.translatable(KEY + "rank", grp ? GroupLabels.myRank(gv, f.view.player().getUUID()) : BookPackPage.rankLabel(f, wolf)),
                     r.x(), y + 6, r.w(), t.ink()) + 3;
         }
         if (!grp && BookPackPage.weakLine(wolf).isPresent()) {
@@ -47,6 +47,7 @@ public final class PackPage implements HubPageView {
         if (!grp && BookPackPage.perkLine(f).isPresent()) {
             y = PageKit.wrapped(f, BookPackPage.perkLine(f).get(), r.x(), y, r.w(), BookPackPage.perkColor(t)) + 3;
         }
+        y = BrotherhoodCards.since(f, r, y, gv);
         y = PageKit.wrapped(f, Component.translatable(KEY + "members").withStyle(ChatFormatting.BOLD), r.x(), y, r.w(), t.accent());
         if (pack.isEmpty()) {
             y = PageKit.wrapped(f, grp ? GroupLabels.alone(gv) : Component.translatable(KEY + "alone"), r.x() + 4, y, r.w() - 4, t.muted());
@@ -64,13 +65,14 @@ public final class PackPage implements HubPageView {
             if (f.focused(id)) {
                 t.drawFocus(f.g, hit);
             }
-            y += PageKit.LINE + 1;
+            y = BrotherhoodCards.pips(f, r, y + PageKit.LINE + 1, gv, m);
         }
         if (!grp) {
             y = wolves.render(f, r, y + 2, wolf.lineage() != WolfState.Lineage.NONE, true);
         }
         y = CovenCards.render(f, r, y, gv, null);
         y = ClanCards.render(f, r, y, gv, null);
+        y = BrotherhoodCards.render(f, r, y, gv);
         f.end(y);
 
         Rect s = f.region(HubLayout.SIDE);

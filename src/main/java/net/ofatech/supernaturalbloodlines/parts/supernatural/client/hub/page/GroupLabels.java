@@ -91,6 +91,14 @@ public final class GroupLabels {
         return memberRank(v, base);
     }
 
+    static Component myRank(GroupView v, java.util.UUID viewer) {
+        if (v.type() == GroupType.BROTHERHOOD && v.viewerRank() != GroupView.LEADER && v.members().stream()
+                .anyMatch(row -> row.rank().equals("potential") && row.id().filter(viewer::equals).isPresent())) {
+            return memberRank(v, "potential");
+        }
+        return myRank(v);
+    }
+
     /** The one line of the ledger when nobody is there yet. */
     public static Component alone(GroupView v) {
         return Component.translatable(HUB + "group.alone." + slot(v));
