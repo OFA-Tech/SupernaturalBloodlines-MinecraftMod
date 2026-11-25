@@ -24,7 +24,6 @@ import net.ofatech.supernaturalbloodlines.parts.species.group.GroupSwitcher;
 import net.ofatech.supernaturalbloodlines.parts.species.group.GroupsConfig;
 import net.ofatech.supernaturalbloodlines.parts.species.pack.PackAccess;
 import net.ofatech.supernaturalbloodlines.parts.species.pack.PackIndex;
-import net.ofatech.supernaturalbloodlines.parts.species.pack.PackMembers;
 import net.ofatech.supernaturalbloodlines.parts.species.sireline.SireCall;
 import net.ofatech.supernaturalbloodlines.shared.supernatural.HubRequests;
 import org.jetbrains.annotations.Nullable;
@@ -105,11 +104,27 @@ public final class Contests {
     }
 
     private static void tellAll(MinecraftServer server, UUID leader, String key, String arg) {
-        PackMembers.tell(server, leader, key, arg);
-        for (UUID id : PackIndex.get(server.overworld()).betasOf(leader)) {
-            PackMembers.tell(server, id, key, arg);
-        }
+        Charters.tellClan(server, leader, key, arg);
         Charters.refresh(server, leader);
+    }
+
+    /**
+     * Why this player may not challenge their clan's head now, or empty when they may. The one answer the challenge command and the hub's card both read, so the
+     * button and the command can never disagree.
+     */
+    public static Optional<ContestRules.Refusal> refusalFor(ServerLevel level, UUID player) {
+        ClanScope.Clan clan = ClanScope.of(level, player);
+        if (clan == null) {
+            return Optional.of(ContestRules.Refusal.NOT_DAY_WALKER);
+        }
+        GroupIndex groups = GroupIndex.get(level);
+        PackIndex packs = PackIndex.get(level);
+        long now = PackIndex.now();
+        int days = packs.inPackSince(player).map(t -> (int) Math.min(Integer.MAX_VALUE, Math.max(0, (now - t) / DAY))).orElse(0);
+        boolean charter = groups.charterOf(clan.group()).filter(r -> r.state() != CharterState.LOST).isPresent();
+        return ContestRules.mayChallenge(ClanScope.dayWalker(level, player) ? GroupRank.DAY_WALKER : GroupRank.NONE, days, packs.roster(clan.leader()).size(),
+                SireCall.player(level.getServer(), clan.leader()) != null, charter, groups.contestOf(clan.group()).isPresent(), groups.cooldownUntil(clan.group(), COOLDOWN_KEY), now,
+                GroupsConfig.challengerMinDays(), GroupsConfig.charterMinMembers());
     }
 
     @Nullable
@@ -118,7 +133,7 @@ public final class Contests {
         if (gate != null) {
             return gate;
         }
-        if (!GroupsConfig.charterEnabled()) {
+        if (!GroupsConfig.charterActive()) {
             return ClanText.error("charter_off");
         }
         ServerLevel level = p.serverLevel();
@@ -128,15 +143,10 @@ public final class Contests {
             return ClanText.error("challenge_leader");
         }
         GroupIndex groups = GroupIndex.get(level);
-        PackIndex packs = PackIndex.get(level);
         long now = PackIndex.now();
-        int days = packs.inPackSince(p.getUUID()).map(t -> (int) Math.min(Integer.MAX_VALUE, Math.max(0, (now - t) / DAY))).orElse(0);
-        boolean charter = groups.charterOf(clan.group()).filter(r -> r.state() != CharterState.LOST).isPresent();
-        long cooldown = groups.cooldownUntil(clan.group(), COOLDOWN_KEY);
-        Optional<ContestRules.Refusal> no = ContestRules.mayChallenge(ClanScope.dayWalker(level, p.getUUID()) ? GroupRank.DAY_WALKER : GroupRank.NONE, days, 1 + packs.betasOf(clan.leader()).size(),
-                SireCall.player(server, clan.leader()) != null, charter, groups.contestOf(clan.group()).isPresent(), cooldown, now,
-                GroupsConfig.challengerMinDays(), GroupsConfig.charterMinMembers());
+        Optional<ContestRules.Refusal> no = refusalFor(level, p.getUUID());
         if (no.isPresent()) {
+            long cooldown = groups.cooldownUntil(clan.group(), COOLDOWN_KEY);
             return no.get() == ContestRules.Refusal.COOLDOWN
                     ? ClanText.error("challenge_cooldown", Math.max(1, (cooldown - now + DAY - 1) / DAY))
                     : ClanText.error("challenge_" + no.get().id());
@@ -206,7 +216,7 @@ public final class Contests {
                 groups.clearContest(group);
                 continue;
             }
-            if (!GroupsConfig.clanPerksOn() || !GroupsConfig.charterEnabled() || !ClanScope.isClan(server.overworld(), leader)) {
+            if (!GroupsConfig.charterActive() || !ClanScope.isClan(server.overworld(), leader)) {
                 voidContest(server, leader, group);
                 continue;
             }
@@ -267,7 +277,7 @@ public final class Contests {
     /** The head's card while a challenge waits for an answer: kind, challenger, no token (the accept command takes none) and the time left. */
     public static List<HubRequests.Request> requestsFor(ServerPlayer p) {
         ClanScope.Clan clan = ClanScope.of(p.serverLevel(), p.getUUID());
-        if (clan == null || !p.getUUID().equals(clan.leader()) || !GroupsConfig.clanPerksOn() || !GroupsConfig.charterEnabled()) {
+        if (clan == null || !p.getUUID().equals(clan.leader()) || !GroupsConfig.charterActive()) {
             return List.of();
         }
         Optional<ContestRow> row = GroupIndex.get(p.serverLevel()).contestOf(clan.group()).filter(r -> r.phase() == ContestRow.Phase.PENDING);

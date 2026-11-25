@@ -12,13 +12,13 @@ import net.ofatech.supernaturalbloodlines.core.group.clan.CharterState;
 import net.ofatech.supernaturalbloodlines.core.group.clan.ClanView;
 import net.ofatech.supernaturalbloodlines.core.group.clan.ClanWire;
 import net.ofatech.supernaturalbloodlines.core.group.clan.ContestRules;
+import net.ofatech.supernaturalbloodlines.core.group.clan.SirelineBonus;
 import net.ofatech.supernaturalbloodlines.parts.species.group.GroupIndex;
 import net.ofatech.supernaturalbloodlines.parts.species.group.GroupIndex.CharterRow;
 import net.ofatech.supernaturalbloodlines.parts.species.group.GroupIndex.ContestRow;
 import net.ofatech.supernaturalbloodlines.parts.species.group.GroupsConfig;
 import net.ofatech.supernaturalbloodlines.parts.species.pack.PackAccess;
 import net.ofatech.supernaturalbloodlines.parts.species.pack.PackIndex;
-import net.ofatech.supernaturalbloodlines.parts.species.sireline.SireCall;
 
 /** The viewer's own clan, as the hub draws it (R281): their own rank clock, the Charter, the contest and two counts. Only members' names, never an id, a species or a root. */
 public final class ClanViews {
@@ -66,14 +66,14 @@ public final class ClanViews {
         GroupRank rank = groups.rankOf(p.getUUID(), GroupType.CLAN);
         int auto = -1;
         boolean dayWalker = ClanScope.dayWalker(level, p.getUUID());
-        if (on && !head && rank == GroupRank.NONE && ClanScope.mayBeDayWalker(level, p.getUUID()) && GroupsConfig.daywalkerDays() > 0 && groups.cooldownUntil(clan.group(), ClanDiscipline.NO_PROMOTE + p.getUUID()) == 0) {
+        if (on && !head && rank == GroupRank.NONE && ClanScope.mayBeDayWalker(level, p.getUUID()) && GroupsConfig.daywalkerDays() > 0 && groups.cooldownUntil(clan.group(), ClanDiscipline.noPromoteKey(p.getUUID())) == 0) {
             auto = clampDays(Math.max(0, GroupsConfig.daywalkerDays() - (now - since) / DAY));
         }
-        int members = 1 + packs.betasOf(clan.leader()).size();
+        int members = packs.roster(clan.leader()).size();
 
         ClanView.Charter charter = ClanView.Charter.NONE;
         Optional<CharterRow> row = groups.charterOf(clan.group());
-        boolean charterOn = on && GroupsConfig.charterEnabled();
+        boolean charterOn = GroupsConfig.charterActive();
         if (row.isPresent()) {
             CharterRow r = row.get();
             byte state = !charterOn ? ClanView.CHARTER_INERT : switch (r.state()) {
@@ -92,7 +92,7 @@ public final class ClanViews {
         ClanView.Contest contest = ClanView.Contest.NONE;
         if (charterOn) {
             Optional<ContestRow> c = groups.contestOf(clan.group());
-            long cooldown = groups.cooldownUntil(clan.group(), "contest");
+            long cooldown = groups.cooldownUntil(clan.group(), Contests.COOLDOWN_KEY);
             int cooldownDays = cooldown > now ? clampDays((cooldown - now + DAY - 1) / DAY) : 0;
             if (c.isPresent()) {
                 ContestRow cr = c.get();
@@ -100,17 +100,15 @@ public final class ClanViews {
                 contest = new ClanView.Contest(cr.phase() == ContestRow.Phase.PENDING ? ClanView.CONTEST_PENDING : ClanView.CONTEST_RUNNING,
                         nameIfMember(p, clan.group(), cr.challenger()), clampSeconds(left), cooldownDays, false, 0, head && cr.phase() == ContestRow.Phase.PENDING);
             } else if (!head && dayWalker) {
-                Optional<ContestRules.Refusal> no = ContestRules.mayChallenge(GroupRank.DAY_WALKER, clampDays((now - since) / DAY), members, SireCall.player(p.server, clan.leader()) != null,
-                        row.filter(r -> r.state() != CharterState.LOST).isPresent(), false, cooldown, now, GroupsConfig.challengerMinDays(), GroupsConfig.charterMinMembers());
-                contest = new ClanView.Contest(ClanView.CONTEST_NONE, "", 0, cooldownDays, no.isEmpty(), no.map(r -> r.ordinal() + 1).orElse(0), false);
+                Optional<ContestRules.Refusal> no = Contests.refusalFor(level, p.getUUID());
+                contest = new ClanView.Contest(ClanView.CONTEST_NONE, "", 0, cooldownDays, no.isEmpty(), ContestRules.Refusal.wire(no), false);
             } else {
                 contest = new ClanView.Contest(ClanView.CONTEST_NONE, "", 0, cooldownDays, false, 0, false);
             }
         }
 
-        int mates = on ? SirelineBonuses.matesNear(p, new HashMap<>()) : 0;
-        int bonus = on ? (int) Math.round(Math.min(mates * (long) GroupsConfig.sirelineBonusPercent(), GroupsConfig.sirelineBonusMaxPercent())) : 0;
-        return new ClanView(true, days, auto, charter, contest, on && GroupsConfig.feedShareEnabled(), on && GroupsConfig.feedShareEnabled() ? GroupsConfig.feedSharePercent() : 0,
-                Math.min(mates, ClanWire.MAX_COUNT), Math.min(bonus, ClanWire.MAX_PERCENT));
+        int bonus = on ? (int) Math.round(100 * SirelineBonus.of(SirelineBonuses.matesNear(p, new HashMap<>()), GroupsConfig.sirelineBonusPercent(), GroupsConfig.sirelineBonusMaxPercent())) : 0;
+        boolean feed = GroupsConfig.feedShareActive();
+        return new ClanView(true, days, auto, charter, contest, feed, feed ? GroupsConfig.feedSharePercent() : 0, Math.min(bonus, ClanWire.MAX_PERCENT));
     }
 }

@@ -73,24 +73,34 @@ public final class GroupCommand {
                 .then(net.ofatech.supernaturalbloodlines.parts.species.group.clan.ClanCommand.charter())
                 .then(Commands.literal("info").executes(c -> info(c.getSource(), self(c))))
                 .then(Commands.literal("challenge")
-                        .executes(c -> run(c, challenge(self(c), null, p -> GroupText.error(Groups.typeOf(p), "wrong_type"), net.ofatech.supernaturalbloodlines.parts.species.group.clan.Contests::challenge)))
-                        .then(Commands.literal("accept").executes(c -> run(c, challenge(self(c), null, p -> PackDuel.accept(p), net.ofatech.supernaturalbloodlines.parts.species.group.clan.Contests::accept))))
-                        .then(Commands.literal("decline").executes(c -> run(c, challenge(self(c), null, p -> PackDuel.decline(p), net.ofatech.supernaturalbloodlines.parts.species.group.clan.Contests::decline))))
+                        .executes(c -> run(c, challenge(self(c), p -> GroupText.error(Groups.typeOf(p), "wrong_type"), net.ofatech.supernaturalbloodlines.parts.species.group.clan.Contests::challenge)))
+                        .then(Commands.literal("accept").executes(c -> run(c, challenge(self(c), p -> PackDuel.accept(p), net.ofatech.supernaturalbloodlines.parts.species.group.clan.Contests::accept))))
+                        .then(Commands.literal("decline").executes(c -> run(c, challenge(self(c), p -> PackDuel.decline(p), net.ofatech.supernaturalbloodlines.parts.species.group.clan.Contests::decline))))
                         .then(Commands.argument("leader", StringArgumentType.word())
-                                .executes(c -> run(c, challenge(self(c), StringArgumentType.getString(c, "leader"), p -> PackDuel.challenge(p, StringArgumentType.getString(c, "leader")), p -> null)))));
+                                .executes(c -> run(c, challengeWord(self(c), StringArgumentType.getString(c, "leader"))))));
     }
 
-    /** The one challenge command routes by type: a pack's is the duel, a coven's is the call for a new Regent; the others have theirs in later plans. */
+    /** The challenge with no name: a clan's is the Game of Kings (asked of ClanScope, not of the type alone), a pack's is the duel; the others have theirs in later plans. */
     @Nullable
-    private static Component challenge(ServerPlayer p, @Nullable String word, java.util.function.Function<ServerPlayer, Component> duel,
-                                       java.util.function.Function<ServerPlayer, Component> clan) {
-        GroupType type = Groups.typeOf(p);
-        if (type == GroupType.CLAN && word == null) {
+    private static Component challenge(ServerPlayer p, java.util.function.Function<ServerPlayer, Component> duel, java.util.function.Function<ServerPlayer, Component> clan) {
+        if (net.ofatech.supernaturalbloodlines.parts.species.group.clan.ClanScope.isClan(p.serverLevel(), PackIndex.get(p.serverLevel()).leaderOf(p.getUUID()))) {
             return clan.apply(p);
         }
-        if (type == GroupType.COVEN && word != null) {
+        return packDuel(p, duel);
+    }
+
+    /** The challenge with a name: a coven's is the call for a new Regent, a pack's is the duel. */
+    @Nullable
+    private static Component challengeWord(ServerPlayer p, String word) {
+        if (Groups.typeOf(p) == GroupType.COVEN) {
             return net.ofatech.supernaturalbloodlines.parts.species.group.coven.CovenGovernance.callElection(p, word);
         }
+        return packDuel(p, q -> PackDuel.challenge(q, word));
+    }
+
+    @Nullable
+    private static Component packDuel(ServerPlayer p, java.util.function.Function<ServerPlayer, Component> duel) {
+        GroupType type = Groups.typeOf(p);
         if (type != GroupType.PACK || !ModList.get().isLoaded("werewolves")) {
             return GroupText.error(type, "wrong_type");
         }

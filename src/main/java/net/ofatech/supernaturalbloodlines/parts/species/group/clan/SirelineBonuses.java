@@ -1,9 +1,9 @@
 package net.ofatech.supernaturalbloodlines.parts.species.group.clan;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Supplier;
 import net.minecraft.resources.ResourceLocation;
@@ -46,30 +46,28 @@ public final class SirelineBonuses {
     }
 
     /** The bonus a player has now, as a fraction, or 0. Used by the hub's count too. */
-    public static int matesNear(ServerPlayer p, Map<UUID, UUID> roots) {
+    public static int matesNear(ServerPlayer p, Map<UUID, Optional<UUID>> roots) {
         ServerLevel level = p.serverLevel();
         ClanScope.Clan clan = ClanScope.of(level, p.getUUID());
         if (clan == null || !ClanScope.appliesTo(level, clan.leader(), p)) {
             return 0;
         }
-        UUID mine = rootOf(level, p.getUUID(), roots);
-        List<UUID> everyone = new ArrayList<>(PackIndex.get(level).betasOf(clan.leader()));
-        everyone.add(clan.leader());
+        Optional<UUID> mine = rootOf(level, p.getUUID(), roots);
         int count = 0;
-        for (UUID id : everyone) {
+        for (UUID id : PackIndex.get(level).roster(clan.leader())) {
             if (id.equals(p.getUUID())) {
                 continue;
             }
             ServerPlayer mate = SireCall.player(p.server, id);
             if (mate != null && mate.isAlive() && mate.level() == p.level() && mate.distanceToSqr(p) <= RANGE * RANGE
-                    && ClanScope.appliesTo(level, clan.leader(), mate) && mine.equals(rootOf(level, id, roots))) {
+                    && ClanScope.appliesTo(level, clan.leader(), mate) && SirelineBonus.same(mine, rootOf(level, id, roots))) {
                 count++;
             }
         }
         return count;
     }
 
-    private static UUID rootOf(ServerLevel level, UUID id, Map<UUID, UUID> roots) {
+    private static Optional<UUID> rootOf(ServerLevel level, UUID id, Map<UUID, Optional<UUID>> roots) {
         return roots.computeIfAbsent(id, k -> {
             walks++;
             SirelineIndex index = SirelineIndex.get(level);
@@ -79,7 +77,7 @@ public final class SirelineBonuses {
 
     public static void refresh(MinecraftServer server) {
         walks = 0;
-        Map<UUID, UUID> roots = new HashMap<>();
+        Map<UUID, Optional<UUID>> roots = new HashMap<>();
         boolean on = GroupsConfig.clanPerksOn() && GroupsConfig.sirelineBonusPercent() > 0;
         for (ServerPlayer p : players != null ? players.get() : server.getPlayerList().getPlayers()) {
             double bonus = on ? SirelineBonus.of(matesNear(p, roots), GroupsConfig.sirelineBonusPercent(), GroupsConfig.sirelineBonusMaxPercent()) : 0;

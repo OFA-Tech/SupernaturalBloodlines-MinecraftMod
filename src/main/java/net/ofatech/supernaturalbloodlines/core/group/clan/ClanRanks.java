@@ -23,29 +23,34 @@ public final class ClanRanks {
         return days > 0 && !demotedByLeader && nowMillis - joinedAtMillis >= days * DAY;
     }
 
-    public static Optional<Refusal> mayPromote(GroupRank callerRank, boolean callerIsLeader, GroupRank targetRank, boolean targetIsLeader, boolean sameClan) {
-        Optional<Refusal> common = common(callerIsLeader, targetIsLeader, sameClan);
+    /** Who may be sent away: only the leader, never themselves, only somebody of this clan. */
+    public static Optional<Refusal> mayExile(boolean callerIsLeader, boolean targetIsLeader, boolean targetInClan) {
+        return common(callerIsLeader, targetIsLeader, targetInClan);
+    }
+
+    public static Optional<Refusal> mayPromote(boolean callerIsLeader, GroupRank targetRank, boolean targetIsLeader, boolean targetInClan) {
+        Optional<Refusal> common = common(callerIsLeader, targetIsLeader, targetInClan);
         if (common.isPresent()) {
             return common;
         }
         return targetRank == GroupRank.DAY_WALKER ? Optional.of(Refusal.ALREADY_DAY_WALKER) : Optional.empty();
     }
 
-    public static Optional<Refusal> mayDemote(GroupRank callerRank, boolean callerIsLeader, GroupRank targetRank, boolean targetIsLeader, boolean sameClan) {
-        Optional<Refusal> common = common(callerIsLeader, targetIsLeader, sameClan);
+    public static Optional<Refusal> mayDemote(boolean callerIsLeader, GroupRank targetRank, boolean targetIsLeader, boolean targetInClan) {
+        Optional<Refusal> common = common(callerIsLeader, targetIsLeader, targetInClan);
         if (common.isPresent()) {
             return common;
         }
         return targetRank == GroupRank.DAY_WALKER ? Optional.empty() : Optional.of(Refusal.NOT_A_DAY_WALKER);
     }
 
-    private static Optional<Refusal> common(boolean callerIsLeader, boolean targetIsLeader, boolean sameClan) {
+    private static Optional<Refusal> common(boolean callerIsLeader, boolean targetIsLeader, boolean targetInClan) {
         if (!callerIsLeader) {
             return Optional.of(Refusal.NOT_LEADER);
         }
         if (targetIsLeader) {
             return Optional.of(Refusal.IS_LEADER);
         }
-        return sameClan ? Optional.empty() : Optional.of(Refusal.NOT_A_MEMBER);
+        return targetInClan ? Optional.empty() : Optional.of(Refusal.NOT_A_MEMBER);
     }
 }

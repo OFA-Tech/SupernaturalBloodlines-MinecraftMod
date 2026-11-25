@@ -88,7 +88,7 @@ public final class CharterScan {
     }
 
     private static void run(MinecraftServer server) {
-        if (!GroupsConfig.charterEnabled() || !GroupsConfig.clanPerksOn()) {
+        if (!GroupsConfig.charterActive()) {
             return;
         }
         ServerLevel level = server.overworld();
@@ -120,9 +120,9 @@ public final class CharterScan {
         Map<UUID, List<Found>> valid = new LinkedHashMap<>();
         for (Found f : found) {
             UUID group = f.group();
-            Optional<CharterRow> row = group == null ? Optional.empty() : groups.charterOf(group);
+            Optional<CharterRow> row = Charters.rowOf(groups, f.stack());
             UUID leader = group == null ? null : leaderOf.get(group);
-            if (f.id() == null || row.isEmpty() || leader == null || !CharterRules.valid(f.id(), row.get().id(), group, group)) {
+            if (row.isEmpty() || leader == null) {
                 dust.add(f);
             } else if (ClanScope.isClan(level, leader)) {
                 valid.computeIfAbsent(group, k -> new ArrayList<>()).add(f);

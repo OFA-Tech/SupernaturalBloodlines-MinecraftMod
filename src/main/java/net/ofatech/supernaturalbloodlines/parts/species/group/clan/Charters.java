@@ -1,6 +1,5 @@
 package net.ofatech.supernaturalbloodlines.parts.species.group.clan;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -66,10 +65,12 @@ public final class Charters {
     }
 
     public static void tellClan(MinecraftServer server, UUID leader, String key) {
-        PackIndex packs = PackIndex.get(server.overworld());
-        PackMembers.tell(server, leader, key, "");
-        for (UUID id : packs.betasOf(leader)) {
-            PackMembers.tell(server, id, key, "");
+        tellClan(server, leader, key, "");
+    }
+
+    public static void tellClan(MinecraftServer server, UUID leader, String key, String arg) {
+        for (UUID id : PackIndex.get(server.overworld()).roster(leader)) {
+            PackMembers.tell(server, id, key, arg);
         }
     }
 
@@ -82,10 +83,7 @@ public final class Charters {
 
     public static void refresh(MinecraftServer server, UUID leader) {
         refreshes++;
-        PackIndex packs = PackIndex.get(server.overworld());
-        List<UUID> all = new ArrayList<>(packs.betasOf(leader));
-        all.add(leader);
-        for (UUID id : all) {
+        for (UUID id : PackIndex.get(server.overworld()).roster(leader)) {
             ServerPlayer online = server.getPlayerList().getPlayer(id);
             if (online != null) {
                 HubRequests.changed(online);
@@ -138,7 +136,7 @@ public final class Charters {
         if (!p.getUUID().equals(clan.leader())) {
             return ClanText.error("leader_only");
         }
-        return GroupsConfig.charterEnabled() ? null : ClanText.error("charter_off");
+        return GroupsConfig.charterActive() ? null : ClanText.error("charter_off");
     }
 
     private static String code(String rule) {
@@ -157,7 +155,7 @@ public final class Charters {
         ServerLevel level = p.serverLevel();
         ClanScope.Clan clan = ClanScope.of(level, p.getUUID());
         GroupIndex groups = GroupIndex.get(level);
-        int members = 1 + PackIndex.get(level).betasOf(clan.leader()).size();
+        int members = PackIndex.get(level).roster(clan.leader()).size();
         Optional<String> refusal = CharterRules.mayForge(members, groups.charterOf(clan.group()).map(CharterRow::state).orElse(null), GroupsConfig.charterMinMembers());
         if (refusal.isPresent()) {
             return ClanText.error(code(refusal.get()));

@@ -7,8 +7,7 @@ package net.ofatech.supernaturalbloodlines.core.group.clan;
  * @param inClan   false for a viewer in no clan; every other field is then its empty value
  * @param autoPromoteDaysLeft the days until a Night Walker is promoted by the clock; -1 when they are not one or the clock is off
  */
-public record ClanView(boolean inClan, int daysInClan, int autoPromoteDaysLeft, Charter charter, Contest contest, boolean feedOn, int feedPercent, int sirelineMates,
-                       int bonusPercent) {
+public record ClanView(boolean inClan, int daysInClan, int autoPromoteDaysLeft, Charter charter, Contest contest, boolean feedOn, int feedPercent, int bonusPercent) {
     public static final byte CHARTER_NONE = 0;
     public static final byte CHARTER_HELD = 1;
     public static final byte CHARTER_STORED = 2;
@@ -41,5 +40,5 @@ public record ClanView(boolean inClan, int daysInClan, int autoPromoteDaysLeft, 
         }
     }
 
-    public static final ClanView NONE = new ClanView(false, 0, -1, Charter.NONE, Contest.NONE, false, 0, 0, 0);
+    public static final ClanView NONE = new ClanView(false, 0, -1, Charter.NONE, Contest.NONE, false, 0, 0);
 }

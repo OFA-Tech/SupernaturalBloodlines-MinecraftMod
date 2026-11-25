@@ -7,7 +7,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import net.ofatech.supernaturalbloodlines.core.group.clan.CharterRules.Event;
 import net.ofatech.supernaturalbloodlines.core.group.clan.CharterRules.Sighting;
 import org.junit.jupiter.api.Test;
 
@@ -17,28 +16,6 @@ class CharterRulesTest {
     private static final UUID A = UUID.fromString("00000000-0000-0000-0000-00000000000a");
     private static final UUID B = UUID.fromString("00000000-0000-0000-0000-00000000000b");
     private static final UUID C = UUID.fromString("00000000-0000-0000-0000-00000000000c");
-
-    @Test
-    void theStateTable() {
-        CharterState h = CharterState.HELD;
-        CharterState s = CharterState.STORED;
-        CharterState d = CharterState.DROPPED;
-        CharterState l = CharterState.LOST;
-        CharterState[][] expected = {
-                // SEEN_HELD, ENTITY_DROPPED, NOT_SEEN, ENTITY_DESTROYED, FORGED, REFORGED
-                {h, d, s, l, h, h}, // from HELD
-                {h, d, s, l, h, h}, // from STORED
-                {h, d, s, l, h, h}, // from DROPPED
-                {h, d, l, l, h, h}, // from LOST
-        };
-        CharterState[] from = {h, s, d, l};
-        Event[] events = {Event.SEEN_HELD, Event.ENTITY_DROPPED, Event.NOT_SEEN, Event.ENTITY_DESTROYED, Event.FORGED, Event.REFORGED};
-        for (int i = 0; i < from.length; i++) {
-            for (int j = 0; j < events.length; j++) {
-                assertEquals(expected[i][j], CharterRules.next(from[i], events[j]), from[i] + " + " + events[j]);
-            }
-        }
-    }
 
     @Test
     void lostAfterSevenDaysWithNoSightingAndNoHolder() {

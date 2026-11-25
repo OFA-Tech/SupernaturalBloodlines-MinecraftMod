@@ -96,6 +96,21 @@ class ClanConfigTest {
     }
 
     @Test
+    void oneSwitchSaysWhetherCharterAndFeedingAreActive() {
+        assertTrue(GroupsConfig.charterActive() && GroupsConfig.feedShareActive());
+        GroupsConfig.override("charter_enabled", false);
+        assertFalse(GroupsConfig.charterActive());
+        assertTrue(GroupsConfig.feedShareActive());
+        GroupsConfig.override("charter_enabled", null);
+        GroupsConfig.override("feed_share_enabled", false);
+        assertFalse(GroupsConfig.feedShareActive());
+        assertTrue(GroupsConfig.charterActive());
+        GroupsConfig.override("feed_share_enabled", null);
+        GroupsConfig.override("clans_enabled", false);
+        assertFalse(GroupsConfig.charterActive() || GroupsConfig.feedShareActive(), "clans off makes both inactive");
+    }
+
+    @Test
     void theSunRingDefaultIsNowDayWalkerOnly() {
         assertTrue(GroupsConfig.sunRingDayWalkerOnly());
     }

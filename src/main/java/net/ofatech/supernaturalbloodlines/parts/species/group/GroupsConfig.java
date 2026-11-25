@@ -306,6 +306,16 @@ public final class GroupsConfig {
         return CHARTER_ENABLED.get();
     }
 
+    /** Clan perks are on and the Charter is: the one question the scan, the contest, the forge and the hub all ask. */
+    public static boolean charterActive() {
+        return clanPerksOn() && charterEnabled();
+    }
+
+    /** Clan perks are on and shared feeding is. */
+    public static boolean feedShareActive() {
+        return clanPerksOn() && feedShareEnabled();
+    }
+
     public static int charterMinMembers() {
         return CHARTER_MIN_MEMBERS.get();
     }

@@ -17,6 +17,15 @@ public final class ContestRules {
         public String id() {
             return name().toLowerCase(java.util.Locale.ROOT);
         }
+
+        /** 0 is no refusal; a refusal is its place in the list plus one, so the wire holds one small number and the bound is {@code values().length}. */
+        public static int wire(Optional<Refusal> refusal) {
+            return refusal.map(r -> r.ordinal() + 1).orElse(0);
+        }
+
+        public static Optional<Refusal> fromWire(int number) {
+            return number >= 1 && number <= values().length ? Optional.of(values()[number - 1]) : Optional.empty();
+        }
     }
 
     /** Who holds the Charter at the end: its state, who, and the facts that decide whether they lead. {@code id} is null when nobody is on record. */

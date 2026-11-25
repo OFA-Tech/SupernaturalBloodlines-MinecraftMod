@@ -13,6 +13,15 @@ class ClanRanksTest {
     private static final long DAY = 24L * 60 * 60 * 1000;
 
     @Test
+    void exileFollowsTheSameLeaderAndMemberChecks() {
+        assertEquals(Optional.empty(), ClanRanks.mayExile(true, false, true));
+        assertEquals(Optional.of(Refusal.NOT_LEADER), ClanRanks.mayExile(false, false, true));
+        assertEquals(Optional.of(Refusal.IS_LEADER), ClanRanks.mayExile(true, true, true));
+        assertEquals(Optional.of(Refusal.NOT_A_MEMBER), ClanRanks.mayExile(true, false, false));
+        assertEquals(Optional.of(Refusal.NOT_LEADER), ClanRanks.mayExile(false, true, false), "the caller is checked first");
+    }
+
+    @Test
     void autoPromotionIsDueAfterTheDays() {
         assertTrue(ClanRanks.autoPromotionDue(0, 14 * DAY, 14, false));
         assertTrue(ClanRanks.autoPromotionDue(0, 20 * DAY, 14, false));
@@ -35,32 +44,32 @@ class ClanRanksTest {
 
     @Test
     void onlyTheLeaderPromotesAndDemotes() {
-        assertEquals(Optional.empty(), ClanRanks.mayPromote(GroupRank.NONE, true, GroupRank.NONE, false, true));
-        assertEquals(Optional.of(Refusal.NOT_LEADER), ClanRanks.mayPromote(GroupRank.DAY_WALKER, false, GroupRank.NONE, false, true));
-        assertEquals(Optional.empty(), ClanRanks.mayDemote(GroupRank.NONE, true, GroupRank.DAY_WALKER, false, true));
-        assertEquals(Optional.of(Refusal.NOT_LEADER), ClanRanks.mayDemote(GroupRank.DAY_WALKER, false, GroupRank.DAY_WALKER, false, true));
+        assertEquals(Optional.empty(), ClanRanks.mayPromote(true, GroupRank.NONE, false, true));
+        assertEquals(Optional.of(Refusal.NOT_LEADER), ClanRanks.mayPromote(false, GroupRank.NONE, false, true));
+        assertEquals(Optional.empty(), ClanRanks.mayDemote(true, GroupRank.DAY_WALKER, false, true));
+        assertEquals(Optional.of(Refusal.NOT_LEADER), ClanRanks.mayDemote(false, GroupRank.DAY_WALKER, false, true));
     }
 
     @Test
     void aNightWalkerCannotPromote() {
-        assertEquals(Optional.of(Refusal.NOT_LEADER), ClanRanks.mayPromote(GroupRank.NONE, false, GroupRank.NONE, false, true));
+        assertEquals(Optional.of(Refusal.NOT_LEADER), ClanRanks.mayPromote(false, GroupRank.NONE, false, true));
     }
 
     @Test
     void cannotPromoteTheLeaderOrAnOutsider() {
-        assertEquals(Optional.of(Refusal.IS_LEADER), ClanRanks.mayPromote(GroupRank.NONE, true, GroupRank.NONE, true, true));
-        assertEquals(Optional.of(Refusal.NOT_A_MEMBER), ClanRanks.mayPromote(GroupRank.NONE, true, GroupRank.NONE, false, false));
-        assertEquals(Optional.of(Refusal.IS_LEADER), ClanRanks.mayDemote(GroupRank.NONE, true, GroupRank.NONE, true, true));
-        assertEquals(Optional.of(Refusal.NOT_A_MEMBER), ClanRanks.mayDemote(GroupRank.NONE, true, GroupRank.DAY_WALKER, false, false));
+        assertEquals(Optional.of(Refusal.IS_LEADER), ClanRanks.mayPromote(true, GroupRank.NONE, true, true));
+        assertEquals(Optional.of(Refusal.NOT_A_MEMBER), ClanRanks.mayPromote(true, GroupRank.NONE, false, false));
+        assertEquals(Optional.of(Refusal.IS_LEADER), ClanRanks.mayDemote(true, GroupRank.NONE, true, true));
+        assertEquals(Optional.of(Refusal.NOT_A_MEMBER), ClanRanks.mayDemote(true, GroupRank.DAY_WALKER, false, false));
     }
 
     @Test
     void promotingADayWalkerAgainIsRefused() {
-        assertEquals(Optional.of(Refusal.ALREADY_DAY_WALKER), ClanRanks.mayPromote(GroupRank.NONE, true, GroupRank.DAY_WALKER, false, true));
+        assertEquals(Optional.of(Refusal.ALREADY_DAY_WALKER), ClanRanks.mayPromote(true, GroupRank.DAY_WALKER, false, true));
     }
 
     @Test
     void demotingANightWalkerIsRefused() {
-        assertEquals(Optional.of(Refusal.NOT_A_DAY_WALKER), ClanRanks.mayDemote(GroupRank.NONE, true, GroupRank.NONE, false, true));
+        assertEquals(Optional.of(Refusal.NOT_A_DAY_WALKER), ClanRanks.mayDemote(true, GroupRank.NONE, false, true));
     }
 }

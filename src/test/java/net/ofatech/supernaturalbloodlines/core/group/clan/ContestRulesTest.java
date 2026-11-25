@@ -87,6 +87,18 @@ class ContestRulesTest {
     }
 
     @Test
+    void theWireNumberOfARefusalRoundTripsAndZeroIsNone() {
+        assertEquals(0, Refusal.wire(Optional.empty()));
+        assertEquals(Optional.empty(), Refusal.fromWire(0));
+        for (Refusal r : Refusal.values()) {
+            assertEquals(Optional.of(r), Refusal.fromWire(Refusal.wire(Optional.of(r))), r.name());
+        }
+        assertEquals(Refusal.values().length, Refusal.wire(Optional.of(Refusal.values()[Refusal.values().length - 1])), "the largest wire number is values().length");
+        assertEquals(Optional.empty(), Refusal.fromWire(Refusal.values().length + 1), "a number past the end is nothing, never a crash");
+        assertEquals(Optional.empty(), Refusal.fromWire(-1));
+    }
+
+    @Test
     void everyReasonHasItsOwnWord() {
         for (String reason : new String[] {"not_held", "left", "leader_holds", "offline", "dead", "not_day_walker", "forfeit_challenger_away"}) {
             assertTrue(ContestRules.REASONS.contains(reason), reason);

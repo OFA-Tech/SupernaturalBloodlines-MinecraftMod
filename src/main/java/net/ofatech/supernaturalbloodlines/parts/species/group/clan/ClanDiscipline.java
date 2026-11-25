@@ -1,6 +1,5 @@
 package net.ofatech.supernaturalbloodlines.parts.species.group.clan;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -27,7 +26,17 @@ import org.jetbrains.annotations.Nullable;
 /** The clan's discipline (R270, R276): the leader promotes, demotes and exiles; the clock promotes a Night Walker after the days. Every action re-checks type, switch and rank. */
 public final class ClanDiscipline {
     /** The mark a demoted member carries so the clock never promotes them again: a cooldown key of the clan's group, with no end. */
-    public static final String NO_PROMOTE = "nodw:";
+    private static final String NO_PROMOTE = "nodw:";
+
+    /** The cooldown key of a member the head demoted; the one place the key is spelled. */
+    public static String noPromoteKey(UUID member) {
+        return NO_PROMOTE + member;
+    }
+
+    /** A member left or was removed: the mark that kept the clock from promoting them goes with them. Called from the one place every departure goes through. */
+    public static void memberDeparted(GroupIndex groups, UUID leader, UUID member) {
+        groups.existingGroupOf(leader).ifPresent(g -> groups.clearCooldown(g, noPromoteKey(member)));
+    }
 
     private ClanDiscipline() {
     }
@@ -37,11 +46,16 @@ public final class ClanDiscipline {
             return p.getUUID().equals(clan.leader());
         }
 
+        boolean isLeader(UUID target) {
+            return target != null && target.equals(clan.leader());
+        }
+
+        GroupRank rankOf(UUID target) {
+            return target == null ? GroupRank.NONE : groups.rankOf(target, GroupType.CLAN);
+        }
+
         List<UUID> everyone() {
-            List<UUID> out = new ArrayList<>();
-            out.add(clan.leader());
-            out.addAll(index.betasOf(clan.leader()));
-            return out;
+            return index.roster(clan.leader());
         }
     }
 
@@ -107,19 +121,13 @@ public final class ClanDiscipline {
             return gate;
         }
         Ctx c = ctx(p);
-        if (!c.leads()) {
-            return ClanText.error("leader_only");
-        }
         UUID target = match(c, word);
-        if (target == null) {
-            return ClanText.error("not_member");
+        Optional<ClanRanks.Refusal> no = ClanRanks.mayPromote(c.leads(), c.rankOf(target), c.isLeader(target), target != null);
+        if (no.isPresent()) {
+            return refusal(no.get());
         }
         if (!ClanScope.mayBeDayWalker(p.serverLevel(), target)) {
             return ClanText.error("cannot_promote");
-        }
-        Optional<ClanRanks.Refusal> no = ClanRanks.mayPromote(GroupRank.NONE, true, c.groups().rankOf(target, GroupType.CLAN), target.equals(c.clan().leader()), true);
-        if (no.isPresent()) {
-            return refusal(no.get());
         }
         c.groups().setRank(target, GroupRank.DAY_WALKER);
         PackMembers.tell(c.server(), target, ClanText.key("promoted"), name(c.server(), p.getUUID()));
@@ -136,23 +144,17 @@ public final class ClanDiscipline {
             return gate;
         }
         Ctx c = ctx(p);
-        if (!c.leads()) {
-            return ClanText.error("leader_only");
-        }
         UUID target = match(c, word);
-        if (target == null) {
-            return ClanText.error("not_member");
+        Optional<ClanRanks.Refusal> no = ClanRanks.mayDemote(c.leads(), c.rankOf(target), c.isLeader(target), target != null);
+        if (no.isPresent()) {
+            return refusal(no.get());
         }
         Component locked = Contests.lockRefusal(p.serverLevel(), c.clan().group(), target);
         if (locked != null) {
             return locked;
         }
-        Optional<ClanRanks.Refusal> no = ClanRanks.mayDemote(GroupRank.NONE, true, c.groups().rankOf(target, GroupType.CLAN), target.equals(c.clan().leader()), true);
-        if (no.isPresent()) {
-            return refusal(no.get());
-        }
         c.groups().clearRank(target, GroupType.CLAN);
-        c.groups().setCooldown(c.clan().group(), NO_PROMOTE + target, Long.MAX_VALUE);
+        c.groups().setCooldown(c.clan().group(), noPromoteKey(target), Long.MAX_VALUE);
         PackMembers.tell(c.server(), target, ClanText.key("demoted"), name(c.server(), p.getUUID()));
         p.sendSystemMessage(ClanText.of("demoted_ok", name(c.server(), target)));
         refresh(c.server(), target);
@@ -168,15 +170,10 @@ public final class ClanDiscipline {
             return gate;
         }
         Ctx c = ctx(p);
-        if (!c.leads()) {
-            return ClanText.error("leader_only");
-        }
         UUID target = match(c, word);
-        if (target == null) {
-            return ClanText.error("not_member");
-        }
-        if (target.equals(c.clan().leader())) {
-            return ClanText.error("leader_target");
+        Optional<ClanRanks.Refusal> no = ClanRanks.mayExile(c.leads(), c.isLeader(target), target != null);
+        if (no.isPresent()) {
+            return refusal(no.get());
         }
         Component locked = Contests.lockRefusal(p.serverLevel(), c.clan().group(), target);
         if (locked != null) {
@@ -221,7 +218,7 @@ public final class ClanDiscipline {
                 if (groups.rankOf(member, GroupType.CLAN) != GroupRank.NONE || !ClanScope.mayBeDayWalker(level, member)) {
                     continue;
                 }
-                boolean demoted = groups.cooldownUntil(group, NO_PROMOTE + member) > 0;
+                boolean demoted = groups.cooldownUntil(group, noPromoteKey(member)) > 0;
                 long since = packs.inPackSince(member).orElse(now);
                 if (ClanRanks.autoPromotionDue(since, now, days, demoted)) {
                     groups.setRank(member, GroupRank.DAY_WALKER);

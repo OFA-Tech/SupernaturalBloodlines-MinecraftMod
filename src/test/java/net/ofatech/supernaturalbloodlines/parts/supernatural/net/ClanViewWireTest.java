@@ -25,14 +25,14 @@ class ClanViewWireTest {
 
     private static ClanView sample() {
         return new ClanView(true, 20, -1, new ClanView.Charter(ClanView.CHARTER_HELD, "Esther", false, false, 0),
-                new ClanView.Contest(ClanView.CONTEST_PENDING, "Rebekah", 540, 6, false, 0, true), true, 10, 3, 9);
+                new ClanView.Contest(ClanView.CONTEST_PENDING, "Rebekah", 540, 6, false, 0, true), true, 10, 9);
     }
 
     @Test
     void roundTrip() {
         assertEquals(sample(), roundTrip(sample()));
         ClanView lost = new ClanView(true, 3, 11, new ClanView.Charter(ClanView.CHARTER_LOST, "", true, true, 3600),
-                new ClanView.Contest(ClanView.CONTEST_NONE, "", 0, 2, false, 3, false), false, 0, 0, 0);
+                new ClanView.Contest(ClanView.CONTEST_NONE, "", 0, 2, false, 3, false), false, 0, 0);
         assertEquals(lost, roundTrip(lost));
     }
 
@@ -54,16 +54,29 @@ class ClanViewWireTest {
     }
 
     @Test
+    void theRefusalNumberIsBoundedByTheEnumAndNotByAMagicNumber() throws Exception {
+        String src = java.nio.file.Files.readString(root().resolve("src/main/java/net/ofatech/supernaturalbloodlines/parts/supernatural/net/ClanViewPayload.java"));
+        assertTrue(src.contains("ContestRules.Refusal.values().length"), "the payload bounds the refusal by the enum");
+        assertTrue(!src.contains("bounded(buf, 16,"), "a magic bound is back");
+        ClanView atEnd = new ClanView(true, 1, -1, ClanView.Charter.NONE, new ClanView.Contest(ClanView.CONTEST_NONE, "", 0, 0, false, net.ofatech.supernaturalbloodlines.core.group.clan.ContestRules.Refusal.values().length, false), true, 10, 5);
+        assertEquals(atEnd, roundTrip(atEnd));
+        ClanView past = new ClanView(true, 1, -1, ClanView.Charter.NONE, new ClanView.Contest(ClanView.CONTEST_NONE, "", 0, 0, false, net.ofatech.supernaturalbloodlines.core.group.clan.ContestRules.Refusal.values().length + 1, false), true, 10, 5);
+        ByteBuf buf = Unpooled.buffer();
+        ClanViewPayload.STREAM_CODEC.encode(buf, new ClanViewPayload(past));
+        assertThrows(DecoderException.class, () -> ClanViewPayload.STREAM_CODEC.decode(buf));
+    }
+
+    @Test
     void aCountOverTheCapIsRejected() {
-        ClanView big = new ClanView(true, 1, -1, ClanView.Charter.NONE, ClanView.Contest.NONE, true, 10, ClanWire.MAX_COUNT + 1, 5);
+        ClanView big = new ClanView(true, ClanWire.MAX_DAYS + 1, -1, ClanView.Charter.NONE, ClanView.Contest.NONE, true, 10, 5);
         ByteBuf buf = Unpooled.buffer();
         ClanViewPayload.STREAM_CODEC.encode(buf, new ClanViewPayload(big));
         assertThrows(DecoderException.class, () -> ClanViewPayload.STREAM_CODEC.decode(buf));
-        ClanView percent = new ClanView(true, 1, -1, ClanView.Charter.NONE, ClanView.Contest.NONE, true, ClanWire.MAX_PERCENT + 1, 1, 5);
+        ClanView percent = new ClanView(true, 1, -1, ClanView.Charter.NONE, ClanView.Contest.NONE, true, ClanWire.MAX_PERCENT + 1, 5);
         ByteBuf second = Unpooled.buffer();
         ClanViewPayload.STREAM_CODEC.encode(second, new ClanViewPayload(percent));
         assertThrows(DecoderException.class, () -> ClanViewPayload.STREAM_CODEC.decode(second));
-        ClanView state = new ClanView(true, 1, -1, new ClanView.Charter((byte) 9, "", false, false, 0), ClanView.Contest.NONE, true, 10, 1, 5);
+        ClanView state = new ClanView(true, 1, -1, new ClanView.Charter((byte) 9, "", false, false, 0), ClanView.Contest.NONE, true, 10, 5);
         ByteBuf third = Unpooled.buffer();
         ClanViewPayload.STREAM_CODEC.encode(third, new ClanViewPayload(state));
         assertThrows(DecoderException.class, () -> ClanViewPayload.STREAM_CODEC.decode(third));
@@ -83,7 +96,7 @@ class ClanViewWireTest {
             }
         }
         assertEquals(List.of("ClanView.inClan:boolean", "ClanView.daysInClan:int", "ClanView.autoPromoteDaysLeft:int", "ClanView.charter:Charter", "ClanView.contest:Contest",
-                "ClanView.feedOn:boolean", "ClanView.feedPercent:int", "ClanView.sirelineMates:int", "ClanView.bonusPercent:int",
+                "ClanView.feedOn:boolean", "ClanView.feedPercent:int", "ClanView.bonusPercent:int",
                 "Charter.state:byte", "Charter.holderName:String", "Charter.mine:boolean", "Charter.forgeable:boolean", "Charter.reforgeSecondsLeft:int",
                 "Contest.phase:byte", "Contest.challengerName:String", "Contest.secondsLeft:int", "Contest.cooldownDaysLeft:int", "Contest.iMayChallenge:boolean",
                 "Contest.challengeWhy:int", "Contest.iMustAccept:boolean"), seen);
@@ -106,7 +119,7 @@ class ClanViewWireTest {
 
     @Test
     void aNonClanViewerGetsNone() {
-        assertEquals(ClanView.NONE, new ClanView(false, 0, -1, ClanView.Charter.NONE, ClanView.Contest.NONE, false, 0, 0, 0));
+        assertEquals(ClanView.NONE, new ClanView(false, 0, -1, ClanView.Charter.NONE, ClanView.Contest.NONE, false, 0, 0));
     }
 
     @Test

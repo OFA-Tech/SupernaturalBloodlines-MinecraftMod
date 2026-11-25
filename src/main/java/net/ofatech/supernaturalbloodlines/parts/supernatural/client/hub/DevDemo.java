@@ -187,7 +187,7 @@ final class DevDemo {
                 state.equals("cooldown") ? 4 : 0, viewer == net.ofatech.supernaturalbloodlines.core.group.GroupView.DAY_WALKER && state.equals("may"), why,
                 viewer == net.ofatech.supernaturalbloodlines.core.group.GroupView.LEADER && state.equals("pending"));
         net.ofatech.supernaturalbloodlines.parts.supernatural.client.ClanClient.demo(new net.ofatech.supernaturalbloodlines.core.group.clan.ClanView(true, viewer == net.ofatech.supernaturalbloodlines.core.group.GroupView.MEMBER ? 6 : 30,
-                viewer == net.ofatech.supernaturalbloodlines.core.group.GroupView.MEMBER ? 8 : -1, holder, contest, true, 10, 2, 6));
+                viewer == net.ofatech.supernaturalbloodlines.core.group.GroupView.MEMBER ? 8 : -1, holder, contest, true, 10, 6));
         net.ofatech.supernaturalbloodlines.parts.supernatural.client.RequestsClient.demo(state.equals("pending") && viewer == net.ofatech.supernaturalbloodlines.core.group.GroupView.LEADER
                 ? List.of(new net.ofatech.supernaturalbloodlines.shared.supernatural.HubRequests.Request(net.ofatech.supernaturalbloodlines.shared.supernatural.HubRequests.Kind.CHARTER_CONTEST, id("Group|mate"), "Rowan", "", 540 * 20))
                 : List.of());

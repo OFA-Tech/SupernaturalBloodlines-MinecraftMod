@@ -4,9 +4,7 @@ import de.teamlapen.vampirism.api.VampirismAPI;
 import de.teamlapen.vampirism.api.entity.player.vampire.IBloodStats;
 import de.teamlapen.vampirism.api.entity.player.vampire.IDrinkBloodContext;
 import de.teamlapen.vampirism.api.event.BloodDrinkEvent;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.function.LongSupplier;
@@ -56,7 +54,7 @@ public final class SharedFeeding {
 
     private static void onDrink(BloodDrinkEvent.PlayerDrinkBloodEvent e) {
         if (SharedFeed.active() || e.getAmount() <= 0 || e.getBloodSource().getEntity().isEmpty()
-                || !GroupsConfig.clanPerksOn() || !GroupsConfig.feedShareEnabled()
+                || !GroupsConfig.feedShareActive()
                 || !(e.getVampire().getRepresentingEntity() instanceof ServerPlayer feeder)) {
             return;
         }
@@ -73,9 +71,7 @@ public final class SharedFeeding {
         long tick = ticks != null ? ticks.getAsLong() : level.getGameTime();
         long now = PackIndex.now();
         double radius = GroupsConfig.feedShareRadius();
-        List<UUID> everyone = new ArrayList<>(PackIndex.get(level).betasOf(clan.leader()));
-        everyone.add(clan.leader());
-        for (UUID id : everyone) {
+        for (UUID id : PackIndex.get(level).roster(clan.leader())) {
             ServerPlayer mate = SireCall.player(server, id);
             if (mate == null || mate == feeder || !mate.isAlive() || mate.level() != feeder.level() || mate.distanceTo(feeder) > radius
                     || !ClanScope.appliesTo(level, clan.leader(), mate)) {

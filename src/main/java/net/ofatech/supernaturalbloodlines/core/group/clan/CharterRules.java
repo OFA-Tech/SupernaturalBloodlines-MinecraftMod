@@ -10,10 +10,6 @@ public final class CharterRules {
     private static final long DAY = 24L * 60 * 60 * 1000;
     public static final long REFORGE_WAIT = 24L * 60 * 60 * 1000;
 
-    public enum Event {
-        SEEN_HELD, ENTITY_DROPPED, NOT_SEEN, ENTITY_DESTROYED, FORGED, REFORGED
-    }
-
     /** One stack of the Charter found in an inventory; {@code index} is its place in the scan. */
     public record Sighting(UUID holder, int index) {
     }
@@ -22,15 +18,6 @@ public final class CharterRules {
     }
 
     private CharterRules() {
-    }
-
-    public static CharterState next(CharterState state, Event event) {
-        return switch (event) {
-            case SEEN_HELD, FORGED, REFORGED -> CharterState.HELD;
-            case ENTITY_DROPPED -> CharterState.DROPPED;
-            case ENTITY_DESTROYED -> CharterState.LOST;
-            case NOT_SEEN -> state == CharterState.LOST ? CharterState.LOST : CharterState.STORED;
-        };
     }
 
     /**

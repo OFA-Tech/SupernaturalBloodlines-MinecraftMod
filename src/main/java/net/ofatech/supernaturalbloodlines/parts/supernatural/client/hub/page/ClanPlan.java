@@ -110,9 +110,9 @@ public final class ClanPlan {
             } else if (k.phase() == ClanView.CONTEST_RUNNING) {
                 lines.add(line(Tone.INK, "contest.running"));
             } else if (viewerRank == GroupView.DAY_WALKER) {
-                String why = k.iMayChallenge() ? "" : "why." + ContestRules.Refusal.values()[Math.max(0, Math.min(ContestRules.Refusal.values().length - 1, k.challengeWhy() - 1))].id();
+                String why = k.iMayChallenge() ? "" : ContestRules.Refusal.fromWire(k.challengeWhy()).map(r -> "why." + r.id()).orElse("why.unknown");
                 buttons.add(new Button("pack:challenge", "C11", "challenge", "challenge.what", k.iMayChallenge(), true, why, List.of()));
-                if (!k.iMayChallenge() && k.challengeWhy() == ContestRules.Refusal.COOLDOWN.ordinal() + 1) {
+                if (!k.iMayChallenge() && ContestRules.Refusal.fromWire(k.challengeWhy()).filter(r -> r == ContestRules.Refusal.COOLDOWN).isPresent()) {
                     lines.add(counted(Tone.MUTED, "contest.cooldown", k.cooldownDaysLeft(), k.cooldownDaysLeft()));
                 }
             } else if (k.cooldownDaysLeft() > 0) {
@@ -123,7 +123,7 @@ public final class ClanPlan {
         if (v.feedOn() && v.feedPercent() > 0) {
             lines.add(line(Tone.MUTED, "feed", v.feedPercent()));
         }
-        lines.add(v.sirelineMates() > 0 ? line(Tone.MUTED, "line", v.sirelineMates(), v.bonusPercent()) : line(Tone.MUTED, "line_none"));
+        lines.add(v.bonusPercent() > 0 ? line(Tone.MUTED, "line", v.bonusPercent()) : line(Tone.MUTED, "line_none"));
         return new Plan(lines, buttons);
     }
 }

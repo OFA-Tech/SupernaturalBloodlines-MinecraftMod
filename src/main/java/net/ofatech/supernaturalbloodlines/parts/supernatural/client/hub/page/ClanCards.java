@@ -38,17 +38,6 @@ public final class ClanCards {
         return members(f, r, y + 4, gv, chosen);
     }
 
-    /** The four rows the cards run, spelled out so the hub's reference check can see each one. */
-    private static void run(String row) {
-        switch (row) {
-            case "C11" -> HubClient.runCommand("C11", List.of());
-            case "C12" -> HubClient.runCommand("C12", List.of());
-            case "C16" -> HubClient.runCommand("C16", List.of());
-            case "C17" -> HubClient.runCommand("C17", List.of());
-            default -> { }
-        }
-    }
-
     static Component words(String key, List<Object> args) {
         return Component.translatable(key, args.stream().map(a -> a instanceof ClanPlan.Key k ? Component.translatable(k.key()) : a).toArray());
     }
@@ -74,7 +63,7 @@ public final class ClanCards {
             Rect rect = new Rect(r.x(), y + 2, Math.min(r.w(), PageWidgets.widthOf(f.font(), label)), PageWidgets.H);
             Component tip = Component.translatable(KEY + (b.why().isEmpty() ? b.tip() : b.why()));
             String row = b.row();
-            PageWidgets.described(f, b.id(), rect, label, b.enabled(), b.primary(), tip, () -> run(row));
+            PageWidgets.described(f, b.id(), rect, label, b.enabled(), b.primary(), tip, () -> HubClient.runCommand(row, List.of()));
             y = rect.bottom() + 1;
         }
         return y;

@@ -10,6 +10,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.ofatech.supernaturalbloodlines.SupernaturalBloodlines;
 import net.ofatech.supernaturalbloodlines.core.group.clan.ClanView;
 import net.ofatech.supernaturalbloodlines.core.group.clan.ClanWire;
+import net.ofatech.supernaturalbloodlines.core.group.clan.ContestRules;
 import net.ofatech.supernaturalbloodlines.shared.supernatural.HubClan;
 
 /**
@@ -46,10 +47,9 @@ public record ClanViewPayload(ClanView view) implements CustomPacketPayload {
             ClanView.Charter charter = new ClanView.Charter(small(buf, ClanView.CHARTER_INERT, "charter state"), NAME.decode(buf), buf.readBoolean(), buf.readBoolean(),
                     bounded(buf, ClanWire.MAX_SECONDS, "reforge seconds"));
             ClanView.Contest contest = new ClanView.Contest(small(buf, ClanView.CONTEST_RUNNING, "contest phase"), NAME.decode(buf), bounded(buf, ClanWire.MAX_SECONDS, "seconds"),
-                    bounded(buf, ClanWire.MAX_DAYS, "cooldown"), buf.readBoolean(), bounded(buf, 16, "why"), buf.readBoolean());
+                    bounded(buf, ClanWire.MAX_DAYS, "cooldown"), buf.readBoolean(), bounded(buf, ContestRules.Refusal.values().length, "why"), buf.readBoolean());
             boolean feedOn = buf.readBoolean();
-            return new ClanView(in, days, auto, charter, contest, feedOn, bounded(buf, ClanWire.MAX_PERCENT, "feed percent"), bounded(buf, ClanWire.MAX_COUNT, "mates"),
-                    bounded(buf, ClanWire.MAX_PERCENT, "bonus percent"));
+            return new ClanView(in, days, auto, charter, contest, feedOn, bounded(buf, ClanWire.MAX_PERCENT, "feed percent"), bounded(buf, ClanWire.MAX_PERCENT, "bonus percent"));
         }
 
         @Override
@@ -71,7 +71,6 @@ public record ClanViewPayload(ClanView view) implements CustomPacketPayload {
             buf.writeBoolean(v.contest().iMustAccept());
             buf.writeBoolean(v.feedOn());
             put(buf, v.feedPercent());
-            put(buf, v.sirelineMates());
             put(buf, v.bonusPercent());
         }
     };

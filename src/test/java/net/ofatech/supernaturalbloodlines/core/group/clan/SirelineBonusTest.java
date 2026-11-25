@@ -47,8 +47,8 @@ class SirelineBonusTest {
     void theRootWalkFindsTheTop() {
         sires.put(id(2), id(1));
         sires.put(id(3), id(2));
-        assertEquals(id(1), SirelineBonus.rootOf(id(3), sireOf, 64));
-        assertEquals(id(1), SirelineBonus.rootOf(id(1), sireOf, 64));
+        assertEquals(Optional.of(id(1)), SirelineBonus.rootOf(id(3), sireOf, 64));
+        assertEquals(Optional.of(id(1)), SirelineBonus.rootOf(id(1), sireOf, 64));
     }
 
     @Test
@@ -56,27 +56,44 @@ class SirelineBonusTest {
         sires.put(id(1), id(2));
         sires.put(id(2), id(1));
         int[] calls = {0};
-        UUID root = SirelineBonus.rootOf(id(1), c -> {
+        Optional<UUID> root = SirelineBonus.rootOf(id(1), c -> {
             calls[0]++;
             return sireOf.apply(c);
         }, 64);
-        assertTrue(root.equals(id(1)) || root.equals(id(2)));
+        assertTrue(root.equals(Optional.of(id(1))) || root.equals(Optional.of(id(2))));
         assertTrue(calls[0] <= 3, "the walk went round the cycle " + calls[0] + " times");
     }
 
     @Test
-    void aDeepLineStopsAtTheDepthCap() {
+    void aLineDeeperThanTheCapHasNoRootAtAll() {
         for (int i = 2; i <= 30; i++) {
             sires.put(id(i), id(i - 1));
         }
-        assertEquals(id(30 - 5), SirelineBonus.rootOf(id(30), sireOf, 5));
-        assertEquals(id(1), SirelineBonus.rootOf(id(30), sireOf, 64));
+        assertEquals(Optional.empty(), SirelineBonus.rootOf(id(30), sireOf, 5), "a truncated walk is not a root");
+        assertEquals(Optional.of(id(1)), SirelineBonus.rootOf(id(30), sireOf, 64));
+        assertEquals(Optional.of(id(1)), SirelineBonus.rootOf(id(6), sireOf, 5), "exactly the cap still reaches the root");
+    }
+
+    @Test
+    void twoTruncatedLinesAreNeverTheSameLine() {
+        for (int i = 2; i <= 30; i++) {
+            sires.put(id(i), id(i - 1));
+        }
+        for (int i = 32; i <= 60; i++) {
+            sires.put(id(i), id(i == 32 ? 31 : i - 1));
+        }
+        Optional<UUID> a = SirelineBonus.rootOf(id(30), sireOf, 5);
+        Optional<UUID> b = SirelineBonus.rootOf(id(60), sireOf, 5);
+        assertEquals(Optional.empty(), a);
+        assertEquals(Optional.empty(), b);
+        assertFalse(SirelineBonus.same(a, b), "two different lines that were both cut short counted as one");
+        assertFalse(SirelineBonus.same(a, a), "a cut-short line is not even the same as itself: nothing is known about its root");
     }
 
     @Test
     void unsiredPlayersShareNothing() {
-        assertEquals(id(4), SirelineBonus.rootOf(id(4), sireOf, 64));
-        assertFalse(SirelineBonus.sameLine(id(4), id(5), sireOf, 64));
+        assertEquals(Optional.of(id(4)), SirelineBonus.rootOf(id(4), sireOf, 64));
+        assertFalse(SirelineBonus.same(SirelineBonus.rootOf(id(4), sireOf, 64), SirelineBonus.rootOf(id(5), sireOf, 64)));
     }
 
     @Test
@@ -84,16 +101,16 @@ class SirelineBonusTest {
         sires.put(id(2), id(1));
         sires.put(id(3), id(1));
         sires.put(id(4), id(2));
-        assertTrue(SirelineBonus.sameLine(id(3), id(4), sireOf, 64), "an aunt and a niece share the root");
-        assertTrue(SirelineBonus.sameLine(id(2), id(3), sireOf, 64), "siblings");
-        assertTrue(SirelineBonus.sameLine(id(1), id(4), sireOf, 64), "a root and a grandchild");
+        assertTrue(SirelineBonus.same(SirelineBonus.rootOf(id(3), sireOf, 64), SirelineBonus.rootOf(id(4), sireOf, 64)), "an aunt and a niece share the root");
+        assertTrue(SirelineBonus.same(SirelineBonus.rootOf(id(2), sireOf, 64), SirelineBonus.rootOf(id(3), sireOf, 64)), "siblings");
+        assertTrue(SirelineBonus.same(SirelineBonus.rootOf(id(1), sireOf, 64), SirelineBonus.rootOf(id(4), sireOf, 64)), "a root and a grandchild");
     }
 
     @Test
     void differentRootsAreNot() {
         sires.put(id(2), id(1));
         sires.put(id(6), id(5));
-        assertFalse(SirelineBonus.sameLine(id(2), id(6), sireOf, 64));
+        assertFalse(SirelineBonus.same(SirelineBonus.rootOf(id(2), sireOf, 64), SirelineBonus.rootOf(id(6), sireOf, 64)));
     }
 
     @Test
@@ -101,7 +118,7 @@ class SirelineBonusTest {
         UUID creature = id(77);
         sires.put(id(2), creature);
         sires.put(id(3), creature);
-        assertTrue(SirelineBonus.sameLine(id(2), id(3), sireOf, 64));
-        assertEquals(creature, SirelineBonus.rootOf(id(2), sireOf, 64));
+        assertTrue(SirelineBonus.same(SirelineBonus.rootOf(id(2), sireOf, 64), SirelineBonus.rootOf(id(3), sireOf, 64)));
+        assertEquals(Optional.of(creature), SirelineBonus.rootOf(id(2), sireOf, 64));
     }
 }
