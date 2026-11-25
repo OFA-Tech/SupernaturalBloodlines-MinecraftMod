@@ -95,7 +95,7 @@ public final class GroupSwitcher {
         long now = PackIndex.now();
         Optional<UUID> existing = groups.existingGroupOf(id);
         if (derived == GroupType.COVEN && existing.map(groups::typeOf).orElse(GroupType.PACK) != GroupType.COVEN
-                && (GroupGate.shunned(leader.server, id) || packs.betasOf(id).stream().anyMatch(member -> GroupGate.shunned(leader.server, member)))) {
+                && GroupGate.bringsShunned(leader.server, id)) {
             return Optional.empty();
         }
         if (existing.isEmpty()) {

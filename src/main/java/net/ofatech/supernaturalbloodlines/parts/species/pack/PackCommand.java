@@ -320,7 +320,7 @@ public final class PackCommand {
             return GroupText.error(type, "self");
         }
         // a shunned witch, or a leader who would bring one, is refused with the one refusal everything else has: nothing says who is shunned
-        if (type == GroupType.COVEN && (GroupGate.shunned(p.server, p.getUUID()) || index.betasOf(p.getUUID()).stream().anyMatch(id -> GroupGate.shunned(p.server, id)))) {
+        if (type == GroupType.COVEN && GroupGate.bringsShunned(p.server, p.getUUID())) {
             return GroupText.error(type, "refused");
         }
         // the cap counts everybody who would be in the group afterwards: the joiner, and the members a joining leader brings

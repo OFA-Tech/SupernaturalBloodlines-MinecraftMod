@@ -40,7 +40,7 @@ public final class GroupGate {
         if (!hasMembers && !enabled(type)) {
             return Optional.of("group_off");
         }
-        if (!hasMembers && type == GroupType.COVEN && shunned(p.server, id)) {
+        if (!hasMembers && type == GroupType.COVEN && bringsShunned(p.server, id)) {
             return Optional.of("not_fit");
         }
         return GroupTypes.canFound(type, fit(p), GroupsConfig.openFounding()) ? Optional.empty() : Optional.of("not_fit");
@@ -49,6 +49,11 @@ public final class GroupGate {
     /** Whether a shunning still bars the player from every coven. */
     public static boolean shunned(net.minecraft.server.MinecraftServer server, UUID player) {
         return GroupIndex.get(server.overworld()).banUntil(net.ofatech.supernaturalbloodlines.parts.species.group.coven.CovenGovernance.SHUN_SCOPE, player) > PackIndex.now();
+    }
+
+    /** Whether the leader, or anybody they would bring into a coven, is still shunned. */
+    public static boolean bringsShunned(net.minecraft.server.MinecraftServer server, UUID leader) {
+        return shunned(server, leader) || PackIndex.get(server.overworld()).betasOf(leader).stream().anyMatch(id -> shunned(server, id));
     }
 
     /** {@link #canLead} and room for one more member. */
