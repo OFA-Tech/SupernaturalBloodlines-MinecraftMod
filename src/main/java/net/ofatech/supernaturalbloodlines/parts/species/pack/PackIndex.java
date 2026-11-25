@@ -492,7 +492,6 @@ public final class PackIndex extends SavedData {
         return Optional.ofNullable(alphaOf.get(beta));
     }
 
-    /** Every member of the pack led by {@code alpha}: Betas, Packmates and co-Alphas, in the order they joined (not the leader). */
     /** The leader first, then everybody who follows them: the whole roster of a group. */
     public List<UUID> roster(UUID leader) {
         List<UUID> out = new ArrayList<>();
@@ -501,6 +500,7 @@ public final class PackIndex extends SavedData {
         return out;
     }
 
+    /** Every member of the pack led by {@code alpha}: Betas, Packmates and co-Alphas, in the order they joined (not the leader). */
     public List<UUID> betasOf(UUID alpha) {
         List<UUID> out = new ArrayList<>();
         alphaOf.forEach((beta, a) -> {
