@@ -163,7 +163,7 @@ final class DevDemo {
     /**
      * {@code .demo.clan=<rank>:<state>}: the clan card for the demo clan. Rank {@code head}, {@code day} or {@code night}; state {@code none} (no Charter, can forge), {@code few}
      * (no Charter, cannot), {@code held}, {@code stored}, {@code dropped}, {@code lost}, {@code lostwait}, {@code pending} (a challenge waits), {@code running}, {@code may}
-     * (a Day Walker may challenge), {@code cooldown}, {@code young} (too new). Returns the rank for the group view. Development only.
+     * (a Day Walker may challenge), {@code cooldown}, {@code young} (too new), {@code loading} (no view has come yet). Returns the rank for the group view. Development only.
      */
     private static byte clan() {
         String[] spec = System.getProperty("supernaturalbloodlines.devshots.demo.clan", "head:none").split(":");
@@ -171,6 +171,10 @@ final class DevDemo {
         String state = spec.length > 1 ? spec[1] : "none";
         byte viewer = rank.equals("day") ? net.ofatech.supernaturalbloodlines.core.group.GroupView.DAY_WALKER : rank.equals("night") ? net.ofatech.supernaturalbloodlines.core.group.GroupView.MEMBER
                 : net.ofatech.supernaturalbloodlines.core.group.GroupView.LEADER;
+        if (state.equals("loading")) {
+            net.ofatech.supernaturalbloodlines.parts.supernatural.client.ClanClient.clear(); // the server has not answered yet: the cards wait
+            return viewer;
+        }
         byte charter = switch (state) {
             case "none", "few" -> net.ofatech.supernaturalbloodlines.core.group.clan.ClanView.CHARTER_NONE;
             case "stored" -> net.ofatech.supernaturalbloodlines.core.group.clan.ClanView.CHARTER_STORED;
