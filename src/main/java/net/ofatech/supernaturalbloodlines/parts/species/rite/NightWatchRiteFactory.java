@@ -130,7 +130,8 @@ public record NightWatchRiteFactory(int minCircle) implements RiteFactory {
         @Override
         protected void loadAdditional(CompoundTag tag, ServerLevel level) {
             radius = tag.getInt("radius");
-            dawn = tag.contains("dawn") ? tag.getLong("dawn") : level.getDayTime();
+            long now = level.getDayTime();
+            dawn = tag.contains("dawn") ? tag.getLong("dawn") : isNight(now) ? now - Math.floorMod(now, 24_000L) + NIGHT_END : now;
         }
     }
 }
