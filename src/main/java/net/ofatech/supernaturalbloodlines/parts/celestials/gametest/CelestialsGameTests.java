@@ -37,9 +37,8 @@ public final class CelestialsGameTests {
     @GameTest(template = "empty", templateNamespace = NS)
     public static void theRealStartUpWithoutEcLinksNothing(GameTestHelper helper) {
         if (net.neoforged.fml.ModList.get().isLoaded(CelestialsPart.EC_MOD)) {
-            // a run with -PecJars: the start-up linked the real one, and CelestialsRealEcGameTests checks what it does
+            // Other GameTests swap the live adapter; only the captured startup result is independent of test order.
             helper.assertTrue(CelestialsPart.linkedAtInit(), "Enhanced Celestials is loaded but the start-up did not link it");
-            helper.assertTrue(CelestialsPart.adapter() != null && LunarMoods.active(), "Enhanced Celestials is loaded but no adapter or no lunar source is in use");
             helper.succeed();
             return;
         }
