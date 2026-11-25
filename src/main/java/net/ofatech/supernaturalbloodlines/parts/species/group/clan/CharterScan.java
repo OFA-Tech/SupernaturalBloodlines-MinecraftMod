@@ -18,9 +18,7 @@ import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.item.ItemStack;
 import net.ofatech.supernaturalbloodlines.SupernaturalBloodlines;
 import net.ofatech.supernaturalbloodlines.core.group.clan.CharterRules;
-import net.ofatech.supernaturalbloodlines.core.group.clan.ClanTime;
 import net.ofatech.supernaturalbloodlines.core.group.clan.CharterState;
-import net.ofatech.supernaturalbloodlines.core.group.clan.ClanTime;
 import net.ofatech.supernaturalbloodlines.core.group.clan.ClanTime;
 import net.ofatech.supernaturalbloodlines.parts.species.SpeciesConfig;
 import net.ofatech.supernaturalbloodlines.parts.species.group.GroupIndex;
@@ -155,8 +153,7 @@ public final class CharterScan {
             kept.dust().forEach(s -> dust.add(e.getValue().get(s.index())));
             Found keep = e.getValue().get(kept.kept().orElseThrow().index());
             handled.add(group);
-            groups.contestOf(group).filter(GroupIndex.ContestRow::headStored).ifPresent(c ->
-                    groups.setContest(group, new GroupIndex.ContestRow(c.challenger(), c.phase(), c.openedAt(), c.acceptBy(), c.startedAt(), c.startedDayTime(), false)));
+            groups.contestOf(group).filter(GroupIndex.ContestRow::headStored).ifPresent(c -> groups.setContest(group, c.withHeadStored(false)));
             if (Charters.isMember(server, keep.player().getUUID(), group)) {
                 boolean same = row.state() == CharterState.HELD && row.holder().filter(keep.player().getUUID()::equals).isPresent() && row.entity().isEmpty();
                 long seen = same && now - row.seenAt() < STALE ? row.seenAt() : now;
@@ -174,11 +171,13 @@ public final class CharterScan {
             }
             CharterRow row = e.getValue();
             if (row.state() == CharterState.HELD && row.holder().filter(onlineIds::contains).isPresent()) {
-                if (row.holder().filter(leader::equals).isPresent()) {
-                    groups.contestOf(group).filter(c -> c.phase() == GroupIndex.ContestRow.Phase.RUNNING && !c.headStored()).ifPresent(c ->
-                            groups.setContest(group, new GroupIndex.ContestRow(c.challenger(), c.phase(), c.openedAt(), c.acceptBy(), c.startedAt(), c.startedDayTime(), true)));
-                }
-                row = new CharterRow(row.id(), Optional.empty(), CharterState.STORED, row.forgedAt(), row.seenAt(), Optional.empty(), 0);
+                // its holder is online and the scan did not see it on them: they put it away; it is the head's forfeit when the head was the holder
+                boolean byHead = row.holder().filter(leader::equals).isPresent();
+                row = new CharterRow(row.id(), Optional.empty(), CharterState.STORED, row.forgedAt(), row.seenAt(), Optional.empty(), 0, byHead);
+            }
+            if (row.state() == CharterState.STORED && row.byHead()) {
+                // pending or running, whenever the challenge came: the contest reads the forfeit from here
+                groups.contestOf(group).filter(c -> !c.headStored()).ifPresent(c -> groups.setContest(group, c.withHeadStored(true)));
             }
             if (row.state() == CharterState.HELD || row.state() == CharterState.STORED) {
                 long offlineSince = row.holder().filter(h -> !onlineIds.contains(h)).flatMap(packs::lastSeen).orElse(0L);
@@ -187,10 +186,17 @@ public final class CharterScan {
                     Charters.tellClan(server, leader, ClanText.key("charter_lost"));
                 }
             }
-            if (row.state() == CharterState.DROPPED && !entityLoaded(server, row) && now - row.seenAt() >= GroupsConfig.charterLostDays() * ClanTime.DAY) {
-                // its entity is in no loaded level and nothing has seen it for the days (a world that lost it, a jar that never knew the item): it is lost like any other
-                row = new CharterRow(row.id(), Optional.empty(), CharterState.LOST, row.forgedAt(), row.seenAt(), Optional.empty(), now);
-                Charters.tellClan(server, leader, ClanText.key("charter_lost"));
+            if (row.state() == CharterState.DROPPED) {
+                if (entityLoaded(server, row)) {
+                    // it sits in a loaded chunk: it is seen (once an hour), so a long restart does not find it stale
+                    if (now - row.seenAt() >= STALE) {
+                        row = new CharterRow(row.id(), Optional.empty(), CharterState.DROPPED, row.forgedAt(), now, row.entity(), 0);
+                    }
+                } else if (now - row.seenAt() >= GroupsConfig.charterLostDays() * ClanTime.DAY) {
+                    // its entity is in no loaded level and nothing has seen it for the days (a world that lost it, a jar that never knew the item): it is lost like any other
+                    row = new CharterRow(row.id(), Optional.empty(), CharterState.LOST, row.forgedAt(), row.seenAt(), Optional.empty(), now);
+                    Charters.tellClan(server, leader, ClanText.key("charter_lost"));
+                }
             }
             if (!row.equals(e.getValue())) {
                 writes.put(group, row);

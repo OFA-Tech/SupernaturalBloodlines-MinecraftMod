@@ -116,6 +116,11 @@ public final class PartyLink {
         }
     }
 
+    private static boolean contestLocked(MinecraftServer server, UUID leader, UUID member) {
+        net.ofatech.supernaturalbloodlines.parts.species.group.GroupIndex groups = net.ofatech.supernaturalbloodlines.parts.species.group.GroupIndex.get(server.overworld());
+        return groups.existingGroupOf(leader).filter(g -> net.ofatech.supernaturalbloodlines.parts.species.group.clan.Contests.lockRefusal(server.overworld(), g, member) != null).isPresent();
+    }
+
     /** One pass for the pack {@code member} is in. {@code rosterChanged}: somebody joined, left or was kicked just now. */
     public static void sync(MinecraftServer server, UUID member, boolean rosterChanged) {
         PartyBackend b = backend;
@@ -181,6 +186,9 @@ public final class PartyLink {
         for (UUID m : plan.leavePack()) {
             if (PackDuel.board().on(m).isPresent()) {
                 continue; // in the middle of a leadership duel nobody can leave the pack: the next pass after it takes them out
+            }
+            if (contestLocked(server, leader, m)) {
+                continue; // the challenger and the Charter holder of a Game of Kings cannot be sent away by a party kick either
             }
             index.setMirror(m, null);
             // they left the party themselves: that is leaving the pack by choice, with the kill grace of /pack leave

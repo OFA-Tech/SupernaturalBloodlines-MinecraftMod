@@ -453,6 +453,167 @@ public final class ContestGameTests {
         helper.succeed();
     }
 
+    // ---- round 2: the forfeit is read from the row, whenever the head stored it ----
+
+    @GameTest(template = "empty", templateNamespace = NS, timeoutTicks = 100)
+    public static void aCharterTheHeadStoredBeforeAnyChallengeIsStillForfeited(GameTestHelper helper) {
+        Clan c = ready(helper);
+        try {
+            headStores(helper, c);
+            helper.assertTrue(groups(helper).charterOf(group(helper, c.leader())).orElseThrow().state() == CharterState.STORED, "setup: not stored");
+            helper.assertTrue(Contests.challenge(c.a()) == null, "setup: the challenge was refused over a stored Charter");
+            helper.assertTrue(contest(helper, c.leader()).orElseThrow().headStored(), "the challenge does not know the head stored it");
+            helper.assertTrue(Contests.accept(c.leader()) == null, "setup: the accept");
+            helper.assertTrue(contest(helper, c.leader()).orElseThrow().headStored(), "the start dropped the forfeit");
+            midnight(helper);
+            helper.assertTrue(leaderOf(helper, c.b()).equals(c.a().getUUID()), "the challenger did not win a Charter stored before the challenge");
+            helper.assertTrue(c.b().received(CLAN + "contest_new_head_forfeit"), "the clan was not told it was a forfeit");
+        } finally {
+            emptyChest(helper);
+            done(helper, c.all());
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS, timeoutTicks = 100)
+    public static void aCharterTheHeadStoredDuringTheAcceptWindowIsStillForfeited(GameTestHelper helper) {
+        Clan c = ready(helper);
+        try {
+            helper.assertTrue(Contests.challenge(c.a()) == null, "setup: the challenge");
+            headStores(helper, c);
+            helper.assertTrue(contest(helper, c.leader()).orElseThrow().headStored(), "a pending contest does not know the head stored it");
+            helper.assertTrue(Contests.accept(c.leader()) == null, "setup: the accept");
+            helper.assertTrue(contest(helper, c.leader()).orElseThrow().headStored(), "the start dropped the forfeit");
+            midnight(helper);
+            helper.assertTrue(leaderOf(helper, c.b()).equals(c.a().getUUID()), "the challenger did not win a Charter stored in the accept window");
+        } finally {
+            emptyChest(helper);
+            done(helper, c.all());
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS, timeoutTicks = 100)
+    public static void aCharterTheHeadStoredAndTookBackBeforeAChallengeIsNoForfeit(GameTestHelper helper) {
+        Clan c = ready(helper);
+        try {
+            BlockPos chestPos = helper.absolutePos(new BlockPos(3, 2, 3));
+            headStores(helper, c);
+            c.leader().getInventory().add(((ChestBlockEntity) helper.getLevel().getBlockEntity(chestPos)).removeItem(0, 1));
+            CharterScan.scanNow(server(helper));
+            helper.assertTrue(Contests.challenge(c.a()) == null, "setup: the challenge");
+            helper.assertTrue(!contest(helper, c.leader()).orElseThrow().headStored(), "a Charter the head took back was read as stored");
+            helper.assertTrue(Contests.accept(c.leader()) == null, "setup: the accept");
+            midnight(helper);
+            unchanged(helper, c, "the head holds it", "leader_holds");
+        } finally {
+            emptyChest(helper);
+            done(helper, c.all());
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS, timeoutTicks = 100)
+    public static void aHeadWhoIsOfflineAtMidnightHoldingTheCharterForfeitsIt(GameTestHelper helper) {
+        Clan c = ready(helper);
+        try {
+            begin(helper, c, c.a());
+            online(c.a(), c.b());
+            CharterScan.overridePlayers(() -> List.of(c.a(), c.b()));
+            midnight(helper);
+            helper.assertTrue(leaderOf(helper, c.b()).equals(c.a().getUUID()), "an absent head kept the lead by holding the Charter");
+            helper.assertTrue(c.b().received(CLAN + "contest_new_head_forfeit"), "the clan was not told it was a forfeit");
+        } finally {
+            done(helper, c.all());
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS, timeoutTicks = 100)
+    public static void anAbsentHeadsForfeitNeedsTheChallengerOnlineAliveAndADayWalker(GameTestHelper helper) {
+        Clan c = ready(helper);
+        try {
+            begin(helper, c, c.a());
+            online(c.b());
+            CharterScan.overridePlayers(() -> List.of(c.b()));
+            midnight(helper);
+            helper.assertTrue(leaderOf(helper, c.b()).equals(c.leader().getUUID()), "the lead moved to a challenger who was away");
+            helper.assertTrue(contest(helper, c.leader()).isEmpty(), "the contest row stayed");
+            helper.assertTrue(c.b().received(CLAN + "contest_nochange.forfeit_challenger_away"), "the clan was not told why nobody changed");
+        } finally {
+            done(helper, c.all());
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS, timeoutTicks = 100)
+    public static void aPendingChallengeWhoseChallengerLeftIsVoidedAndStampsNoCooldown(GameTestHelper helper) {
+        Clan c = ready(helper);
+        try {
+            helper.assertTrue(Contests.challenge(c.a()) == null, "setup: the challenge");
+            helper.assertTrue(PackCommand.leave(c.a()) == null, "setup: the challenger could not leave");
+            CLOCK[0] += 10 * MIN;
+            Contests.tick(server(helper), DAYTIME[0]);
+            helper.assertTrue(contest(helper, c.leader()).isEmpty(), "the contest of a challenger who left stayed or started: " + contest(helper, c.leader()));
+            helper.assertTrue(groups(helper).cooldownUntil(group(helper, c.leader()), Contests.COOLDOWN_KEY) == 0, "a cooldown was stamped for a contest nobody could win");
+            helper.assertTrue(c.leader().received(CLAN + "contest_void"), "the clan was not told it was called off");
+        } finally {
+            done(helper, c.all());
+        }
+        helper.succeed();
+    }
+
+    private static final class FakeParty implements net.ofatech.supernaturalbloodlines.parts.species.pack.party.PartyBackend {
+        final java.util.Map<UUID, UUID> ids = new java.util.HashMap<>();
+        final java.util.Map<UUID, java.util.Set<UUID>> parties = new java.util.HashMap<>();
+
+        @Override
+        public Found find(MinecraftServer server, UUID owner, UUID id) {
+            return id.equals(ids.get(owner)) ? new Found(true, new net.ofatech.supernaturalbloodlines.core.bloodline.PartySyncRules.Party(owner, new java.util.HashSet<>(parties.get(owner)))) : new Found(true, null);
+        }
+
+        @Override
+        public Optional<UUID> create(MinecraftServer server, UUID owner) {
+            ids.put(owner, UUID.randomUUID());
+            parties.put(owner, new java.util.HashSet<>(java.util.Set.of(owner)));
+            return Optional.of(ids.get(owner));
+        }
+
+        @Override
+        public boolean add(MinecraftServer server, UUID owner, UUID member) {
+            parties.get(owner).add(member);
+            return true;
+        }
+
+        @Override
+        public boolean remove(MinecraftServer server, UUID owner, UUID member) {
+            parties.get(owner).remove(member);
+            return true;
+        }
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS, timeoutTicks = 100)
+    public static void aPartyOwnersKickDoesNotRemoveAContestsPeople(GameTestHelper helper) {
+        Clan c = ready(helper);
+        FakeParty fake = new FakeParty();
+        net.ofatech.supernaturalbloodlines.parts.species.pack.party.PartyLink.setBackend(fake);
+        try {
+            begin(helper, c, c.a());
+            net.ofatech.supernaturalbloodlines.parts.species.pack.party.PartyLink.sync(server(helper), c.leader().getUUID(), true);
+            helper.assertTrue(fake.parties.get(c.leader().getUUID()).containsAll(List.of(c.a().getUUID(), c.b().getUUID())), "setup: the party was not made");
+            fake.parties.get(c.leader().getUUID()).remove(c.a().getUUID());
+            net.ofatech.supernaturalbloodlines.parts.species.pack.party.PartyLink.sync(server(helper), c.leader().getUUID(), false);
+            helper.assertTrue(leaderOf(helper, c.a()).equals(c.leader().getUUID()), "the party owner's kick took the challenger out of the clan mid-contest");
+            fake.parties.get(c.leader().getUUID()).remove(c.b().getUUID());
+            net.ofatech.supernaturalbloodlines.parts.species.pack.party.PartyLink.sync(server(helper), c.leader().getUUID(), false);
+            helper.assertTrue(!leaderOf(helper, c.b()).equals(c.leader().getUUID()), "an uninvolved member who left the party stayed in the clan");
+        } finally {
+            net.ofatech.supernaturalbloodlines.parts.species.pack.party.PartyLink.setBackend(null);
+            done(helper, c.all());
+        }
+        helper.succeed();
+    }
+
     // ---- a contest cannot be cancelled by removing its two people ----
 
     private static String id(TalkingDuelist p) {

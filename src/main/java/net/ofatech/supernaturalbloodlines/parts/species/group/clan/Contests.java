@@ -17,7 +17,6 @@ import net.ofatech.supernaturalbloodlines.core.group.GroupType;
 import net.ofatech.supernaturalbloodlines.core.group.clan.CharterState;
 import net.ofatech.supernaturalbloodlines.core.group.clan.ClanTime;
 import net.ofatech.supernaturalbloodlines.core.group.clan.ContestRules;
-import net.ofatech.supernaturalbloodlines.core.group.clan.ClanTime;
 import net.ofatech.supernaturalbloodlines.parts.species.group.GroupIndex;
 import net.ofatech.supernaturalbloodlines.parts.species.group.GroupIndex.CharterRow;
 import net.ofatech.supernaturalbloodlines.parts.species.group.GroupIndex.ContestRow;
@@ -148,7 +147,8 @@ public final class Contests {
                     ? ClanText.error("challenge_cooldown", Math.max(1, (cooldown - now + ClanTime.DAY - 1) / ClanTime.DAY))
                     : ClanText.error("challenge_" + no.get().id());
         }
-        groups.setContest(clan.group(), new ContestRow(p.getUUID(), ContestRow.Phase.PENDING, now, now + GroupsConfig.contestAcceptMinutes() * 60_000L, 0, 0));
+        boolean headStored = groups.charterOf(clan.group()).filter(r -> r.state() == CharterState.STORED && r.byHead()).isPresent();
+        groups.setContest(clan.group(), new ContestRow(p.getUUID(), ContestRow.Phase.PENDING, now, now + GroupsConfig.contestAcceptMinutes() * 60_000L, 0, 0, headStored));
         tellAll(server, clan.leader(), ClanText.key("challenged"), ClanDiscipline.name(server, p.getUUID()));
         return null;
     }
@@ -174,7 +174,7 @@ public final class Contests {
     private static void start(MinecraftServer server, UUID leader, UUID group, ContestRow pending) {
         GroupIndex groups = GroupIndex.get(server.overworld());
         long now = PackIndex.now();
-        groups.setContest(group, new ContestRow(pending.challenger(), ContestRow.Phase.RUNNING, pending.openedAt(), pending.acceptBy(), now, dayTime(server), false));
+        groups.setContest(group, new ContestRow(pending.challenger(), ContestRow.Phase.RUNNING, pending.openedAt(), pending.acceptBy(), now, dayTime(server), pending.headStored()));
         groups.setCooldown(group, COOLDOWN_KEY, now + GroupsConfig.contestCooldownDays() * ClanTime.DAY);
         tellAll(server, leader, ClanText.key("contest_started"), "");
     }
@@ -219,6 +219,10 @@ public final class Contests {
                 continue;
             }
             if (row.phase() == ContestRow.Phase.PENDING) {
+                if (!Charters.isMember(server, row.challenger(), group)) {
+                    voidContest(server, leader, group); // the challenger left while it waited: nobody is left to challenge, and no cooldown is earned
+                    continue;
+                }
                 // a head who is away at the deadline is waited for: it starts at their next login, never by itself without them
                 if (ContestRules.autoStart(row.acceptBy(), now) && SireCall.player(server, leader) != null) {
                     start(server, leader, group, row);

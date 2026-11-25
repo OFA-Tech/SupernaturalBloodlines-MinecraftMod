@@ -76,12 +76,12 @@ public final class ContestRules {
 
     /**
      * An online, alive Day Walker of the clan holding the Charter in {@code HELD} leads. A Charter that is {@code STORED} because the head was its last
-     * holder is forfeited: the challenger leads when they are online, alive and a Day Walker of the clan. Anything else changes nobody.
+     * holder is forfeited: the challenger leads when they are online, alive and a Day Walker of the clan. So is a Charter the head holds while away.
+     * Anything else changes nobody.
      */
     public static Outcome resolve(Holder holder, UUID leader, Holder challenger, boolean headStored) {
         if (holder.state() == CharterState.STORED && headStored && challenger != null) {
-            boolean can = challenger.id() != null && challenger.inClan() && challenger.online() && challenger.alive() && challenger.rank() == GroupRank.DAY_WALKER;
-            return can ? Outcome.change(challenger.id(), true) : Outcome.none("forfeit_challenger_away");
+            return forfeit(challenger);
         }
         if (holder.state() != CharterState.HELD) {
             return Outcome.none("not_held");
@@ -90,7 +90,8 @@ public final class ContestRules {
             return Outcome.none("left");
         }
         if (holder.id().equals(leader)) {
-            return Outcome.none("leader_holds");
+            // a head who is away at the midnight with the Charter on them has not got it in hand: it is forfeited like a stored one
+            return holder.online() || challenger == null ? Outcome.none(holder.online() ? "leader_holds" : "offline") : forfeit(challenger);
         }
         if (!holder.online()) {
             return Outcome.none("offline");
@@ -99,6 +100,11 @@ public final class ContestRules {
             return Outcome.none("dead");
         }
         return holder.rank() == GroupRank.DAY_WALKER ? Outcome.change(holder.id(), false) : Outcome.none("not_day_walker");
+    }
+
+    private static Outcome forfeit(Holder challenger) {
+        boolean can = challenger.id() != null && challenger.inClan() && challenger.online() && challenger.alive() && challenger.rank() == GroupRank.DAY_WALKER;
+        return can ? Outcome.change(challenger.id(), true) : Outcome.none("forfeit_challenger_away");
     }
 
     /** The day time at which a contest started at {@code startedDayTime} ends: the first midnight at least {@code minMinutes} after the start. */

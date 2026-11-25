@@ -80,8 +80,14 @@ public final class GroupIndex extends SavedData {
     public record ChannelRow(int value, long at) {
     }
 
-    /** A clan's Charter as the server knows it; the item in a stack is only a token. {@code holder} and {@code entity} are empty when nobody or nothing is on record. */
-    public record CharterRow(UUID id, Optional<UUID> holder, CharterState state, long forgedAt, long seenAt, Optional<UUID> entity, long lostAt) {
+    /**
+     * A clan's Charter as the server knows it; the item in a stack is only a token. {@code holder} and {@code entity} are empty when nobody or nothing is on
+     * record. {@code byHead}: it is {@code STORED} because the clan's head was its last holder (the forfeit of a contest, whenever one comes).
+     */
+    public record CharterRow(UUID id, Optional<UUID> holder, CharterState state, long forgedAt, long seenAt, Optional<UUID> entity, long lostAt, boolean byHead) {
+        public CharterRow(UUID id, Optional<UUID> holder, CharterState state, long forgedAt, long seenAt, Optional<UUID> entity, long lostAt) {
+            this(id, holder, state, forgedAt, seenAt, entity, lostAt, false);
+        }
     }
 
     /** The clan's one contest: a challenge waiting for the leader, or the Game of Kings running until its midnight. */
@@ -90,6 +96,10 @@ public final class GroupIndex extends SavedData {
 
         public ContestRow(UUID challenger, Phase phase, long openedAt, long acceptBy, long startedAt, long startedDayTime) {
             this(challenger, phase, openedAt, acceptBy, startedAt, startedDayTime, false);
+        }
+
+        public ContestRow withHeadStored(boolean stored) {
+            return new ContestRow(challenger, phase, openedAt, acceptBy, startedAt, startedDayTime, stored);
         }
     }
 
@@ -587,7 +597,7 @@ public final class GroupIndex extends SavedData {
                     throw new IllegalArgumentException("a charter row with no state");
                 }
                 i.charters.put(group, new CharterRow(NbtUtils.loadUUID(e.get("id")), e.contains("holder") ? Optional.of(NbtUtils.loadUUID(e.get("holder"))) : Optional.empty(),
-                        state, e.getLong("forged_at"), e.getLong("seen_at"), e.contains("entity") ? Optional.of(NbtUtils.loadUUID(e.get("entity"))) : Optional.empty(), e.getLong("lost_at")));
+                        state, e.getLong("forged_at"), e.getLong("seen_at"), e.contains("entity") ? Optional.of(NbtUtils.loadUUID(e.get("entity"))) : Optional.empty(), e.getLong("lost_at"), e.getBoolean("by_head")));
             } catch (RuntimeException bad) {
                 net.ofatech.supernaturalbloodlines.SupernaturalBloodlines.LOGGER.warn("The group index skipped a damaged charter row: {}", bad.toString());
             }
@@ -737,6 +747,9 @@ public final class GroupIndex extends SavedData {
             e.putLong("seen_at", c.seenAt());
             c.entity().ifPresent(en -> e.put("entity", NbtUtils.createUUID(en)));
             e.putLong("lost_at", c.lostAt());
+            if (c.byHead()) {
+                e.putBoolean("by_head", true);
+            }
             charterList.add(e);
         });
         tag.put(CHARTERS, charterList);
