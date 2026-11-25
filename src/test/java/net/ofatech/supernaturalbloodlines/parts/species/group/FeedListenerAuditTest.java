@@ -21,6 +21,7 @@ class FeedListenerAuditTest {
     static final String NEEDS_GUARD = "needs the SharedFeed guard";
     static final String NOT_A_RULE = "not a feed rule";
     static final String DRINKER_RULE = "acts on the drinker, wanted on a share";
+    static final String MAKES_SHARE = "makes the share, inside SharedFeed.run";
 
     /** File name -> what it does to a drink with no living source. */
     static final Map<String, String> LISTENERS = Map.ofEntries(
@@ -32,7 +33,8 @@ class FeedListenerAuditTest {
             Map.entry("TurningHandler.java", IGNORES_EMPTY),
             Map.entry("GhoulGates.java", IGNORES_EMPTY),
             Map.entry("AugustineRules.java", NEEDS_GUARD),
-            Map.entry("TensuraFeed.java", NOT_A_RULE));
+            Map.entry("TensuraFeed.java", NOT_A_RULE),
+            Map.entry("SharedFeeding.java", MAKES_SHARE));
 
     private static Path projectRoot() {
         Path base = Path.of("").toAbsolutePath();
@@ -81,8 +83,21 @@ class FeedListenerAuditTest {
     @Test
     void everyEntryIsOneOfTheKnownAnswers() {
         for (Map.Entry<String, String> e : LISTENERS.entrySet()) {
-            assertTrue(List.of(IGNORES_EMPTY, NEEDS_GUARD, NOT_A_RULE, DRINKER_RULE).contains(e.getValue()), e.getKey() + " has the answer '" + e.getValue() + "'");
+            assertTrue(List.of(IGNORES_EMPTY, NEEDS_GUARD, NOT_A_RULE, DRINKER_RULE, MAKES_SHARE).contains(e.getValue()), e.getKey() + " has the answer '" + e.getValue() + "'");
         }
+    }
+
+    @Test
+    void everyListenerThatNeedsTheGuardReadsIt() throws Exception {
+        Map<String, Path> found = mentions();
+        List<String> bad = new ArrayList<>();
+        for (Map.Entry<String, String> e : LISTENERS.entrySet()) {
+            if (NEEDS_GUARD.equals(e.getValue()) && !Files.readString(found.get(e.getKey())).contains("SharedFeed.active()")) {
+                bad.add(e.getKey());
+            }
+        }
+        assertEquals(List.of(), bad, "listed as needing the SharedFeed guard but it never calls SharedFeed.active()");
+        assertTrue(Files.readString(found.get("SharedFeeding.java")).contains("SharedFeed.run("), "the share is not made inside SharedFeed.run");
     }
 
     @Test

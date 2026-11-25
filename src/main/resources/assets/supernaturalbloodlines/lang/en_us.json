@@ -2376,6 +2376,7 @@
   "supernaturalbloodlines.hub.admin.key.supernaturalbloodlines-groups.toml:feed_share_cap_per_minute": "The most blood a clanmate gets from shares in a minute",
   "supernaturalbloodlines.hub.admin.key.supernaturalbloodlines-groups.toml:sireline_bonus_percent": "Attack damage percent for each clanmate of your sireline nearby (0 = off)",
   "supernaturalbloodlines.hub.admin.key.supernaturalbloodlines-groups.toml:sireline_bonus_max_percent": "The most the sire-line bonus adds, in percent",
+  "supernaturalbloodlines.clan.shared_feed": "Warmth of a clanmate's feed reaches you.",
   "supernaturalbloodlines.clan.challenged": "%s challenges the head of the clan for the Charter.",
   "supernaturalbloodlines.clan.contest_started": "The Game of Kings has begun. At midnight, the Day Walker who holds the Charter leads the clan.",
   "supernaturalbloodlines.clan.contest_void": "The Game of Kings is called off. Nobody wins it.",

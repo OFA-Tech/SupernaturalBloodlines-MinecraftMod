@@ -92,6 +92,9 @@ public final class AugustineRules {
     }
 
     private static void noteVictimBlood(BloodDrinkEvent.PlayerDrinkBloodEvent e) {
+        if (net.ofatech.supernaturalbloodlines.shared.supernatural.SharedFeed.active()) {
+            return;
+        }
         if (e.getVampire().getRepresentingEntity() instanceof ServerPlayer p && isAugustine(p)
                 && e.getBloodSource().getEntity().orElse(null) instanceof ServerPlayer victim && victim != p
                 && VampirismAPI.factionRegistry().getFaction(victim) == VReference.VAMPIRE_FACTION) {
@@ -101,6 +104,9 @@ public final class AugustineRules {
 
     private static void onDrinkBlood(BloodDrinkEvent.PlayerDrinkBloodEvent e) {
         Integer victimBefore = VICTIM_BEFORE.remove(e);
+        if (net.ofatech.supernaturalbloodlines.shared.supernatural.SharedFeed.active()) {
+            return;
+        }
         if (!(e.getVampire().getRepresentingEntity() instanceof ServerPlayer p) || !isAugustine(p)) {
             return;
         }

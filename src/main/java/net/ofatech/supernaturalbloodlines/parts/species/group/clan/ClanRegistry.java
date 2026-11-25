@@ -28,5 +28,6 @@ public final class ClanRegistry {
         });
         CharterGuard.register();
         Contests.register();
+        SharedFeeding.register();
     }
 }
