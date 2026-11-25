@@ -53,6 +53,47 @@ class ClanUiHonestyTest {
     }
 
     @Test
+    void theRingAsDrawnMeetsThreeToOneEvenAtItsOwnOpacity() {
+        int[] papers = {new GrimoireTheme().paper(), new TensuraHubTheme().paper(), LineColors.MOON_SKY_TOP, LineColors.MOON_SKY_BOTTOM};
+        for (PackRing.Role role : PackRing.Role.values()) {
+            for (int paper : papers) {
+                int drawn = BookPackPage.ringColor(role.color(), role.alpha(), paper);
+                assertEquals(0xFF, drawn >>> 24, "the ring is drawn opaque, its faintness is folded into the colour");
+                assertTrue(Contrast.ratio(drawn, paper) >= 3.0, role + " drawn " + Integer.toHexString(drawn) + " on " + Integer.toHexString(paper) + ": " + Contrast.ratio(drawn, paper));
+            }
+        }
+        // the faint subordinate is still fainter than a full ring where the paper allows it
+        int paper = new TensuraHubTheme().paper();
+        assertTrue(Contrast.ratio(BookPackPage.ringColor(PackRing.Role.SUBORDINATE.color(), 0.5f, paper), paper) <= Contrast.ratio(BookPackPage.ringColor(PackRing.Role.SUBORDINATE.color(), 1f, paper), paper));
+    }
+
+    @Test
+    void theCardsRenderTheLoadingLineAndEachDisabledButtonsReason() throws Exception {
+        java.nio.file.Path at = java.nio.file.Path.of("").toAbsolutePath();
+        while (!java.nio.file.Files.isDirectory(at.resolve("src/main/java"))) {
+            at = at.getParent();
+        }
+        String cards = java.nio.file.Files.readString(at.resolve("src/main/java/net/ofatech/supernaturalbloodlines/parts/supernatural/client/hub/page/ClanCards.java"));
+        int render = cards.indexOf("static int render(");
+        assertTrue(render > 0, "ClanCards.render moved");
+        String body = cards.substring(render);
+        assertTrue(body.contains("if (loading(ClanClient.view()))"), "render no longer waits while the view has not come");
+        assertTrue(body.contains("reasonLine(b)") && body.contains("PageKit.wrapped(f, Component.translatable(reason.get()), r.x(), y + 1, r.w(), t.muted())"), "render no longer says why a button is grey, as a muted line on the page");
+        assertTrue(body.contains("b.row()"), "render no longer places a button by its own row");
+    }
+
+    @Test
+    void theRingIsDrawnFromItsOwnContrastCheckedColour() throws Exception {
+        java.nio.file.Path at = java.nio.file.Path.of("").toAbsolutePath();
+        while (!java.nio.file.Files.isDirectory(at.resolve("src/main/java"))) {
+            at = at.getParent();
+        }
+        String page = java.nio.file.Files.readString(at.resolve("src/main/java/net/ofatech/supernaturalbloodlines/parts/supernatural/client/hub/page/BookPackPage.java"));
+        assertTrue(page.contains("ringColor(slot.member().role().color(), slot.alpha(), ringBackground(t))"), "the portrait ring is the checked colour at its own opacity");
+        assertFalse(page.contains("<< 24)"), "no alpha is put on a ring after the contrast was checked");
+    }
+
+    @Test
     void aThemedTitleNeedsTheRoomOfItsFont() throws Exception {
         java.nio.file.Path at = java.nio.file.Path.of("").toAbsolutePath();
         while (!java.nio.file.Files.isDirectory(at.resolve("src/main/java"))) {

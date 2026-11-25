@@ -450,7 +450,13 @@ public final class BookPackPage implements HubPageView {
 
     /** A rank ring's colour, opaque, and at least 3:1 against what it is drawn on (the Grimoire's paper, the Blood Moon's sky). */
     static int ringColor(int roleColor, int background) {
-        return LineColors.atLeast(0xFF000000 | (roleColor & 0xFFFFFF), 0xFF000000 | (background & 0xFFFFFF), LineColors.MIN_RATIO);
+        return ringColor(roleColor, 1f, background);
+    }
+
+    /** The ring as it is drawn: the faintness of a role is folded into the colour first (over the background), and that colour is what must be 3:1. */
+    static int ringColor(int roleColor, float alpha, int background) {
+        int bg = 0xFF000000 | (background & 0xFFFFFF);
+        return LineColors.atLeast(LineColors.over(roleColor, alpha, bg), bg, LineColors.MIN_RATIO);
     }
 
     private int ringBackground(HubTheme t) {
@@ -564,7 +570,7 @@ public final class BookPackPage implements HubPageView {
         int named_i = 0;
         for (PackRing.Slot slot : ring.slots()) {
             int size = slot.size();
-            int color = (ringColor(slot.member().role().color(), ringBackground(t)) & 0xFFFFFF) | ((int) (slot.alpha() * 255) << 24);
+            int color = ringColor(slot.member().role().color(), slot.alpha(), ringBackground(t));
             BookKit.portrait(f.g, slot.member().id(), slot.x(), slot.y(), size, color, t.paper());
             if (named) {
                 Rect at = where.get(named_i++);
