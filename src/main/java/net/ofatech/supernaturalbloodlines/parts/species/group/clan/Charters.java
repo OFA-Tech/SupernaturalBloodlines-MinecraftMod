@@ -14,6 +14,7 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.ofatech.supernaturalbloodlines.core.group.clan.CharterCost;
 import net.ofatech.supernaturalbloodlines.core.group.clan.CharterRules;
+import net.ofatech.supernaturalbloodlines.core.group.clan.ClanTime;
 import net.ofatech.supernaturalbloodlines.core.group.clan.CharterState;
 import net.ofatech.supernaturalbloodlines.parts.species.SpeciesRegistries;
 import net.ofatech.supernaturalbloodlines.parts.species.group.GroupIndex;
@@ -189,7 +190,9 @@ public final class Charters {
         }
         Optional<String> refusal = CharterRules.mayReforge(row.get().state(), row.get().lostAt(), PackIndex.now());
         if (refusal.isPresent()) {
-            return ClanText.error(code(refusal.get()));
+            return "reforge_wait".equals(refusal.get())
+                    ? ClanText.error(code(refusal.get()), ClanTime.span(CharterRules.REFORGE_WAIT - (PackIndex.now() - row.get().lostAt())))
+                    : ClanText.error(code(refusal.get()));
         }
         List<CharterCost.Entry> cost = GroupsConfig.charterForgeCost();
         if (!has(p, cost)) {

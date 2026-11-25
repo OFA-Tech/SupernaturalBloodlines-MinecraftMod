@@ -30,9 +30,10 @@ public record ClanView(boolean inClan, int daysInClan, int autoPromoteDaysLeft, 
     }
 
     /**
+     * @param waitDaysLeft the days until what stops the viewer is over: the contest cooldown, or (for a viewer not long enough in the clan) the days still to wait
      * @param challengeWhy 0 when the viewer may challenge, else why not: the {@code ContestRules.Refusal} ordinal plus one
      */
-    public record Contest(byte phase, String challengerName, int secondsLeft, int cooldownDaysLeft, boolean iMayChallenge, int challengeWhy, boolean iMustAccept) {
+    public record Contest(byte phase, String challengerName, int secondsLeft, int waitDaysLeft, boolean iMayChallenge, int challengeWhy, boolean iMustAccept) {
         public static final Contest NONE = new Contest(CONTEST_NONE, "", 0, 0, false, 0, false);
 
         public Contest {

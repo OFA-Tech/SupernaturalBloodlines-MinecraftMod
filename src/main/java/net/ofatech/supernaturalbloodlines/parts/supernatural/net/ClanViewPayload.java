@@ -65,7 +65,7 @@ public record ClanViewPayload(ClanView view) implements CustomPacketPayload {
             put(buf, v.contest().phase());
             NAME.encode(buf, v.contest().challengerName());
             put(buf, v.contest().secondsLeft());
-            put(buf, v.contest().cooldownDaysLeft());
+            put(buf, v.contest().waitDaysLeft());
             buf.writeBoolean(v.contest().iMayChallenge());
             put(buf, v.contest().challengeWhy());
             buf.writeBoolean(v.contest().iMustAccept());

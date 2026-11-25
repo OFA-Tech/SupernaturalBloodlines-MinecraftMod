@@ -6,10 +6,14 @@ public final class ExileRules {
     private ExileRules() {
     }
 
-    /** "7 days, until 2026-12-01 14:03 UTC" (UTC, so the line is the same wherever it is read; one day is "1 day"). */
-    public static String words(int days, long untilMillis) {
-        String when = java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm").withZone(java.time.ZoneOffset.UTC).format(java.time.Instant.ofEpochMilli(untilMillis));
-        return days + (days == 1 ? " day" : " days") + ", until " + when + " UTC";
+    /** "2026-12-01 14:03 UTC": UTC, so the line is the same wherever it is read. The days are a number of their own, said by the lang file. */
+    public static String untilText(long untilMillis) {
+        return java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm").withZone(java.time.ZoneOffset.UTC).format(java.time.Instant.ofEpochMilli(untilMillis)) + " UTC";
+    }
+
+    /** Whole days a ban still lasts, a started day counting as a day; 0 when it is over. */
+    public static int daysLeft(long untilMillis, long nowMillis) {
+        return untilMillis <= nowMillis ? 0 : (int) Math.min(Integer.MAX_VALUE, (untilMillis - nowMillis + ClanTime.DAY - 1) / ClanTime.DAY);
     }
 
     public static long until(long nowMillis, int days) {

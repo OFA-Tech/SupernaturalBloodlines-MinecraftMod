@@ -251,7 +251,9 @@ public final class PackCommand {
         UUID blocker = ownGroup == null ? null : GroupGate.exiledAmong(alpha.server, target.getUUID(), ownGroup).orElse(null);
         if (blocker != null) {
             String blockerName = net.ofatech.supernaturalbloodlines.parts.species.group.clan.ClanDiscipline.name(alpha.server, blocker);
-            return blocker.equals(target.getUUID()) ? net.ofatech.supernaturalbloodlines.parts.species.group.clan.ClanText.error("exiled_still", name(target))
+            int left = net.ofatech.supernaturalbloodlines.core.group.clan.ExileRules.daysLeft(GroupIndex.get(alpha.serverLevel()).banUntil(ownGroup.toString(), blocker), PackIndex.now());
+            return blocker.equals(target.getUUID()) ? (left == 1 ? net.ofatech.supernaturalbloodlines.parts.species.group.clan.ClanText.error("exiled_still.one", name(target))
+                    : net.ofatech.supernaturalbloodlines.parts.species.group.clan.ClanText.error("exiled_still", name(target), left))
                     : net.ofatech.supernaturalbloodlines.parts.species.group.clan.ClanText.error("exiled_brings", name(target), blockerName);
         }
         long now = alpha.serverLevel().getGameTime();

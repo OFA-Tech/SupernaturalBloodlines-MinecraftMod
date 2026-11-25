@@ -10,15 +10,10 @@ import net.ofatech.supernaturalbloodlines.core.group.GroupType;
 import net.ofatech.supernaturalbloodlines.core.group.clan.CharterRules;
 import net.ofatech.supernaturalbloodlines.core.group.clan.ClanTime;
 import net.ofatech.supernaturalbloodlines.core.group.clan.CharterState;
-import net.ofatech.supernaturalbloodlines.core.group.clan.ClanTime;
 import net.ofatech.supernaturalbloodlines.core.group.clan.ClanView;
-import net.ofatech.supernaturalbloodlines.core.group.clan.ClanTime;
 import net.ofatech.supernaturalbloodlines.core.group.clan.ClanWire;
-import net.ofatech.supernaturalbloodlines.core.group.clan.ClanTime;
 import net.ofatech.supernaturalbloodlines.core.group.clan.ContestRules;
-import net.ofatech.supernaturalbloodlines.core.group.clan.ClanTime;
 import net.ofatech.supernaturalbloodlines.core.group.clan.SirelineBonus;
-import net.ofatech.supernaturalbloodlines.core.group.clan.ClanTime;
 import net.ofatech.supernaturalbloodlines.parts.species.group.GroupIndex;
 import net.ofatech.supernaturalbloodlines.parts.species.group.GroupIndex.CharterRow;
 import net.ofatech.supernaturalbloodlines.parts.species.group.GroupIndex.ContestRow;
@@ -106,7 +101,9 @@ public final class ClanViews {
                         nameIfMember(p, clan.group(), cr.challenger()), clampSeconds(left), cooldownDays, false, 0, head && cr.phase() == ContestRow.Phase.PENDING);
             } else if (!head && dayWalker) {
                 Optional<ContestRules.Refusal> no = Contests.refusalFor(level, p.getUUID());
-                contest = new ClanView.Contest(ClanView.CONTEST_NONE, "", 0, cooldownDays, no.isEmpty(), ContestRules.Refusal.wire(no), false);
+                // what keeps the viewer out lasts as long as it says: the cooldown, or the days still to be in the clan before they may challenge
+                int wait = no.filter(r -> r == ContestRules.Refusal.TOO_NEW).isPresent() ? clampDays(Math.max(1, GroupsConfig.challengerMinDays() - days)) : cooldownDays;
+                contest = new ClanView.Contest(ClanView.CONTEST_NONE, "", 0, wait, no.isEmpty(), ContestRules.Refusal.wire(no), false);
             } else {
                 contest = new ClanView.Contest(ClanView.CONTEST_NONE, "", 0, cooldownDays, false, 0, false);
             }

@@ -2,6 +2,7 @@ package net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import net.ofatech.supernaturalbloodlines.core.group.GroupView;
 import net.ofatech.supernaturalbloodlines.core.group.clan.ClanView;
 import net.ofatech.supernaturalbloodlines.core.group.clan.ContestRules;
@@ -47,6 +48,11 @@ public final class ClanPlan {
             case GroupView.DAY_WALKER -> "rank.day_walker";
             default -> "rank.night_walker";
         };
+    }
+
+    /** A wait in a unit: "45 s", "12 min", "5 h" (the countdown of an answer window is {@link #clock}). */
+    public static String wait(int seconds) {
+        return net.ofatech.supernaturalbloodlines.core.group.clan.ClanTime.span(seconds * 1000L);
     }
 
     public static String clock(int seconds) {
@@ -95,7 +101,7 @@ public final class ClanPlan {
         if (head && c.state() == ClanView.CHARTER_LOST) {
             boolean ready = c.reforgeSecondsLeft() <= 0;
             if (!ready) {
-                lines.add(line(Tone.MUTED, "charter.reforge_wait", clock(c.reforgeSecondsLeft())));
+                lines.add(line(Tone.MUTED, "charter.reforge_wait", wait(c.reforgeSecondsLeft())));
             }
             buttons.add(new Button("clan:charter_reforge", "C17", "charter_reforge", "charter_reforge.what", ready, true, ready ? "" : "charter_reforge.wait", List.of()));
         }
@@ -112,11 +118,14 @@ public final class ClanPlan {
             } else if (viewerRank == GroupView.DAY_WALKER) {
                 String why = k.iMayChallenge() ? "" : ContestRules.Refusal.fromWire(k.challengeWhy()).map(r -> "why." + r.id()).orElse("why.unknown");
                 buttons.add(new Button("pack:challenge", "C11", "challenge", "challenge.what", k.iMayChallenge(), true, why, List.of()));
-                if (!k.iMayChallenge() && ContestRules.Refusal.fromWire(k.challengeWhy()).filter(r -> r == ContestRules.Refusal.COOLDOWN).isPresent()) {
-                    lines.add(counted(Tone.MUTED, "contest.cooldown", k.cooldownDaysLeft(), k.cooldownDaysLeft()));
+                Optional<ContestRules.Refusal> refusal = k.iMayChallenge() ? Optional.empty() : ContestRules.Refusal.fromWire(k.challengeWhy());
+                if (refusal.filter(r -> r == ContestRules.Refusal.COOLDOWN).isPresent()) {
+                    lines.add(counted(Tone.MUTED, "contest.cooldown", k.waitDaysLeft(), k.waitDaysLeft()));
+                } else if (refusal.filter(r -> r == ContestRules.Refusal.TOO_NEW).isPresent() && k.waitDaysLeft() > 0) {
+                    lines.add(counted(Tone.MUTED, "contest.too_new", k.waitDaysLeft(), k.waitDaysLeft()));
                 }
-            } else if (k.cooldownDaysLeft() > 0) {
-                lines.add(counted(Tone.MUTED, "contest.cooldown", k.cooldownDaysLeft(), k.cooldownDaysLeft()));
+            } else if (k.waitDaysLeft() > 0) {
+                lines.add(counted(Tone.MUTED, "contest.cooldown", k.waitDaysLeft(), k.waitDaysLeft()));
             }
         }
 

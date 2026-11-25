@@ -20,7 +20,7 @@ class ClanTextTest {
                 "charter.held", "charter.held_mate", "charter.stored", "charter.dropped", "charter.lost", "charter.inert", "charter.reforge_wait", "charter_forge", "charter_forge.what",
                 "charter_forge.few", "charter_reforge", "charter_reforge.what", "charter_reforge.wait", "contest.pending", "contest.pending_anon", "contest.pending_left", "contest.running",
                 "contest.cooldown", "challenge", "challenge.what", "accept", "accept.what", "feed", "line", "line_none", "member_title", "promote", "promote.what", "demote", "demote.what",
-                "exile", "exile.what", "exile.body", "you.one", "to_day_walker.one", "contest.cooldown.one")) {
+                "exile", "exile.what", "exile.body", "you.one", "to_day_walker.one", "contest.cooldown.one", "contest.too_new", "contest.too_new.one")) {
             k.add(H + s);
         }
         for (ContestRules.Refusal r : ContestRules.Refusal.values()) {
@@ -31,7 +31,7 @@ class ClanTextTest {
                 "charter_dust", "charter_replaced", "charter_lost", "challenged", "contest_started", "contest_void", "contest_cooldown", "contest_cooldown.one", "contest_nochange.not_held", "contest_nochange.left", "contest_nochange.leader_holds", "contest_nochange.offline", "contest_nochange.dead", "contest_nochange.not_day_walker", "contest_nochange.forfeit_challenger_away", "contest_new_head_forfeit", "contest_new_head", "err.leader_only",
                 "err.leader_target", "err.not_member", "err.already_day_walker", "err.not_day_walker", "err.exiled_still", "err.charter_off", "err.charter_too_few", "err.charter_already",
                 "err.charter_use_reforge", "err.charter_not_lost", "err.charter_reforge_wait", "err.charter_none", "err.charter_cost", "err.challenge_leader", "err.challenge_cooldown",
-                "err.challenge_none", "err.no_decline", "err.contest_running", "err.cannot_promote", "exiled_until", "err.exiled_brings")) {
+                "err.challenge_none", "err.no_decline", "err.contest_running", "err.cannot_promote", "exiled_until", "exiled_for", "exiled_for.one", "exiled_ok", "exiled_ok.one", "err.exiled_still", "err.exiled_still.one", "err.exiled_brings")) {
             k.add(C + s);
         }
         k.add("item.supernaturalbloodlines.clan_charter");

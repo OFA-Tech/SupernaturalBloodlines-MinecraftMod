@@ -98,7 +98,7 @@ class ClanViewWireTest {
         assertEquals(List.of("ClanView.inClan:boolean", "ClanView.daysInClan:int", "ClanView.autoPromoteDaysLeft:int", "ClanView.charter:Charter", "ClanView.contest:Contest",
                 "ClanView.feedOn:boolean", "ClanView.feedPercent:int", "ClanView.bonusPercent:int",
                 "Charter.state:byte", "Charter.holderName:String", "Charter.mine:boolean", "Charter.forgeable:boolean", "Charter.reforgeSecondsLeft:int",
-                "Contest.phase:byte", "Contest.challengerName:String", "Contest.secondsLeft:int", "Contest.cooldownDaysLeft:int", "Contest.iMayChallenge:boolean",
+                "Contest.phase:byte", "Contest.challengerName:String", "Contest.secondsLeft:int", "Contest.waitDaysLeft:int", "Contest.iMayChallenge:boolean",
                 "Contest.challengeWhy:int", "Contest.iMustAccept:boolean"), seen);
     }
 

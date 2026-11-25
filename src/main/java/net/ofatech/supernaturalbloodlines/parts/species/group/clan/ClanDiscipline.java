@@ -186,8 +186,11 @@ public final class ClanDiscipline {
         }
         long until = ExileRules.until(PackIndex.now(), GroupsConfig.exileDays());
         c.groups().ban(c.clan().group().toString(), target, until);
-        PackMembers.tell(c.server(), target, ClanText.key("exiled_until"), ExileRules.words(GroupsConfig.exileDays(), until));
-        p.sendSystemMessage(ClanText.of("exiled_ok", targetName, ExileRules.words(GroupsConfig.exileDays(), until)));
+        int days = GroupsConfig.exileDays();
+        String end = ExileRules.untilText(until);
+        PackMembers.tell(c.server(), target, ClanText.key(days == 1 ? "exiled_for.one" : "exiled_for"), String.valueOf(days));
+        PackMembers.tell(c.server(), target, ClanText.key("exiled_until"), end);
+        p.sendSystemMessage(days == 1 ? ClanText.of("exiled_ok.one", targetName, end) : ClanText.of("exiled_ok", targetName, days, end));
         PartyLink.sync(c.server(), p.getUUID(), true);
         HubRequests.changed(p);
         return null;

@@ -438,7 +438,9 @@ public final class ClanRankGameTests {
         Clan c = clan(helper);
         try {
             ClanDiscipline.exile(c.leader(), name(c.a()));
-            said(helper, PackCommand.invite(c.leader(), c.a()), ERR + "exiled_still", "the invite was not refused with the leader's own line");
+            Component still = PackCommand.invite(c.leader(), c.a());
+            said(helper, still, ERR + "exiled_still", "the invite was not refused with the leader's own line");
+            helper.assertTrue("7".equals(((net.minecraft.network.chat.contents.TranslatableContents) still.getContents()).getArgs()[1].toString()), "the refusal does not say how many days are left: " + still);
             helper.assertTrue(PackCommand.requests().latestFor(c.a().getUUID(), helper.getLevel().getGameTime()).isEmpty(), "an invitation was sent anyway");
         } finally {
             clean(helper, c.all());
@@ -544,13 +546,16 @@ public final class ClanRankGameTests {
         Clan c = clan(helper);
         try {
             helper.assertTrue(ClanDiscipline.exile(c.leader(), name(c.a())) == null, "refused");
+            Component days = c.a().message(CLAN + "exiled_for");
             Component told = c.a().message(CLAN + "exiled_until");
-            helper.assertTrue(told != null, "the exiled player was not told the days and the end");
+            helper.assertTrue(days != null && told != null, "the exiled player was not told the days and the end");
+            helper.assertTrue("7".equals(((net.minecraft.network.chat.contents.TranslatableContents) days.getContents()).getArgs()[0].toString()), "the days are their own argument: " + days);
             String arg = ((net.minecraft.network.chat.contents.TranslatableContents) told.getContents()).getArgs()[0].toString();
-            helper.assertTrue(arg.contains("7 days") && arg.contains(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd").withZone(java.time.ZoneOffset.UTC).format(java.time.Instant.ofEpochMilli(now[0] + 7 * DAY))), "the line is " + arg);
+            helper.assertTrue(arg.contains(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd").withZone(java.time.ZoneOffset.UTC).format(java.time.Instant.ofEpochMilli(now[0] + 7 * DAY))) && arg.endsWith("UTC"), "the end is " + arg);
             GroupsConfig.override("exile_days", 1);
             helper.assertTrue(ClanDiscipline.exile(c.leader(), name(c.b())) == null, "the second exile was refused");
-            helper.assertTrue(((net.minecraft.network.chat.contents.TranslatableContents) c.b().message(CLAN + "exiled_until").getContents()).getArgs()[0].toString().startsWith("1 day,"), "one day is not said as one day");
+            helper.assertTrue(c.b().message(CLAN + "exiled_for.one") != null && c.b().message(CLAN + "exiled_for") == null, "one day is not said as one day");
+            helper.assertTrue(c.leader().message(CLAN + "exiled_ok.one") != null, "the head was not told in the singular");
         } finally {
             clean(helper, c.all());
         }

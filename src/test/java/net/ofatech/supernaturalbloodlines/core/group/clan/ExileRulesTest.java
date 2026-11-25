@@ -33,8 +33,14 @@ class ExileRulesTest {
     }
 
     @Test
-    void theWordsSayTheDaysAndTheEndInUtc() {
-        assertEquals("7 days, until 1970-01-08 00:00 UTC", ExileRules.words(7, 7 * DAY));
-        assertEquals("1 day, until 1970-01-02 00:00 UTC", ExileRules.words(1, DAY));
+    void theEndIsSaidInUtcAndTheDaysAreTheirOwnNumber() {
+        assertEquals("1970-01-08 00:00 UTC", ExileRules.untilText(7 * DAY));
+        assertEquals("1970-01-02 00:00 UTC", ExileRules.untilText(DAY));
+        assertEquals(1, ExileRules.daysLeft(DAY, 0), "a whole day is one day");
+        assertEquals(1, ExileRules.daysLeft(1, 0), "a started day is a day");
+        assertEquals(7, ExileRules.daysLeft(7 * DAY, 0));
+        assertEquals(7, ExileRules.daysLeft(7 * DAY, 1), "a day is not lost to a millisecond");
+        assertEquals(0, ExileRules.daysLeft(5, 5), "over is zero days");
+        assertEquals(0, ExileRules.daysLeft(5, 50));
     }
 }
