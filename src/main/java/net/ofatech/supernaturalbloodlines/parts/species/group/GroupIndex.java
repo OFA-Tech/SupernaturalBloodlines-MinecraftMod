@@ -44,7 +44,10 @@ public final class GroupIndex extends SavedData {
     private static final String COOLDOWNS = "cooldowns";
     private static final String CHARTERS = "charters";
     private static final String CONTESTS = "contests";
-    private static final Set<String> KNOWN = Set.of(VERSION, IDS, TYPES, TYPE_SINCE, RANKS, CHANNEL, CONSENT, VOTES, BANS, COOLDOWNS, CHARTERS, CONTESTS);
+    private static final String MARKS = "marks";
+    private static final String CURSES = "curses";
+    private static final String BREAKERS = "code_breakers";
+    private static final Set<String> KNOWN = Set.of(VERSION, IDS, TYPES, TYPE_SINCE, RANKS, CHANNEL, CONSENT, VOTES, BANS, COOLDOWNS, CHARTERS, CONTESTS, MARKS, CURSES, BREAKERS);
     private static final String KEY = "key";
     private static final String VALUE = "value";
     private static final String TYPE = "type";
@@ -69,12 +72,23 @@ public final class GroupIndex extends SavedData {
     private final Map<UUID, CharterRow> charters = new HashMap<>();
     // group -> its open challenge or running contest (plan 20c)
     private final Map<UUID, ContestRow> contests = new HashMap<>();
+    // player rows of the brotherhood (plan 20d), not group rows: they outlive a lead change, a dissolved group and a type switch
+    private final Map<UUID, Integer> marks = new HashMap<>();
+    private final Map<UUID, Long> curses = new HashMap<>();
+    private final Map<UUID, BreakerRow> breakers = new HashMap<>();
     private CompoundTag extras = new CompoundTag();
     private int dataVersion;
 
     private static volatile GroupIndex live;
     private static volatile PackIndex livePacks;
     private static boolean registered;
+
+    /** A Code-breaker until {@code until} (wall-clock millis), with the wall-clock stamps of the breaks that still count towards an expulsion. */
+    public record BreakerRow(long until, List<Long> strikes) {
+        public BreakerRow {
+            strikes = List.copyOf(strikes);
+        }
+    }
 
     /** What the channel meter held at {@code at} (wall-clock millis); it refills lazily from there ({@code ChannelMeter.valueAt}). */
     public record ChannelRow(int value, long at) {
@@ -372,6 +386,91 @@ public final class GroupIndex extends SavedData {
         return m == null ? 0 : m.getOrDefault(player, 0L);
     }
 
+    /** The last recorded mark of a member (0 to 20), empty when none was recorded. */
+    public java.util.OptionalInt markOf(UUID member) {
+        Integer m = marks.get(member);
+        return m == null ? java.util.OptionalInt.empty() : java.util.OptionalInt.of(m);
+    }
+
+    public void setMark(UUID member, int mark) {
+        Integer old = marks.put(member, mark);
+        if (old == null || old != mark) {
+            setDirty();
+        }
+    }
+
+    public void clearMark(UUID member) {
+        if (marks.remove(member) != null) {
+            setDirty();
+        }
+    }
+
+    public Map<UUID, Integer> marks() {
+        return Map.copyOf(marks);
+    }
+
+    /** The wall-clock millis a timed curse ends at, empty when the player has none. */
+    public java.util.OptionalLong curseUntil(UUID player) {
+        Long u = curses.get(player);
+        return u == null ? java.util.OptionalLong.empty() : java.util.OptionalLong.of(u);
+    }
+
+    public void setCurse(UUID player, long until) {
+        Long old = curses.put(player, until);
+        if (old == null || old != until) {
+            setDirty();
+        }
+    }
+
+    public void clearCurse(UUID player) {
+        if (curses.remove(player) != null) {
+            setDirty();
+        }
+    }
+
+    public Map<UUID, Long> curses() {
+        return Map.copyOf(curses);
+    }
+
+    public Optional<BreakerRow> breakerOf(UUID player) {
+        return Optional.ofNullable(breakers.get(player));
+    }
+
+    public void setBreaker(UUID player, BreakerRow row) {
+        if (!row.equals(breakers.put(player, row))) {
+            setDirty();
+        }
+    }
+
+    public void clearBreaker(UUID player) {
+        if (breakers.remove(player) != null) {
+            setDirty();
+        }
+    }
+
+    public Map<UUID, BreakerRow> breakers() {
+        return Map.copyOf(breakers);
+    }
+
+    /** Drops the strikes the window has passed (a stamp from the future stays), and a row with no strikes whose breaker day is over. */
+    public void pruneCode(long now, long windowMillis) {
+        boolean[] changed = {false};
+        for (UUID player : List.copyOf(breakers.keySet())) {
+            BreakerRow row = breakers.get(player);
+            List<Long> kept = row.strikes().stream().filter(t -> now - t < windowMillis).toList();
+            if (kept.isEmpty() && row.until() <= now) {
+                breakers.remove(player);
+                changed[0] = true;
+            } else if (kept.size() != row.strikes().size()) {
+                breakers.put(player, new BreakerRow(row.until(), kept));
+                changed[0] = true;
+            }
+        }
+        if (changed[0]) {
+            setDirty();
+        }
+    }
+
     public void setCooldown(UUID group, String key, long until) {
         cooldowns.computeIfAbsent(group, k -> new HashMap<>()).put(key, until);
         setDirty();
@@ -503,6 +602,8 @@ public final class GroupIndex extends SavedData {
                 changed[0] = true;
             }
         });
+        // a mark is the last one seen of somebody in a group; a group of another type keeps it (it sleeps), nobody in no group does
+        changed[0] |= marks.keySet().removeIf(member -> !packs.inPack(member));
         if (changed[0]) {
             setDirty();
         }
@@ -617,6 +718,24 @@ public final class GroupIndex extends SavedData {
                 i.contests.put(group, new ContestRow(NbtUtils.loadUUID(e.get("challenger")), phase, e.getLong("opened_at"), e.getLong("accept_by"), e.getLong("started_at"), e.getLong("started_day_time"), e.getBoolean("head_stored")));
             } catch (RuntimeException bad) {
                 net.ofatech.supernaturalbloodlines.SupernaturalBloodlines.LOGGER.warn("The group index skipped a damaged contest row: {}", bad.toString());
+            }
+        }
+        readPairs(tag, MARKS, (k, v) -> i.marks.put(NbtUtils.loadUUID(k), ((net.minecraft.nbt.NumericTag) v).getAsInt()));
+        readPairs(tag, CURSES, (k, v) -> i.curses.put(NbtUtils.loadUUID(k), ((net.minecraft.nbt.NumericTag) v).getAsLong()));
+        for (Tag t : tag.getList(BREAKERS, Tag.TAG_COMPOUND)) {
+            try {
+                CompoundTag e = (CompoundTag) t;
+                UUID player = NbtUtils.loadUUID(e.get(KEY));
+                if (!(e.get("strikes") instanceof net.minecraft.nbt.LongArrayTag strikes) || !(e.get("until") instanceof net.minecraft.nbt.NumericTag)) {
+                    throw new IllegalArgumentException("a code-breaker row with no strikes or no end");
+                }
+                List<Long> times = new java.util.ArrayList<>();
+                for (long s : strikes.getAsLongArray()) {
+                    times.add(s);
+                }
+                i.breakers.put(player, new BreakerRow(e.getLong("until"), times));
+            } catch (RuntimeException bad) {
+                net.ofatech.supernaturalbloodlines.SupernaturalBloodlines.LOGGER.warn("The group index skipped a damaged code-breaker row: {}", bad.toString());
             }
         }
         if (orphans > 0) {
@@ -770,6 +889,28 @@ public final class GroupIndex extends SavedData {
             contestList.add(e);
         });
         tag.put(CONTESTS, contestList);
+        ListTag markList = new ListTag();
+        marks.forEach((member, mark) -> {
+            CompoundTag e = row(member);
+            e.putInt(VALUE, mark);
+            markList.add(e);
+        });
+        tag.put(MARKS, markList);
+        ListTag curseList = new ListTag();
+        curses.forEach((player, until) -> {
+            CompoundTag e = row(player);
+            e.putLong(VALUE, until);
+            curseList.add(e);
+        });
+        tag.put(CURSES, curseList);
+        ListTag breakerList = new ListTag();
+        breakers.forEach((player, b) -> {
+            CompoundTag e = row(player);
+            e.putLong("until", b.until());
+            e.put("strikes", new net.minecraft.nbt.LongArrayTag(b.strikes().stream().mapToLong(Long::longValue).toArray()));
+            breakerList.add(e);
+        });
+        tag.put(BREAKERS, breakerList);
         return tag;
     }
 
