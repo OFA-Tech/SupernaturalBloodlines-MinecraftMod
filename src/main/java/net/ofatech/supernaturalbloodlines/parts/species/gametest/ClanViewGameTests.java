@@ -154,6 +154,23 @@ public final class ClanViewGameTests {
     }
 
     @GameTest(template = "empty", templateNamespace = NS, timeoutTicks = 100)
+    public static void aMemberWhoseNameIsUnknownIsShownAsNothingNeverAsAnId(GameTestHelper helper) {
+        TalkingDuelist[] c = clan(helper, 1.5);
+        try {
+            ClanViews.overrideNames(id -> null);
+            c[0].getInventory().add(new ItemStack(Items.WRITABLE_BOOK));
+            c[0].getInventory().add(new ItemStack(Items.GOLD_BLOCK));
+            helper.assertTrue(Charters.forge(c[0]) == null, "setup: forge");
+            for (TalkingDuelist p : c) {
+                helper.assertTrue(ClanViews.of(p).charter().holderName().isEmpty(), "an unknown name was shown as " + ClanViews.of(p).charter().holderName());
+            }
+        } finally {
+            clean(helper, c);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS, timeoutTicks = 100)
     public static void aViewerOutsideEveryClanSeesNothingWhileAClanExists(GameTestHelper helper) {
         TalkingDuelist[] c = clan(helper, 1.5);
         TalkingDuelist outsider = human(helper, 6.5);

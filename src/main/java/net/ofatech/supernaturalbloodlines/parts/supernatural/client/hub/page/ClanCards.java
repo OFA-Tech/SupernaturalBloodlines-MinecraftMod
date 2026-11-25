@@ -34,7 +34,7 @@ public final class ClanCards {
         if (!applies(gv)) {
             return y;
         }
-        y = plan(f, r, y + 4, ClanPlan.of(ClanClient.view(), gv.viewerRank()));
+        y = plan(f, r, y, ClanPlan.of(ClanClient.view(), gv.viewerRank()));
         return members(f, r, y + 4, gv, chosen);
     }
 
@@ -58,8 +58,8 @@ public final class ClanCards {
         for (ClanPlan.Line l : plan.lines()) {
             Component text = words(l.key(), l.args());
             if (l.tone() == ClanPlan.Tone.TITLE) {
-                boolean whole = f.whole(y + 2, 14) && y + 2 >= f.clipTop();
-                y = PageKit.title(f, text, r.x(), y + 2, r.w(), t.accent());
+                boolean whole = f.whole(y + 2, 30) && y + 2 >= f.clipTop();
+                y = PageKit.title(f, text, r.x(), y + 2, r.w(), t.accent(), 30);
                 if (whole) {
                     t.drawRule(f.g, r.x(), y + 2, r.w());
                 }

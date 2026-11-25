@@ -260,7 +260,7 @@ public final class BookPackPage implements HubPageView {
         Rect r = f.region(ledgerRegion);
         if (style == Style.BOOK) {
             // the ACCEPT seal and the line that says what it accepts are pinned at the foot of the page; a group page with no seal keeps only its buttons (and Leave)
-            f.reserve(ledgerRegion, footer(f, pack) == BookKit.SEAL ? BookKit.sealReserve() : footer(f, pack) + 4);
+            f.reserve(ledgerRegion, !grp || !leaderFirst() ? BookKit.sealReserve() : footer(f, pack) + 4);
         }
         int y = BookKit.head(f, ledgerRegion, t(KEY + "title", "title"), t(BOOK + "subtitle", "subtitle"));
         if (!GroupLabels.neutral(gv)) {
