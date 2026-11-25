@@ -39,6 +39,14 @@ public final class BrotherhoodRegistry {
             if (e.getServer().getTickCount() % SWEEP == 0) {
                 sweep(e.getServer());
             }
+            if (e.getServer().getTickCount() % 20 == 0) {
+                BrotherhoodArms.refresh(e.getServer());
+            }
+        });
+        NeoForge.EVENT_BUS.addListener((PlayerEvent.PlayerLoggedOutEvent e) -> {
+            if (e.getEntity() instanceof ServerPlayer p) {
+                BrotherhoodArms.remove(p);
+            }
         });
     }
 
