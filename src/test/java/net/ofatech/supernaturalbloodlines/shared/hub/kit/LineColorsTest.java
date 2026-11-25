@@ -12,6 +12,15 @@ import org.junit.jupiter.api.Test;
 
 class LineColorsTest {
     @Test
+    void overIsTheColourSeenAtItsOpacity() {
+        assertEquals(0xFF7F7F7F, LineColors.over(0xFFFFFFFF, 0.5f, 0xFF000000));
+        assertEquals(0xFF123456, LineColors.over(0xFF123456, 1f, 0xFF000000), "opaque is the colour");
+        assertEquals(0xFF654321, LineColors.over(0xFF123456, 0f, 0xFF654321), "invisible is the background");
+        assertEquals(0xFF123456, LineColors.over(0xFF123456, 7f, 0xFF654321), "an opacity past 1 is 1");
+        assertEquals(0xFF654321, LineColors.over(0xFF123456, -1f, 0xFF654321), "an opacity below 0 is 0");
+    }
+
+    @Test
     void atLeastKeepsAColourThatAlreadyReadsAndFixesOneThatDoesNot() {
         assertEquals(0xFF000000, LineColors.atLeast(0xFF000000, 0xFFFFFFFF, 3.0));
         int fixed = LineColors.atLeast(0xFFE9DCBC, 0xFFE9DCBC, 3.0);

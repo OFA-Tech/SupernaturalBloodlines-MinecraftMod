@@ -18,6 +18,8 @@ class ClanWordingTest {
         assertEquals("1 s", ClanTime.span(1));
         assertEquals("0 s", ClanTime.span(-5));
         assertEquals("12 min", ClanTime.span(12 * 60_000L));
+        assertEquals("13 min", ClanTime.span(12 * 60_000L + 1), "a started minute is a minute");
+        assertEquals("2 min", ClanTime.span(61_000));
         assertEquals("1 h", ClanTime.span(ClanTime.HOUR));
         assertEquals("24 h", ClanTime.span(ClanTime.HOUR * 23 + ClanTime.HOUR / 2));
         assertEquals("2 h", ClanTime.span(ClanTime.HOUR + 1));
