@@ -89,7 +89,7 @@ public final class GroupGate {
             case PACK -> true;
             case CLAN -> GroupsConfig.groupsEnabled() && GroupsConfig.clansEnabled();
             case COVEN -> GroupsConfig.groupsEnabled() && GroupsConfig.covensEnabled();
-            case BROTHERHOOD -> GroupsConfig.groupsEnabled();
+            case BROTHERHOOD -> GroupsConfig.groupsEnabled() && GroupsConfig.brotherhoodEnabled();
         };
     }
 }

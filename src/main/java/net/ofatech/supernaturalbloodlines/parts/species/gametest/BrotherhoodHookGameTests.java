@@ -455,24 +455,6 @@ public final class BrotherhoodHookGameTests {
     }
 
     @GameTest(template = "empty", templateNamespace = NS)
-    public static void aLeaderWhoLeavesTheHuntersLeadsACovenToday(GameTestHelper helper) {
-        TalkingDuelist leader = GroupTestKit.hunter(helper, 1.5);
-        TalkingDuelist member = GroupTestKit.human(helper, 2.5);
-        online(leader, member);
-        try {
-            helper.assertTrue(join(leader, member) && stored(helper, leader.getUUID()) == GroupType.BROTHERHOOD, "no brotherhood to begin with: " + Groups.typeOf(leader));
-            VampirismAPI.factionPlayerHandler(leader).leaveFaction(false);
-            GroupSwitcher.refresh(leader);
-            GroupType after = stored(helper, leader.getUUID());
-            helper.assertTrue(after == GroupType.COVEN, "the group is " + after + ", the plan expected COVEN today (Task 4 turns it around)");
-            say("a hunter who left the faction leads a " + after + " (Task 4 turns this around: a plain human keeps the brotherhood)");
-        } finally {
-            clean(helper, leader, member);
-        }
-        helper.succeed();
-    }
-
-    @GameTest(template = "empty", templateNamespace = NS)
     public static void aWitchIsInnocentAndNotPreyForTheCode(GameTestHelper helper) {
         Witch mob = helper.spawnWithNoFreeWill(EntityType.WITCH, new BlockPos(2, 1, 2));
         ServerPlayer killer = TestPlayers.createMortal(helper);
