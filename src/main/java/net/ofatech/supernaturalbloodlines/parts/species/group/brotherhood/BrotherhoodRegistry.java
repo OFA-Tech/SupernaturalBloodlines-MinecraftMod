@@ -30,6 +30,7 @@ public final class BrotherhoodRegistry {
                 onMarkChanged(p);
             }
         });
+        net.ofatech.supernaturalbloodlines.parts.species.hunter.HunterInstinct.onSense(BrotherhoodSight::share);
         NeoForge.EVENT_BUS.addListener((PlayerEvent.PlayerLoggedInEvent e) -> {
             if (e.getEntity() instanceof ServerPlayer p) {
                 onMarkChanged(p);

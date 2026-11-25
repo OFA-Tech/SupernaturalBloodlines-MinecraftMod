@@ -12,6 +12,7 @@ import net.neoforged.neoforge.event.tick.ServerTickEvent;
 import net.ofatech.supernaturalbloodlines.core.BloodlineAccess;
 import net.ofatech.supernaturalbloodlines.core.bloodline.BloodlineState;
 import net.ofatech.supernaturalbloodlines.core.bloodline.Species;
+import net.ofatech.supernaturalbloodlines.core.group.brotherhood.Marks;
 import net.ofatech.supernaturalbloodlines.core.network.GlowPayload;
 import org.jetbrains.annotations.VisibleForTesting;
 
@@ -29,8 +30,20 @@ public final class HunterInstinct {
     static final double SENSE_RANGE = 24;
 
     private static volatile Double rangeOverride;
+    private static final java.util.List<java.util.function.BiConsumer<ServerPlayer, List<Integer>>> SENSE_HOOKS = new java.util.concurrent.CopyOnWriteArrayList<>();
 
     private HunterInstinct() {}
+
+    /** Who else is told what a hunter senses: each hook gets the sensor and the very list that was sent to them, every time a non-empty list is sent. */
+    public static void onSense(java.util.function.BiConsumer<ServerPlayer, List<Integer>> hook) {
+        SENSE_HOOKS.add(hook);
+    }
+
+    /** Whether the hunter has the prey sense: a Hunter of the Five with {@link #SENSE_KILLS} or more kills. */
+    public static boolean hasSense(ServerPlayer p) {
+        BloodlineState s = BloodlineAccess.get(p);
+        return Marks.hasSense(s.species(), s.markKills(), SENSE_KILLS);
+    }
 
     /** For tests: shrinks the sense range so the test mobs stay inside the test structure; null clears it. */
     @VisibleForTesting
@@ -104,14 +117,20 @@ public final class HunterInstinct {
 
     /** Sends the prey within range, if the hunter has the kills for it. Nothing is sent when there is none. */
     static void sense(ServerPlayer p) {
-        BloodlineState s = BloodlineAccess.get(p);
-        if (s.species() != Species.HUNTER_OF_THE_FIVE || s.markKills() < SENSE_KILLS) {
+        if (!hasSense(p)) {
             return;
         }
         List<Integer> ids = p.level().getEntitiesOfClass(LivingEntity.class, p.getBoundingBox().inflate(range(p)), e -> senses(p, e))
                 .stream().map(LivingEntity::getId).toList();
         if (!ids.isEmpty()) {
             GlowPayload.send(p, ids);
+            for (java.util.function.BiConsumer<ServerPlayer, List<Integer>> hook : SENSE_HOOKS) {
+                try {
+                    hook.accept(p, ids);
+                } catch (RuntimeException e) {
+                    net.ofatech.supernaturalbloodlines.SupernaturalBloodlines.LOGGER.error("A hook of the prey sense failed", e);
+                }
+            }
         }
     }
 }
