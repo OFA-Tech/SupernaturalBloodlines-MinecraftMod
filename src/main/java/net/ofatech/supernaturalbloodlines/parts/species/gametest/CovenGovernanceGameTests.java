@@ -270,12 +270,21 @@ public final class CovenGovernanceGameTests {
             UUID member = c.members().get(0).getUUID();
             groups.setType(group, GroupType.PACK, clock[0]);
             groups.ban(CovenGovernance.SHUN_SCOPE, member, clock[0] + 20);
+            String blocked = "supernaturalbloodlines.coven.switch_blocked";
             helper.assertTrue(GroupSwitcher.refresh(c.regent()).isEmpty() && groups.typeOf(group) == GroupType.PACK,
                     "the switch brought a shunned member into a coven");
+            helper.assertTrue(c.regent().count(blocked) == 1, "the leader was not told once why the group stays a pack: " + c.regent().count(blocked));
+            GroupSwitcher.refresh(c.regent());
+            GroupSwitcher.sweep(helper.getLevel().getServer());
+            helper.assertTrue(c.regent().count(blocked) == 1, "the sweep told the leader again: " + c.regent().count(blocked));
+            helper.assertTrue(c.members().get(0).count(blocked) == 0, "the member was told the block");
             clock[0] += 20;
             helper.assertTrue(GroupSwitcher.refresh(c.regent()).isPresent() && groups.typeOf(group) == GroupType.COVEN
                     && PackIndex.get(helper.getLevel()).betasOf(c.regent().getUUID()).contains(member),
                     "the expired ban still blocked the switch or cost the member their group");
+            groups.setType(group, GroupType.PACK, clock[0]);
+            groups.ban(CovenGovernance.SHUN_SCOPE, member, clock[0] + 20);
+            helper.assertTrue(GroupSwitcher.refresh(c.regent()).isEmpty() && c.regent().count(blocked) == 2, "a block that came back was not told again: " + c.regent().count(blocked));
         } finally {
             PackIndex.overrideClock(null);
             tidy(helper, c);

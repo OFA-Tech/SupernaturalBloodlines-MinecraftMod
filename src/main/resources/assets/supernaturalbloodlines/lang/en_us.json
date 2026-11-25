@@ -2538,6 +2538,7 @@
   "supernaturalbloodlines.coven.err.vote_expired": "That vote closed at its deadline and has been counted.",
   "supernaturalbloodlines.coven.err.vote_answered": "You have already answered this vote.",
   "supernaturalbloodlines.coven.vote_void": "The vote on %s was closed: the coven's members or Elders changed while it was open.",
+  "supernaturalbloodlines.coven.switch_blocked": "Your group cannot become a coven yet: someone in it is barred from covens for a while. It will switch once that ends.",
   "supernaturalbloodlines.coven.vote_counted": "Your vote is counted.",
   "supernaturalbloodlines.coven.vote_opened.elder_add": "A vote is open: make %s an Elder.",
   "supernaturalbloodlines.coven.vote_opened.elder_remove": "A vote is open: take the Elder seat from %s.",
