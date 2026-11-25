@@ -19,6 +19,7 @@ import net.neoforged.neoforge.event.server.ServerStoppedEvent;
 import net.ofatech.supernaturalbloodlines.core.group.GroupRank;
 import net.ofatech.supernaturalbloodlines.core.group.GroupType;
 import net.ofatech.supernaturalbloodlines.core.group.GroupSwitch;
+import net.ofatech.supernaturalbloodlines.core.group.clan.CharterState;
 import net.ofatech.supernaturalbloodlines.core.group.circle.Consent;
 import net.ofatech.supernaturalbloodlines.core.group.coven.VoteKind;
 import net.ofatech.supernaturalbloodlines.parts.species.pack.PackIndex;
@@ -41,7 +42,9 @@ public final class GroupIndex extends SavedData {
     private static final String VOTES = "votes";
     private static final String BANS = "bans";
     private static final String COOLDOWNS = "cooldowns";
-    private static final Set<String> KNOWN = Set.of(VERSION, IDS, TYPES, TYPE_SINCE, RANKS, CHANNEL, CONSENT, VOTES, BANS, COOLDOWNS);
+    private static final String CHARTERS = "charters";
+    private static final String CONTESTS = "contests";
+    private static final Set<String> KNOWN = Set.of(VERSION, IDS, TYPES, TYPE_SINCE, RANKS, CHANNEL, CONSENT, VOTES, BANS, COOLDOWNS, CHARTERS, CONTESTS);
     private static final String KEY = "key";
     private static final String VALUE = "value";
     private static final String TYPE = "type";
@@ -62,6 +65,10 @@ public final class GroupIndex extends SavedData {
     private final Map<String, Map<UUID, Long>> bans = new HashMap<>();
     // group -> key ("election", a grand rite) -> until
     private final Map<UUID, Map<String, Long>> cooldowns = new HashMap<>();
+    // group -> its Charter (plan 20c); kept while the group is another type, dropped with the group
+    private final Map<UUID, CharterRow> charters = new HashMap<>();
+    // group -> its open challenge or running contest (plan 20c)
+    private final Map<UUID, ContestRow> contests = new HashMap<>();
     private CompoundTag extras = new CompoundTag();
     private int dataVersion;
 
@@ -71,6 +78,15 @@ public final class GroupIndex extends SavedData {
 
     /** What the channel meter held at {@code at} (wall-clock millis); it refills lazily from there ({@code ChannelMeter.valueAt}). */
     public record ChannelRow(int value, long at) {
+    }
+
+    /** A clan's Charter as the server knows it; the item in a stack is only a token. {@code holder} and {@code entity} are empty when nobody or nothing is on record. */
+    public record CharterRow(UUID id, Optional<UUID> holder, CharterState state, long forgedAt, long seenAt, Optional<UUID> entity, long lostAt) {
+    }
+
+    /** The clan's one contest: a challenge waiting for the leader, or the Game of Kings running until its midnight. */
+    public record ContestRow(UUID challenger, Phase phase, long openedAt, long acceptBy, long startedAt, long startedDayTime) {
+        public enum Phase { PENDING, RUNNING }
     }
 
     /** A coven vote. Ballots are who voted what; a cancelled vote is kept and ignored. */
@@ -353,6 +369,46 @@ public final class GroupIndex extends SavedData {
         return m == null ? 0 : m.getOrDefault(key, 0L);
     }
 
+    public Optional<CharterRow> charterOf(UUID group) {
+        return Optional.ofNullable(charters.get(group));
+    }
+
+    public void setCharter(UUID group, CharterRow row) {
+        if (!row.equals(charters.put(group, row))) {
+            setDirty();
+        }
+    }
+
+    public void clearCharter(UUID group) {
+        if (charters.remove(group) != null) {
+            setDirty();
+        }
+    }
+
+    public Map<UUID, CharterRow> charters() {
+        return Map.copyOf(charters);
+    }
+
+    public Optional<ContestRow> contestOf(UUID group) {
+        return Optional.ofNullable(contests.get(group));
+    }
+
+    public void setContest(UUID group, ContestRow row) {
+        if (!row.equals(contests.put(group, row))) {
+            setDirty();
+        }
+    }
+
+    public void clearContest(UUID group) {
+        if (contests.remove(group) != null) {
+            setDirty();
+        }
+    }
+
+    public Map<UUID, ContestRow> contests() {
+        return Map.copyOf(contests);
+    }
+
     /** Forgets what is over: bans that ended, votes older than {@code maxAgeMillis}. */
     public void prune(long now, long maxAgeMillis) {
         boolean changed = false;
@@ -394,6 +450,8 @@ public final class GroupIndex extends SavedData {
         typeSince.remove(group);
         votes.values().removeIf(v -> v.group.equals(group));
         cooldowns.remove(group);
+        charters.remove(group);
+        contests.remove(group);
     }
 
     /** Forgets the ranks of people who are in no group. */
@@ -485,6 +543,44 @@ public final class GroupIndex extends SavedData {
             } catch (RuntimeException bad) {
                 net.ofatech.supernaturalbloodlines.SupernaturalBloodlines.LOGGER.warn("The group index skipped a damaged cooldown row: {}", bad.toString());
             }
+        }
+        int orphans = 0;
+        for (Tag t : tag.getList(CHARTERS, Tag.TAG_COMPOUND)) {
+            try {
+                CompoundTag e = (CompoundTag) t;
+                UUID group = NbtUtils.loadUUID(e.get(KEY));
+                if (!i.ids.containsValue(group)) {
+                    orphans++;
+                    i.setDirty();
+                    continue;
+                }
+                CharterState state = CharterState.parse(e.getString("state"));
+                if (!e.contains("state")) {
+                    throw new IllegalArgumentException("a charter row with no state");
+                }
+                i.charters.put(group, new CharterRow(NbtUtils.loadUUID(e.get("id")), e.contains("holder") ? Optional.of(NbtUtils.loadUUID(e.get("holder"))) : Optional.empty(),
+                        state, e.getLong("forged_at"), e.getLong("seen_at"), e.contains("entity") ? Optional.of(NbtUtils.loadUUID(e.get("entity"))) : Optional.empty(), e.getLong("lost_at")));
+            } catch (RuntimeException bad) {
+                net.ofatech.supernaturalbloodlines.SupernaturalBloodlines.LOGGER.warn("The group index skipped a damaged charter row: {}", bad.toString());
+            }
+        }
+        for (Tag t : tag.getList(CONTESTS, Tag.TAG_COMPOUND)) {
+            try {
+                CompoundTag e = (CompoundTag) t;
+                UUID group = NbtUtils.loadUUID(e.get(KEY));
+                if (!i.ids.containsValue(group)) {
+                    orphans++;
+                    i.setDirty();
+                    continue;
+                }
+                ContestRow.Phase phase = ContestRow.Phase.valueOf(e.getString("phase"));
+                i.contests.put(group, new ContestRow(NbtUtils.loadUUID(e.get("challenger")), phase, e.getLong("opened_at"), e.getLong("accept_by"), e.getLong("started_at"), e.getLong("started_day_time")));
+            } catch (RuntimeException bad) {
+                net.ofatech.supernaturalbloodlines.SupernaturalBloodlines.LOGGER.warn("The group index skipped a damaged contest row: {}", bad.toString());
+            }
+        }
+        if (orphans > 0) {
+            net.ofatech.supernaturalbloodlines.SupernaturalBloodlines.LOGGER.warn("The group index dropped {} charter or contest row(s) of groups that no longer exist", orphans);
         }
         for (String key : tag.getAllKeys()) {
             if (!KNOWN.contains(key)) {
@@ -603,7 +699,36 @@ public final class GroupIndex extends SavedData {
             cooldownList.add(e);
         }));
         tag.put(COOLDOWNS, cooldownList);
+        ListTag charterList = new ListTag();
+        charters.forEach((group, c) -> {
+            CompoundTag e = row(group);
+            e.put("id", NbtUtils.createUUID(c.id()));
+            c.holder().ifPresent(h -> e.put("holder", NbtUtils.createUUID(h)));
+            e.putString("state", c.state().id());
+            e.putLong("forged_at", c.forgedAt());
+            e.putLong("seen_at", c.seenAt());
+            c.entity().ifPresent(en -> e.put("entity", NbtUtils.createUUID(en)));
+            e.putLong("lost_at", c.lostAt());
+            charterList.add(e);
+        });
+        tag.put(CHARTERS, charterList);
+        ListTag contestList = new ListTag();
+        contests.forEach((group, c) -> {
+            CompoundTag e = row(group);
+            e.put("challenger", NbtUtils.createUUID(c.challenger()));
+            e.putString("phase", c.phase().name());
+            e.putLong("opened_at", c.openedAt());
+            e.putLong("accept_by", c.acceptBy());
+            e.putLong("started_at", c.startedAt());
+            e.putLong("started_day_time", c.startedDayTime());
+            contestList.add(e);
+        });
+        tag.put(CONTESTS, contestList);
         return tag;
+    }
+
+    static Set<String> knownKeys() {
+        return KNOWN;
     }
 
     int dataVersion() {
