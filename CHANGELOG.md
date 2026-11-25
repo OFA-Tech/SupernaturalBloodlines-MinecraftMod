@@ -1,5 +1,24 @@
 # Changelog
 
+## Unreleased (plan 20b: covens)
+
+### Added
+- **Covens have a circle.** A coven member standing at a gold chalk opens a circle, calls the rest of the coven and the linked witches **split the cost of a rite**: 70% of the altar's bill (a share in `link_member_share`) and the rite's EP are shared out, so a rite too big for one witch can be worked by a coven. A witch's **channel meter** (3000 power, refilling in 10 minutes) says what she can give before it hurts; each member sets how much she accepts (**Strictly my meter**, **Allow a nosebleed**, **Allow pain**) and nobody can be linked against their will. A larger circle also makes a rite stronger (potency). If the anchor dies while the rite runs, the linked members are hurt.
+- **Elders, votes, shunning and a new Regent** (`group elder add|remove`, `group shun`, `group vote yes|no <kind>`, the card names the vote it answers, and the Challenge button naming an Elder).
+- **Three grand rites:** the Fete des Benedictions (a circle of 3), Night Watch (7) and the Great Harvest (13), each a rite file with its own items; a coven can cast the same one every 12 hours.
+- **Two coven ring rites:** a circle of three forges a Moon Ring for a werewolf of a pack, or a Sun Ring at half the power, bound to whoever stands at the centre.
+- **The Rite of Mastery's Ultimate needs a circle of seven** (`mastery_ultimate_circle`; 0 or `link_enabled` off waives it). *This changes the existing rite: a solo caster can no longer do it.*
+- The Group page draws a coven's **tier, circle, meter, consent, share, votes and Elder actions**; the Home page shows a circle call and an open vote as cards; a member's Profile offers the Elder and shunning actions. 30 new settings, each on the Admin page.
+
+### Changed
+- EP now leaves a player in one place (`RiteEp`), which is what lets a circle split it.
+- `AdminCommands` has ten more rows (`C1` to `C10`, 72 in all).
+
+### Network
+**The hub channel changed: update client and server together.** `LadderNet.PROTOCOL` is "17" (Home and Group ballots identify the exact proposal, and Group Join identifies the displayed circle call).
+
+### Rolling back
+Set `link_enabled` to false: no new circle, every rite is a solo cast and Mastery's Ultimate needs no circle again. Shares already paid are gone (a debt is never saved). Before installing 20a, end all active Night Watches on the 20b build: keep their chalks loaded through dawn and confirm the rites have ended. With the server stopped, back up the world and `supernaturalbloodlines-groups.toml`; restore the saved 20b groups TOML before starting 20b again, since the older build can rewrite it without the new settings. The rows `channel`, `consent`, `votes`, `bans` and `cooldowns` stay in `supernaturalbloodlines_groups.dat`, and a 20a jar keeps them as unknown keys; an Elder rank row stays dormant. The five new rite files (`fete_des_benedictions`, `night_watch`, `great_harvest`, `coven_moon_ring`, `coven_sun_ring`) vanish with their jar.
 ## Unreleased (skill wheel, phase W5b: Infinity's menus on our wheel)
 
 ### Added

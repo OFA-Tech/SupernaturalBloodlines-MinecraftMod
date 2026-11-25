@@ -145,6 +145,9 @@ public final class SpeciesPart {
         RiteFactoryRegistry.get().register(BrokenLineRiteFactory.ID, BrokenLineRiteFactory.CODEC);
         RiteFactoryRegistry.get().register(ImprisonedOriginalRiteFactory.ID, ImprisonedOriginalRiteFactory.CODEC);
         RiteFactoryRegistry.get().register(AncestralCallingRiteFactory.ID, AncestralCallingRiteFactory.CODEC);
+        RiteFactoryRegistry.get().register(net.ofatech.supernaturalbloodlines.parts.species.rite.FeteRiteFactory.ID, net.ofatech.supernaturalbloodlines.parts.species.rite.FeteRiteFactory.CODEC);
+        RiteFactoryRegistry.get().register(net.ofatech.supernaturalbloodlines.parts.species.rite.NightWatchRiteFactory.ID, net.ofatech.supernaturalbloodlines.parts.species.rite.NightWatchRiteFactory.CODEC);
+        RiteFactoryRegistry.get().register(net.ofatech.supernaturalbloodlines.parts.species.rite.HarvestRiteFactory.ID, net.ofatech.supernaturalbloodlines.parts.species.rite.HarvestRiteFactory.CODEC);
         RiteFactoryRegistry.get().register(LineageRiteFactory.ID, LineageRiteFactory.CODEC);
         if (ModList.get().isLoaded("werewolves")) {
             RiteFactoryRegistry.get().register(net.ofatech.supernaturalbloodlines.parts.species.pack.AlphaTrialRiteFactory.ID, net.ofatech.supernaturalbloodlines.parts.species.pack.AlphaTrialRiteFactory.CODEC);
@@ -336,6 +339,14 @@ public final class SpeciesPart {
             e.register(net.ofatech.supernaturalbloodlines.parts.species.gametest.GroupTypeSwitchGameTests.class);
             e.register(net.ofatech.supernaturalbloodlines.parts.species.gametest.GroupAbsenceGameTests.class);
             e.register(net.ofatech.supernaturalbloodlines.parts.species.gametest.GroupNoWerewolvesGameTests.class);
+            e.register(net.ofatech.supernaturalbloodlines.parts.species.gametest.CovenHookGameTests.class);
+            e.register(net.ofatech.supernaturalbloodlines.parts.species.gametest.CovenCircleGameTests.class);
+            e.register(net.ofatech.supernaturalbloodlines.parts.species.gametest.CovenCostGameTests.class);
+            e.register(net.ofatech.supernaturalbloodlines.parts.species.gametest.CovenDeathGameTests.class);
+            e.register(net.ofatech.supernaturalbloodlines.parts.species.gametest.CovenGovernanceGameTests.class);
+            e.register(net.ofatech.supernaturalbloodlines.parts.species.gametest.CovenRiteGameTests.class);
+            e.register(net.ofatech.supernaturalbloodlines.parts.species.gametest.CovenRingGameTests.class);
+            e.register(net.ofatech.supernaturalbloodlines.parts.species.gametest.CovenViewGameTests.class);
             if (ModList.get().isLoaded("werewolves")) {
                 e.register(net.ofatech.supernaturalbloodlines.parts.species.gametest.GroupWolfGameTests.class);
                 e.register(net.ofatech.supernaturalbloodlines.parts.species.gametest.MoonWerewolfGameTests.class);

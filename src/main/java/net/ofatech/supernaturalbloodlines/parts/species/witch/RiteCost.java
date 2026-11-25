@@ -11,7 +11,11 @@ import java.util.UUID;
 import net.favouriteless.enchanted.api.altar.PowerConsumer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.Level;
+import net.ofatech.supernaturalbloodlines.SupernaturalBloodlines;
+import net.ofatech.supernaturalbloodlines.parts.species.group.circle.CircleCost;
+import net.ofatech.supernaturalbloodlines.parts.species.group.circle.CircleStage;
 import net.ofatech.supernaturalbloodlines.core.BloodlineAccess;
 import net.ofatech.supernaturalbloodlines.core.bloodline.BloodlineState;
 import net.ofatech.supernaturalbloodlines.core.moon.LunarMood;
@@ -29,9 +33,21 @@ public final class RiteCost {
 
     private record Pending(ServerPlayer player, int siphoned) {}
 
+    private static volatile boolean warned;
+
     private static final ThreadLocal<Pending> PENDING = new ThreadLocal<>();
 
+    /** A test seam: told {@code begin:<base>}, {@code tick-begin:<base>}, {@code commit} and {@code discard} in the order they happen. */
+    public static volatile java.util.function.Consumer<String> trace;
+
     private RiteCost() {}
+
+    private static void note(String what) {
+        java.util.function.Consumer<String> t = trace;
+        if (t != null) {
+            t.accept(what);
+        }
+    }
 
     public static Split split(int base, boolean witch, int siphonedAvailable) {
         return split(base, witch, false, siphonedAvailable);
@@ -70,9 +86,33 @@ public final class RiteCost {
     public static int begin(Level level, UUID caster, BlockPos chalk, PowerConsumer.PowerPosHolder holder, int base, boolean start,
                             @Nullable RiteType type) {
         PENDING.remove();
-        if (level == null || level.isClientSide || base <= 0) {
+        if (start) {
+            CircleStage.set(null);
+        }
+        note((start ? "begin:" : "tick-begin:") + base);
+        if (level == null || level.isClientSide || (base <= 0 && !start)) {
             return base;
         }
+        int bill = base;
+        if (base > 0) {
+            bill = chain(level, caster, chalk, holder, base, start, type);
+        }
+        if (start && caster != null && level instanceof ServerLevel serverLevel) {
+            try {
+                bill = CircleCost.stage(serverLevel, caster, chalk, type, Math.max(0, bill));
+            } catch (RuntimeException broken) {
+                // a rite must never break because of the link: it is a solo cast
+                CircleStage.set(null);
+                if (!warned) {
+                    warned = true;
+                    SupernaturalBloodlines.LOGGER.warn("The circle plan failed; the rite is a solo cast", broken);
+                }
+            }
+        }
+        return base <= 0 ? base : bill;
+    }
+
+    private static int chain(Level level, UUID caster, BlockPos chalk, PowerConsumer.PowerPosHolder holder, int base, boolean start, @Nullable RiteType type) {
         List<BlockPos> altars = holder.getPositions();
         boolean witch = WitchAltarBonus.appliesTo(level, caster, chalk, altars);
         int available = 0;
@@ -116,15 +156,27 @@ public final class RiteCost {
     }
 
     public static void commit() {
+        note("commit");
         Pending pending = PENDING.get();
         PENDING.remove();
+        CircleStage.Staged staged = CircleStage.current();
+        CircleStage.set(null);
         if (pending != null) {
             BloodlineState state = BloodlineAccess.get(pending.player());
             BloodlineAccess.set(pending.player(), state.toBuilder().siphonedPower(Math.max(0, state.siphonedPower() - pending.siphoned())).build());
         }
+        if (staged != null && !staged.result().shares().isEmpty()) {
+            try {
+                CircleCost.pay(staged);
+            } catch (RuntimeException broken) {
+                SupernaturalBloodlines.LOGGER.warn("The circle shares could not be charged", broken);
+            }
+        }
     }
 
     public static void discard() {
+        note("discard");
         PENDING.remove();
+        CircleStage.set(null);
     }
 }

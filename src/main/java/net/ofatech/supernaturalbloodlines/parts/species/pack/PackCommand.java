@@ -319,6 +319,10 @@ public final class PackCommand {
         if (leader.equals(p.getUUID())) {
             return GroupText.error(type, "self");
         }
+        // a shunned witch, or a leader who would bring one, is refused with the one refusal everything else has: nothing says who is shunned
+        if (type == GroupType.COVEN && GroupGate.bringsShunned(p.server, p.getUUID())) {
+            return GroupText.error(type, "refused");
+        }
         // the cap counts everybody who would be in the group afterwards: the joiner, and the members a joining leader brings
         List<UUID> own = index.betasOf(p.getUUID());
         int max = GroupsConfig.maxMembers();
@@ -369,9 +373,9 @@ public final class PackCommand {
         }
         // a co-Alpha or a Packmate lives in the index only
         index.leaveVoluntarily(p.getUUID());
+        PackMembers.departed(p.server, wasIn, p.getUUID(), true);
         PartyLink.sync(p.server, wasIn, true);
         p.sendSystemMessage(GroupText.of(type, "left"));
-        GroupIndex.get(p.serverLevel()).clearRanks(p.getUUID());
         return null;
     }
 
@@ -398,7 +402,6 @@ public final class PackCommand {
             return GroupText.error(type, "not_member", targetName);
         }
         PackMembers.remove(leader.server, target, GroupText.key(type, "kicked"), name(leader));
-        GroupIndex.get(leader.serverLevel()).clearRanks(target);
         leader.sendSystemMessage(GroupText.of(type, "kicked_ok", targetName));
         PartyLink.sync(leader.server, leader.getUUID(), true);
         return null;

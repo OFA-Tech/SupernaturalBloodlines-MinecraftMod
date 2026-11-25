@@ -71,7 +71,13 @@ public final class MasteryGameTests {
         };
     }
 
+    /** The Ultimate rows below test the rite's own rules, not the circle (plan 20b has its own tests in CovenMasteryGameTests): the circle requirement is 0 for them. */
+    private static void noCircle() {
+        net.ofatech.supernaturalbloodlines.parts.species.group.GroupsConfig.override("mastery_ultimate_circle", 0);
+    }
+
     private static void work(GameTestHelper helper, Tier t, RecordingPlayer caster) {
+        noCircle();
         if (t == Tier.ULTIMATE) {
             atEclipse(helper, () -> start(helper, rite(t), caster, items(t)));
         } else {
@@ -81,6 +87,7 @@ public final class MasteryGameTests {
 
     private static void clean(GameTestHelper helper, RecordingPlayer... ps) {
         clearDropped(helper);
+        net.ofatech.supernaturalbloodlines.parts.species.group.GroupsConfig.override("mastery_ultimate_circle", null);
         MasteryChoice.clock = null;
         EvolutionRitesConfig.override("mastery_refused_skills", null);
         EvolutionRitesConfig.override("mastery_cooldown_days", null);
@@ -430,6 +437,7 @@ public final class MasteryGameTests {
             helper.assertTrue(!inst.isMastered(target) && caster.received("supernaturalbloodlines.rite.needs_full_moon"), "ordinary night: " + caster.heard());
             clearDropped(helper);
             // the Ultimate rite on a plain full moon: needs the eclipse
+            noCircle();
             atNight(helper, true, () -> start(helper, rite(Tier.ULTIMATE), caster, items(Tier.ULTIMATE)));
             helper.assertTrue(caster.received("supernaturalbloodlines.rite.needs_eclipse"), "full moon, Ultimate rite: " + caster.heard());
         } finally {
@@ -528,6 +536,7 @@ public final class MasteryGameTests {
         RecordingPlayer target = onTheCircle(helper, true, EP);
         try {
             MasteryChoice.clear(target);
+            noCircle();
             atEclipse(helper, () -> start(helper, rite(Tier.ULTIMATE), caster, items(Tier.ULTIMATE)));
             helper.assertTrue(target.received("supernaturalbloodlines.refusal.mastery.no_choice"), "in an eclipse the rite runs as far as the choice: " + target.heard());
             helper.assertTrue(dropped(helper, firstItem(Tier.ULTIMATE)) == 10, "the ingredients were not given back");
@@ -550,6 +559,7 @@ public final class MasteryGameTests {
             String id = "tensura:anti_skill";
             ManasSkillInstance inst = give(target, id, 0);
             helper.assertTrue(MasteryChoice.choose(target, ResourceLocation.parse(id)).isEmpty(), "could not choose " + id);
+            noCircle();
             atNight(helper, true, () -> start(helper, rite(Tier.ULTIMATE), caster, items(Tier.ULTIMATE)));
             helper.assertTrue(!inst.isMastered(target) && caster.received("supernaturalbloodlines.rite.needs_eclipse"), "a plain full moon mastered an Ultimate: " + caster.heard());
             clearDropped(helper);

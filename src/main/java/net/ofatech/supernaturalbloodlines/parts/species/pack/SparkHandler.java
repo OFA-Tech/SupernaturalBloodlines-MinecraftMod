@@ -410,7 +410,7 @@ public final class SparkHandler {
     }
 
     /** An online Beta now belongs to {@code newAlpha}; the index was moved already, so only their own state changes. */
-    static void repoint(MinecraftServer server, UUID beta, UUID newAlpha) {
+    public static void repoint(MinecraftServer server, UUID beta, UUID newAlpha) {
         ServerPlayer b = SireCall.player(server, beta);
         WolfState w = b == null ? null : PackAccess.wolf(b);
         if (w != null && w.lineage() != Lineage.NONE && w.packAlpha() != null && !beta.equals(newAlpha)) {

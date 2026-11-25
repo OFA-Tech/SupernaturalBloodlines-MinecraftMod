@@ -10,7 +10,7 @@ public final class MasteryRules {
     public static final String KEY = "supernaturalbloodlines.refusal.mastery.";
     public static final String VETOED = KEY + "vetoed";
 
-    public enum Reason { CLOSED, NOT_WITCH, WRONG_NIGHT, NO_CONSENT, NO_CHOICE, NOT_HELD, TEMPORARY, ALREADY, WRONG_TIER, SYSTEM, RETIRED, NO_EP, COOLDOWN }
+    public enum Reason { CLOSED, NOT_WITCH, WRONG_NIGHT, NO_CONSENT, NO_CHOICE, NOT_HELD, TEMPORARY, ALREADY, WRONG_TIER, SYSTEM, RETIRED, NO_EP, COOLDOWN, CIRCLE }
 
     public record Facts(boolean enabled, boolean casterWitch, boolean fullMoonNight, boolean eclipse, boolean casterIsTarget, boolean targetSneaking,
                         boolean hasChoice, boolean held, boolean temporary, boolean alreadyDone, Tier skillTier, Tier riteTier, boolean refusedId,
@@ -73,6 +73,14 @@ public final class MasteryRules {
             return Optional.of(Reason.COOLDOWN);
         }
         return Optional.empty();
+    }
+
+    /**
+     * R267: an Ultimate rite needs {@code required} linked members in the staged circle when it starts. Waived for the other tiers, for a requirement of 0, and when
+     * circles are switched off (the link or the covens). Nothing about the target.
+     */
+    public static boolean circleOk(Tier riteTier, int staged, int required, boolean waived) {
+        return riteTier != Tier.ULTIMATE || waived || required <= 0 || staged >= required;
     }
 
     /** Everything from the choice on is about the target's own skills: it goes through {@code refuseAbout}. */

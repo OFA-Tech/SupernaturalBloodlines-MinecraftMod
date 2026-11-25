@@ -1,0 +1,21 @@
+{
+    "neoforge:conditions": [
+        { "type": "supernaturalbloodlines:part_enabled", "part": "artifacts" },
+        { "type": "supernaturalbloodlines:part_enabled", "part": "species" }
+    ],
+    "items": [
+        { "id": "minecraft:sunflower", "count": 2 },
+        { "id": "minecraft:glowstone_dust", "count": 4 },
+        { "id": "minecraft:gold_ingot", "count": 2 }
+    ],
+    "shapes": {
+        "enchanted:medium_circle": "enchanted:ritual_chalk"
+    },
+    "power": 3000,
+    "factory": {
+        "type": "supernaturalbloodlines:coven_forge",
+        "output": "supernaturalbloodlines:sun_ring",
+        "faction": "vampire",
+        "ring": "sun_ring"
+    }
+}

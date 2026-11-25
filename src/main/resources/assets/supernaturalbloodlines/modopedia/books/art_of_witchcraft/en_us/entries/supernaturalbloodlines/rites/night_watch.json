@@ -1,0 +1,38 @@
+{
+  "title": "Night Watch",
+  "icon": {
+    "count": 1,
+    "id": "minecraft:bell"
+  },
+  "assigned_items": [],
+  "advancement": "supernaturalbloodlines:rites/known/night_watch",
+  "pages": [
+    {
+      "components": [
+        {
+          "template": "modopedia:page/headered_text",
+          "text": "Circle: large circle, infernal chalk.\n\nA coven rite for a linked circle of seven, worked at night. Until dawn the monsters around the chalk are outlined and slowed.",
+          "header": "Night Watch"
+        }
+      ]
+    },
+    {
+      "components": [
+        {
+          "template": "modopedia:page/headered_text",
+          "text": "It stays while the night lasts. If the one who holds the circle falls, it ends, and the link takes its toll.",
+          "header": "Night Watch"
+        }
+      ]
+    },
+    {
+      "components": [
+        {
+          "template": "supernaturalbloodlines:page/rite",
+          "rite": "supernaturalbloodlines:night_watch",
+          "header": "Night Watch"
+        }
+      ]
+    }
+  ]
+}

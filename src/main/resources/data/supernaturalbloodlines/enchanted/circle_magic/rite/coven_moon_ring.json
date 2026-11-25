@@ -1,0 +1,22 @@
+{
+    "neoforge:conditions": [
+        { "type": "supernaturalbloodlines:part_enabled", "part": "artifacts" },
+        { "type": "supernaturalbloodlines:part_enabled", "part": "species" },
+        { "type": "neoforge:mod_loaded", "modid": "werewolves" }
+    ],
+    "items": [
+        { "id": "werewolves:silver_ingot", "count": 2 },
+        { "id": "minecraft:amethyst_shard", "count": 1 }
+    ],
+    "shapes": {
+        "enchanted:medium_circle": "enchanted:ritual_chalk"
+    },
+    "power": 6000,
+    "factory": {
+        "type": "supernaturalbloodlines:coven_forge",
+        "output": "supernaturalbloodlines:moon_ring",
+        "faction": "werewolf",
+        "needs_pack": true,
+        "ring": "moon_ring"
+    }
+}

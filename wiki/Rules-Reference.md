@@ -181,3 +181,26 @@ R192 to R199 are not used. The full text of each is in `docs/superpowers/specs/S
 | Hunter of the Five | Eternal Hunter |
 
 Details are on [Tensura integration](Tensura-Integration#apex-evolutions).
+
+## Covens (R250 to R268)
+| Rule | In short |
+|---|---|
+| **R250** | The Regent appoints Elders (a vote when there are some); a candidate has 3 days in the coven; one seat per four members. |
+| **R251** | A shunned witch cannot join any coven for 7 days. |
+| **R252** | A member at a gold chalk opens a circle; the others accept a call. Thirteen at most, one circle each. |
+| **R253** | A started rite is split among the circle: 70% of the altar's bill and the rite's EP. Nothing is charged before it starts. |
+| **R254** | A bigger circle gives a rite more potency, each member less than the one before. |
+| **R255** | Tiers at 3, 7 and 13 linked members; grand rites name their tier. |
+| **R256** | The anchor's death during the rite hurts the linked members (60% of max health, never below 1 HP) and stops the rite. |
+| **R257** | The channel meter: 3000 power for a witch type, half for others; over it is a nosebleed, then pain, then you cannot link. |
+| **R258** | Consent is yours alone and the hub shows each member only their own meter, consent and ballot. |
+| **R259** | Votes: Regent and Elders, a strict majority once all voted or 24 hours passed; fewer than three electors: the Regent decides. |
+| **R260** | A shunning vote removes a member for 7 days. |
+| **R261** | An Elder can call for a new Regent naming an Elder; one call per 7 days, counted from the end of the vote. |
+| **R262** | A circle of three forges a Moon Ring for a werewolf of a pack, for half the silver. |
+| **R263** | A circle of three forges a Sun Ring at half power. |
+| **R264** | Fete des Benedictions: Luck I and Regeneration I near the chalk. |
+| **R265** | Night Watch: monsters outlined and slowed until dawn. |
+| **R266** | Great Harvest: crops grow, levels split, no creature harmed. |
+| **R267** | Mastery's Ultimate needs a circle of seven (waived when circles are off). |
+| **R268** | A coven casts the same grand rite once per 12 hours. |

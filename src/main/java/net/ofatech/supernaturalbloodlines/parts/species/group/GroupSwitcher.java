@@ -15,6 +15,7 @@ import net.neoforged.neoforge.server.ServerLifecycleHooks;
 import net.ofatech.supernaturalbloodlines.core.BloodlineAccess;
 import net.ofatech.supernaturalbloodlines.core.group.GroupSwitch;
 import net.ofatech.supernaturalbloodlines.core.group.GroupType;
+import net.ofatech.supernaturalbloodlines.parts.species.group.coven.CovenText;
 import net.ofatech.supernaturalbloodlines.parts.species.pack.PackIndex;
 import net.ofatech.supernaturalbloodlines.parts.species.pack.PackMembers;
 import net.ofatech.supernaturalbloodlines.parts.species.sireline.SireCall;
@@ -28,6 +29,7 @@ public final class GroupSwitcher {
     private static final int PERIOD = 200;
     private static final List<Consumer<Switched>> HOOKS = new CopyOnWriteArrayList<>();
     private static boolean registered;
+    private static final java.util.Set<UUID> BLOCKED = new java.util.HashSet<>();
 
     /** What the type-specific plans cancel when a group changes type (a contest, a vote, a circle). */
     public record Switched(MinecraftServer server, UUID leader, UUID group, GroupType from, GroupType to) {
@@ -94,6 +96,14 @@ public final class GroupSwitcher {
         GroupType derived = Groups.derive(leader);
         long now = PackIndex.now();
         Optional<UUID> existing = groups.existingGroupOf(id);
+        if (derived == GroupType.COVEN && existing.map(groups::typeOf).orElse(GroupType.PACK) != GroupType.COVEN && GroupGate.bringsShunned(leader.server, id)) {
+            // told once until the block clears; nobody is named
+            if (BLOCKED.add(id)) {
+                PackMembers.tell(leader.server, id, CovenText.key("switch_blocked"), "");
+            }
+            return Optional.empty();
+        }
+        BLOCKED.remove(id);
         if (existing.isEmpty()) {
             groups.ensure(id, derived, now);
             return Optional.empty();

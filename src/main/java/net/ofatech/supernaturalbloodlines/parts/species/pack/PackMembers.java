@@ -27,9 +27,11 @@ public final class PackMembers {
     /** {@link #remove(MinecraftServer, UUID, String, String)}; {@code voluntary} is somebody who left the pack's party themselves, which is leaving by choice. */
     public static boolean remove(MinecraftServer server, UUID member, String reasonKey, String arg, boolean voluntary) {
         PackIndex index = PackIndex.get(server.overworld());
+        UUID leader = index.leaderOf(member);
         if (!index.kick(member, voluntary)) {
             return false;
         }
+        departed(server, leader, member, false);
         ServerPlayer online = SireCall.player(server, member);
         if (online != null) {
             WolfState w = PackAccess.wolf(online);
@@ -43,6 +45,17 @@ public final class PackMembers {
             index.addNotice(member, reasonKey, arg);
         }
         return true;
+    }
+
+    static void departed(MinecraftServer server, UUID leader, UUID member, boolean tellCircle) {
+        var groups = net.ofatech.supernaturalbloodlines.parts.species.group.GroupIndex.get(server.overworld());
+        groups.clearRanks(member);
+        net.ofatech.supernaturalbloodlines.parts.species.group.coven.CovenGovernance.memberDeparted(server, leader, member);
+        net.ofatech.supernaturalbloodlines.parts.species.group.circle.CircleLink.dropMember(server, member, tellCircle);
+        ServerPlayer online = SireCall.player(server, member);
+        if (online != null) {
+            net.ofatech.supernaturalbloodlines.shared.supernatural.HubRequests.changed(online);
+        }
     }
 
     /** Tells {@code id} now when they are online, at their next login when not. */

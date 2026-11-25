@@ -245,10 +245,15 @@ public final class TensuraHubTheme implements HubTheme, HubThemeViews {
         KitDraw.icon(g, icon, r.x() + 3 + (16 - box) / 2, r.y() + (r.h() - box) / 2, box, alpha);
     }
 
+    private static void pageRowIcon(GuiGraphics g, Rect r, HubPage page, int alpha) {
+        int box = Math.min(16, r.h() - 2);
+        KitDraw.pageIcon(g, page, net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page.GroupLabels.iconName(), r.x() + 3 + (16 - box) / 2, r.y() + (r.h() - box) / 2, box, alpha);
+    }
+
     @Override
     public void drawTab(GuiGraphics g, Rect r, HubPage page, boolean selected, boolean focused) {
         row(g, this, r, selected, false, Component.translatable(page.langKey()).getString(), selected ? TEAL : TEXT, () ->
-                rowIcon(g, r, Icons.of(page), selected ? 0xFFFFFFFF : 0xD0FFFFFF));
+                pageRowIcon(g, r, page, selected ? 0xFFFFFFFF : 0xD0FFFFFF));
         if (page.group() == HubPage.Group.OPERATOR) {
             KitDraw.dashed(g, r, GOLD);
         }

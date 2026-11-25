@@ -373,7 +373,7 @@ Art: the ring variants need two new ring sprites per theme (three with the Broth
 | `/clan charter forge|reforge` | Forge / Reforge the Charter | clan leader |
 | `/coven elder add|remove <p>` | Appoint / Remove Elder | Regent |
 | `/coven shun <p>` | Call a shunning vote (confirm) | Elder, Regent |
-| `/coven vote yes|no` | Yes / No on the vote card | electorate |
+| `/group vote yes|no <kind>` | Yes / No on the vote card (the card names its kind: one vote of a kind is open per coven) | electorate |
 | `/coven link open|close|leave|join`, `consent <level>` | Open / Close / Leave / Join circle; consent selector | coven members |
 | pack-only (`heal`, `protect`, `roar`, `surge`, `spirits`, `npc ...`, `anchor`, `emissary`) | unchanged | pack |
 | (the Brotherhood has no command of its own: `/brotherhood` is one more alias of the shared tree; marks, the Code, the map and the bonus are shown, never typed; its Admin rows are in section 9) | the Map and Code cards | brotherhood |
@@ -476,3 +476,13 @@ Per plan (each plan lists its own, with a mutation table); the cross-cutting lis
 2. **Q8 The Code punishes only.** An innocent kill costs 25% of the mark (at least 1 kill) and a day as a Code-breaker (no group perks, no lead); the third break in a week expels for a week; nothing rewards prey-only hunting (R294).
 3. **Q9 A non-marked brother's curse ends after 48 real hours,** or at once when a Potential awakens as today (R295).
 4. **Q10 Shared mark is the hunting-together bonus plus shared sight** (+3% attack per brother within 24 blocks, up to +12%); the map is a shared picture; kills are never shared (R292, R293, R297).
+## Corrections made by plan 20b (2026-11-24)
+These replace the sentence they name above.
+1. **R254:** the wards have no duration, so potency scales the Linking Spell's `link_seconds` and the reach or length of the three grand rites (R264 to R266) only.
+2. **Q2 (16.1) and 6.2 "evolution rites take no potency":** no existing rite becomes a grand rite, with one owner-decided exception: the Rite of Mastery's Ultimate tier needs a linked circle of 7 (R267; waived while `link_enabled` or `covens_enabled` is off). The evolution rites still only get the cost split.
+3. **`channel` rows** are `(value, at-millis)` on the wall clock (`PackIndex.now()`), not ticks; a clock that moves backwards counts as no time passed. **`bans`** are `{scope, player, until}` where scope is a group UUID (exile, 20c) or `type:coven` (a shunning bars every coven). New rows: `consent` (non-default levels only) and `cooldowns` (group, key, until).
+4. **10.2:** the Regent call is the coven's route of the one `challenge` literal (R245), not a `/coven regent` literal. `link join [token]` takes an optional token like `accept`.
+5. **7.4 and 8 (Sun Ring):** the half-power Sun Ring is built in 20b for any vampire receiver; `sun_ring_day_walker_only` (default false) is the switch plan 20c turns on once Day Walkers exist.
+6. **13 items 1 and 2:** the hooks were read in the Enchanted sources and proved by `CovenHookGameTests` (plan 20b Task 0): see `docs/parts/species.md`.
+7. **9 (config):** the 20b row lists the 30 keys of `GroupsConfig`.
+8. **11:** the new payload is `CovenViewPayload` and the request kinds are `CIRCLE_CALL` and `GROUP_VOTE`.

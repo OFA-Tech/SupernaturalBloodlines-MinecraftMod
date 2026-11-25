@@ -23,6 +23,12 @@ public final class GroupLabels {
         return GroupClient.view();
     }
 
+    /** The sprite of the viewer's group type, for the Group page's tab and anywhere else the paw stood for "your group". */
+    public static String iconName() {
+        GroupView v = view();
+        return net.ofatech.supernaturalbloodlines.core.group.GroupIcons.name(v.type(), v.hasGroup());
+    }
+
     /** True for a clan, a coven or a brotherhood (and for a player whose own kind leads one): the page leaves the wolf parts out. */
     public static boolean active(GroupView v) {
         return v.type() != GroupType.PACK;

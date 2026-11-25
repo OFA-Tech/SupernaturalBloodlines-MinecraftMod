@@ -25,7 +25,7 @@ class SourceRulesTest {
         throw new IllegalStateException("no src/main/java above " + p);
     }
 
-    private static String source(String file) throws IOException {
+    static String source(String file) throws IOException {
         return Files.readString(root().resolve(BASE + file));
     }
 

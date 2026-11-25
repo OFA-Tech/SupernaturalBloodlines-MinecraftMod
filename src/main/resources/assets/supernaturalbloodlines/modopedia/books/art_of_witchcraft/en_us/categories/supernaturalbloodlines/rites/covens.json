@@ -1,0 +1,22 @@
+{
+  "children": [],
+  "display_on_front_page": false,
+  "entries": [
+    "supernaturalbloodlines/sealed/fete_des_benedictions",
+    "supernaturalbloodlines/rites/fete_des_benedictions",
+    "supernaturalbloodlines/sealed/night_watch",
+    "supernaturalbloodlines/rites/night_watch",
+    "supernaturalbloodlines/sealed/great_harvest",
+    "supernaturalbloodlines/rites/great_harvest",
+    "supernaturalbloodlines/sealed/coven_moon_ring",
+    "supernaturalbloodlines/rites/coven_moon_ring",
+    "supernaturalbloodlines/sealed/coven_sun_ring",
+    "supernaturalbloodlines/rites/coven_sun_ring"
+  ],
+  "icon": {
+    "count": 1,
+    "id": "minecraft:candle"
+  },
+  "landing_text": "Rites a circle of linked witches works together.",
+  "title": "Coven Rites"
+}

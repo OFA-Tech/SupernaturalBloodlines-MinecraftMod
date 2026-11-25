@@ -941,6 +941,11 @@ public final class HubScreen extends Screen {
             return clip == null ? Integer.MAX_VALUE : clip.bottom();
         }
 
+        /** Where the clip of the region being drawn starts: a line of text that begins above it is half cut, so it is not drawn. */
+        public int clipTop() {
+            return clip == null ? Integer.MIN_VALUE : clip.y();
+        }
+
         /** Whether a row {@code h} tall at {@code y} is whole above the clip: the pages draw only such rows (their targets are registered either way). */
         public boolean whole(int y, int h) {
             return net.ofatech.supernaturalbloodlines.shared.hub.ScrollHint.rowFits(y, h, clipBottom());

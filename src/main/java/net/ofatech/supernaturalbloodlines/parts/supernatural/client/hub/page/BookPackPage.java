@@ -209,6 +209,20 @@ public final class BookPackPage implements HubPageView {
     private boolean grp;
     private List<HubSocial.Member> members = List.of();
 
+    /** "Accept" is drawn only for someone an invitation really is waiting for, who is not in a group or leads one (a leader brings their members along): a leader's main action is the group's own (invite, the circle). */
+    static boolean mayAccept(GroupView gv, boolean grp) {
+        boolean invited = net.ofatech.supernaturalbloodlines.parts.supernatural.client.RequestsClient.requests().stream().anyMatch(q -> q.kind() == net.ofatech.supernaturalbloodlines.shared.supernatural.HubRequests.Kind.PACK_INVITE);
+        return mayAccept(invited, grp, gv.viewerRank());
+    }
+
+    static boolean mayAccept(boolean invited, boolean grp, byte viewerRank) {
+        return invited && (!grp || viewerRank == GroupView.NOT_IN || viewerRank == GroupView.LEADER);
+    }
+
+    private boolean leaderFirst() {
+        return !mayAccept(gv, grp);
+    }
+
     private Component t(String packKey, String name, Object... args) {
         return GroupLabels.t(gv, packKey, name, args);
     }
@@ -300,6 +314,7 @@ public final class BookPackPage implements HubPageView {
         } else {
             y += 2;
         }
+        y = CovenCards.render(f, r, y, gv, chosen, style == Style.TENSURA);
         t.drawRule(f.g, r.x(), y + 3, r.w());
         y += 9;
         if (style == Style.BOOK && chosen != null) {
@@ -344,12 +359,16 @@ public final class BookPackPage implements HubPageView {
         if (style == Style.BOOK) {
             // the foot of the page: the seal, the two invite buttons beside it and, under them, the way out
             int sy = r.bottom() - BookKit.SEAL;
-            BookKit.seal(f, "pack:accept", Component.translatable(BOOK + "accept"), true, r.x(), sy, () -> BloodlinePage.command(cmd("accept")),
-                    List.of(t(KEY + "accept", "accept")));
-            PackInvite.buttons(f, new Rect(r.x() + BookKit.SEAL + 8, sy + 2, r.w() - BookKit.SEAL - 8, PageWidgets.H), sy + 2, mayInvite);
-            // the seal says only ACCEPT: the line beside it says what it accepts
-            String note = net.ofatech.supernaturalbloodlines.shared.hub.kit.TextCache.cut(f.font(), t(KEY + "accept", "accept").getString(), r.w(), f.font()::width);
-            f.g.drawString(f.font(), note, r.x(), BookKit.sealNoteY(sy), t.muted(), false);
+            if (leaderFirst()) {
+                PackInvite.buttons(f, new Rect(r.x(), sy + 2, r.w(), PageWidgets.H), sy + 2, mayInvite);
+            } else {
+                BookKit.seal(f, "pack:accept", Component.translatable(BOOK + "accept"), true, r.x(), sy, () -> BloodlinePage.command(cmd("accept")),
+                        List.of(t(KEY + "accept", "accept")));
+                PackInvite.buttons(f, new Rect(r.x() + BookKit.SEAL + 8, sy + 2, r.w() - BookKit.SEAL - 8, PageWidgets.H), sy + 2, mayInvite);
+                // the seal says only ACCEPT: the line beside it says what it accepts
+                String note = net.ofatech.supernaturalbloodlines.shared.hub.kit.TextCache.cut(f.font(), t(KEY + "accept", "accept").getString(), r.w(), f.font()::width);
+                f.g.drawString(f.font(), note, r.x(), BookKit.sealNoteY(sy), t.muted(), false);
+            }
             if (GroupLabels.mayLeave(pack, f.view.player().getName().getString())) {
                 BookKit.link(f, "pack:leave", t(KEY + "leave", "leave"), r.x() + BookKit.SEAL + 8, sy + 24, List.of(t(KEY + "leave", "leave")),
                         () -> f.confirm(t(BOOK + "leave_title", "leave_title"), t(BOOK + "leave_body", "leave_body"), t(BOOK + "leave_yes", "leave_yes"),
@@ -387,7 +406,9 @@ public final class BookPackPage implements HubPageView {
                 d.field(Component.translatable(KEY + "role"), t(KEY + "leader", "leader"));
             }
         }
-        d.action("accept", t(KEY + "accept", "accept"), true, true, () -> BloodlinePage.command(cmd("accept")));
+        if (!leaderFirst()) {
+            d.action("accept", t(KEY + "accept", "accept"), true, true, () -> BloodlinePage.command(cmd("accept")));
+        }
         if (canKick(f, pack, chosen)) {
             d.action(new Detail.Action("kick", t(KEY + "kick", "kick"), false, true, null,
                     new Detail.Confirm(t(KEY + "kick_title", "kick_title", chosen.name()), t(KEY + "kick_body", "kick_body")),
@@ -410,7 +431,31 @@ public final class BookPackPage implements HubPageView {
             d.action(new Detail.Action("leave", t(KEY + "leave", "leave"), false, true, null,
                     new Detail.Confirm(t(BOOK + "leave_title", "leave_title"), t(BOOK + "leave_body", "leave_body")), () -> BloodlinePage.command(cmd("leave"))));
         }
+        if (style == Style.TENSURA && CovenCards.applies(gv)) {
+            CovenCards.facts(d);
+        }
         f.detail(d.build());
+    }
+
+    /** The viewer's own ring round the emblem in the centre, in the colour of their own rank: the legend names it, so the page must show it. */
+    private void ownRing(HubScreen.Frame f, int cx, int cy, int radius) {
+        String base = switch (gv.viewerRank()) {
+            case GroupView.LEADER -> "leader";
+            case GroupView.DAY_WALKER -> "day_walker";
+            case GroupView.ELDER -> "elder";
+            default -> "member";
+        };
+        int color = 0xFF000000 | (GroupLabels.role(gv.type(), base).color() & 0xFFFFFF);
+        for (int dy = -radius; dy <= radius; dy++) {
+            int outer = (int) Math.round(Math.sqrt((double) radius * radius - (double) dy * dy));
+            int inner = Math.abs(dy) >= radius - 1 ? -1 : (int) Math.round(Math.sqrt((double) (radius - 2) * (radius - 2) - (double) dy * dy));
+            if (inner < 0) {
+                f.g.fill(cx - outer, cy + dy, cx + outer + 1, cy + dy + 1, color);
+            } else {
+                f.g.fill(cx - outer, cy + dy, cx - inner, cy + dy + 1, color);
+                f.g.fill(cx + inner + 1, cy + dy, cx + outer + 1, cy + dy + 1, color);
+            }
+        }
     }
 
     private void ring(HubScreen.Frame f, List<HubSocial.Member> pack, WolfState wolf) {
@@ -451,6 +496,9 @@ public final class BookPackPage implements HubPageView {
         int radius = PackRing.radiusFor(areaW, s.bottom() - legend - top, face);
         int inner = Math.max(14, radius * 2 / 5);
         f.emblem(new Rect(cx - inner - 2, cy - inner - 2, 2 * inner + 4, 2 * inner + 4));
+        if (grp && !GroupLabels.neutral(gv)) {
+            ownRing(f, cx, cy, inner + 2);
+        }
         Component you = Component.translatable(BOOK + "you", f.view.player().getName(),
                 grp ? GroupLabels.myRank(gv) : Component.translatable(KEY + "rank." + wolf.rank().name().toLowerCase(Locale.ROOT)));
         PackRing.Layout ring = PackRing.layout(members, cx, cy, radius, face);

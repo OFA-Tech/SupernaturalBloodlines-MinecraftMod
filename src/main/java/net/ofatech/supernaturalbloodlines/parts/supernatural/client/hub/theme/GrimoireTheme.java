@@ -141,7 +141,7 @@ public final class GrimoireTheme implements HubTheme, HubThemeViews {
         if (page.group() == HubPage.Group.OPERATOR) {
             KitDraw.dashed(g, new Rect(r.x() + 1, r.y(), w - 1, r.h()), GOLD);
         }
-        KitDraw.icon(g, Icons.of(page), r.x() + 8 + (w - 8 - 14) / 2, r.y() + (r.h() - 14) / 2, 14, selected ? 0xFFFFFFFF : 0xC0FFFFFF);
+        KitDraw.pageIcon(g, page, net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page.GroupLabels.iconName(), r.x() + 8 + (w - 8 - 14) / 2, r.y() + (r.h() - 14) / 2, 14, selected ? 0xFFFFFFFF : 0xC0FFFFFF);
         if (focused) {
             KitDraw.focusRing(g, new Rect(r.x(), r.y(), w, r.h()), focusColor());
         }

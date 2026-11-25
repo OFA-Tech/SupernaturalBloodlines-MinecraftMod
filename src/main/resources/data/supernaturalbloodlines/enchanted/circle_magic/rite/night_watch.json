@@ -1,0 +1,18 @@
+{
+    "neoforge:conditions": [
+        { "type": "supernaturalbloodlines:part_enabled", "part": "species" }
+    ],
+    "items": [
+        { "id": "minecraft:lantern", "count": 4 },
+        { "id": "minecraft:iron_ingot", "count": 4 },
+        { "id": "minecraft:bell", "count": 1 }
+    ],
+    "shapes": {
+        "enchanted:large_circle": "enchanted:nether_chalk"
+    },
+    "power": 20000,
+    "time": [13000, 23000],
+    "factory": {
+        "type": "supernaturalbloodlines:night_watch"
+    }
+}

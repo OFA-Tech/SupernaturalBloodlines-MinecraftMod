@@ -24,7 +24,7 @@ public record HubRequestsPayload(List<HubRequests.Request> requests) implements 
             KIND, HubRequests.Request::kind,
             net.minecraft.core.UUIDUtil.STREAM_CODEC, HubRequests.Request::from,
             ByteBufCodecs.stringUtf8(64), HubRequests.Request::fromName,
-            ByteBufCodecs.stringUtf8(16), HubRequests.Request::token,
+            ByteBufCodecs.stringUtf8(64), HubRequests.Request::token,
             ByteBufCodecs.VAR_INT, HubRequests.Request::ticksLeft,
             HubRequests.Request::new);
 
@@ -43,4 +43,3 @@ public record HubRequestsPayload(List<HubRequests.Request> requests) implements 
         return TYPE;
     }
 }
-

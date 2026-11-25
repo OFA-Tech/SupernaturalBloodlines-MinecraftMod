@@ -1,0 +1,18 @@
+{
+    "neoforge:conditions": [
+        { "type": "supernaturalbloodlines:part_enabled", "part": "species" }
+    ],
+    "items": [
+        { "id": "minecraft:wheat", "count": 16 },
+        { "id": "minecraft:carrot", "count": 16 },
+        { "id": "minecraft:potato", "count": 16 },
+        { "id": "minecraft:beetroot", "count": 16 }
+    ],
+    "shapes": {
+        "enchanted:large_circle": "enchanted:nether_chalk"
+    },
+    "power": 36000,
+    "factory": {
+        "type": "supernaturalbloodlines:great_harvest"
+    }
+}

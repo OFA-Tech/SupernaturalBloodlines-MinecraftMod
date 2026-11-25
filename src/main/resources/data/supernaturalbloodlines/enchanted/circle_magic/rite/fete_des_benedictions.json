@@ -1,0 +1,17 @@
+{
+    "neoforge:conditions": [
+        { "type": "supernaturalbloodlines:part_enabled", "part": "species" }
+    ],
+    "items": [
+        { "id": "minecraft:gold_ingot", "count": 4 },
+        { "id": "minecraft:emerald", "count": 4 },
+        { "id": "minecraft:honey_bottle", "count": 2 }
+    ],
+    "shapes": {
+        "enchanted:medium_circle": "enchanted:ritual_chalk"
+    },
+    "power": 12000,
+    "factory": {
+        "type": "supernaturalbloodlines:fete"
+    }
+}

@@ -26,6 +26,10 @@ import net.ofatech.supernaturalbloodlines.core.evolution.Tier;
 import net.ofatech.supernaturalbloodlines.core.moon.MoonRule;
 import net.ofatech.supernaturalbloodlines.parts.evolutionrites.EvoSkills;
 import net.ofatech.supernaturalbloodlines.parts.evolutionrites.EvolutionRitesConfig;
+import net.ofatech.supernaturalbloodlines.parts.evolutionrites.RiteEp;
+import net.ofatech.supernaturalbloodlines.parts.species.group.GroupsConfig;
+import net.ofatech.supernaturalbloodlines.parts.species.group.circle.CircleStage;
+import net.ofatech.supernaturalbloodlines.parts.species.group.circle.EpPriced;
 import net.ofatech.supernaturalbloodlines.parts.evolutionrites.mastery.MasteryApply;
 import net.ofatech.supernaturalbloodlines.parts.evolutionrites.mastery.MasteryChoice;
 import net.ofatech.supernaturalbloodlines.parts.species.pack.LunarEclipse;
@@ -62,8 +66,13 @@ public record MasteryRiteFactory(Tier tier) implements RiteFactory {
         return List.of();
     }
 
-    private static final class MasteryRite extends Rite {
+    private static final class MasteryRite extends Rite implements EpPriced {
         private final Tier riteTier;
+
+        @Override
+        public double epCost() {
+            return EvolutionRitesConfig.masteryEp(riteTier);
+        }
 
         MasteryRite(BaseRiteParams base, RiteParams params, Tier riteTier) {
             super(base, params);
@@ -80,6 +89,11 @@ public record MasteryRiteFactory(Tier tier) implements RiteFactory {
             ServerPlayer caster = RiteTargets.performer(findEntity(params.caster), params.caster, target).orElse(null);
             if (caster == null) {
                 return cancel(); // the performer left: nobody is asked and nobody is changed
+            }
+
+            if (!MasteryRules.circleOk(riteTier, CircleStage.size(), GroupsConfig.masteryUltimateCircle(), !GroupsConfig.linkEnabled() || !GroupsConfig.covensEnabled())) {
+                caster.displayClientMessage(Component.translatable(MasteryRules.keyOf(MasteryRules.Reason.CIRCLE, riteTier)), true); // one line for every target, good or bad
+                return cancel();
             }
 
             // before anything about the target is read, so a short offering says nothing of them; a cancel gives back what was taken, the extras too
@@ -99,7 +113,7 @@ public record MasteryRiteFactory(Tier tier) implements RiteFactory {
                     target.isShiftKeyDown(), choice.isPresent(), inst.isPresent(), inst.map(ManasSkillInstance::isTemporarySkill).orElse(false),
                     inst.map(i -> MasteryApply.done(target, i)).orElse(false), skillTier, riteTier,
                     choice.map(id -> EvolutionRitesConfig.masteryRefusedSkills().contains(id.toString())).orElse(false),
-                    inst.map(i -> EvoSkills.retired(target.server, i.getSkill())).orElse(false), MasteryRules.enoughEp(EnergyHelper.getBaseMaxEP(target), cost),
+                    inst.map(i -> EvoSkills.retired(target.server, i.getSkill())).orElse(false), MasteryRules.enoughEp(EnergyHelper.getBaseMaxEP(target), RiteEp.owedBy(target, cost)),
                     MasteryChoice.onCooldown(target));
             Optional<MasteryRules.Reason> reason = MasteryRules.check(facts);
             if (reason.isPresent()) {
@@ -120,9 +134,7 @@ public record MasteryRiteFactory(Tier tier) implements RiteFactory {
                 RiteTargets.refuseAbout(caster, target, result == MasteryApply.Result.VETOED ? MasteryRules.VETOED : MasteryRules.KEY + "already");
                 return cancel();
             }
-            if (cost > 0) {
-                EnergyHelper.setBaseMaxEP(target, EnergyHelper.getBaseMaxEP(target) - cost);
-            }
+            RiteEp.charge(target, cost);
             MasteryChoice.markRite(target);
             MasteryChoice.clear(target);
             target.displayClientMessage(Component.translatable(DONE), true);

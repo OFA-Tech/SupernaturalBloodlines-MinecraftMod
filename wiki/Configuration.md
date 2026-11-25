@@ -294,3 +294,31 @@ Part of the species part. All on the Admin page (section Groups).
 | `covens_enabled` | true | Off: no new coven. |
 | `open_founding` | false | On: anyone can found the group their own kind leads. |
 | `max_members` | 0 | Most members of a group, the leader not counted. 0 = no limit. |
+| `link_enabled` | true | The circle link: linked witches split a rite's cost. Off: no new circle, every rite is a solo cast, Mastery's Ultimate needs no circle. Nothing already paid is refunded. |
+| `link_member_share` | 0.70 | The part of a linked rite's altar bill the circle's members pay; the altar pays the rest (never nothing). |
+| `channel_cap` | 3000 | A witch's channel meter. |
+| `channel_other_factor` | 0.5 | The share of `channel_cap` a member who is not a witch type has. |
+| `channel_regen_minutes` | 10 | Minutes a meter takes to refill. |
+| `ep_keep_percent` | 10 | A member whose EP share would leave them under this percent of their base Max EP is left out of the circle. |
+| `potency_max_bonus` | 1.0 | The most a large circle adds to a rite's potency. |
+| `potency_falloff` | 0.8 | How fast each extra member adds less. |
+| `tier1_members`, `tier2_members`, `tier3_members` | 3, 7, 13 | Linked members for the three circle tiers (a smaller later number is raised to the one before). |
+| `link_window_seconds` | 30 | Seconds in which the anchor's death hurts the linked members. |
+| `link_death_damage_percent` | 60 | Percent of max health they lose (never below 1 HP). |
+| `link_death_lethal` | false | They die instead of being hurt. |
+| `link_shaken_minutes` | 30 | Minutes a hurt member cannot join any circle. |
+| `elder_min_days` | 3 | Days in the coven before an Elder. |
+| `members_per_elder` | 4 | One Elder seat per this many members. |
+| `vote_hours` | 24 | Hours a vote stays open. |
+| `election_cooldown_days` | 7 | Days a coven waits after a vote for a new Regent ends (passed or failed) before it can call another. A cancelled vote starts no wait. |
+| `shun_days` | 7 | Days a shunned witch cannot join any coven. |
+| `moonlight_ring_enabled` | true | A circle of three can forge a Moon Ring. |
+| `sun_ring_forge_enabled` | true | A circle of three can forge a Sun Ring at half power. |
+| `sun_ring_day_walker_only` | false | The coven Sun Ring only for a Day Walker of a clan (plan 20c flips this). |
+| `mastery_ultimate_circle` | 7 | Linked members the Rite of Mastery's Ultimate needs. 0 = none. |
+| `grand_rites_enabled` | true | The three grand rites can be cast. |
+| `grand_rite_cooldown_hours` | 12 | Hours before a coven can cast the same grand rite again. |
+| `grand_rite_radius` | 24 | Blocks a grand rite reaches, before potency (never over 48). |
+| `fete_minutes` | 10 | Minutes the Fete des Benedictions lasts, before potency. |
+| `harvest_xp_levels` | 30 | Experience levels the circle splits to cast the Great Harvest. |
+| `harvest_max_blocks` | 2048 | The most blocks the Great Harvest touches. |

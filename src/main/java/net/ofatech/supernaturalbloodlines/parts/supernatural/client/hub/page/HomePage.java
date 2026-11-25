@@ -45,6 +45,8 @@ public final class HomePage implements HubPageView {
             case CHALLENGE -> List.of(new Answer("accept", "P9", false, true), new Answer("decline", "P10", false, false));
             case COMPULSION -> List.of(new Answer("discount", "B5", true, true), new Answer("follow", "B6", true, false));
             case DUEL -> List.of();
+            case CIRCLE_CALL -> List.of(new Answer("join", "C3", true, true));
+            case GROUP_VOTE -> List.of(new Answer("yes", "C9", true, true), new Answer("no", "C10", true, false));
         };
     }
 
@@ -174,10 +176,17 @@ public final class HomePage implements HubPageView {
         PEAK.keySet().retainAll(keep);
     }
 
+    /** A request's time left: m:ss, but whole hours (rounded up) once it is over an hour, as a coven vote's day is. */
+    static Component clock(int seconds) {
+        return seconds >= 3600 ? Component.translatable(KEY + "hours", (seconds + 3599) / 3600) : Component.literal(seconds / 60 + ":" + String.format("%02d", seconds % 60));
+    }
+
     private int card(HubScreen.Frame f, Rect r, int y, HubRequests.Request q) {
         HubTheme t = f.theme();
         String id = "stage:request:" + q.kind() + ":" + q.token() + q.from();
-        Component what = Component.translatable("supernaturalbloodlines.hub.request.kind." + q.kind().name().toLowerCase(Locale.ROOT));
+        var vote = q.kind() == HubRequests.Kind.GROUP_VOTE ? net.ofatech.supernaturalbloodlines.core.group.coven.VoteKind.ofAnswer(q.token()).orElse(null) : null;
+        Component what = vote != null ? Component.translatable(CovenCards.KEY + "vote." + vote.id(), q.fromName())
+                : Component.translatable("supernaturalbloodlines.hub.request.kind." + q.kind().name().toLowerCase(Locale.ROOT));
         int ticks = RequestsClient.ticksLeft(q);
         int left = (ticks + 19) / 20;
         int peak = PEAK.merge(q.token() + q.from(), ticks, Math::max);
@@ -187,7 +196,7 @@ public final class HomePage implements HubPageView {
         boolean named = !q.fromName().isEmpty() && !q.from().equals(HubRequests.NOBODY);
         int face = 16;
         int tx = named ? x + face + 4 : x;
-        Component clock = Component.literal(left / 60 + ":" + String.format("%02d", left % 60));
+        Component clock = clock(left);
         int cw = f.font().width(clock);
         int ty = y + 3;
         if (named) {
@@ -225,7 +234,8 @@ public final class HomePage implements HubPageView {
             Rect b = flow.rects().get(i);
             if (i < answers.size()) {
                 Answer a = answers.get(i);
-                Component tip = q.kind() == HubRequests.Kind.COMPULSION ? Component.translatable(KEY + "answer." + a.label() + ".tip") : null;
+                Component tip = vote != null ? CovenCards.voteTip(vote, q.fromName(), a.primary())
+                        : q.kind() == HubRequests.Kind.COMPULSION ? Component.translatable(KEY + "answer." + a.label() + ".tip") : null;
                 PageWidgets.described(f, id + ":" + a.label(), b, labels.get(i), true, a.primary(), tip,
                         () -> HubClient.runCommand(a.rowId(), a.usesToken() ? List.of(q.token()) : List.of()));
             } else {
@@ -247,9 +257,11 @@ public final class HomePage implements HubPageView {
         HubTheme t = f.theme();
         y = section(f, s, y, "people");
         var snap = f.view.snapshot();
-        List<HubSocial.Member> pack = snap.pack();
+        net.ofatech.supernaturalbloodlines.core.group.GroupView gv = GroupLabels.view();
+        boolean grp = GroupLabels.active(gv);
+        List<HubSocial.Member> pack = grp ? GroupLabels.members(gv) : snap.pack();
         if (pack.isEmpty()) {
-            y = PageKit.wrapped(f, Component.translatable(KEY + "no_pack"), s.x(), y, s.w(), t.muted());
+            y = PageKit.wrapped(f, GroupLabels.t(gv, KEY + "no_pack", "no_pack"), s.x(), y, s.w(), t.muted());
         }
         int face = 16;
         int step = face + 4;
@@ -270,7 +282,7 @@ public final class HomePage implements HubPageView {
             }
             online += m.online() ? 1 : 0;
             String tid = "stage:person:" + m.name();
-            Component role = Component.translatableWithFallback(PageKit.HUB + "pack.member." + m.base(), HubModel.pretty(m.base()));
+            Component role = grp ? GroupLabels.memberRank(gv, m.base()) : Component.translatableWithFallback(PageKit.HUB + "pack.member." + m.base(), HubModel.pretty(m.base()));
             UUID id = m.id().orElse(null);
             f.target(tid, hit, List.of(Component.literal(m.name()), role, Component.translatable(KEY + "open_profile")), id == null ? null : () -> f.screen().openProfile(id, m.name()));
             if (drawn && (f.focused(tid) || (id != null && f.hovered(hit)))) {
@@ -279,7 +291,7 @@ public final class HomePage implements HubPageView {
         }
         if (!pack.isEmpty()) {
             y += 6 + ((pack.size() - 1) / perRow + 1) * (face + 8);
-            y = PageKit.wrapped(f, Component.translatable(KEY + "pack_count", pack.size(), online), s.x(), y, s.w(), t.muted());
+            y = PageKit.wrapped(f, GroupLabels.t(gv, KEY + "pack_count", "pack_count", pack.size(), online), s.x(), y, s.w(), t.muted());
         }
         if (snap.sire().filter(n -> !n.isEmpty()).isPresent()) {
             String n = snap.sire().get();

@@ -1,6 +1,8 @@
 package net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page;
 
 import java.util.ArrayList;
+import net.ofatech.supernaturalbloodlines.core.group.GroupView;
+import net.ofatech.supernaturalbloodlines.parts.supernatural.client.GroupClient;
 import java.util.List;
 import net.ofatech.supernaturalbloodlines.core.group.GroupType;
 import java.util.Locale;
@@ -377,6 +379,13 @@ public final class ProfilePage implements HubPageView {
         ProfileActions.Subject subject = new ProfileActions.Subject(route.id(), route.name(), isSelf, role, sired, sire, duelWith(route.id()).isPresent(), npc);
         Component sub = isSelf ? Component.translatable(KEY + "you") : npc ? Component.translatable(KEY + "npc") : role == ProfileActions.Role.NONE ? Component.translatable(KEY + "no_bond")
                 : Component.translatableWithFallback(PageKit.HUB + "pack.member." + base, HubModel.pretty(base));
-        return new ActionView(ProfileActions.of(viewer, subject, f.view.context().op() && !route.op()), sub, route.id(), npc);
+        List<ProfileActions.Action> list = new ArrayList<>(ProfileActions.of(viewer, subject, f.view.context().op() && !route.op()));
+        GroupView gv = GroupClient.view();
+        if (CovenCards.applies(gv) && !isSelf) {
+            // the same rules as the Group page: the member is one of the viewer's coven and the viewer's own rank allows it (no new payload)
+            gv.members().stream().filter(m -> m.id().filter(route.id()::equals).isPresent()).findFirst().ifPresent(m ->
+                    CovenCards.actionsFor(gv.viewerRank(), m.rank(), false, true).forEach(a -> list.add(new ProfileActions.Action(a.id(), ProfileActions.Kind.COMMAND, a.row(), true, false, true, null, a.confirm()))));
+        }
+        return new ActionView(list, sub, route.id(), npc);
     }
 }

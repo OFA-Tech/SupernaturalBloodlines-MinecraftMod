@@ -21,7 +21,10 @@ import net.ofatech.supernaturalbloodlines.shared.admin.AdminCommands;
 @GameTestHolder(SupernaturalBloodlines.MODID)
 @PrefixGameTestTemplate(false)
 public final class CommandCoverageGameTests {
-    private static final List<String> ROOTS = List.of("bloodline", "pack", "ward", SupernaturalBloodlines.MODID);
+    private static final List<String> ROOTS = List.of("bloodline", "pack", "ward", "group", SupernaturalBloodlines.MODID);
+    /** The shapes of the shared {@code /group} tree are the pack's rows (P1 to P10 and P12): the same literal path under the other root needs no second row. */
+    private static final Set<String> SHARED_WITH_PACK = Set.of("invite <>", "accept", "accept <>", "leave", "kick <>", "ally invite <>", "ally accept <>", "ally remove <>",
+            "challenge <>", "challenge accept", "challenge decline", "info");
 
     private CommandCoverageGameTests() {}
 
@@ -46,6 +49,7 @@ public final class CommandCoverageGameTests {
         }
         Set<String> rows = new TreeSet<>();
         AdminCommands.ALL.forEach(r -> rows.addAll(r.shapes()));
+        real.removeIf(s -> s.startsWith("group ") && SHARED_WITH_PACK.contains(s.substring("group ".length())) && rows.contains("pack " + s.substring("group ".length())));
 
         List<String> noRow = new ArrayList<>(real);
         noRow.removeAll(rows);

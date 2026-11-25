@@ -76,7 +76,7 @@ class MasteryRulesTest {
 
     @Test
     void onlyTargetReasonsAreAboutTheTarget() {
-        List<Reason> notAbout = List.of(Reason.CLOSED, Reason.NOT_WITCH, Reason.WRONG_NIGHT, Reason.NO_CONSENT);
+        List<Reason> notAbout = List.of(Reason.CLOSED, Reason.NOT_WITCH, Reason.WRONG_NIGHT, Reason.NO_CONSENT, Reason.CIRCLE);
         for (Reason r : Reason.values()) {
             assertEquals(!notAbout.contains(r), MasteryRules.aboutTarget(r), r.name());
         }
@@ -131,4 +131,14 @@ class MasteryRulesTest {
         assertEquals(Optional.of(Reason.RETIRED), MasteryRules.unchoosable(false, false, false, true));
         assertEquals(Optional.empty(), MasteryRules.unchoosable(false, false, false, false));
     }
-}
+
+    @Test
+    void theCircleGateIsForTheUltimateOnlyAndWaivable() {
+        assertFalse(MasteryRules.circleOk(Tier.ULTIMATE, 6, 7, false));
+        assertTrue(MasteryRules.circleOk(Tier.ULTIMATE, 7, 7, false));
+        assertTrue(MasteryRules.circleOk(Tier.ULTIMATE, 0, 7, true));
+        assertTrue(MasteryRules.circleOk(Tier.ULTIMATE, 0, 0, false));
+        for (Tier lower : new Tier[] {Tier.COMMON, Tier.EXTRA, Tier.UNIQUE}) {
+            assertTrue(MasteryRules.circleOk(lower, 0, 7, false));
+        }
+    }}

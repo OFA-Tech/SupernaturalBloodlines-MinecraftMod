@@ -78,7 +78,7 @@ final class PageKit {
             List<String> words = LabelFit.wrapWords(c.getString(), w, measure);
             int whole = net.ofatech.supernaturalbloodlines.shared.hub.ScrollHint.wholeLines(y, LINE, words.size(), f.clipBottom());
             for (int i = 0; i < words.size(); i++) {
-                if (i < whole) {
+                if (i < whole && y >= f.clipTop()) {
                     f.g.drawString(f.font(), Component.literal(words.get(i)).withStyle(style), x, y, color, false);
                 }
                 y += LINE;
@@ -88,7 +88,7 @@ final class PageKit {
         List<FormattedCharSequence> split = f.font().split(c, w);
         int whole = net.ofatech.supernaturalbloodlines.shared.hub.ScrollHint.wholeLines(y, LINE, split.size(), f.clipBottom());
         for (int i = 0; i < split.size(); i++) {
-            if (i < whole) {
+            if (i < whole && y >= f.clipTop()) {
                 f.g.drawString(f.font(), split.get(i), x, y, color, false);
             }
             y += LINE;

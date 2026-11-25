@@ -1,0 +1,38 @@
+{
+  "title": "Coven Sun Ring",
+  "icon": {
+    "count": 1,
+    "id": "minecraft:sunflower"
+  },
+  "assigned_items": [],
+  "advancement": "supernaturalbloodlines:rites/known/coven_sun_ring",
+  "pages": [
+    {
+      "components": [
+        {
+          "template": "modopedia:page/headered_text",
+          "text": "Circle: medium circle, ritual chalk.\n\nA circle of three linked witches forges a Sun Ring bound to the vampire on the heart glyph. It costs half the power of the Ward of Daylight and needs no ring to start from.",
+          "header": "Coven Sun Ring"
+        }
+      ]
+    },
+    {
+      "components": [
+        {
+          "template": "modopedia:page/headered_text",
+          "text": "A server can restrict it to Day Walkers of a clan.",
+          "header": "Coven Sun Ring"
+        }
+      ]
+    },
+    {
+      "components": [
+        {
+          "template": "supernaturalbloodlines:page/rite",
+          "rite": "supernaturalbloodlines:coven_sun_ring",
+          "header": "Coven Sun Ring"
+        }
+      ]
+    }
+  ]
+}

@@ -91,11 +91,16 @@ class GroupUiCoverageTest {
     }
 
     @Test
+    void noControlIsExemptFromBeingDrawnAnyMore() {
+        assertTrue(GroupButtons.NOT_DRAWN_YET.isEmpty(), "plan 20b Task 12 draws every coven control: " + GroupButtons.NOT_DRAWN_YET);
+    }
+
+    @Test
     void thePagesReallyDrawEveryControl() throws Exception {
         String source = pageSources();
         List<String> missing = new ArrayList<>();
         for (String id : GroupButtons.IDS.values()) {
-            if (!source.contains("\"" + id + "\"")) {
+            if (!GroupButtons.NOT_DRAWN_YET.contains(id) && !source.contains("\"" + id + "\"")) {
                 missing.add(id);
             }
         }

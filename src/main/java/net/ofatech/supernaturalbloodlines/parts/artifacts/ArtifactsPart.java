@@ -46,6 +46,7 @@ public final class ArtifactsPart {
         boolean werewolves = ModList.get().isLoaded("werewolves");
         // before the datapacks load, so the rite JSONs can name this factory
         RiteFactoryRegistry.get().register(BindItemRiteFactory.ID, BindItemRiteFactory.CODEC);
+        RiteFactoryRegistry.get().register(net.ofatech.supernaturalbloodlines.parts.artifacts.rite.CovenForgeRiteFactory.ID, net.ofatech.supernaturalbloodlines.parts.artifacts.rite.CovenForgeRiteFactory.CODEC);
         RiteFactoryRegistry.get().register(RequiresDesiccatedRiteFactory.ID, RequiresDesiccatedRiteFactory.CODEC);
         RiteFactoryRegistry.get().register(WardRiteFactory.ID, WardRiteFactory.CODEC);
         RiteFactoryRegistry.get().register(net.ofatech.supernaturalbloodlines.parts.artifacts.rite.LocatorRiteFactory.ID, net.ofatech.supernaturalbloodlines.parts.artifacts.rite.LocatorRiteFactory.CODEC);
@@ -98,6 +99,7 @@ public final class ArtifactsPart {
             if (werewolves) {
                 e.register(MountainAshWerewolfGameTests.class);
                 e.register(MoonRingGameTests.class);
+                e.register(net.ofatech.supernaturalbloodlines.parts.artifacts.gametest.CovenForgeGameTests.class);
                 e.register(WolfsbaneGameTests.class);
             }
         });

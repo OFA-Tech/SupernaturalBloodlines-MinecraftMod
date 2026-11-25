@@ -27,6 +27,8 @@ import net.ofatech.supernaturalbloodlines.parts.evolutionrites.EvoGrant;
 import net.ofatech.supernaturalbloodlines.parts.evolutionrites.EvoSkills;
 import net.ofatech.supernaturalbloodlines.parts.evolutionrites.EvolutionRitesConfig;
 import net.ofatech.supernaturalbloodlines.parts.evolutionrites.Recipes;
+import net.ofatech.supernaturalbloodlines.parts.evolutionrites.RiteEp;
+import net.ofatech.supernaturalbloodlines.parts.species.group.circle.EpPriced;
 import net.ofatech.supernaturalbloodlines.parts.evolutionrites.probe.AddonProbe;
 import net.ofatech.supernaturalbloodlines.parts.species.pack.LunarEclipse;
 import net.ofatech.supernaturalbloodlines.parts.species.rite.SeveranceRiteFactory;
@@ -91,13 +93,14 @@ public record EvolutionRiteFactory(EvolutionRecipe recipe) implements RiteFactor
         boolean learned = recipe.grantForm() == GrantForm.FREE ? EvoGrant.learnFree(target, skill)
                 : removeTime.isPresent() ? SkillHelper.learnSkill(target, skill, removeTime.getAsInt()) : SkillHelper.learnSkill(target, skill);
         if (!learned) {
-            EnergyHelper.setBaseMaxEP(target, epBefore);
+            RiteEp.restore(target, epBefore);
             return Grant.VETOED;
         }
-        if (recipe.epCost() > 0 && EnergyHelper.getBaseMaxEP(target) <= recipe.epCost()) {
+        double owed = RiteEp.owedBy(target, recipe.epCost());
+        if (owed > 0 && EnergyHelper.getBaseMaxEP(target) <= owed) {
             // the learn took its price and left too little to pay the rite's own: undo it all
             skills.forgetSkill(skill);
-            EnergyHelper.setBaseMaxEP(target, epBefore);
+            RiteEp.restore(target, epBefore);
             return Grant.VETOED;
         }
         for (String id : recipe.consumes()) {
@@ -106,9 +109,7 @@ public record EvolutionRiteFactory(EvolutionRecipe recipe) implements RiteFactor
                 skills.forgetSkill(rl);
             }
         }
-        if (recipe.epCost() > 0) {
-            EnergyHelper.setBaseMaxEP(target, EnergyHelper.getBaseMaxEP(target) - recipe.epCost());
-        }
+        RiteEp.charge(target, recipe.epCost());
         probe.ifPresent(p -> p.onGranted(target, recipe));
         return Grant.DONE;
     }
@@ -128,12 +129,17 @@ public record EvolutionRiteFactory(EvolutionRecipe recipe) implements RiteFactor
         return List.of();
     }
 
-    private static final class EvolutionRite extends Rite {
+    private static final class EvolutionRite extends Rite implements EpPriced {
         private final EvolutionRecipe recipe;
 
         EvolutionRite(BaseRiteParams base, RiteParams params, EvolutionRecipe recipe) {
             super(base, params);
             this.recipe = recipe;
+        }
+
+        @Override
+        public double epCost() {
+            return recipe.epCost();
         }
 
         @Override
@@ -185,7 +191,7 @@ public record EvolutionRiteFactory(EvolutionRecipe recipe) implements RiteFactor
             boolean satisfied = probe.map(p -> p.satisfied(target, recipe)).orElse(false);
             boolean owned = probe.map(p -> p.ownedByOther(target, recipe)).orElse(false);
             // Tensura charges its own price for the skill from the same base Max EP inside the learn: both must fit, checked before anything is learned
-            boolean enoughEp = grant.isEmpty() || MasteryRules.enoughEp(EnergyHelper.getBaseMaxEP(target) - priceOf(recipe, target, grant.get()), recipe.epCost());
+            boolean enoughEp = grant.isEmpty() || MasteryRules.enoughEp(EnergyHelper.getBaseMaxEP(target) - priceOf(recipe, target, grant.get()), RiteEp.owedBy(target, recipe.epCost()));
             boolean retired = grant.isPresent() && EvoSkills.retired(level.getServer(), grant.get());
             boolean enabled = EvolutionRitesConfig.recipeOpen(recipe.id(), recipe.tier()) && probe.map(p -> p.enabledIn(level)).orElse(true);
             return new EvolutionRules.Facts(enabled, Recipes.modLoaded(recipe.requiresMod()), hooks, roadOpen,
