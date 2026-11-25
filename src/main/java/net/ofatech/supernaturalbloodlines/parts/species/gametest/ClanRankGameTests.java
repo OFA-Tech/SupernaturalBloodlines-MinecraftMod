@@ -518,6 +518,46 @@ public final class ClanRankGameTests {
     }
 
     @GameTest(template = "empty", templateNamespace = NS, timeoutTicks = 100)
+    public static void theHeadHearsWhoIsBroughtAndWhoIsExiled(GameTestHelper helper) {
+        Clan c = clan(helper);
+        TalkingDuelist rival = vampire(helper, 5.5);
+        TalkingDuelist follower = human(helper, 6.5);
+        online(c.leader(), c.a(), c.b(), rival, follower);
+        try {
+            helper.assertTrue(join(rival, follower), "setup: no second clan");
+            groups(helper).ban(groupOf(helper, c.leader()).toString(), follower.getUUID(), PackIndex.now() + 7 * DAY);
+            Component refusal = PackCommand.invite(c.leader(), rival);
+            said(helper, refusal, ERR + "exiled_brings", "the head was not told who the rival brings");
+            var args = ((net.minecraft.network.chat.contents.TranslatableContents) refusal.getContents()).getArgs();
+            helper.assertTrue(args.length == 2 && args[0].toString().contains(rival.getUUID().toString().substring(0, 8)) && args[1].toString().contains(follower.getUUID().toString().substring(0, 8)), "the refusal does not name both: " + java.util.Arrays.toString(args));
+            helper.assertTrue(PackCommand.requests().latestFor(rival.getUUID(), helper.getLevel().getGameTime()).isEmpty(), "an invitation was sent anyway");
+        } finally {
+            clean(helper, c.leader(), c.a(), c.b(), rival, follower);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS, timeoutTicks = 100)
+    public static void theExiledPlayerHearsTheDaysAndTheEnd(GameTestHelper helper) {
+        long[] now = {2_000_000_000L};
+        PackIndex.overrideClock(() -> now[0]);
+        Clan c = clan(helper);
+        try {
+            helper.assertTrue(ClanDiscipline.exile(c.leader(), name(c.a())) == null, "refused");
+            Component told = c.a().message(CLAN + "exiled_until");
+            helper.assertTrue(told != null, "the exiled player was not told the days and the end");
+            String arg = ((net.minecraft.network.chat.contents.TranslatableContents) told.getContents()).getArgs()[0].toString();
+            helper.assertTrue(arg.contains("7 days") && arg.contains(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd").withZone(java.time.ZoneOffset.UTC).format(java.time.Instant.ofEpochMilli(now[0] + 7 * DAY))), "the line is " + arg);
+            GroupsConfig.override("exile_days", 1);
+            helper.assertTrue(ClanDiscipline.exile(c.leader(), name(c.b())) == null, "the second exile was refused");
+            helper.assertTrue(((net.minecraft.network.chat.contents.TranslatableContents) c.b().message(CLAN + "exiled_until").getContents()).getArgs()[0].toString().startsWith("1 day,"), "one day is not said as one day");
+        } finally {
+            clean(helper, c.all());
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS, timeoutTicks = 100)
     public static void exileEndsAfterTheDays(GameTestHelper helper) {
         long[] now = {2_000_000_000L};
         PackIndex.overrideClock(() -> now[0]);

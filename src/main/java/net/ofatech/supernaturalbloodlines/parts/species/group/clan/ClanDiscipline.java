@@ -64,7 +64,7 @@ public final class ClanDiscipline {
         return new Ctx(p, p.server, ClanScope.of(p.serverLevel(), p.getUUID()), PackIndex.get(p.serverLevel()), GroupIndex.get(p.serverLevel()));
     }
 
-    private static String name(MinecraftServer server, UUID id) {
+    public static String name(MinecraftServer server, UUID id) {
         String n = PackAccess.nameOf(server, id);
         return n != null ? n : id.toString().substring(0, 8);
     }
@@ -183,11 +183,14 @@ public final class ClanDiscipline {
             return locked;
         }
         String targetName = name(c.server(), target);
-        c.groups().ban(c.clan().group().toString(), target, ExileRules.until(PackIndex.now(), GroupsConfig.exileDays()));
+        // the ban is written only once the member is really out: a failed removal must not leave a bar behind
         if (!PackMembers.remove(c.server(), target, ClanText.key("exiled"), name(c.server(), p.getUUID()))) {
             return ClanText.error("not_member");
         }
-        p.sendSystemMessage(ClanText.of("exiled_ok", targetName, GroupsConfig.exileDays()));
+        long until = ExileRules.until(PackIndex.now(), GroupsConfig.exileDays());
+        c.groups().ban(c.clan().group().toString(), target, until);
+        PackMembers.tell(c.server(), target, ClanText.key("exiled_until"), ExileRules.words(GroupsConfig.exileDays(), until));
+        p.sendSystemMessage(ClanText.of("exiled_ok", targetName, ExileRules.words(GroupsConfig.exileDays(), until)));
         PartyLink.sync(c.server(), p.getUUID(), true);
         HubRequests.changed(p);
         return null;

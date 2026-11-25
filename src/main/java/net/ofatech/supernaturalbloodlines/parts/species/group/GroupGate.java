@@ -63,7 +63,15 @@ public final class GroupGate {
 
     /** Whether the joiner, or anybody they would bring along as their members, is still exiled from the group. */
     public static boolean bringsExiled(net.minecraft.server.MinecraftServer server, UUID joiner, UUID group) {
-        return exiled(server, group, joiner) || PackIndex.get(server.overworld()).betasOf(joiner).stream().anyMatch(id -> exiled(server, group, id));
+        return exiledAmong(server, joiner, group).isPresent();
+    }
+
+    /** The first person among the joiner and the members they would bring who is still exiled from the group, so the leader can be told who blocks it. */
+    public static Optional<UUID> exiledAmong(net.minecraft.server.MinecraftServer server, UUID joiner, UUID group) {
+        if (exiled(server, group, joiner)) {
+            return Optional.of(joiner);
+        }
+        return PackIndex.get(server.overworld()).betasOf(joiner).stream().filter(id -> exiled(server, group, id)).findFirst();
     }
 
     /** {@link #canLead} and room for one more member. */

@@ -248,8 +248,11 @@ public final class PackCommand {
             return GroupText.error(type, "target_in_group", name(target));
         }
         UUID ownGroup = GroupIndex.get(alpha.serverLevel()).existingGroupOf(alpha.getUUID()).orElse(null);
-        if (ownGroup != null && GroupGate.bringsExiled(alpha.server, target.getUUID(), ownGroup)) {
-            return net.ofatech.supernaturalbloodlines.parts.species.group.clan.ClanText.error("exiled_still", name(target));
+        UUID blocker = ownGroup == null ? null : GroupGate.exiledAmong(alpha.server, target.getUUID(), ownGroup).orElse(null);
+        if (blocker != null) {
+            String blockerName = net.ofatech.supernaturalbloodlines.parts.species.group.clan.ClanDiscipline.name(alpha.server, blocker);
+            return blocker.equals(target.getUUID()) ? net.ofatech.supernaturalbloodlines.parts.species.group.clan.ClanText.error("exiled_still", name(target))
+                    : net.ofatech.supernaturalbloodlines.parts.species.group.clan.ClanText.error("exiled_brings", name(target), blockerName);
         }
         long now = alpha.serverLevel().getGameTime();
         target.sendSystemMessage(inviteMessage(net.ofatech.supernaturalbloodlines.shared.supernatural.ProfileLink.name(name(alpha), alpha.getUUID()), REQUESTS.open(alpha.getUUID(), target.getUUID(), now), index.betasOf(target.getUUID()).size(), type));

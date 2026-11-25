@@ -24,8 +24,17 @@ class ExileRulesTest {
     }
 
     @Test
-    void aBanIsPerScopeNotPerPlayer() {
-        assertFalse(ExileRules.bars(0, 5), "no ban recorded (until 0) never bars");
+    void noBanRecordedNeverBarsAtAnyTime() {
+        for (long now : new long[] {0, 5, 7 * DAY, Long.MAX_VALUE}) {
+            assertFalse(ExileRules.bars(0, now), "until 0 means none; now " + now);
+        }
         assertTrue(ExileRules.bars(10, 5));
+        assertTrue(ExileRules.bars(Long.MAX_VALUE, Long.MAX_VALUE - 1));
+    }
+
+    @Test
+    void theWordsSayTheDaysAndTheEndInUtc() {
+        assertEquals("7 days, until 1970-01-08 00:00 UTC", ExileRules.words(7, 7 * DAY));
+        assertEquals("1 day, until 1970-01-02 00:00 UTC", ExileRules.words(1, DAY));
     }
 }
