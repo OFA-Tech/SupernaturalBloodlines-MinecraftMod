@@ -187,6 +187,11 @@ Rules R270 to R281 (R282 to R289 reserved). The numbers are the defaults of `sup
 - **R278.** **Lost and reforged.** A Charter is lost when its entity was destroyed (void, `/kill`), when it was not seen for `charter_lost_days` (7) with nobody on record, or when its recorded holder was away for the absent-leader days. A lost Charter can be reforged by the head after 24 hours for the same cost; the old copies are dust.
 - **R279.** **Protection.** A dropped Charter cannot be picked up by anyone outside its clan, cannot be hurt and never despawns. A non-member who ends up holding it has it taken and dropped at their feet; nothing is destroyed except duplicates. A chest, a hopper, a shulker box, a Curios slot and an armour slot hold it for nobody.
 - **R280.** **Dormancy.** A type switch, `clans_enabled` off or `charter_enabled` off makes every Charter inert, ends a running contest with no winner and no new cooldown, and stops promotion, shares and the bonus. Nothing is deleted.
+- **R282.** A head who is away when the accept time ends is waited for: the challenge starts at their next login.
+- **R283.** A Charter that is stored at midnight because the head was its last holder is forfeited: the online, living Day Walker challenger leads.
+- **R284.** While a contest is pending or running the head cannot demote, exile or kick its challenger or the holder of the Charter.
+- **R285.** Forging a Charter always costs something (`charter_forge_cost` is never empty).
+- **R286.** The hub shows the sire-line bonus as a percent only, never a count of people.
 - **R281.** **Privacy.** The clan view and every refusal say nothing about people outside the viewer's clan: no species, no sireline root, no other clan's Charter, nobody's id. A hidden Original who leads or joins a clan is a name like any other.
 
 ## Tensura links

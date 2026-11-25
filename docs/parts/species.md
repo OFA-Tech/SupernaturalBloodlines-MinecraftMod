@@ -611,7 +611,7 @@ Settings (`supernaturalbloodlines-groups.toml`, section `groups`; every one has 
 | `charter_enabled` | true | |
 | `charter_min_members` | 3 | 2-50 |
 | `charter_lost_days` | 7 | 1-365 |
-| `charter_forge_cost` | minecraft:writable_book, minecraft:gold_block | a list; `id` or `id=count`; empty is free |
+| `charter_forge_cost` | minecraft:writable_book, minecraft:gold_block | a list; `id` or `id=count`; never empty (an empty list is refused, and read as the default) |
 | `challenger_min_days` | 7 | 0-365 |
 | `contest_cooldown_days` | 7 | 0-365 |
 | `contest_accept_minutes` | 10 | 1-120 |
@@ -629,12 +629,26 @@ Settings (`supernaturalbloodlines-groups.toml`, section `groups`; every one has 
 What vanishes with the switches: `clans_enabled` off: no new clan, no promotion, no share, no bonus, no contest, every Charter inert; rows and ranks are kept. `charter_enabled` off: Charters inert and no contest. `feed_share_enabled` off: no shares. `sireline_bonus_percent` 0: no bonus. `sun_ring_day_walker_only` off: any vampire again for the coven Sun Ring.
 
 Where plan 20e (several types per group) will hook in: every clan perk asks `ClanScope` ("is this group a clan" and "does this member fit a clan"), the per-type rank and row reads are keyed by `GroupType`, and the Charter rows hang on the group id.
+### Round 1 panel rulings (plan 20c)
+- **The lock (R284).** While a contest is pending or running, the head cannot demote, exile or kick **the challenger or the holder of the Charter** (`Contests.lockRefusal`, the one place; `ClanDiscipline.demote/exile` and `PackCommand.kick` ask it). Everybody else can still be removed.
+- **One Day Walker rule (R270).** `ClanScope.dayWalker(level, id)`: the head, or a stored `DAY_WALKER` rank and, when online, a member who **fits** (`Groups.derive(p) == CLAN`, the same definition the type derivation uses). The challenge, the hub, the midnight, the coven Sun Ring hook and the promotion all ask it; promotion (by the head and by the clock) skips a member who does not fit.
+- **R282.** A head who is away when the accept time runs out is waited for: the challenge stays pending and starts at their next login (it is no longer cancelled).
+- **R283.** A Charter that is `STORED` at midnight because the head was its last holder is forfeited: the challenger leads if they are online, alive and a Day Walker (`ContestRow.headStored`, set by the scan, cleared when the head holds it again). A Charter a member stored, or any other state with a holder named, changes nobody.
+- **The midnight talks.** `ContestRules.REASONS` each has a line (`contest_nochange.<reason>`), then the cooldown line (`contest_cooldown`).
+- **R285.** `charter_forge_cost` is never empty (spec validator, `CharterCost.parse`, the Admin row): the Charter always costs something.
+- **R286.** The hub shows the sire-line bonus only as "your line is near: +N% attack" (or none), never a count: a count would tell a viewer the moment a person of their line comes near.
+- **Exile.** The ban is written only after `PackMembers.remove` succeeded. The exiled hear the days and the UTC end (`exiled_until`); the head who invites somebody who brings an exiled member hears who (`exiled_brings`); the accept side stays the generic refusal.
+- **Scan.** A held Charter rewrites its row only when its state or holder changes, or its `seenAt` is 1 hour old, and pushes the clan only on a change (`Charters.refreshes()` counts). A dropped row whose entity is in no loaded level and unseen for `charter_lost_days` goes lost. A `CharterGuard` join with no row behind it is cancelled.
+- **Creative.** A creative copy cannot make a second Charter: the stack of one splits into stacks of one (duplicates are dust), a stack with no id is dust.
+- **With clans off** the `sun_ring_day_walker_only` rule is off too (`CovenRegistry.switchOn`): a ring would otherwise be forgeable by nobody.
+- **Dead code gone:** `Midnight.crossed`, `CharterRules.next/Event`, `SirelineBonus.sameLine`. `SirelineBonus.rootOf` now answers empty past the depth cap (a cut-short line has no root and equals nothing).
+
 ## Clans: hooks read (plan 20c, Task 0)
 Proved by `ClanHookGameTests` (a failing proof would be a finding; all passed on the first run) and `FeedListenerAuditTest`:
 - `ItemEntityPickupEvent.Pre` with `setCanPickup(TriState.FALSE)` keeps a stack in the world for that player only (`playerTouch`). A hopper under a dropped stack empties the entity with **no** pickup event (the hole: the plan treats it as `STORED`).
 - A pick-up leaves the world with `RemovalReason.DISCARDED` and an **empty** stack **at the moment of `EntityLeaveLevelEvent`** (vanilla restores the count right after `discard()`, so the stack reads full again afterwards: the probe must read it inside the event). A void fall (`checkBelowWorld`) leaves `DISCARDED` and `/kill` `KILLED`, both `shouldDestroy()` with a non-empty stack. Unloads do not destroy.
 - `setInvulnerable(true)` + `setUnlimitedLifetime()` survives lava, fire and an explosion that destroys an ordinary item; the saved `Age` is -32768 and a reload keeps it. Void and `/kill` bypass the invulnerability (that is how a Charter is lost).
-- Midnight is the crossing of `18000 mod 24000` between two consecutive per-tick reads of `getDayTime()`: one crossing on an ordinary run, a 13000 to 24000 jump crosses, 24000 to 5000 does not, and with `doDaylightCycle` off the time never moves. (`Midnight.crossed` in Task 2 is this arithmetic.)
+- Midnight is `18000 mod 24000`, and it is reached by crossing it between two reads of `getDayTime()`: one crossing on an ordinary run, a 13000 to 24000 jump crosses, 24000 to 5000 does not, and with `doDaylightCycle` off the time never moves. (The contest never compares two reads: its row carries the day time it started at and `ContestRules.endsAt` is the first midnight at or after the minimum, so a jump over it ends the contest too. `Midnight.crossed` was dead code and is gone.)
 - `drinkBlood` on a mate fires one `PlayerDrinkBloodEvent` per call; a call with `IDrinkBloodContext.none()` has an empty source. `VampirismAPI.vampirePlayer(human)` is present for a human: the mate test is `VampirismSupernatural.isVampire`.
 - `AugustineRules.onDrinkBlood` rescales an empty-source drink (10 became 3) and sets the diet note: it needs the `SharedFeed` guard. The other listeners are in `FeedListenerAuditTest`: `VervainRules`, `Detectors`, `BloodMoonBite`, `BloodEffects`, `TurningHandler` and `GhoulGates` ignore an empty source; `AshDagger` empties the drink of a desiccated **drinker** (wanted for a share too: a desiccated mate gets nothing); `TensuraFeed` is a source, not a rule.
 - `BloodBottles.apply` and `applyWithoutConsent` (where `GiveBloodAction` and a forced feed end) fire no drink event at all: they cannot start a share.

@@ -320,7 +320,7 @@ Part of the species part. All on the Admin page (section Groups).
 | `charter_enabled` | true | Off: every Charter is inert and no contest runs. |
 | `charter_min_members` | 3 | Members needed to forge a Charter and to challenge for it. |
 | `charter_lost_days` | 7 | Days a Charter can go unseen before it counts as lost. |
-| `charter_forge_cost` | writable_book, gold_block | The cost of forging or reforging, one item per line (`id` or `id=count`); empty is free. |
+| `charter_forge_cost` | writable_book, gold_block | The cost of forging or reforging, one item per line (`id` or `id=count`); it can never be empty. |
 | `challenger_min_days` | 7 | Days in the clan before a Day Walker can challenge. |
 | `contest_cooldown_days` | 7 | Days between two contests of one clan. |
 | `contest_accept_minutes` | 10 | Minutes the head has to accept before it starts anyway. |

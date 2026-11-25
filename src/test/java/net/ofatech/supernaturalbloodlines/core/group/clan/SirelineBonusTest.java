@@ -60,8 +60,19 @@ class SirelineBonusTest {
             calls[0]++;
             return sireOf.apply(c);
         }, 64);
-        assertTrue(root.equals(Optional.of(id(1))) || root.equals(Optional.of(id(2))));
-        assertTrue(calls[0] <= 3, "the walk went round the cycle " + calls[0] + " times");
+        assertEquals(Optional.of(id(2)), root, "a cycle closes at the last new node");
+        assertEquals(2, calls[0], "the walk went round the cycle " + calls[0] + " times");
+    }
+
+    @Test
+    void aLongerCycleAndASelfSireStopToo() {
+        sires.put(id(1), id(3));
+        sires.put(id(3), id(2));
+        sires.put(id(2), id(1));
+        assertEquals(Optional.of(id(2)), SirelineBonus.rootOf(id(1), sireOf, 64));
+        sires.clear();
+        sires.put(id(4), id(4));
+        assertEquals(Optional.of(id(4)), SirelineBonus.rootOf(id(4), sireOf, 64), "a sire of themselves is their own root");
     }
 
     @Test
