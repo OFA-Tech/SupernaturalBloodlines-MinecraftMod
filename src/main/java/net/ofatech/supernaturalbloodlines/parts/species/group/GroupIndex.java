@@ -394,7 +394,6 @@ public final class GroupIndex extends SavedData {
         typeSince.remove(group);
         votes.values().removeIf(v -> v.group.equals(group));
         cooldowns.remove(group);
-        bans.remove(group.toString());
     }
 
     /** Forgets the ranks of people who are in no group. */

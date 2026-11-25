@@ -46,18 +46,13 @@ class GroupIndexCovenTest {
         UUID survivor = g.groupOf(B);
         g.openVote(merging, VoteKind.SHUN, B, A, 10, 2);
         g.setCooldown(merging, "election", 100);
-        g.ban(merging.toString(), A, 100);
         g.ban("type:coven", A, 100);
         g.follow(A, B);
         GroupIndex merged = roundTrip(g);
         assertEquals(survivor, merged.existingGroupOf(B).orElseThrow());
         assertTrue(merged.openVotes(merging).isEmpty());
         assertEquals(0, merged.cooldownUntil(merging, "election"));
-        assertEquals(0, merged.banUntil(merging.toString(), A));
         assertEquals(100, merged.banUntil("type:coven", A));
-        g.ban(survivor.toString(), A, 100);
-        g.drop(B);
-        assertEquals(0, roundTrip(g).banUntil(survivor.toString(), A));
     }
 
     @Test
