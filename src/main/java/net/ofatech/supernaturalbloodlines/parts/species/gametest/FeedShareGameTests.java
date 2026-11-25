@@ -370,6 +370,10 @@ public final class FeedShareGameTests {
 
     @GameTest(template = "empty", templateNamespace = NS, timeoutTicks = 100)
     public static void theShareReadsTheAmountAfterKeenFangs(GameTestHelper helper) {
+        if (!net.ofatech.supernaturalbloodlines.core.EnabledParts.isEnabled("supernatural")) {
+            helper.succeed(); // Keen Fangs is the supernatural part's skill
+            return;
+        }
         Clan c = clan(helper);
         try {
             net.ofatech.supernaturalbloodlines.core.supernatural.SupernaturalAccess.set(c.a(), net.ofatech.supernaturalbloodlines.core.supernatural.SupernaturalAccess.get(c.a()).toBuilder().skills(java.util.Set.of("S-VAM-1")).build());
