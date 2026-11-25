@@ -624,6 +624,7 @@ public final class BossDirector {
             target.displayClientMessage(text, true);
             target.sendSystemMessage(text);
             target.sendSystemMessage(Component.translatable("supernaturalbloodlines.boss.notice.kol.hint"));
+            net.ofatech.supernaturalbloodlines.parts.species.group.brotherhood.KolShadow.warn(target);
         }
         return Optional.of(e);
     }

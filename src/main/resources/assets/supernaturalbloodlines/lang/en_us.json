@@ -2400,6 +2400,7 @@
   "supernaturalbloodlines.brotherhood.lead_now": "Your mark is the highest of the brotherhood: you are its First Brother now.",
   "supernaturalbloodlines.brotherhood.lead_lost": "%s is the First Brother now: their mark is the highest.",
   "supernaturalbloodlines.brotherhood.lead_you": "%s is the First Brother now: their mark has passed yours.",
+  "supernaturalbloodlines.brotherhood.kol_warning": "%s is being hunted. Stay close.",
   "supernaturalbloodlines.brotherhood.code_broken": "%s broke the Code: a brother does not kill the innocent.",
   "supernaturalbloodlines.brotherhood.code_expelled": "%s broke the Code once too often and is put out of the brotherhood.",
   "supernaturalbloodlines.brotherhood.broke_code": "You broke the Code once too often. %s's brotherhood has put you out, and will not have you back for a while.",

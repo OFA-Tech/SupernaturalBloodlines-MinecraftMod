@@ -99,6 +99,7 @@ public final class BossesPart {
             e.register(net.ofatech.supernaturalbloodlines.parts.bosses.gametest.RebekahGameTests.class);
             e.register(net.ofatech.supernaturalbloodlines.parts.bosses.gametest.ElixirGameTests.class);
             e.register(net.ofatech.supernaturalbloodlines.parts.bosses.gametest.KolGameTests.class);
+            e.register(net.ofatech.supernaturalbloodlines.parts.bosses.gametest.KolShadowGameTests.class);
         e.register(net.ofatech.supernaturalbloodlines.parts.bosses.gametest.GrimoireLoreGameTests.class);
             e.register(net.ofatech.supernaturalbloodlines.parts.bosses.gametest.FinnGameTests.class);
             e.register(net.ofatech.supernaturalbloodlines.parts.bosses.gametest.CloakLinkGameTests.class);
