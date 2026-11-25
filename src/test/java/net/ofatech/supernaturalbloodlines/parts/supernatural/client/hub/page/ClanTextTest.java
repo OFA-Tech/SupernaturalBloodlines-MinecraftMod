@@ -38,6 +38,11 @@ class ClanTextTest {
         k.add("item.supernaturalbloodlines.clan_charter.tooltip");
         k.add("item.supernaturalbloodlines.clan_charter.tooltip_night");
         k.add("supernaturalbloodlines.hub.request.kind.charter_contest");
+        for (String s : List.of("promote", "demote", "exile")) {
+            k.add("supernaturalbloodlines.hub.profile.action." + s);
+            k.add("supernaturalbloodlines.hub.profile.action." + s + ".what");
+        }
+        k.add("supernaturalbloodlines.hub.profile.confirm.exile");
         return k;
     }
 
