@@ -37,6 +37,9 @@ Since the turning (above), the quick routes no longer hand out a full vampire. I
 - Vampires who joined before this update are **not** Ghouls.
 
 **Biting a vampire** never feeds you and costs you 1 point of your own blood (config `bite_vampire_cost`).
+## Clans
+A vampire-like leader (a vampire, an Original, an Augustine, a vampire-siphoner) leads a **clan**: Night Walkers and Day Walkers, shared feeding, a sire-line bonus and the Charter. See [Groups](Groups#clans). An Original who leads or joins a clan is a name like any other: nothing shows what they are.
+
 ## Originals
 
 An Original is the first of their line: hard to kill and very strong.

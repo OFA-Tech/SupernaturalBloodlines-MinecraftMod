@@ -314,7 +314,25 @@ Part of the species part. All on the Admin page (section Groups).
 | `shun_days` | 7 | Days a shunned witch cannot join any coven. |
 | `moonlight_ring_enabled` | true | A circle of three can forge a Moon Ring. |
 | `sun_ring_forge_enabled` | true | A circle of three can forge a Sun Ring at half power. |
-| `sun_ring_day_walker_only` | false | The coven Sun Ring only for a Day Walker of a clan (plan 20c flips this). |
+| `sun_ring_day_walker_only` | true | The coven Sun Ring only for a Day Walker or the head of a clan. Default is true for new files; a server that ran the covens build keeps its stored value (set it in the Admin page). |
+| `daywalker_days` | 14 | Real days in a clan before a Night Walker becomes a Day Walker by themselves (0: only the head promotes). |
+| `exile_days` | 7 | Days an exiled member cannot rejoin that clan. |
+| `charter_enabled` | true | Off: every Charter is inert and no contest runs. |
+| `charter_min_members` | 3 | Members needed to forge a Charter and to challenge for it. |
+| `charter_lost_days` | 7 | Days a Charter can go unseen before it counts as lost. |
+| `charter_forge_cost` | writable_book, gold_block | The cost of forging or reforging, one item per line (`id` or `id=count`); empty is free. |
+| `challenger_min_days` | 7 | Days in the clan before a Day Walker can challenge. |
+| `contest_cooldown_days` | 7 | Days between two contests of one clan. |
+| `contest_accept_minutes` | 10 | Minutes the head has to accept before it starts anyway. |
+| `contest_min_minutes` | 2 | Minutes a contest runs at least. |
+| `contest_max_hours` | 1 | Hours after which a contest ends even if midnight never comes. |
+| `feed_share_enabled` | true | Off: no shared feeding. |
+| `feed_share_percent` | 10 | Percent of a feed each clanmate nearby gets. |
+| `feed_share_max` | 2 | The most blood one share gives. |
+| `feed_share_radius` | 16 | Blocks. |
+| `feed_share_cap_per_minute` | 4 | The most blood a clanmate gets from shares in a minute. |
+| `sireline_bonus_percent` | 3 | Attack percent for each clanmate of your sireline nearby (0: off). |
+| `sireline_bonus_max_percent` | 15 | The most the bonus adds. |
 | `mastery_ultimate_circle` | 7 | Linked members the Rite of Mastery's Ultimate needs. 0 = none. |
 | `grand_rites_enabled` | true | The three grand rites can be cast. |
 | `grand_rite_cooldown_hours` | 12 | Hours before a coven can cast the same grand rite again. |

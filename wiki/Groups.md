@@ -32,4 +32,15 @@ A coven has a **Regent** (its leader), **Elders** and members. The Regent appoin
 **The circle.** Stand within five blocks of a gold chalk and press **Open the circle** on the Group page: the rest of your coven near you gets a card on Home to **Join**. When the Regent, or any member who opened it, starts a rite on that chalk, the linked witches pay a share of it from their **channel meter** instead of the altar paying it all, and a bigger circle makes the rite stronger. **Strictly my meter** (the default) never asks more of you than your meter holds; the other two levels let a heavy rite hurt a little or a lot. If the one who holds the circle dies while the rite runs, the rest are hurt. A circle of 3 / 7 / 13 reaches tier I / II / III.
 
 **What a coven can do:** the three grand rites (Fete des Benedictions, Night Watch, Great Harvest; see [Rites](Rites#coven-rites)), forge a Moon Ring or a Sun Ring, and the Rite of Mastery's Ultimate needs a circle of seven. The numbers are in [Configuration](Configuration#groups-supernaturalbloodlines-groupstoml).
-Clan, coven and brotherhood **perks** other than the coven's (the Charter, brothers in arms) come in later updates.
+
+## Clans
+A clan is led by a vampire-like head (a vampire, an Original, an Augustine, a vampire-siphoner). A new member is a **Night Walker**; the head promotes a member to **Day Walker** (`/group promote <player>`, `/group demote <player>`), or the clock does after 14 real days in the clan; a demoted member is promoted again only by the head.
+
+**Shared feeding.** When a clan member feeds on a creature, each clanmate within 16 blocks gets a little blood (a tenth of it, one or two points, at most four a minute for each mate). Bottles, blocks and bites between clanmates share nothing, and a share earns no task or skill.
+**The sire-line bonus.** Each online clanmate of your own sireline within 32 blocks adds 3% attack damage, up to 15%.
+
+**The Charter and the Game of Kings.** A clan of three or more can forge a **Clan Charter** (`/group charter forge`: a book and quill and a gold block). Only the clan can pick it up; it cannot be hurt and never despawns. A Day Walker with 7 days in the clan can **challenge** for it (`/group challenge`); the head cannot refuse (`/group challenge accept`, or it starts by itself after ten minutes while the head is online), and at the next in-game midnight the online Day Walker or head who holds the Charter leads. A chest, a hopper, a shulker box and a Curios slot hold it for nobody. A clan has at most one contest every 7 days. A lost Charter can be reforged after a day.
+
+**Exile.** The head can exile a member (`/group exile <player>`): they cannot rejoin that clan for 7 days. A kick has no bar.
+
+All of it works without Werewolves, and the numbers are in [Configuration](Configuration#groups-supernaturalbloodlines-groupstoml). Brotherhood perks come in a later update.

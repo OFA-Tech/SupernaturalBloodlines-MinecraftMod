@@ -42,6 +42,9 @@ Tokens last 60 seconds (calls) or 5 seconds (compulsion choices), are tied to on
 
 See [Werewolves and packs](Werewolves-And-Packs#packs-and-pack) for what each one means. A refused command says why in chat (for example "Only an Alpha can do that.", "You are not in a pack.").
 
+## `/group` clan literals (also `/clan ...`; every one is a button on the Group page)
+`promote <player>`, `demote <player>`, `exile <player>`, `charter forge`, `charter reforge`, `challenge` and `challenge accept` (the head cannot decline). They answer "wrong type" in a pack or a coven and "off" when clans are switched off.
+
 ## `/supernaturalbloodlines debug` (permission level 2)
 
 For testing and for operators fixing a player. All of them affect only the player you name, and bad names give a normal command error and change nothing.

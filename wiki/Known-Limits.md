@@ -104,6 +104,11 @@ If you find something that behaves differently from this wiki, please [open an i
 - **The "Tonight: Blood Moon" line on Home and a Guide paragraph are not built.** Only the almanac on the Path page shows the events.
 - **The eclipse light.** The red light of our eclipse as an Enhanced Celestials event is a guess (`c0403a`); it may need a different colour once someone has seen it.
 
+## Clans (plan 20c)
+- A hopper or a chest can hold the Charter: it then counts for nobody (a hopper takes a dropped item without any pickup event). A Curios slot, an armour slot and a shulker box are not scanned.
+- The contest reads the overworld's day time: a server with the daylight cycle off ends it by the real-time limit instead.
+- The Charter's texture and the clan ring art are placeholders.
+
 ## Packs (plan 14)
 
 - **The party link has not been seen with the real Open Parties and Claims running.** It is written against the 0.33.0 jar (and the Team Claims 1.5.0 fork, which has the same classes) with javap, reached by reflection, and tested with a stand-in. Five failed calls in a row log one warning and turn it off for the rest of the session; a single failure changes nothing.
