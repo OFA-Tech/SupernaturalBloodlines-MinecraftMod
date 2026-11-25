@@ -463,18 +463,18 @@ public final class ClanHookGameTests {
     // ---- the ring ----
 
     @GameTest(template = "empty", templateNamespace = NS, timeoutTicks = 100)
-    public static void theCovenRiteSeesNoDayWalkerForAClanLeader(GameTestHelper helper) {
+    public static void theCovenRiteSeesAClanLeaderAsADayWalkerSincePlan20c(GameTestHelper helper) {
         TalkingDuelist leader = vampire(helper, 1.5);
         TalkingDuelist member = human(helper, 2.5);
         online(leader, member);
         try {
             helper.assertTrue(join(leader, member) && Groups.typeOf(member) == GroupType.CLAN, "no clan formed");
             ServerLevel level = helper.getLevel();
-            helper.assertTrue(!CircleQuery.dayWalker(level, leader.getUUID()), "a clan leader counts as a Day Walker already");
+            helper.assertTrue(CircleQuery.dayWalker(level, leader.getUUID()), "a clan leader does not count as a Day Walker for the ring (owner answer 1 of plan 20c; it was false on 20b, which is the finding this fixed)");
             helper.assertTrue(!CircleQuery.dayWalker(level, member.getUUID()), "a fresh member counts as a Day Walker");
             GroupIndex.get(level).setRank(member.getUUID(), GroupRank.DAY_WALKER);
             helper.assertTrue(CircleQuery.dayWalker(level, member.getUUID()), "a member with DAY_WALKER is not one");
-            say("CircleQuery.dayWalker: leader false, new member false, DAY_WALKER member true: Task 9 makes the leader count");
+            say("CircleQuery.dayWalker: leader true (changed by Task 9; it was false on main, the finding), new member false, DAY_WALKER member true");
         } finally {
             clean(helper, leader, member);
         }

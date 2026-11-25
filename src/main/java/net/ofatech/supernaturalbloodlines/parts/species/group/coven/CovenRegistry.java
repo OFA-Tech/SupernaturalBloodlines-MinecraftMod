@@ -48,8 +48,12 @@ public final class CovenRegistry {
 
             @Override
             public boolean dayWalker(ServerLevel level, java.util.UUID player) {
+                var clan = net.ofatech.supernaturalbloodlines.parts.species.group.clan.ClanScope.of(level, player);
+                if (clan == null || !GroupsConfig.clanPerksOn()) {
+                    return false;
+                }
                 var groups = net.ofatech.supernaturalbloodlines.parts.species.group.GroupIndex.get(level);
-                return groups.rankOf(player, net.ofatech.supernaturalbloodlines.core.group.GroupType.CLAN) == net.ofatech.supernaturalbloodlines.core.group.GroupRank.DAY_WALKER;
+                return clan.leader().equals(player) || groups.rankOf(player, net.ofatech.supernaturalbloodlines.core.group.GroupType.CLAN) == net.ofatech.supernaturalbloodlines.core.group.GroupRank.DAY_WALKER;
             }
 
             @Override

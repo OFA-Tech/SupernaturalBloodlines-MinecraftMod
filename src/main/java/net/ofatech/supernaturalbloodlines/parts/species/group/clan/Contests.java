@@ -226,7 +226,7 @@ public final class Contests {
         } else {
             UUID id = charter.holder().get();
             ServerPlayer online = SireCall.player(server, id);
-            GroupRank rank = online != null && ClanScope.fits(online) ? groups.rankOf(id, GroupType.CLAN) : GroupRank.NONE;
+            GroupRank rank = online != null && !ClanScope.fits(online) ? GroupRank.NONE : groups.rankOf(id, GroupType.CLAN);
             holder = new ContestRules.Holder(charter.state(), id, online != null, online != null && online.isAlive(), rank, Charters.isMember(server, id, group));
         }
         ContestRules.Outcome outcome = ContestRules.resolve(holder, leader);
