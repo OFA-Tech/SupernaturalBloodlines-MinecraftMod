@@ -8,7 +8,6 @@ import net.ofatech.supernaturalbloodlines.parts.species.group.GroupIndex;
 import net.ofatech.supernaturalbloodlines.parts.species.group.Groups;
 import net.ofatech.supernaturalbloodlines.parts.species.group.GroupsConfig;
 import net.ofatech.supernaturalbloodlines.parts.species.pack.PackIndex;
-import net.ofatech.supernaturalbloodlines.parts.vampirismenchanted.VampirismSupernatural;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -32,9 +31,15 @@ public final class ClanScope {
         return Groups.typeOfGroup(level, leader) == GroupType.CLAN;
     }
 
-    /** Whether this player personally fits the clan: a vampire, an Original, an Augustine, a vampire-siphoner. */
+    /** Whether this player personally fits the clan: the kind the type derivation gives a clan (a vampire, an Original, an Augustine, a vampire-siphoner), one definition. */
     public static boolean fits(ServerPlayer p) {
-        return VampirismSupernatural.isVampire(p);
+        return Groups.derive(p) == GroupType.CLAN;
+    }
+
+    /** Whether a member may hold a Day Walker rank: they fit when they can be read (an offline member is read again when they are next on). */
+    public static boolean mayBeDayWalker(ServerLevel level, UUID id) {
+        ServerPlayer online = net.ofatech.supernaturalbloodlines.parts.species.sireline.SireCall.player(level.getServer(), id);
+        return online == null || fits(online);
     }
 
     /** The clan {@code player} leads or belongs to, whatever the switches say; null when they are in no group or in another type's. */
@@ -49,6 +54,24 @@ public final class ClanScope {
             return null;
         }
         return GroupIndex.get(level).existingGroupOf(leader).map(g -> new Clan(leader, g)).orElse(null);
+    }
+
+    /**
+     * The one answer to "is this member a Day Walker": the head always is; anybody else needs the stored rank and, when online, to fit the clan
+     * (a rank a member kept after their kind changed counts for nothing; an offline member cannot be read, and is checked again when they are on).
+     */
+    public static boolean dayWalker(ServerLevel level, UUID id) {
+        Clan clan = of(level, id);
+        if (clan == null) {
+            return false;
+        }
+        if (clan.leader().equals(id)) {
+            return true;
+        }
+        if (GroupIndex.get(level).rankOf(id, GroupType.CLAN) != net.ofatech.supernaturalbloodlines.core.group.GroupRank.DAY_WALKER) {
+            return false;
+        }
+        return mayBeDayWalker(level, id);
     }
 
     /** Clan perks are on, the group is a clan and this member fits it. */

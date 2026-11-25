@@ -65,7 +65,8 @@ public final class ClanViews {
         int days = since <= 0 ? 0 : clampDays((now - since) / DAY);
         GroupRank rank = groups.rankOf(p.getUUID(), GroupType.CLAN);
         int auto = -1;
-        if (on && !head && rank == GroupRank.NONE && GroupsConfig.daywalkerDays() > 0 && groups.cooldownUntil(clan.group(), ClanDiscipline.NO_PROMOTE + p.getUUID()) == 0) {
+        boolean dayWalker = ClanScope.dayWalker(level, p.getUUID());
+        if (on && !head && rank == GroupRank.NONE && ClanScope.mayBeDayWalker(level, p.getUUID()) && GroupsConfig.daywalkerDays() > 0 && groups.cooldownUntil(clan.group(), ClanDiscipline.NO_PROMOTE + p.getUUID()) == 0) {
             auto = clampDays(Math.max(0, GroupsConfig.daywalkerDays() - (now - since) / DAY));
         }
         int members = 1 + packs.betasOf(clan.leader()).size();
@@ -98,8 +99,8 @@ public final class ClanViews {
                 long left = cr.phase() == ContestRow.Phase.PENDING ? cr.acceptBy() - now : 0;
                 contest = new ClanView.Contest(cr.phase() == ContestRow.Phase.PENDING ? ClanView.CONTEST_PENDING : ClanView.CONTEST_RUNNING,
                         nameIfMember(p, clan.group(), cr.challenger()), clampSeconds(left), cooldownDays, false, 0, head && cr.phase() == ContestRow.Phase.PENDING);
-            } else if (!head && rank == GroupRank.DAY_WALKER) {
-                Optional<ContestRules.Refusal> no = ContestRules.mayChallenge(rank, clampDays((now - since) / DAY), members, SireCall.player(p.server, clan.leader()) != null,
+            } else if (!head && dayWalker) {
+                Optional<ContestRules.Refusal> no = ContestRules.mayChallenge(GroupRank.DAY_WALKER, clampDays((now - since) / DAY), members, SireCall.player(p.server, clan.leader()) != null,
                         row.filter(r -> r.state() != CharterState.LOST).isPresent(), false, cooldown, now, GroupsConfig.challengerMinDays(), GroupsConfig.charterMinMembers());
                 contest = new ClanView.Contest(ClanView.CONTEST_NONE, "", 0, cooldownDays, no.isEmpty(), no.map(r -> r.ordinal() + 1).orElse(0), false);
             } else {

@@ -114,6 +114,9 @@ public final class ClanDiscipline {
         if (target == null) {
             return ClanText.error("not_member");
         }
+        if (!ClanScope.mayBeDayWalker(p.serverLevel(), target)) {
+            return ClanText.error("cannot_promote");
+        }
         Optional<ClanRanks.Refusal> no = ClanRanks.mayPromote(GroupRank.NONE, true, c.groups().rankOf(target, GroupType.CLAN), target.equals(c.clan().leader()), true);
         if (no.isPresent()) {
             return refusal(no.get());
@@ -212,7 +215,7 @@ public final class ClanDiscipline {
                 continue;
             }
             for (UUID member : packs.betasOf(leader)) {
-                if (groups.rankOf(member, GroupType.CLAN) != GroupRank.NONE) {
+                if (groups.rankOf(member, GroupType.CLAN) != GroupRank.NONE || !ClanScope.mayBeDayWalker(level, member)) {
                     continue;
                 }
                 boolean demoted = groups.cooldownUntil(group, NO_PROMOTE + member) > 0;

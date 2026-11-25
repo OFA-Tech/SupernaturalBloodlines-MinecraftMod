@@ -31,7 +31,7 @@ class ClanTextTest {
                 "charter_dust", "charter_lost", "challenged", "contest_started", "contest_void", "contest_cancelled", "contest_nochange", "contest_new_head", "err.leader_only",
                 "err.leader_target", "err.not_member", "err.already_day_walker", "err.not_day_walker", "err.exiled_still", "err.charter_off", "err.charter_too_few", "err.charter_already",
                 "err.charter_use_reforge", "err.charter_not_lost", "err.charter_reforge_wait", "err.charter_none", "err.charter_cost", "err.challenge_leader", "err.challenge_cooldown",
-                "err.challenge_none", "err.no_decline", "err.contest_running")) {
+                "err.challenge_none", "err.no_decline", "err.contest_running", "err.cannot_promote")) {
             k.add(C + s);
         }
         k.add("item.supernaturalbloodlines.clan_charter");

@@ -51,8 +51,8 @@ public final class ClanViewGameTests {
         PackIndex.overrideClock(() -> CLOCK[0]);
         ClanViews.overrideNames(ClanViewGameTests::name);
         TalkingDuelist l = vampire(helper, x);
-        TalkingDuelist a = human(helper, x + 1);
-        TalkingDuelist b = human(helper, x + 2);
+        TalkingDuelist a = vampire(helper, x + 1);
+        TalkingDuelist b = vampire(helper, x + 2);
         online(l, a, b);
         helper.assertTrue(join(l, a) && join(l, b) && Groups.typeOf(a) == GroupType.CLAN, "no clan formed");
         return new TalkingDuelist[] {l, a, b};

@@ -51,8 +51,8 @@ public final class ClanRankGameTests {
 
     private static Clan clan(GameTestHelper helper) {
         TalkingDuelist l = vampire(helper, 1.5);
-        TalkingDuelist a = human(helper, 2.5);
-        TalkingDuelist b = human(helper, 3.5);
+        TalkingDuelist a = vampire(helper, 2.5);
+        TalkingDuelist b = vampire(helper, 3.5);
         online(l, a, b);
         helper.assertTrue(join(l, a) && join(l, b) && Groups.typeOf(a) == GroupType.CLAN, "no clan formed");
         return new Clan(l, a, b);
@@ -244,6 +244,66 @@ public final class ClanRankGameTests {
             helper.assertTrue(c.a().received(CLAN + "auto_promoted"), "the member was not told");
         } finally {
             clean(helper, c.all());
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS, timeoutTicks = 100)
+    public static void aMemberWhoDoesNotFitAClanIsNeverPromoted(GameTestHelper helper) {
+        long[] now = {1_000_000_000L};
+        PackIndex.overrideClock(() -> now[0]);
+        Clan c = clan(helper);
+        TalkingDuelist h = human(helper, 6.5);
+        online(c.leader(), c.a(), c.b(), h);
+        try {
+            helper.assertTrue(join(c.leader(), h), "setup: the human joined");
+            said(helper, ClanDiscipline.promote(c.leader(), name(h)), ERR + "cannot_promote", "a human was promoted by the head");
+            helper.assertTrue(rank(helper, h) == GroupRank.NONE, "a human holds a rank");
+            now[0] += 15 * DAY;
+            ClanDiscipline.sweep(server(helper));
+            helper.assertTrue(rank(helper, h) == GroupRank.NONE, "the clock promoted a human");
+            helper.assertTrue(rank(helper, c.a()) == GroupRank.DAY_WALKER, "the clock did not promote a vampire");
+        } finally {
+            clean(helper, c.leader(), c.a(), c.b(), h);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS, timeoutTicks = 100)
+    public static void fitsIsTheClanKindRuleOfTheTypeDerivation(GameTestHelper helper) {
+        TalkingDuelist p = vampire(helper, 1.5);
+        try {
+            for (net.ofatech.supernaturalbloodlines.core.bloodline.Species s : net.ofatech.supernaturalbloodlines.core.bloodline.Species.values()) {
+                net.ofatech.supernaturalbloodlines.core.BloodlineAccess.set(p, net.ofatech.supernaturalbloodlines.core.bloodline.BloodlineState.NONE.toBuilder().species(s).build());
+                boolean clanKind = net.ofatech.supernaturalbloodlines.core.group.GroupTypes.of(new net.ofatech.supernaturalbloodlines.core.group.GroupTypes.Leader(s, true, false, false)) == GroupType.CLAN;
+                helper.assertTrue(net.ofatech.supernaturalbloodlines.parts.species.group.clan.ClanScope.fits(p) == clanKind, "a vampire of species " + s + (clanKind ? " should fit" : " should not fit") + " a clan");
+            }
+        } finally {
+            net.ofatech.supernaturalbloodlines.core.BloodlineAccess.set(p, net.ofatech.supernaturalbloodlines.core.bloodline.BloodlineState.NONE);
+            clean(helper, p);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS, timeoutTicks = 100)
+    public static void dayWalkerIsOneRuleForEveryPlace(GameTestHelper helper) {
+        Clan c = clan(helper);
+        TalkingDuelist h = human(helper, 6.5);
+        TalkingDuelist stranger = vampire(helper, 7.5);
+        online(c.leader(), c.a(), c.b(), h, stranger);
+        try {
+            helper.assertTrue(join(c.leader(), h), "setup: the human joined");
+            var level = helper.getLevel();
+            groups(helper).setRank(c.a().getUUID(), GroupRank.DAY_WALKER);
+            groups(helper).setRank(h.getUUID(), GroupRank.DAY_WALKER); // a rank a member who does not fit holds anyway (set by an older build, or by a kind that changed)
+            groups(helper).setRank(stranger.getUUID(), GroupRank.DAY_WALKER);
+            helper.assertTrue(net.ofatech.supernaturalbloodlines.parts.species.group.clan.ClanScope.dayWalker(level, c.leader().getUUID()), "the head is not a Day Walker for the rules");
+            helper.assertTrue(net.ofatech.supernaturalbloodlines.parts.species.group.clan.ClanScope.dayWalker(level, c.a().getUUID()), "a vampire Day Walker is not one");
+            helper.assertTrue(!net.ofatech.supernaturalbloodlines.parts.species.group.clan.ClanScope.dayWalker(level, c.b().getUUID()), "a Night Walker is one");
+            helper.assertTrue(!net.ofatech.supernaturalbloodlines.parts.species.group.clan.ClanScope.dayWalker(level, h.getUUID()), "a human with a stored rank is one");
+            helper.assertTrue(!net.ofatech.supernaturalbloodlines.parts.species.group.clan.ClanScope.dayWalker(level, stranger.getUUID()), "a vampire of no clan is one");
+        } finally {
+            clean(helper, c.leader(), c.a(), c.b(), h, stranger);
         }
         helper.succeed();
     }

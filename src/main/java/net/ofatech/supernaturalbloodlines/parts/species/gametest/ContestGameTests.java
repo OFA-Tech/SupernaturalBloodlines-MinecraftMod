@@ -412,6 +412,26 @@ public final class ContestGameTests {
         helper.succeed();
     }
 
+    @GameTest(template = "empty", templateNamespace = NS, timeoutTicks = 100)
+    public static void aMemberWhoDoesNotFitCannotChallengeOrWinWithAStoredRank(GameTestHelper helper) {
+        Clan c = ready(helper);
+        TalkingDuelist h = human(helper, 6.5);
+        online(c.leader(), c.a(), c.b(), h);
+        try {
+            helper.assertTrue(join(c.leader(), h), "setup: the human joined");
+            groups(helper).setRank(h.getUUID(), GroupRank.DAY_WALKER);
+            said(helper, Contests.challenge(h), ERR + "challenge_not_day_walker", "a human with a stored Day Walker rank challenged");
+            begin(helper, c, c.a());
+            pass(c.leader(), h);
+            CharterScan.overridePlayers(() -> List.of(c.leader(), c.a(), c.b(), h));
+            midnight(helper);
+            helper.assertTrue(leaderOf(helper, c.a()).equals(c.leader().getUUID()), "a human with a stored rank took the lead");
+        } finally {
+            done(helper, c.leader(), c.a(), c.b(), h);
+        }
+        helper.succeed();
+    }
+
     // ---- a contest cannot be cancelled by removing its two people ----
 
     private static String id(TalkingDuelist p) {

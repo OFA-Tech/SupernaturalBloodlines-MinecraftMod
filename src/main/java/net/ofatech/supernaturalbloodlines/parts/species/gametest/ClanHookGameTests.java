@@ -465,7 +465,7 @@ public final class ClanHookGameTests {
     @GameTest(template = "empty", templateNamespace = NS, timeoutTicks = 100)
     public static void theCovenRiteSeesAClanLeaderAsADayWalkerSincePlan20c(GameTestHelper helper) {
         TalkingDuelist leader = vampire(helper, 1.5);
-        TalkingDuelist member = human(helper, 2.5);
+        TalkingDuelist member = vampire(helper, 2.5);
         online(leader, member);
         try {
             helper.assertTrue(join(leader, member) && Groups.typeOf(member) == GroupType.CLAN, "no clan formed");

@@ -132,7 +132,7 @@ public final class Contests {
         int days = packs.inPackSince(p.getUUID()).map(t -> (int) Math.min(Integer.MAX_VALUE, Math.max(0, (now - t) / DAY))).orElse(0);
         boolean charter = groups.charterOf(clan.group()).filter(r -> r.state() != CharterState.LOST).isPresent();
         long cooldown = groups.cooldownUntil(clan.group(), "contest");
-        Optional<ContestRules.Refusal> no = ContestRules.mayChallenge(groups.rankOf(p.getUUID(), GroupType.CLAN), days, 1 + packs.betasOf(clan.leader()).size(),
+        Optional<ContestRules.Refusal> no = ContestRules.mayChallenge(ClanScope.dayWalker(level, p.getUUID()) ? GroupRank.DAY_WALKER : GroupRank.NONE, days, 1 + packs.betasOf(clan.leader()).size(),
                 SireCall.player(server, clan.leader()) != null, charter, groups.contestOf(clan.group()).isPresent(), cooldown, now,
                 GroupsConfig.challengerMinDays(), GroupsConfig.charterMinMembers());
         if (no.isPresent()) {
@@ -241,7 +241,7 @@ public final class Contests {
         } else {
             UUID id = charter.holder().get();
             ServerPlayer online = SireCall.player(server, id);
-            GroupRank rank = online != null && !ClanScope.fits(online) ? GroupRank.NONE : groups.rankOf(id, GroupType.CLAN);
+            GroupRank rank = ClanScope.dayWalker(server.overworld(), id) ? GroupRank.DAY_WALKER : GroupRank.NONE;
             holder = new ContestRules.Holder(charter.state(), id, online != null, online != null && online.isAlive(), rank, Charters.isMember(server, id, group));
         }
         ContestRules.Outcome outcome = ContestRules.resolve(holder, leader);
