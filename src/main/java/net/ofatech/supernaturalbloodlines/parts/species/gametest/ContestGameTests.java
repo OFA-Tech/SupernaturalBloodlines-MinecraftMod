@@ -368,16 +368,22 @@ public final class ContestGameTests {
     }
 
     @GameTest(template = "empty", templateNamespace = NS, timeoutTicks = 100)
-    public static void noAnswerWithTheLeaderOfflineCancelsWithNoCooldown(GameTestHelper helper) {
+    public static void noAnswerWithTheLeaderOfflineWaitsForTheirLoginAndStartsThen(GameTestHelper helper) {
         Clan c = ready(helper);
         try {
             helper.assertTrue(Contests.challenge(c.a()) == null, "setup");
             online(c.a(), c.b());
             CLOCK[0] += 10 * MIN;
             Contests.tick(server(helper), DAYTIME[0]);
-            helper.assertTrue(contest(helper, c.leader()).isEmpty(), "the row stayed");
+            helper.assertTrue(contest(helper, c.leader()).orElseThrow().phase() == ContestRow.Phase.PENDING, "the challenge was cancelled or started without the head");
             helper.assertTrue(groups(helper).cooldownUntil(group(helper, c.leader()), "contest") == 0, "a cooldown was stamped");
-            helper.assertTrue(c.a().received(CLAN + "contest_cancelled") && c.b().received(CLAN + "contest_cancelled"), "the clan was not told");
+            CLOCK[0] += 5 * 60 * MIN;
+            Contests.tick(server(helper), DAYTIME[0]);
+            helper.assertTrue(contest(helper, c.leader()).orElseThrow().phase() == ContestRow.Phase.PENDING, "five hours later it started without the head");
+            online(c.leader(), c.a(), c.b());
+            Contests.tick(server(helper), DAYTIME[0]);
+            helper.assertTrue(contest(helper, c.leader()).orElseThrow().phase() == ContestRow.Phase.RUNNING, "it did not start at the head's next login");
+            helper.assertTrue(groups(helper).cooldownUntil(group(helper, c.leader()), "contest") > 0, "no cooldown at the start");
         } finally {
             done(helper, c.all());
         }
@@ -545,10 +551,14 @@ public final class ContestGameTests {
         helper.succeed();
     }
 
-    private static void unchanged(GameTestHelper helper, Clan c, String why) {
+    private static void unchanged(GameTestHelper helper, Clan c, String why, String reason) {
         helper.assertTrue(leaderOf(helper, c.a()).equals(c.leader().getUUID()), why + ": the lead moved");
         helper.assertTrue(contest(helper, c.leader()).isEmpty(), why + ": the contest row stayed");
-        helper.assertTrue(c.leader().received(CLAN + "contest_nochange"), why + ": the clan was not told");
+        helper.assertTrue(c.leader().received(CLAN + "contest_nochange." + reason), why + ": the clan was not told " + reason);
+        for (String other : net.ofatech.supernaturalbloodlines.core.group.clan.ContestRules.REASONS) {
+            helper.assertTrue(other.equals(reason) || !c.leader().received(CLAN + "contest_nochange." + other), why + ": the clan was told " + other + " as well");
+        }
+        helper.assertTrue(c.leader().received(CLAN + "contest_cooldown"), why + ": the clan was not told the cooldown started");
     }
 
     @GameTest(template = "empty", templateNamespace = NS, timeoutTicks = 100)
@@ -557,7 +567,7 @@ public final class ContestGameTests {
         try {
             begin(helper, c, c.a());
             midnight(helper);
-            unchanged(helper, c, "the head holds it");
+            unchanged(helper, c, "the head holds it", "leader_holds");
         } finally {
             done(helper, c.all());
         }
@@ -571,7 +581,7 @@ public final class ContestGameTests {
             begin(helper, c, c.a());
             pass(c.leader(), c.b());
             midnight(helper);
-            unchanged(helper, c, "a Night Walker holds it");
+            unchanged(helper, c, "a Night Walker holds it", "not_day_walker");
         } finally {
             done(helper, c.all());
         }
@@ -588,7 +598,7 @@ public final class ContestGameTests {
             online(c.leader(), c.b());
             CharterScan.overridePlayers(() -> List.of(c.leader(), c.b()));
             midnight(helper);
-            unchanged(helper, c, "the holder is offline");
+            unchanged(helper, c, "the holder is offline", "offline");
             CharterRow row = groups(helper).charterOf(group(helper, c.leader())).orElseThrow();
             helper.assertTrue(row.state() == CharterState.HELD && row.holder().equals(Optional.of(c.a().getUUID())), "the row is " + row);
         } finally {
@@ -609,10 +619,118 @@ public final class ContestGameTests {
             helper.getLevel().setBlock(chestPos, Blocks.CHEST.defaultBlockState(), 3);
             ((ChestBlockEntity) helper.getLevel().getBlockEntity(chestPos)).setItem(0, takeCharter(c.a()));
             midnight(helper);
-            unchanged(helper, c, "the Charter is in a chest");
+            unchanged(helper, c, "the Charter is in a chest", "not_held");
         } finally {
             helper.getLevel().setBlock(chestPos, Blocks.AIR.defaultBlockState(), 3);
             done(helper, c.all());
+        }
+        helper.succeed();
+    }
+
+    private static void headStores(GameTestHelper helper, Clan c) {
+        BlockPos chestPos = helper.absolutePos(new BlockPos(3, 2, 3));
+        helper.getLevel().setBlock(chestPos, Blocks.CHEST.defaultBlockState(), 3);
+        ((ChestBlockEntity) helper.getLevel().getBlockEntity(chestPos)).setItem(0, takeCharter(c.leader()));
+        CharterScan.scanNow(server(helper));
+    }
+
+    private static void emptyChest(GameTestHelper helper) {
+        helper.getLevel().setBlock(helper.absolutePos(new BlockPos(3, 2, 3)), Blocks.AIR.defaultBlockState(), 3);
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS, timeoutTicks = 100)
+    public static void aCharterTheHeadStoredIsForfeitedToTheOnlineChallenger(GameTestHelper helper) {
+        Clan c = ready(helper);
+        try {
+            begin(helper, c, c.a());
+            headStores(helper, c);
+            helper.assertTrue(groups(helper).charterOf(group(helper, c.leader())).orElseThrow().state() == CharterState.STORED, "setup: not stored");
+            helper.assertTrue(contest(helper, c.leader()).orElseThrow().headStored(), "the contest does not know the head stored it");
+            midnight(helper);
+            helper.assertTrue(leaderOf(helper, c.b()).equals(c.a().getUUID()), "the challenger did not win a forfeited Charter");
+            helper.assertTrue(c.b().received(CLAN + "contest_new_head_forfeit"), "the clan was not told it was a forfeit");
+        } finally {
+            emptyChest(helper);
+            done(helper, c.all());
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS, timeoutTicks = 100)
+    public static void aForfeitedCharterNeedsTheChallengerOnlineAliveAndADayWalker(GameTestHelper helper) {
+        Clan c = ready(helper);
+        try {
+            begin(helper, c, c.a());
+            headStores(helper, c);
+            c.a().setHealth(0f);
+            midnight(helper);
+            unchanged(helper, c, "the challenger is dead", "forfeit_challenger_away");
+        } finally {
+            emptyChest(helper);
+            done(helper, c.all());
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS, timeoutTicks = 100)
+    public static void aCharterAMemberStoredIsNoForfeit(GameTestHelper helper) {
+        Clan c = ready(helper);
+        try {
+            begin(helper, c, c.a());
+            pass(c.leader(), c.b());
+            CharterScan.scanNow(server(helper));
+            BlockPos chestPos = helper.absolutePos(new BlockPos(3, 2, 3));
+            helper.getLevel().setBlock(chestPos, Blocks.CHEST.defaultBlockState(), 3);
+            ((ChestBlockEntity) helper.getLevel().getBlockEntity(chestPos)).setItem(0, takeCharter(c.b()));
+            CharterScan.scanNow(server(helper));
+            helper.assertTrue(!contest(helper, c.leader()).orElseThrow().headStored(), "a Night Walker storing it was read as the head storing it");
+            midnight(helper);
+            unchanged(helper, c, "a member stored it", "not_held");
+        } finally {
+            emptyChest(helper);
+            done(helper, c.all());
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS, timeoutTicks = 100)
+    public static void theHeadTakingItBackClearsTheForfeit(GameTestHelper helper) {
+        Clan c = ready(helper);
+        try {
+            begin(helper, c, c.a());
+            BlockPos chestPos = helper.absolutePos(new BlockPos(3, 2, 3));
+            headStores(helper, c);
+            helper.assertTrue(contest(helper, c.leader()).orElseThrow().headStored(), "setup");
+            c.leader().getInventory().add(((ChestBlockEntity) helper.getLevel().getBlockEntity(chestPos)).removeItem(0, 1));
+            CharterScan.scanNow(server(helper));
+            helper.assertTrue(!contest(helper, c.leader()).orElseThrow().headStored(), "the forfeit stayed after the head took it back");
+            midnight(helper);
+            unchanged(helper, c, "the head holds it again", "leader_holds");
+        } finally {
+            emptyChest(helper);
+            done(helper, c.all());
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS, timeoutTicks = 100)
+    public static void aStoredOrDroppedRowThatStillNamesAHolderChangesNothing(GameTestHelper helper) {
+        for (CharterState state : new CharterState[] {CharterState.STORED, CharterState.DROPPED}) {
+            Clan c = ready(helper);
+            try {
+                begin(helper, c, c.a());
+                UUID group = group(helper, c.leader());
+                CharterRow row = groups(helper).charterOf(group).orElseThrow();
+                takeCharter(c.leader());
+                CharterScan.overridePlayers(() -> List.of(c.leader(), c.a(), c.b()));
+                groups(helper).setCharter(group, new CharterRow(row.id(), Optional.of(c.a().getUUID()), state, row.forgedAt(), PackIndex.now(), Optional.empty(), 0));
+                DAYTIME[0] = 18_000L;
+                // the scan would rewrite the row from the inventories, so the contest reads the row as it stands
+                Contests.tick(server(helper), DAYTIME[0]);
+                helper.assertTrue(leaderOf(helper, c.b()).equals(c.leader().getUUID()), state + " row naming a holder: the lead moved");
+            } finally {
+                done(helper, c.all());
+            }
         }
         helper.succeed();
     }
@@ -629,7 +747,7 @@ public final class ContestGameTests {
             e.setNoGravity(true);
             helper.getLevel().addFreshEntity(e);
             midnight(helper);
-            unchanged(helper, c, "the Charter is on the ground");
+            unchanged(helper, c, "the Charter is on the ground", "not_held");
         } finally {
             done(helper, c.all());
         }
@@ -645,7 +763,7 @@ public final class ContestGameTests {
             CharterScan.scanNow(server(helper));
             c.a().setHealth(0f);
             midnight(helper);
-            unchanged(helper, c, "the holder is dead");
+            unchanged(helper, c, "the holder is dead", "dead");
         } finally {
             done(helper, c.all());
         }

@@ -23,14 +23,17 @@ public final class ContestRules {
     public record Holder(CharterState state, UUID id, boolean online, boolean alive, GroupRank rank, boolean inClan) {
     }
 
-    /** {@code reason} is empty exactly when somebody changes. */
-    public record Outcome(Optional<UUID> newLeader, String reason) {
-        static Outcome change(UUID id) {
-            return new Outcome(Optional.of(id), "");
+    /** Why a midnight changed nobody: each one has its own line for the clan. */
+    public static final java.util.List<String> REASONS = java.util.List.of("not_held", "left", "leader_holds", "offline", "dead", "not_day_walker", "forfeit_challenger_away");
+
+    /** {@code reason} is empty exactly when somebody changes; {@code forfeit} says the head's Charter was not in hand and the challenger won by that. */
+    public record Outcome(Optional<UUID> newLeader, String reason, boolean forfeit) {
+        static Outcome change(UUID id, boolean forfeit) {
+            return new Outcome(Optional.of(id), "", forfeit);
         }
 
         static Outcome none(String reason) {
-            return new Outcome(Optional.empty(), reason);
+            return new Outcome(Optional.empty(), reason, false);
         }
     }
 
@@ -60,8 +63,19 @@ public final class ContestRules {
         return cooldownUntil > nowMillis ? Optional.of(Refusal.COOLDOWN) : Optional.empty();
     }
 
-    /** An online, alive Day Walker of the clan holding the Charter in {@code HELD} leads; anything else changes nobody. */
     public static Outcome resolve(Holder holder, UUID leader) {
+        return resolve(holder, leader, null, false);
+    }
+
+    /**
+     * An online, alive Day Walker of the clan holding the Charter in {@code HELD} leads. A Charter that is {@code STORED} because the head was its last
+     * holder is forfeited: the challenger leads when they are online, alive and a Day Walker of the clan. Anything else changes nobody.
+     */
+    public static Outcome resolve(Holder holder, UUID leader, Holder challenger, boolean headStored) {
+        if (holder.state() == CharterState.STORED && headStored && challenger != null) {
+            boolean can = challenger.id() != null && challenger.inClan() && challenger.online() && challenger.alive() && challenger.rank() == GroupRank.DAY_WALKER;
+            return can ? Outcome.change(challenger.id(), true) : Outcome.none("forfeit_challenger_away");
+        }
         if (holder.state() != CharterState.HELD) {
             return Outcome.none("not_held");
         }
@@ -77,7 +91,7 @@ public final class ContestRules {
         if (!holder.alive()) {
             return Outcome.none("dead");
         }
-        return holder.rank() == GroupRank.DAY_WALKER ? Outcome.change(holder.id()) : Outcome.none("not_day_walker");
+        return holder.rank() == GroupRank.DAY_WALKER ? Outcome.change(holder.id(), false) : Outcome.none("not_day_walker");
     }
 
     /** The day time at which a contest started at {@code startedDayTime} ends: the first midnight at least {@code minMinutes} after the start. */

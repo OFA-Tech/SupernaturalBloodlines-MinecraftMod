@@ -85,8 +85,12 @@ public final class GroupIndex extends SavedData {
     }
 
     /** The clan's one contest: a challenge waiting for the leader, or the Game of Kings running until its midnight. */
-    public record ContestRow(UUID challenger, Phase phase, long openedAt, long acceptBy, long startedAt, long startedDayTime) {
+    public record ContestRow(UUID challenger, Phase phase, long openedAt, long acceptBy, long startedAt, long startedDayTime, boolean headStored) {
         public enum Phase { PENDING, RUNNING }
+
+        public ContestRow(UUID challenger, Phase phase, long openedAt, long acceptBy, long startedAt, long startedDayTime) {
+            this(challenger, phase, openedAt, acceptBy, startedAt, startedDayTime, false);
+        }
     }
 
     /** A coven vote. Ballots are who voted what; a cancelled vote is kept and ignored. */
@@ -587,7 +591,7 @@ public final class GroupIndex extends SavedData {
                     continue;
                 }
                 ContestRow.Phase phase = ContestRow.Phase.valueOf(e.getString("phase"));
-                i.contests.put(group, new ContestRow(NbtUtils.loadUUID(e.get("challenger")), phase, e.getLong("opened_at"), e.getLong("accept_by"), e.getLong("started_at"), e.getLong("started_day_time")));
+                i.contests.put(group, new ContestRow(NbtUtils.loadUUID(e.get("challenger")), phase, e.getLong("opened_at"), e.getLong("accept_by"), e.getLong("started_at"), e.getLong("started_day_time"), e.getBoolean("head_stored")));
             } catch (RuntimeException bad) {
                 net.ofatech.supernaturalbloodlines.SupernaturalBloodlines.LOGGER.warn("The group index skipped a damaged contest row: {}", bad.toString());
             }
@@ -734,6 +738,9 @@ public final class GroupIndex extends SavedData {
             e.putLong("accept_by", c.acceptBy());
             e.putLong("started_at", c.startedAt());
             e.putLong("started_day_time", c.startedDayTime());
+            if (c.headStored()) {
+                e.putBoolean("head_stored", true);
+            }
             contestList.add(e);
         });
         tag.put(CONTESTS, contestList);

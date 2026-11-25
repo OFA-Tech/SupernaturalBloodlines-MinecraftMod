@@ -70,6 +70,31 @@ class ContestRulesTest {
     }
 
     @Test
+    void aStoredCharterThatTheHeadLastHeldIsForfeitedToAnOnlineLivingDayWalkerChallenger() {
+        Holder stored = holder(CharterState.STORED, null, false, false, GroupRank.NONE, false);
+        Holder challenger = holder(CharterState.HELD, WALKER, true, true, GroupRank.DAY_WALKER, true);
+        Outcome won = ContestRules.resolve(stored, LEADER, challenger, true);
+        assertEquals(Optional.of(WALKER), won.newLeader());
+        assertTrue(won.forfeit());
+        assertEquals("forfeit_challenger_away", ContestRules.resolve(stored, LEADER, holder(CharterState.HELD, WALKER, false, false, GroupRank.DAY_WALKER, true), true).reason());
+        assertEquals("forfeit_challenger_away", ContestRules.resolve(stored, LEADER, holder(CharterState.HELD, WALKER, true, false, GroupRank.DAY_WALKER, true), true).reason());
+        assertEquals("forfeit_challenger_away", ContestRules.resolve(stored, LEADER, holder(CharterState.HELD, WALKER, true, true, GroupRank.NONE, true), true).reason());
+        assertEquals("forfeit_challenger_away", ContestRules.resolve(stored, LEADER, holder(CharterState.HELD, WALKER, true, true, GroupRank.DAY_WALKER, false), true).reason());
+        assertEquals("not_held", ContestRules.resolve(stored, LEADER, challenger, false).reason(), "a Charter somebody else stored is no forfeit");
+        assertEquals("not_held", ContestRules.resolve(holder(CharterState.DROPPED, null, false, false, GroupRank.NONE, false), LEADER, challenger, true).reason(), "only STORED is a forfeit");
+        assertEquals("not_held", ContestRules.resolve(holder(CharterState.LOST, null, false, false, GroupRank.NONE, false), LEADER, challenger, true).reason());
+        assertFalse(ContestRules.resolve(holder(CharterState.HELD, WALKER, true, true, GroupRank.DAY_WALKER, true), LEADER, challenger, true).forfeit(), "a held Charter is the ordinary win");
+    }
+
+    @Test
+    void everyReasonHasItsOwnWord() {
+        for (String reason : new String[] {"not_held", "left", "leader_holds", "offline", "dead", "not_day_walker", "forfeit_challenger_away"}) {
+            assertTrue(ContestRules.REASONS.contains(reason), reason);
+        }
+        assertEquals(7, ContestRules.REASONS.size());
+    }
+
+    @Test
     void dueAtTheNextMidnightAfterTheMinimum() {
         // started 17 990: the 2 minute minimum puts the earliest at 20 390, so the end is the midnight at 42 000
         assertEquals(42_000, ContestRules.endsAt(17_990, 2));

@@ -127,6 +127,8 @@ public final class CharterScan {
             kept.dust().forEach(s -> dust.add(e.getValue().get(s.index())));
             Found keep = e.getValue().get(kept.kept().orElseThrow().index());
             handled.add(group);
+            groups.contestOf(group).filter(GroupIndex.ContestRow::headStored).ifPresent(c ->
+                    groups.setContest(group, new GroupIndex.ContestRow(c.challenger(), c.phase(), c.openedAt(), c.acceptBy(), c.startedAt(), c.startedDayTime(), false)));
             if (Charters.isMember(server, keep.player().getUUID(), group)) {
                 writes.put(group, new CharterRow(row.id(), Optional.of(keep.player().getUUID()), CharterState.HELD, row.forgedAt(), now, Optional.empty(), 0));
             } else {
@@ -142,6 +144,10 @@ public final class CharterScan {
             }
             CharterRow row = e.getValue();
             if (row.state() == CharterState.HELD && row.holder().filter(onlineIds::contains).isPresent()) {
+                if (row.holder().filter(leader::equals).isPresent()) {
+                    groups.contestOf(group).filter(c -> c.phase() == GroupIndex.ContestRow.Phase.RUNNING && !c.headStored()).ifPresent(c ->
+                            groups.setContest(group, new GroupIndex.ContestRow(c.challenger(), c.phase(), c.openedAt(), c.acceptBy(), c.startedAt(), c.startedDayTime(), true)));
+                }
                 row = new CharterRow(row.id(), Optional.empty(), CharterState.STORED, row.forgedAt(), row.seenAt(), Optional.empty(), 0);
             }
             if (row.state() == CharterState.HELD || row.state() == CharterState.STORED) {

@@ -35,6 +35,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public final class Contests {
     private static final long DAY = 24L * 60 * 60 * 1000;
+    public static final String COOLDOWN_KEY = "contest";
     private static LongSupplier dayTimeOverride;
     private static boolean resolving;
     private static boolean registered;
@@ -131,7 +132,7 @@ public final class Contests {
         long now = PackIndex.now();
         int days = packs.inPackSince(p.getUUID()).map(t -> (int) Math.min(Integer.MAX_VALUE, Math.max(0, (now - t) / DAY))).orElse(0);
         boolean charter = groups.charterOf(clan.group()).filter(r -> r.state() != CharterState.LOST).isPresent();
-        long cooldown = groups.cooldownUntil(clan.group(), "contest");
+        long cooldown = groups.cooldownUntil(clan.group(), COOLDOWN_KEY);
         Optional<ContestRules.Refusal> no = ContestRules.mayChallenge(ClanScope.dayWalker(level, p.getUUID()) ? GroupRank.DAY_WALKER : GroupRank.NONE, days, 1 + packs.betasOf(clan.leader()).size(),
                 SireCall.player(server, clan.leader()) != null, charter, groups.contestOf(clan.group()).isPresent(), cooldown, now,
                 GroupsConfig.challengerMinDays(), GroupsConfig.charterMinMembers());
@@ -166,8 +167,8 @@ public final class Contests {
     private static void start(MinecraftServer server, UUID leader, UUID group, ContestRow pending) {
         GroupIndex groups = GroupIndex.get(server.overworld());
         long now = PackIndex.now();
-        groups.setContest(group, new ContestRow(pending.challenger(), ContestRow.Phase.RUNNING, pending.openedAt(), pending.acceptBy(), now, dayTime(server)));
-        groups.setCooldown(group, "contest", now + GroupsConfig.contestCooldownDays() * DAY);
+        groups.setContest(group, new ContestRow(pending.challenger(), ContestRow.Phase.RUNNING, pending.openedAt(), pending.acceptBy(), now, dayTime(server), false));
+        groups.setCooldown(group, COOLDOWN_KEY, now + GroupsConfig.contestCooldownDays() * DAY);
         tellAll(server, leader, ClanText.key("contest_started"), "");
     }
 
@@ -210,13 +211,9 @@ public final class Contests {
                 continue;
             }
             if (row.phase() == ContestRow.Phase.PENDING) {
-                if (ContestRules.autoStart(row.acceptBy(), now)) {
-                    if (SireCall.player(server, leader) != null) {
-                        start(server, leader, group, row);
-                    } else {
-                        groups.clearContest(group);
-                        tellAll(server, leader, ClanText.key("contest_cancelled"), "");
-                    }
+                // a head who is away at the deadline is waited for: it starts at their next login, never by itself without them
+                if (ContestRules.autoStart(row.acceptBy(), now) && SireCall.player(server, leader) != null) {
+                    start(server, leader, group, row);
                 }
                 continue;
             }
@@ -244,10 +241,17 @@ public final class Contests {
             GroupRank rank = ClanScope.dayWalker(server.overworld(), id) ? GroupRank.DAY_WALKER : GroupRank.NONE;
             holder = new ContestRules.Holder(charter.state(), id, online != null, online != null && online.isAlive(), rank, Charters.isMember(server, id, group));
         }
-        ContestRules.Outcome outcome = ContestRules.resolve(holder, leader);
+        ContestRow contest = groups.contestOf(group).orElseThrow();
+        ServerPlayer challengerOnline = SireCall.player(server, contest.challenger());
+        ContestRules.Holder challenger = new ContestRules.Holder(CharterState.HELD, contest.challenger(), challengerOnline != null, challengerOnline != null && challengerOnline.isAlive(),
+                ClanScope.dayWalker(server.overworld(), contest.challenger()) ? GroupRank.DAY_WALKER : GroupRank.NONE, Charters.isMember(server, contest.challenger(), group));
+        ContestRules.Outcome outcome = ContestRules.resolve(holder, leader, challenger, contest.headStored());
         groups.clearContest(group);
         if (outcome.newLeader().isEmpty()) {
-            tellAll(server, leader, ClanText.key("contest_nochange"), "");
+            tellAll(server, leader, ClanText.key("contest_nochange." + outcome.reason()), "");
+            long until = groups.cooldownUntil(group, COOLDOWN_KEY);
+            long days = Math.max(1, (until - PackIndex.now() + DAY - 1) / DAY);
+            tellAll(server, leader, ClanText.key(days == 1 ? "contest_cooldown.one" : "contest_cooldown"), String.valueOf(days));
             return;
         }
         UUID next = outcome.newLeader().get();
@@ -257,7 +261,7 @@ public final class Contests {
         } finally {
             resolving = false;
         }
-        tellAll(server, next, ClanText.key("contest_new_head"), name(server, next));
+        tellAll(server, next, ClanText.key(outcome.forfeit() ? "contest_new_head_forfeit" : "contest_new_head"), name(server, next));
     }
 
     /** The head's card while a challenge waits for an answer: kind, challenger, no token (the accept command takes none) and the time left. */
