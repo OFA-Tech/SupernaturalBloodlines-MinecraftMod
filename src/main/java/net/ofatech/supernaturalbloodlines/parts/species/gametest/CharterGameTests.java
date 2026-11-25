@@ -761,6 +761,28 @@ public final class CharterGameTests {
     }
 
     @GameTest(template = "empty", templateNamespace = NS, timeoutTicks = 100)
+    public static void aCreativeStackOfManyKeepsOneAndAStrippedStackIsDust(GameTestHelper helper) {
+        Clan c = clan(helper);
+        try {
+            ItemStack stack = forged(helper, c);
+            take(c.leader());
+            ItemStack many = stack.copy();
+            many.setCount(5); // a creative-mode player can set any count on a stack they copied
+            c.leader().getInventory().add(many);
+            scan(helper, c.leader(), c.a(), c.b());
+            helper.assertTrue(held(c.leader()) == 1 && firstCharter(c.leader()).getCount() == 1, "a stack of " + firstCharter(c.leader()).getCount() + " Charters survived the scan");
+            ItemStack stripped = stack.copy();
+            stripped.remove(SpeciesRegistries.CHARTER_ID.get()); // a creative copy that lost its components is no Charter
+            c.a().getInventory().add(stripped);
+            scan(helper, c.leader(), c.a(), c.b());
+            helper.assertTrue(held(c.a()) == 0 && held(c.leader()) == 1, "a creative stack with no id survived");
+        } finally {
+            done(helper, c.all());
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS, timeoutTicks = 100)
     public static void adminGiveWithNoRowIsDust(GameTestHelper helper) {
         Clan c = clan(helper);
         try {
