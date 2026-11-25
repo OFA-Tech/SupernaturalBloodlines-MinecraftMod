@@ -497,7 +497,7 @@ These replace the sentence they name above. The plan is [20c](../plans/2026-11-2
 7. **7.6:** a contest ends at the first midnight at least `contest_min_minutes` after it started, and the Charter is scanned again right before the read. A Charter found with a non-member is dropped at their feet, protected, not destroyed.
 8. **11:** the payload is `ClanViewPayload`, the request kind `CHARTER_CONTEST`, `LadderNet.PROTOCOL` "18".
 ## Corrections made by plan 20d (2026-11-25)
-These replace the sentence they name above. The plan is [20d](../plans/2026-11-25-plan-20d-brotherhood.md). Owner scope of 2026-11-25 (binding): the brotherhood is for hunters **and plain humans**.
+These replace the sentence they name above. The plan is [20d](../plans/2026-11-25-plan-20d-brotherhood.md). Owner scope of 2026-11-25 (binding): the brotherhood is for hunters **and plain humans**; the owner accepted all six open picks of the plan the same day (plan section "Owner answers, 2026-11-25").
 1. **3.1:** a plain human leader (species NONE, human-like, no vampire or werewolf fact) derives **BROTHERHOOD**, after the vampire test. A race that is not human-like, a witch, a siphoner who is not a vampire and a heretic still derive COVEN. **3.2:** founding is unchanged (a hunter; open_founding lifts it).
 2. **8b.2 R290:** the prey_member join refusal and the eleased_prey sweep are **not built in 20d** (join rules are plan 20e). Every perk asks one helper, BrotherhoodScope.appliesTo(level, leader, member) (group is a brotherhood, perks on, the member is a hunter or a plain human), so a member who does not fit gives and gets nothing (R298).
 3. **R292, R293:** "brother who is a hunter" reads "brother who fits (a hunter or a plain human)".
