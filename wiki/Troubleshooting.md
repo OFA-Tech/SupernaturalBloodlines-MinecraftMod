@@ -4,7 +4,7 @@ See also [Known limits](Known-Limits) for things that are not finished.
 
 ## The game won't start
 
-- **A version error naming a linked mod:** the mod declares each linked mod with a **version range** (see [Installing](Installing#requirements)). A Vampirism, Werewolves, Enchanted, Tensura, ManasCore or Curios outside the range stops the game. Use the tested versions.
+- **A version error naming a linked mod:** the mod declares each linked mod with a **version range** (see [Installing](Installing#requirements)). A Vampirism, Werewolves, Enchanted, Tensura, ManasCore, Curios or GeckoLib older than the minimum stops the game; a newer one loads with an "untested version" line in the log. Use the tested versions where you can.
 - **A part says it failed to initialise** (`Part X failed to initialise, skipping it`, with an error): that part is skipped and the rest keeps running. Usually a linked mod was updated and a class changed. Report it.
 
 ## A part is not working
