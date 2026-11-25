@@ -1,7 +1,10 @@
 package net.ofatech.supernaturalbloodlines.parts.species.group;
 
+import java.util.List;
 import net.neoforged.neoforge.common.ModConfigSpec;
 import net.ofatech.supernaturalbloodlines.SupernaturalBloodlines;
+import net.ofatech.supernaturalbloodlines.core.group.clan.CharterCost;
+import net.ofatech.supernaturalbloodlines.core.group.clan.ClanSwitches;
 
 /** The groups config (plans 20a and 20b). Every key has an Admin row ({@code AdminEntries}). Before the config loads the defaults answer. */
 public final class GroupsConfig {
@@ -82,7 +85,8 @@ public final class GroupsConfig {
     private static final Whole SHUN_DAYS = whole("shun_days", 7, 1, 365, "Days a shunned witch cannot join any coven.");
     private static final Flag MOONLIGHT_RING_ENABLED = flag("moonlight_ring_enabled", true, "A circle of three can forge a Moon Ring for a werewolf in a pack, for half the silver.");
     private static final Flag SUN_RING_FORGE_ENABLED = flag("sun_ring_forge_enabled", true, "A circle of three can forge a Sun Ring that binds at half power.");
-    private static final Flag SUN_RING_DAY_WALKER_ONLY = flag("sun_ring_day_walker_only", false, "The coven Sun Ring only for a Day Walker of a clan. Off: any vampire.");
+    private static final Flag SUN_RING_DAY_WALKER_ONLY = flag("sun_ring_day_walker_only", true,
+            "The coven Sun Ring only for a Day Walker of a clan (its leader counts). Off: any vampire. The default is on since the clans build; a config file that already says false keeps false.");
     private static final Whole MASTERY_ULTIMATE_CIRCLE = whole("mastery_ultimate_circle", 7, 0, 13, "Linked members standing in the circle for the Rite of Mastery's Ultimate tier. 0 = no requirement.");
     private static final Flag GRAND_RITES_ENABLED = flag("grand_rites_enabled", true, "The three grand rites (Fete des Benedictions, Night Watch, Great Harvest) can be cast.");
     private static final Whole GRAND_RITE_COOLDOWN_HOURS = whole("grand_rite_cooldown_hours", 12, 0, 720, "Hours before a coven can cast the same grand rite again.");
@@ -90,6 +94,26 @@ public final class GroupsConfig {
     private static final Whole FETE_MINUTES = whole("fete_minutes", 10, 1, 120, "Minutes the Fete des Benedictions lasts, before potency.");
     private static final Whole HARVEST_XP_LEVELS = whole("harvest_xp_levels", 30, 0, 1000, "Experience levels the circle's members split to cast the Great Harvest.");
     private static final Whole HARVEST_MAX_BLOCKS = whole("harvest_max_blocks", 2048, 64, 65536, "The most blocks the Great Harvest touches in one cast.");
+    private static final Whole DAYWALKER_DAYS = whole("daywalker_days", 14, 0, 365, "Real days in a clan before a Night Walker becomes a Day Walker by themselves. 0 = only the leader promotes.");
+    private static final Whole EXILE_DAYS = whole("exile_days", 7, 1, 365, "Days an exiled member cannot rejoin that clan.");
+    private static final Flag CHARTER_ENABLED = flag("charter_enabled", true, "Clans can forge a Charter and hold the Game of Kings for it. Off: every Charter is inert and no contest runs; nothing is deleted.");
+    private static final Whole CHARTER_MIN_MEMBERS = whole("charter_min_members", 3, 2, 50, "Members (the leader counted) a clan needs to forge a Charter and to challenge for it.");
+    private static final Whole CHARTER_LOST_DAYS = whole("charter_lost_days", 7, 1, 365, "Days a Charter can go unseen before it counts as lost and the leader may reforge it.");
+    private static final ModConfigSpec.ConfigValue<List<? extends String>> CHARTER_FORGE_COST = B
+            .comment("What forging or reforging a Charter takes from the leader: one item id per line, optionally =count (minecraft:gold_ingot=5). A bad or unknown line is skipped; nothing valid left means the default; an empty list is free.")
+            .defineList("charter_forge_cost", CharterCost.DEFAULT, () -> "minecraft:gold_block", o -> o instanceof String);
+    private static final Whole CHALLENGER_MIN_DAYS = whole("challenger_min_days", 7, 0, 365, "Real days in a clan before a Day Walker can challenge for the Charter.");
+    private static final Whole CONTEST_COOLDOWN_DAYS = whole("contest_cooldown_days", 7, 0, 365, "Days between two contests of one clan, counted from the start of the last.");
+    private static final Whole CONTEST_ACCEPT_MINUTES = whole("contest_accept_minutes", 10, 1, 120, "Minutes the leader has to accept a challenge; if they stay online the contest starts anyway.");
+    private static final Whole CONTEST_MIN_MINUTES = whole("contest_min_minutes", 2, 0, 20, "Real minutes a contest runs at least, so an accept just before midnight does not decide it.");
+    private static final Whole CONTEST_MAX_HOURS = whole("contest_max_hours", 1, 1, 24, "Real hours after which a contest ends even if the in-game midnight never comes (daylight cycle off).");
+    private static final Flag FEED_SHARE_ENABLED = flag("feed_share_enabled", true, "A clan member's feed gives clanmates nearby a little blood.");
+    private static final Whole FEED_SHARE_PERCENT = whole("feed_share_percent", 10, 1, 100, "The percent of the blood a feed gives that each clanmate nearby gets (at least 1).");
+    private static final Whole FEED_SHARE_MAX = whole("feed_share_max", 2, 1, 20, "The most blood one share gives.");
+    private static final Whole FEED_SHARE_RADIUS = whole("feed_share_radius", 16, 2, 64, "Blocks around the feeder a clanmate must be within.");
+    private static final Whole FEED_SHARE_CAP_PER_MINUTE = whole("feed_share_cap_per_minute", 4, 1, 100, "The most blood one clanmate can receive from shares in a minute.");
+    private static final Whole SIRELINE_BONUS_PERCENT = whole("sireline_bonus_percent", 3, 0, 50, "Percent attack damage for each clanmate of your sireline nearby. 0 = off.");
+    private static final Whole SIRELINE_BONUS_MAX_PERCENT = whole("sireline_bonus_max_percent", 15, 0, 100, "The most the sire-line bonus adds, in percent.");
 
     static {
         SPEC = B.build();
@@ -262,5 +286,107 @@ public final class GroupsConfig {
 
     public static int harvestMaxBlocks() {
         return HARVEST_MAX_BLOCKS.get();
+    }
+
+    /** Groups on and clans on: the master switch of every clan perk (R280). */
+    public static boolean clanPerksOn() {
+        return ClanSwitches.perksOn(groupsEnabled(), clansEnabled());
+    }
+
+    public static int daywalkerDays() {
+        return DAYWALKER_DAYS.get();
+    }
+
+    public static int exileDays() {
+        return EXILE_DAYS.get();
+    }
+
+    public static boolean charterEnabled() {
+        return CHARTER_ENABLED.get();
+    }
+
+    public static int charterMinMembers() {
+        return CHARTER_MIN_MEMBERS.get();
+    }
+
+    public static int charterLostDays() {
+        return CHARTER_LOST_DAYS.get();
+    }
+
+    /** The lines as written, before anything is looked up. */
+    @SuppressWarnings("unchecked")
+    public static List<String> charterForgeCostRaw() {
+        Object pinned = OVERRIDES.get("charter_forge_cost");
+        if (pinned != null) {
+            return (List<String>) pinned;
+        }
+        try {
+            return List.copyOf(CHARTER_FORGE_COST.get());
+        } catch (IllegalStateException notLoaded) {
+            return CharterCost.DEFAULT;
+        }
+    }
+
+    private static final java.util.Set<String> COST_WARNED = java.util.concurrent.ConcurrentHashMap.newKeySet();
+
+    /** The cost with every item looked up by {@code known}; each bad line is warned about once. */
+    public static List<CharterCost.Entry> charterForgeCost(java.util.function.Predicate<String> known) {
+        return CharterCost.parse(charterForgeCostRaw(), known, line -> {
+            if (COST_WARNED.add(line)) {
+                SupernaturalBloodlines.LOGGER.warn(line);
+            }
+        });
+    }
+
+    public static List<CharterCost.Entry> charterForgeCost() {
+        return charterForgeCost(id -> net.minecraft.core.registries.BuiltInRegistries.ITEM.containsKey(net.minecraft.resources.ResourceLocation.parse(id)));
+    }
+
+    public static int challengerMinDays() {
+        return CHALLENGER_MIN_DAYS.get();
+    }
+
+    public static int contestCooldownDays() {
+        return CONTEST_COOLDOWN_DAYS.get();
+    }
+
+    public static int contestAcceptMinutes() {
+        return CONTEST_ACCEPT_MINUTES.get();
+    }
+
+    public static int contestMinMinutes() {
+        return CONTEST_MIN_MINUTES.get();
+    }
+
+    public static int contestMaxHours() {
+        return CONTEST_MAX_HOURS.get();
+    }
+
+    public static boolean feedShareEnabled() {
+        return FEED_SHARE_ENABLED.get();
+    }
+
+    public static int feedSharePercent() {
+        return FEED_SHARE_PERCENT.get();
+    }
+
+    public static int feedShareMax() {
+        return FEED_SHARE_MAX.get();
+    }
+
+    public static int feedShareRadius() {
+        return FEED_SHARE_RADIUS.get();
+    }
+
+    public static int feedShareCapPerMinute() {
+        return FEED_SHARE_CAP_PER_MINUTE.get();
+    }
+
+    public static int sirelineBonusPercent() {
+        return SIRELINE_BONUS_PERCENT.get();
+    }
+
+    public static int sirelineBonusMaxPercent() {
+        return SIRELINE_BONUS_MAX_PERCENT.get();
     }
 }

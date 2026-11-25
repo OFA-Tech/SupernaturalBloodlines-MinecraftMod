@@ -63,7 +63,8 @@ class CovenConfigTest {
             assertEquals(r.def(), r.get().getAsDouble(), 1e-9, r.key());
         }
         assertTrue(GroupsConfig.linkEnabled() && GroupsConfig.moonlightRingEnabled() && GroupsConfig.sunRingForgeEnabled() && GroupsConfig.grandRitesEnabled());
-        assertFalse(GroupsConfig.linkDeathLethal() || GroupsConfig.sunRingDayWalkerOnly());
+        assertFalse(GroupsConfig.linkDeathLethal());
+        assertTrue(GroupsConfig.sunRingDayWalkerOnly(), "plan 20c: the default is Day Walkers only");
         assertEquals(7, GroupsConfig.tier2Members());
         assertEquals(13, GroupsConfig.tier3Members());
     }

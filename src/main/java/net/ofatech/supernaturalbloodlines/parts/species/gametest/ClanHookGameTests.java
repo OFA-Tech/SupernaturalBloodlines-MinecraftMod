@@ -485,9 +485,7 @@ public final class ClanHookGameTests {
 
     @GameTest(template = "empty", templateNamespace = NS, timeoutTicks = 100)
     public static void aSavedNonDefaultIsKept(GameTestHelper helper) {
-        ModConfigSpec.Builder b = new ModConfigSpec.Builder();
-        b.define("sun_ring_day_walker_only", true);
-        ModConfigSpec spec = b.build();
+        ModConfigSpec spec = net.ofatech.supernaturalbloodlines.parts.species.group.GroupsConfig.SPEC;
         CommentedConfig file = new TomlParser().parse("sun_ring_day_walker_only = false\n");
         spec.correct(file);
         helper.assertTrue(spec.isCorrect(file) && Boolean.FALSE.equals(file.get("sun_ring_day_walker_only")), "a stored false became " + file.get("sun_ring_day_walker_only"));

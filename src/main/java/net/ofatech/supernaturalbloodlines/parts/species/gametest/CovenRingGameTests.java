@@ -206,6 +206,7 @@ public final class CovenRingGameTests {
         Circle c = circleAt(helper, new BlockPos(8, 1, 8), 3);
         TalkingDuelist vampire = onCentre(helper);
         try {
+            GroupsConfig.override("sun_ring_day_walker_only", false);
             helper.assertTrue(type(helper, "coven_sun_ring").getPower() == 3000 && type(helper, "ward_of_daylight").getPower() == 6000, "the file powers are 3000 and 6000");
             int half = CovenCostGameTests.begin(helper, c, c.anchor().getUUID(), 3000, true);
             RiteCost.discard();
