@@ -496,3 +496,15 @@ These replace the sentence they name above. The plan is [20c](../plans/2026-11-2
 6. **7.1:** a demoted member is not auto-promoted again; the 14 days are real days in the clan.
 7. **7.6:** a contest ends at the first midnight at least `contest_min_minutes` after it started, and the Charter is scanned again right before the read. A Charter found with a non-member is dropped at their feet, protected, not destroyed.
 8. **11:** the payload is `ClanViewPayload`, the request kind `CHARTER_CONTEST`, `LadderNet.PROTOCOL` "18".
+## Corrections made by plan 20d (2026-11-25)
+These replace the sentence they name above. The plan is [20d](../plans/2026-11-25-plan-20d-brotherhood.md). Owner scope of 2026-11-25 (binding): the brotherhood is for hunters **and plain humans**; the owner accepted all six open picks of the plan the same day (plan section "Owner answers, 2026-11-25").
+1. **3.1:** a plain human leader (species NONE, human-like, no vampire or werewolf fact) derives **BROTHERHOOD**, after the vampire test. A race that is not human-like, a witch, a siphoner who is not a vampire and a heretic still derive COVEN. **3.2:** founding is unchanged (a hunter; open_founding lifts it).
+2. **8b.2 R290:** the prey_member join refusal and the eleased_prey sweep are **not built in 20d** (join rules are plan 20e). Every perk asks one helper, BrotherhoodScope.appliesTo(level, leader, member) (group is a brotherhood, perks on, the member is a hunter or a plain human), so a member who does not fit gives and gets nothing (R298).
+3. **R292, R293:** "brother who is a hunter" reads "brother who fits (a hunter or a plain human)".
+4. **R291:** the clause "at least a Potential" is dropped (strictly higher than the leader's mark already needs 1 or more); a Code-breaker cannot take or inherit the lead.
+5. **R294:** a leader is never expelled by the third break (strikes clear, a fresh breaker day).
+6. **R295:** the 48-hour end keeps running when its switch or rotherhood_enabled is off; a killer who already carries the curse is left alone.
+7. **R296:** the warning is a direct call from BossDirector.spawnKol (bosses requires species); there is no seam. The line names the target only.
+8. **R297:** region labels are plain words (R5); the saying is the only quotation.
+9. **R298 and R299** are dormancy and privacy; Mikael's call is parked with no number.
+10. **9 (config):** the 20d row lists 16 keys (unchanged); AdminEntries is 293 after 20c. **11 (wire):** the payload is BrotherhoodViewPayload, primitives only, LadderNet.PROTOCOL "19" (after 20c's "18"); no request kind.
