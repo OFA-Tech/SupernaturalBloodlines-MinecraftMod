@@ -153,6 +153,8 @@ public final class AdminCommands {
             row("C8", "group shun <player>", 0, Ui.HUB_BUTTON, "PACK"),
             row("C9", "group vote yes <kind>", 0, Ui.HUB_BUTTON, "REQUESTS"),
             row("C10", "group vote no <kind>", 0, Ui.HUB_BUTTON, "REQUESTS"),
+            row("C11", "group challenge", 0, Ui.HUB_BUTTON, "PACK"),
+            row("C12", "group challenge accept", 0, Ui.HUB_BUTTON, "REQUESTS"),
             row("C13", "group promote <player>", 0, Ui.HUB_BUTTON, "PACK"),
             row("C14", "group demote <player>", 0, Ui.HUB_BUTTON, "PACK"),
             row("C15", "group exile <player>", 0, Ui.HUB_BUTTON, "PACK"),

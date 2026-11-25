@@ -13,7 +13,7 @@ import net.minecraft.server.level.ServerPlayer;
  */
 public final class HubRequests {
     /** DUEL is not a request: it is the player's own duel (token {@code asked}, {@code on} or {@code paused}), sent on the same channel so the Profile can show it. */
-    public enum Kind { SIRE_CALL, PACK_INVITE, ALLY_INVITE, CHALLENGE, COMPULSION, DUEL, CIRCLE_CALL, GROUP_VOTE }
+    public enum Kind { SIRE_CALL, PACK_INVITE, ALLY_INVITE, CHALLENGE, COMPULSION, DUEL, CIRCLE_CALL, GROUP_VOTE, CHARTER_CONTEST }
 
     /** The id used when nobody asked (a compulsion is the player's own). */
     public static final UUID NOBODY = new UUID(0, 0);

@@ -19,10 +19,14 @@ public final class ClanRegistry {
             if (e.getServer().getTickCount() % 200 == 0) {
                 ClanDiscipline.sweep(e.getServer());
             }
+            if (e.getServer().getTickCount() % 20 == 0) {
+                Contests.tick(e.getServer());
+            }
             if (e.getServer().getTickCount() % 40 == 0) {
                 CharterScan.scanNow(e.getServer());
             }
         });
         CharterGuard.register();
+        Contests.register();
     }
 }

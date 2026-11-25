@@ -73,16 +73,21 @@ public final class GroupCommand {
                 .then(net.ofatech.supernaturalbloodlines.parts.species.group.clan.ClanCommand.charter())
                 .then(Commands.literal("info").executes(c -> info(c.getSource(), self(c))))
                 .then(Commands.literal("challenge")
-                        .then(Commands.literal("accept").executes(c -> run(c, challenge(self(c), null, p -> PackDuel.accept(p)))))
-                        .then(Commands.literal("decline").executes(c -> run(c, challenge(self(c), null, p -> PackDuel.decline(p)))))
+                        .executes(c -> run(c, challenge(self(c), null, p -> GroupText.error(Groups.typeOf(p), "wrong_type"), net.ofatech.supernaturalbloodlines.parts.species.group.clan.Contests::challenge)))
+                        .then(Commands.literal("accept").executes(c -> run(c, challenge(self(c), null, p -> PackDuel.accept(p), net.ofatech.supernaturalbloodlines.parts.species.group.clan.Contests::accept))))
+                        .then(Commands.literal("decline").executes(c -> run(c, challenge(self(c), null, p -> PackDuel.decline(p), net.ofatech.supernaturalbloodlines.parts.species.group.clan.Contests::decline))))
                         .then(Commands.argument("leader", StringArgumentType.word())
-                                .executes(c -> run(c, challenge(self(c), StringArgumentType.getString(c, "leader"), p -> PackDuel.challenge(p, StringArgumentType.getString(c, "leader")))))));
+                                .executes(c -> run(c, challenge(self(c), StringArgumentType.getString(c, "leader"), p -> PackDuel.challenge(p, StringArgumentType.getString(c, "leader")), p -> null)))));
     }
 
     /** The one challenge command routes by type: a pack's is the duel, a coven's is the call for a new Regent; the others have theirs in later plans. */
     @Nullable
-    private static Component challenge(ServerPlayer p, @Nullable String word, java.util.function.Function<ServerPlayer, Component> duel) {
+    private static Component challenge(ServerPlayer p, @Nullable String word, java.util.function.Function<ServerPlayer, Component> duel,
+                                       java.util.function.Function<ServerPlayer, Component> clan) {
         GroupType type = Groups.typeOf(p);
+        if (type == GroupType.CLAN && word == null) {
+            return clan.apply(p);
+        }
         if (type == GroupType.COVEN && word != null) {
             return net.ofatech.supernaturalbloodlines.parts.species.group.coven.CovenGovernance.callElection(p, word);
         }

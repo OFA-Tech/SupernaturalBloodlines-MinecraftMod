@@ -726,6 +726,10 @@ public final class CharterGameTests {
             c.a().getInventory().add(old);
             scan(helper, c.leader(), c.a(), c.b());
             helper.assertTrue(held(c.a()) == 0 && held(c.leader()) == 1 && newId.equals(firstCharter(c.leader()).get(SpeciesRegistries.CHARTER_ID.get())), "the old Charter survived the reforge");
+            take(c.leader());
+            c.a().getInventory().add(old.copy());
+            scan(helper, c.a());
+            helper.assertTrue(held(c.a()) == 0 && row(helper, c.leader()).id().equals(newId), "an old Charter held on its own survived the reforge");
         } finally {
             done(helper, c.all());
         }

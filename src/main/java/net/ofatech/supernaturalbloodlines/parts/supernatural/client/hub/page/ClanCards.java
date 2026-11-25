@@ -34,6 +34,7 @@ public final class ClanCards {
             return y;
         }
         y = charter(f, r, y + 4, gv);
+        y = contest(f, r, y, gv);
         return members(f, r, y + 4, gv, chosen);
     }
 
@@ -44,6 +45,17 @@ public final class ClanCards {
         }
         y = charterButton(f, r, y, "charter_forge", "clan:charter_forge", () -> HubClient.runCommand("C16", List.of()));
         return charterButton(f, r, y, "charter_reforge", "clan:charter_reforge", () -> HubClient.runCommand("C17", List.of()));
+    }
+
+    /** A Day Walker challenges; the head accepts (there is no decline). The Home card answers with the same row. */
+    private static int contest(HubScreen.Frame f, Rect r, int y, GroupView gv) {
+        if (gv.viewerRank() == GroupView.DAY_WALKER) {
+            return charterButton(f, r, y, "challenge", "pack:challenge", () -> HubClient.runCommand("C11", List.of()));
+        }
+        if (gv.viewerRank() == GroupView.LEADER) {
+            return charterButton(f, r, y, "accept", "pack:duel_accept", () -> HubClient.runCommand("C12", List.of()));
+        }
+        return y;
     }
 
     private static int charterButton(HubScreen.Frame f, Rect r, int y, String name, String id, Runnable press) {
