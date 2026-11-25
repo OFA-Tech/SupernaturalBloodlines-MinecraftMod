@@ -486,3 +486,13 @@ These replace the sentence they name above.
 6. **13 items 1 and 2:** the hooks were read in the Enchanted sources and proved by `CovenHookGameTests` (plan 20b Task 0): see `docs/parts/species.md`.
 7. **9 (config):** the 20b row lists the 30 keys of `GroupsConfig`.
 8. **11:** the new payload is `CovenViewPayload` and the request kinds are `CIRCLE_CALL` and `GROUP_VOTE`.
+## Corrections made by plan 20c (2026-11-24)
+These replace the sentence they name above. The plan is [20c](../plans/2026-11-24-plan-20c-clans.md).
+1. **Rule numbers (7.1 to 7.6):** R270 ranks, R271 the Charter, R272 the challenge, R273 the Sun Ring, R274 shared feeding, R275 the sire-line bonus, R276 exile, R277 the midnight, R278 lost and reforged, R279 protection, R280 dormancy, R281 privacy; R282 to R289 stay reserved.
+2. **9 (config, 20c row):** 18 keys: `sun_ring_discount_percent` is gone (20b made the discount the rite file's `power`); `challenger_min_days` (7), `contest_min_minutes` (2) and `charter_forge_cost` (a list) are added. `sun_ring_day_walker_only` defaults to `true` from 20c, for new config files.
+3. **7.2:** `VampirismAPI.vampirePlayer(mate)` is never empty; the mate must pass `VampirismSupernatural.isVampire`. The shared drink goes through the `SharedFeed` guard, which `AugustineRules` (it rescales an empty-source drink) and the other feed listeners read.
+4. **7.4 and 8:** the clan's leader counts as a Day Walker for the ring; the rank is read when the ring is forged, never afterwards.
+5. **10.2:** the clan's challenge and accept are `group challenge` and `group challenge accept` (their own `AdminCommands` rows, root `group`); a clan leader cannot decline, so `challenge decline` has no button on a clan.
+6. **7.1:** a demoted member is not auto-promoted again; the 14 days are real days in the clan.
+7. **7.6:** a contest ends at the first midnight at least `contest_min_minutes` after it started, and the Charter is scanned again right before the read. A Charter found with a non-member is dropped at their feet, protected, not destroyed.
+8. **11:** the payload is `ClanViewPayload`, the request kind `CHARTER_CONTEST`, `LadderNet.PROTOCOL` "18".
