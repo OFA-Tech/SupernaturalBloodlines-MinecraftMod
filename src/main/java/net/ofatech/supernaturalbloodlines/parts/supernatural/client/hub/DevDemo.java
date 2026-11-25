@@ -163,7 +163,7 @@ final class DevDemo {
         net.ofatech.supernaturalbloodlines.parts.supernatural.client.CovenClient.demo(new net.ofatech.supernaturalbloodlines.core.group.coven.CovenView(2, 5, circle,
                 circle == net.ofatech.supernaturalbloodlines.core.group.coven.CovenView.Circle.JOINED || circle == net.ofatech.supernaturalbloodlines.core.group.coven.CovenView.Circle.CALLED ? "Rowan" : me,
                 inside ? List.of(me, "Rowan", "Mira") : List.of(), 2000, 3000, 240, net.ofatech.supernaturalbloodlines.core.group.circle.Consent.NOSEBLEED,
-                 inside ? 840 : 0, 0, false, 0, vote, state.equals("called") ? "aabbccdd" : ""));
+                 inside ? 840 : 0, 0, vote, state.equals("called") ? "aabbccdd" : ""));
         net.ofatech.supernaturalbloodlines.parts.supernatural.client.RequestsClient.demo(List.of());
         if (state.equals("called") || state.equals("vote")) {
             var kind = state.equals("called") ? net.ofatech.supernaturalbloodlines.shared.supernatural.HubRequests.Kind.CIRCLE_CALL : net.ofatech.supernaturalbloodlines.shared.supernatural.HubRequests.Kind.GROUP_VOTE;

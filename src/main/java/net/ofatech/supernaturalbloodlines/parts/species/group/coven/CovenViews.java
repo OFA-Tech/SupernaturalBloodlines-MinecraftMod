@@ -78,7 +78,7 @@ public final class CovenViews {
             int pool = (int) Math.floor(highestListedPower(level) * GroupsConfig.linkMemberShare() + 1e-9);
             sharePower = (int) CirclePlan.split(pool, n)[index];
         }
-        return new CovenView(tier, size, circle, anchorName, names, meter, cap, regen, groups.consentOf(me), sharePower, 0, false, shunned, vote(p, groups, leader, now), callToken);
+        return new CovenView(tier, size, circle, anchorName, names, meter, cap, regen, groups.consentOf(me), sharePower, shunned, vote(p, groups, leader, now), callToken);
     }
 
     private static String name(ServerPlayer viewer, UUID id) {

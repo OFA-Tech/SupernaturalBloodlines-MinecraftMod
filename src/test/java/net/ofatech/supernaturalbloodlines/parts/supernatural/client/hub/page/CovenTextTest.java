@@ -19,7 +19,7 @@ class CovenTextTest {
 
     private static List<String> keys() {
         List<String> k = new ArrayList<>();
-        for (String s : List.of("tier", "tier.tip", "shunned", "circle_title", "circle_names", "meter", "meter_full", "meter_refill", "meter.tip", "consent", "share", "share_worst",
+        for (String s : List.of("tier", "tier.tip", "shunned", "circle_title", "circle_names", "meter", "meter_full", "meter_refill", "meter.tip", "consent", "share_worst",
                 "share_unknown", "votes_title", "no_vote", "vote_counts", "vote_mine.yes", "vote_mine.no", "vote_electors", "vote_yes", "vote_no", "elders_title",
                 "elder_add", "elder_add.what", "elder_remove", "elder_remove.what", "shun", "shun.what", "shun.body", "call_regent", "call_regent.what", "call_regent.body",
                 "link_open", "link_close", "link_join", "link_leave", "f.names", "f.channel", "f.channel_value", "f.share", "vote_tip")) {

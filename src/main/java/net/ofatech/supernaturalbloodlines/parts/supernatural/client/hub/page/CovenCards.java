@@ -78,8 +78,7 @@ public final class CovenCards {
             d.field(Component.translatable(KEY + "f.channel"), Component.translatable(KEY + "f.channel_value", cv.meter(), cv.meterCap(), refill));
         }
         if (cv.circle() == CovenView.Circle.ANCHOR || cv.circle() == CovenView.Circle.JOINED) {
-            d.field(Component.translatable(KEY + "f.share"), cv.shareKnown() ? Component.translatable(KEY + "share", cv.sharePower(), cv.shareEp())
-                    : Component.translatable(KEY + "share_worst", cv.sharePower()));
+            d.field(Component.translatable(KEY + "f.share"), Component.translatable(KEY + "share_worst", cv.sharePower()));
         }
         if (!cv.circleNames().isEmpty()) {
             d.field(Component.translatable(KEY + "f.names"), Component.literal(String.join(", ", cv.circleNames())));
@@ -187,9 +186,6 @@ public final class CovenCards {
         HubTheme t = f.theme();
         if (cv.circle() == CovenView.Circle.NONE || cv.circle() == CovenView.Circle.CALLED) {
             return y;
-        }
-        if (cv.shareKnown()) {
-            return PageKit.wrapped(f, Component.translatable(KEY + "share", cv.sharePower(), cv.shareEp()), r.x(), y, r.w(), t.ink());
         }
         y = PageKit.wrapped(f, Component.translatable(KEY + "share_worst", cv.sharePower()), r.x(), y, r.w(), t.ink());
         return PageKit.wrapped(f, Component.translatable(KEY + "share_unknown"), r.x(), y, r.w(), t.muted());

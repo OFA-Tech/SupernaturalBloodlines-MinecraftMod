@@ -37,7 +37,7 @@ class CovenViewWireTest {
 
     @Test
     void roundTrip() {
-        CovenView v = new CovenView(2, 5, CovenView.Circle.CALLED, "Esther", names(3), 1200, 3000, 240, Consent.NOSEBLEED, 700, 285_714, true, 0,
+        CovenView v = new CovenView(2, 5, CovenView.Circle.CALLED, "Esther", names(3), 1200, 3000, 240, Consent.NOSEBLEED, 700, 0,
                 Optional.of(new CovenView.Vote(VoteKind.SHUN, new java.util.UUID(4, 5), "Rebekah", 2, 1, 3, CovenView.Ballot.YES, 17)), "aabbccdd");
         assertEquals(v, roundTrip(v));
     }
@@ -71,7 +71,7 @@ class CovenViewWireTest {
 
     @Test
     void maxCircleRoundTrips() {
-        CovenView v = new CovenView(3, 13, CovenView.Circle.ANCHOR, "a".repeat(CovenWire.MAX_NAME), names(CovenWire.MAX_CIRCLE), 3000, 3000, 0, Consent.DAMAGE, 0, 0, false, 0, Optional.empty(), "");
+        CovenView v = new CovenView(3, 13, CovenView.Circle.ANCHOR, "a".repeat(CovenWire.MAX_NAME), names(CovenWire.MAX_CIRCLE), 3000, 3000, 0, Consent.DAMAGE, 0, 0, Optional.empty(), "");
         assertEquals(CovenWire.MAX_CIRCLE, roundTrip(v).circleNames().size());
         assertEquals(v, roundTrip(v));
     }
@@ -93,7 +93,7 @@ class CovenViewWireTest {
 
     @Test
     void aLongNameInAViewIsCutNotCarried() {
-        CovenView v = new CovenView(1, 3, CovenView.Circle.JOINED, "x".repeat(200), List.of("y".repeat(200)), 0, 0, 0, Consent.NONE, 0, 0, false, 0, Optional.empty(), "");
+        CovenView v = new CovenView(1, 3, CovenView.Circle.JOINED, "x".repeat(200), List.of("y".repeat(200)), 0, 0, 0, Consent.NONE, 0, 0, Optional.empty(), "");
         assertEquals(CovenWire.MAX_NAME, v.anchorName().length());
         assertEquals(CovenWire.MAX_NAME, roundTrip(v).circleNames().get(0).length());
     }
@@ -115,7 +115,7 @@ class CovenViewWireTest {
             top.add(c.getName() + ":" + c.getType().getSimpleName());
         }
         assertEquals(List.of("tier:int", "size:int", "circle:Circle", "anchorName:String", "circleNames:List", "meter:int", "meterCap:int", "regenSeconds:int", "consent:Consent",
-                "sharePower:int", "shareEp:long", "shareKnown:boolean", "shunnedDaysLeft:int", "vote:Optional", "callToken:String"), top);
+                "sharePower:int", "shunnedDaysLeft:int", "vote:Optional", "callToken:String"), top);
         List<String> vote = new ArrayList<>();
         for (RecordComponent c : CovenView.Vote.class.getRecordComponents()) {
             vote.add(c.getName() + ":" + c.getType().getSimpleName());

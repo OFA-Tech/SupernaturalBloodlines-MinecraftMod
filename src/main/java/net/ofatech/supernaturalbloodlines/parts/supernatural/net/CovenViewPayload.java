@@ -77,11 +77,9 @@ public record CovenViewPayload(CovenView view) implements CustomPacketPayload {
             int regen = ByteBufCodecs.VAR_INT.decode(buf);
             Consent consent = CONSENT.decode(buf);
             int power = ByteBufCodecs.VAR_INT.decode(buf);
-            long ep = ByteBufCodecs.VAR_LONG.decode(buf);
-            boolean known = ByteBufCodecs.BOOL.decode(buf);
             int shun = ByteBufCodecs.VAR_INT.decode(buf);
             java.util.Optional<CovenView.Vote> vote = ByteBufCodecs.optional(VOTE).decode(buf);
-            return new CovenView(tier, size, circle, anchor, names, meter, cap, regen, consent, power, ep, known, shun, vote, CALL_TOKEN.decode(buf));
+            return new CovenView(tier, size, circle, anchor, names, meter, cap, regen, consent, power, shun, vote, CALL_TOKEN.decode(buf));
         }
 
         @Override
@@ -96,8 +94,6 @@ public record CovenViewPayload(CovenView view) implements CustomPacketPayload {
             ByteBufCodecs.VAR_INT.encode(buf, v.regenSeconds());
             CONSENT.encode(buf, v.consent());
             ByteBufCodecs.VAR_INT.encode(buf, v.sharePower());
-            ByteBufCodecs.VAR_LONG.encode(buf, v.shareEp());
-            ByteBufCodecs.BOOL.encode(buf, v.shareKnown());
             ByteBufCodecs.VAR_INT.encode(buf, v.shunnedDaysLeft());
             ByteBufCodecs.optional(VOTE).encode(buf, v.vote());
             CALL_TOKEN.encode(buf, v.callToken());
