@@ -221,3 +221,7 @@ Details are on [Tensura integration](Tensura-Integration#apex-evolutions).
 | **R279** | A dropped Charter cannot be picked up by outsiders, hurt or despawned. |
 | **R280** | A type switch or an off switch makes it all dormant; nothing is deleted. |
 | **R281** | Nothing about other clans, species or a sireline root reaches the hub. |
+
+## Brotherhood (R290–R299)
+
+See [Groups](Groups#brotherhood) for fit and leadership, and [Hunters of the Five](Hunters-Of-The-Five#in-a-brotherhood) for the Code and curse. The Map only changes the display.

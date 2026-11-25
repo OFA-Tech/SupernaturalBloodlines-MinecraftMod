@@ -58,3 +58,8 @@ No skills, **+10% max aura**. Apex race: **Eternal Hunter** (not undead). See [T
 
 - A hunter with the hidden gene: the gene stays latent forever.
 - A Hunter of the Five who joins a non-hunter faction loses the mark.
+
+
+### In a Brotherhood
+
+A Code break costs a Hunter of the Five a quarter of their mark by default, but does not change their species or reset the instinct clock. A prey player outside the group who kills an unmarked brother receives the same Hunter's Curse, limited to 48 real hours by default or until a Potential awakens. An existing curse keeps its end.

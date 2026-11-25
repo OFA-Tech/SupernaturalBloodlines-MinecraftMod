@@ -147,3 +147,8 @@ If you find something that behaves differently from this wiki, please [open an i
 - **Wards:** a ward turns away by position (a push, then a move out after `ward_expel_seconds`); somebody who is already inside with the ward off keeps their place. A door ward guards one door cell: a wall, a window or a hole is not guarded. With `ward_expel_on_revoke` off, the grace for somebody already inside is in memory and a restart ends it. An owner who turns while offline keeps the ward until their next login.
 - **The locator** points at the middle of a square, never the spot, and needs the species part. The one looked for hears "Somebody is looking for you." only if they are online when it starts, and that it ended only if they are online at the end (a restart forgets the end).
 
+
+
+## Brotherhood
+
+A member who does not fit can stay but receives no perks. Type-specific joining is not part of 20d. The attack bonus display reflects the most recent hub snapshot, and a Potential is a roster label, not another rank. The map and ring use placeholder art; the Cure road and Mikael's call are not implemented here.

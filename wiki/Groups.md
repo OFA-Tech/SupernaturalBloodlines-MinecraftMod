@@ -44,3 +44,7 @@ A clan is led by a vampire-like head (a vampire, an Original, an Augustine, a va
 **Exile.** The head can exile a member (`/group exile <player>`): they cannot rejoin that clan for 7 days. A kick has no bar.
 
 All of it works without Werewolves, and the numbers are in [Configuration](Configuration#groups-supernaturalbloodlines-groupstoml). Brotherhood perks come in a later update.
+
+## Brotherhood
+
+Hunters can found a Brotherhood. Plain humans can join and lead one; with open founding off, they cannot found one. The First Brother leads until an eligible online brother has a strictly higher mark. A tie keeps the leader. Nearby fitting brothers add attack damage and can share prey sight, but never kills. The Group page shows the Map and Code and only your mark and the First Brother's.

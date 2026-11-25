@@ -340,3 +340,27 @@ Part of the species part. All on the Admin page (section Groups).
 | `fete_minutes` | 10 | Minutes the Fete des Benedictions lasts, before potency. |
 | `harvest_xp_levels` | 30 | Experience levels the circle splits to cast the Great Harvest. |
 | `harvest_max_blocks` | 2048 | The most blocks the Great Harvest touches. |
+
+
+### Brotherhood settings
+
+All rows are under Groups in the operator-only Admin page (`supernaturalbloodlines-groups.toml`). The server rechecks permission on edits.
+
+| Key | Default | Effect |
+| --- | ---: | --- |
+| `brotherhood_enabled` | true | Founding and perks; off retains saved rows and still expires timed curses |
+| `lead_by_mark` | true | Immediate takeover by a higher eligible mark |
+| `arms_percent` | 3 | Attack bonus per nearby brother; 0 disables the bonus |
+| `arms_max_percent` | 12 | Attack bonus cap |
+| `arms_radius` | 24 | Attack bonus distance in blocks |
+| `sight_share_enabled` | true | Forward the prey sense |
+| `sight_radius` | 48 | Shared sight distance from the sensor in blocks |
+| `code_enabled` | true | Judge new breaks; existing breaker periods still expire |
+| `code_mark_penalty_percent` | 25 | Mark lost per break; 0 disables mark loss |
+| `code_breaker_hours` | 24 | Breaker duration in real hours |
+| `code_strikes` | 3 | Breaks needed for an expulsion |
+| `code_strikes_days` | 7 | Real-day strike window |
+| `code_exile_days` | 7 | Real days barred from that group |
+| `curse_extends_enabled` | true | Extend the old curse rule to unmarked brothers |
+| `brotherhood_curse_hours` | 48 | New timed curse duration in real hours |
+| `kol_warning_enabled` | true | Warn the other fitting online brothers |

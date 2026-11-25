@@ -667,3 +667,35 @@ Proved by `BrotherhoodHookGameTests`, `KolSpawnSitesTest`, `BloodlineEventAppend
 - A second `HunterCurse.curse` keeps the first timer and one roster entry; `liftAll` marks an offline killer in `liftedCurses` and `onLogin` frees them.
 - A witch who leads a coven and joins the hunters switches the group to a brotherhood through the faction event. A hunter who leaves the faction leads a **coven** today (Task 4 turns it around: a plain human keeps the brotherhood).
 - `BossDirector.spawnKol` has three callers (the director's roll, `/boss` debug, the test rig); `BloodlineEvent` is never read by position (appending is safe).
+
+
+### Brotherhood (plan 20d)
+
+- [x] Fit and type derivation; mark and shared leadership.
+- [x] Brothers in arms, shared sight, the Code, timed curse and Kol warning.
+- [x] Viewer-only hub payload, Map and Code cards.
+
+For multi-type groups, the runtime entry point is `BrotherhoodScope.appliesTo`. Resolve the typed group there; marks, shared sight, the attack bonus, the Code, curse and Kol should not independently guess type.
+
+### Brotherhood settings
+
+All rows are under Groups in the operator-only Admin page (`supernaturalbloodlines-groups.toml`). The server rechecks permission on edits.
+
+| Key | Default | Effect |
+| --- | ---: | --- |
+| `brotherhood_enabled` | true | Founding and perks; off retains saved rows and still expires timed curses |
+| `lead_by_mark` | true | Immediate takeover by a higher eligible mark |
+| `arms_percent` | 3 | Attack bonus per nearby brother; 0 disables the bonus |
+| `arms_max_percent` | 12 | Attack bonus cap |
+| `arms_radius` | 24 | Attack bonus distance in blocks |
+| `sight_share_enabled` | true | Forward the prey sense |
+| `sight_radius` | 48 | Shared sight distance from the sensor in blocks |
+| `code_enabled` | true | Judge new breaks; existing breaker periods still expire |
+| `code_mark_penalty_percent` | 25 | Mark lost per break; 0 disables mark loss |
+| `code_breaker_hours` | 24 | Breaker duration in real hours |
+| `code_strikes` | 3 | Breaks needed for an expulsion |
+| `code_strikes_days` | 7 | Real-day strike window |
+| `code_exile_days` | 7 | Real days barred from that group |
+| `curse_extends_enabled` | true | Extend the old curse rule to unmarked brothers |
+| `brotherhood_curse_hours` | 48 | New timed curse duration in real hours |
+| `kol_warning_enabled` | true | Warn the other fitting online brothers |

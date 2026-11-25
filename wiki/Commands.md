@@ -83,3 +83,8 @@ Events (any case): `RITE_OF_IMMORTALITY`, `DIED_WITH_ORIGINAL_BLOOD`, `DRANK_DOP
 | `/ward drop <ward>` | the owner | Lifts one ward; its id is on the card and in `/ward info`. |
 | `/ward info` | anyone | Lists your wards in chat; the Path page shows the same. |
 
+
+
+### Brotherhood
+
+Uses the shared `/group` commands (also available in the hub), including without Werewolves. The Map, Code and mark leadership add no commands. Operators change the sixteen settings in the Admin page.

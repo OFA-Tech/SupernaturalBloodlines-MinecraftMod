@@ -192,6 +192,21 @@ Rules R270 to R281 (R282 to R289 reserved). The numbers are the defaults of `sup
 - **R284.** While a contest is pending or running the head cannot demote, exile or kick its challenger or the holder of the Charter; neither can the owner of the linked party (OPAC) take them out by a party kick.
 - **R285.** Forging a Charter always costs something (`charter_forge_cost` is never empty).
 - **R286.** The hub shows the sire-line bonus as a percent only, never a count of people.
+
+### Brotherhood (plan 20d, owner 2026-11-25)
+
+- **R290.** A hunter or plain human fits a Brotherhood. A plain human can lead but cannot found under the default founding rule. Type follows the leader; members stay and other types' rows sleep.
+- **R291.** A fitting online member with a strictly higher mark can take the lead unless they broke the Code. Compare an offline leader by their recorded mark; choose between equal challengers by tenure then UUID. The absence rule also excludes offline, non-fitting and Code-breaking heirs.
+- **R292.** Each other fitting, living, non-spectating online brother within 24 blocks in the same dimension contributes 3% multiplicative attack damage, capped at 12%. Code-breakers do not give or receive it.
+- **R293.** A brother with the prey sense shares the same sensed entity IDs with fitting brothers who lack the sense within 48 blocks in the same dimension. Code-breakers do not give or receive it. Neither kills nor mark progress are shared.
+- **R294.** Killing a villager or non-prey player who did not fight back breaks the Code. Repeat credit for the same killer and victim within one minute is ignored. A break costs a marked hunter 25% of their mark (at least one when positive and the penalty is enabled) and begins a 24-hour breaker period. Three breaks in seven days clear the strikes and bar the member for seven days; an incumbent leader stays and gets a fresh breaker period.
+- **R295.** A prey player outside the group who kills an unmarked fitting brother receives the Hunter's Curse for 48 real hours or until a Potential awakens. A marked victim uses the old curse rule. An existing curse keeps its end. Expiry runs even with perks off.
+- **R296.** When Kol spawns for a fitting brother, the other fitting online brothers receive one chat and action-bar warning naming only the target.
+- **R297.** The Map reveals regions at 1, 4, 8, 12, 16 and 20 kills; it is complete for all fitting viewers when a brother has the full recorded mark. It does not lead to the Cure. The hub displays only the viewer's and leader's marks.
+- **R298.** Turning Brotherhood perks off stops founding and perks without deleting rows or stopping existing curse expiry. The individual switches act independently.
+- **R299.** The existing group governs membership and bars; a refusal to accept an invite does not reveal the bar. The payload carries only bounded numbers and flags about the viewer's own Brotherhood.
+
+R80–R84 and R173 still apply outside a Brotherhood; R290–R299 add the rules for fitting members.
 - **R281.** **Privacy.** The clan view and every refusal say nothing about people outside the viewer's clan: no species, no sireline root, no other clan's Charter, nobody's id. A hidden Original who leads or joins a clan is a name like any other.
 
 ## Tensura links
