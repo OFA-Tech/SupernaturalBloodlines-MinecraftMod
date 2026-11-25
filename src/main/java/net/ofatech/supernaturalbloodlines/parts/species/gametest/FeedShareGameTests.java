@@ -393,6 +393,8 @@ public final class FeedShareGameTests {
             BloodlineAccess.set(c.leader(), BloodlineState.NONE.toBuilder().species(Species.AUGUSTINE).build());
             AugustineRules.forgetFeedsForTest();
             c.leader().getPersistentData().remove("supernaturalbloodlines:augustine_diet_noted");
+            helper.assertTrue(ClanScope.appliesTo(helper.getLevel(), c.leader().getUUID(), c.leader()), "setup: an Augustine head is a clan head");
+            helper.assertTrue(blood(c.leader()) == 0, "setup: the Augustine mate starts with " + blood(c.leader()));
             bite(c.a(), from(villager(helper)), 10);
             helper.assertTrue(blood(c.leader()) == 1, "an Augustine mate gained " + blood(c.leader()) + ", not the unscaled share");
             helper.assertTrue(!c.leader().getPersistentData().getBoolean("supernaturalbloodlines:augustine_diet_noted"), "the diet note was shown for a share");
