@@ -753,7 +753,7 @@ public final class CharterGameTests {
             helper.assertTrue(held(c.leader()) + held(c.a()) + held(c.b()) == 4, "setup");
             scan(helper, c.a(), c.b(), c.leader());
             helper.assertTrue(held(c.leader()) == 1 && held(c.a()) == 0 && held(c.b()) == 0, "the row's holder's copy did not survive alone: " + held(c.leader()) + held(c.a()) + held(c.b()));
-            helper.assertTrue(droppedCharters(helper).isEmpty() && c.a().received(CLAN + "charter_dust"), "a duplicate was dropped instead of destroyed, or its holder was not told");
+            helper.assertTrue(droppedCharters(helper).isEmpty() && c.a().received(CLAN + "charter_dust") && !c.a().received(CLAN + "charter_replaced"), "a duplicate was dropped instead of destroyed, or its holder was not told");
         } finally {
             done(helper, c.all());
         }
@@ -840,6 +840,7 @@ public final class CharterGameTests {
             c.a().getInventory().add(old.copy()); // Inventory.add empties the stack it is given, so a second add of the same object adds nothing
             scan(helper, c.leader(), c.a(), c.b());
             helper.assertTrue(held(c.a()) == 0 && held(c.leader()) == 1 && newId.equals(firstCharter(c.leader()).get(SpeciesRegistries.CHARTER_ID.get())), "the old Charter survived the reforge");
+            helper.assertTrue(c.a().received(CLAN + "charter_replaced") && !c.a().received(CLAN + "charter_dust"), "a replaced Charter was called false: it was the true one once");
             take(c.leader());
             c.a().getInventory().add(old.copy());
             scan(helper, c.a());

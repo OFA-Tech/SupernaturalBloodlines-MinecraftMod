@@ -28,7 +28,7 @@ class ClanTextTest {
             k.add(C + "err.challenge_" + r.id().replace("not_day_walker", "not_day_walker"));
         }
         for (String s : List.of("promoted", "promoted_ok", "demoted", "demoted_ok", "auto_promoted", "exiled", "exiled_ok", "shared_feed", "charter_forged", "charter_reforged", "charter_taken",
-                "charter_dust", "charter_lost", "challenged", "contest_started", "contest_void", "contest_cooldown", "contest_cooldown.one", "contest_nochange.not_held", "contest_nochange.left", "contest_nochange.leader_holds", "contest_nochange.offline", "contest_nochange.dead", "contest_nochange.not_day_walker", "contest_nochange.forfeit_challenger_away", "contest_new_head_forfeit", "contest_new_head", "err.leader_only",
+                "charter_dust", "charter_replaced", "charter_lost", "challenged", "contest_started", "contest_void", "contest_cooldown", "contest_cooldown.one", "contest_nochange.not_held", "contest_nochange.left", "contest_nochange.leader_holds", "contest_nochange.offline", "contest_nochange.dead", "contest_nochange.not_day_walker", "contest_nochange.forfeit_challenger_away", "contest_new_head_forfeit", "contest_new_head", "err.leader_only",
                 "err.leader_target", "err.not_member", "err.already_day_walker", "err.not_day_walker", "err.exiled_still", "err.charter_off", "err.charter_too_few", "err.charter_already",
                 "err.charter_use_reforge", "err.charter_not_lost", "err.charter_reforge_wait", "err.charter_none", "err.charter_cost", "err.challenge_leader", "err.challenge_cooldown",
                 "err.challenge_none", "err.no_decline", "err.contest_running", "err.cannot_promote", "exiled_until", "err.exiled_brings")) {

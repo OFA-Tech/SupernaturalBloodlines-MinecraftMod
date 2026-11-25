@@ -15,7 +15,9 @@ import net.neoforged.neoforge.server.ServerLifecycleHooks;
 import net.ofatech.supernaturalbloodlines.core.group.GroupRank;
 import net.ofatech.supernaturalbloodlines.core.group.GroupType;
 import net.ofatech.supernaturalbloodlines.core.group.clan.CharterState;
+import net.ofatech.supernaturalbloodlines.core.group.clan.ClanTime;
 import net.ofatech.supernaturalbloodlines.core.group.clan.ContestRules;
+import net.ofatech.supernaturalbloodlines.core.group.clan.ClanTime;
 import net.ofatech.supernaturalbloodlines.parts.species.group.GroupIndex;
 import net.ofatech.supernaturalbloodlines.parts.species.group.GroupIndex.CharterRow;
 import net.ofatech.supernaturalbloodlines.parts.species.group.GroupIndex.ContestRow;
@@ -24,6 +26,7 @@ import net.ofatech.supernaturalbloodlines.parts.species.group.GroupSwitcher;
 import net.ofatech.supernaturalbloodlines.parts.species.group.GroupsConfig;
 import net.ofatech.supernaturalbloodlines.parts.species.pack.PackAccess;
 import net.ofatech.supernaturalbloodlines.parts.species.pack.PackIndex;
+import net.ofatech.supernaturalbloodlines.parts.species.pack.PackMembers;
 import net.ofatech.supernaturalbloodlines.parts.species.sireline.SireCall;
 import net.ofatech.supernaturalbloodlines.shared.supernatural.HubRequests;
 import org.jetbrains.annotations.Nullable;
@@ -33,7 +36,6 @@ import org.jetbrains.annotations.Nullable;
  * who holds the Charter leads. The lead only ever moves through {@link GroupLead#handOver}. The row is the clock: it carries the day time it started at.
  */
 public final class Contests {
-    private static final long DAY = 24L * 60 * 60 * 1000;
     public static final String COOLDOWN_KEY = "contest";
     private static LongSupplier dayTimeOverride;
     private static boolean resolving;
@@ -98,11 +100,6 @@ public final class Contests {
         return noDecline(p);
     }
 
-    private static String name(MinecraftServer server, UUID id) {
-        String n = PackAccess.nameOf(server, id);
-        return n != null ? n : id.toString().substring(0, 8);
-    }
-
     private static void tellAll(MinecraftServer server, UUID leader, String key, String arg) {
         Charters.tellClan(server, leader, key, arg);
         Charters.refresh(server, leader);
@@ -120,7 +117,7 @@ public final class Contests {
         GroupIndex groups = GroupIndex.get(level);
         PackIndex packs = PackIndex.get(level);
         long now = PackIndex.now();
-        int days = packs.inPackSince(player).map(t -> (int) Math.min(Integer.MAX_VALUE, Math.max(0, (now - t) / DAY))).orElse(0);
+        int days = packs.inPackSince(player).map(t -> (int) Math.min(Integer.MAX_VALUE, Math.max(0, (now - t) / ClanTime.DAY))).orElse(0);
         boolean charter = groups.charterOf(clan.group()).filter(r -> r.state() != CharterState.LOST).isPresent();
         return ContestRules.mayChallenge(ClanScope.dayWalker(level, player) ? GroupRank.DAY_WALKER : GroupRank.NONE, days, packs.roster(clan.leader()).size(),
                 SireCall.player(level.getServer(), clan.leader()) != null, charter, groups.contestOf(clan.group()).isPresent(), groups.cooldownUntil(clan.group(), COOLDOWN_KEY), now,
@@ -148,11 +145,11 @@ public final class Contests {
         if (no.isPresent()) {
             long cooldown = groups.cooldownUntil(clan.group(), COOLDOWN_KEY);
             return no.get() == ContestRules.Refusal.COOLDOWN
-                    ? ClanText.error("challenge_cooldown", Math.max(1, (cooldown - now + DAY - 1) / DAY))
+                    ? ClanText.error("challenge_cooldown", Math.max(1, (cooldown - now + ClanTime.DAY - 1) / ClanTime.DAY))
                     : ClanText.error("challenge_" + no.get().id());
         }
         groups.setContest(clan.group(), new ContestRow(p.getUUID(), ContestRow.Phase.PENDING, now, now + GroupsConfig.contestAcceptMinutes() * 60_000L, 0, 0));
-        tellAll(server, clan.leader(), ClanText.key("challenged"), name(server, p.getUUID()));
+        tellAll(server, clan.leader(), ClanText.key("challenged"), ClanDiscipline.name(server, p.getUUID()));
         return null;
     }
 
@@ -178,7 +175,7 @@ public final class Contests {
         GroupIndex groups = GroupIndex.get(server.overworld());
         long now = PackIndex.now();
         groups.setContest(group, new ContestRow(pending.challenger(), ContestRow.Phase.RUNNING, pending.openedAt(), pending.acceptBy(), now, dayTime(server), false));
-        groups.setCooldown(group, COOLDOWN_KEY, now + GroupsConfig.contestCooldownDays() * DAY);
+        groups.setCooldown(group, COOLDOWN_KEY, now + GroupsConfig.contestCooldownDays() * ClanTime.DAY);
         tellAll(server, leader, ClanText.key("contest_started"), "");
     }
 
@@ -214,6 +211,7 @@ public final class Contests {
             UUID leader = leaderOf.get(group);
             if (leader == null) {
                 groups.clearContest(group);
+                PackMembers.tell(server, row.challenger(), ClanText.key("contest_void"), "");
                 continue;
             }
             if (!GroupsConfig.charterActive() || !ClanScope.isClan(server.overworld(), leader)) {
@@ -260,7 +258,7 @@ public final class Contests {
         if (outcome.newLeader().isEmpty()) {
             tellAll(server, leader, ClanText.key("contest_nochange." + outcome.reason()), "");
             long until = groups.cooldownUntil(group, COOLDOWN_KEY);
-            long days = Math.max(1, (until - PackIndex.now() + DAY - 1) / DAY);
+            long days = Math.max(1, (until - PackIndex.now() + ClanTime.DAY - 1) / ClanTime.DAY);
             tellAll(server, leader, ClanText.key(days == 1 ? "contest_cooldown.one" : "contest_cooldown"), String.valueOf(days));
             return;
         }
@@ -271,7 +269,7 @@ public final class Contests {
         } finally {
             resolving = false;
         }
-        tellAll(server, next, ClanText.key(outcome.forfeit() ? "contest_new_head_forfeit" : "contest_new_head"), name(server, next));
+        tellAll(server, next, ClanText.key(outcome.forfeit() ? "contest_new_head_forfeit" : "contest_new_head"), ClanDiscipline.name(server, next));
     }
 
     /** The head's card while a challenge waits for an answer: kind, challenger, no token (the accept command takes none) and the time left. */
@@ -285,6 +283,6 @@ public final class Contests {
             return List.of();
         }
         int ticks = (int) Math.max(1, Math.min(Integer.MAX_VALUE, (row.get().acceptBy() - PackIndex.now()) / 50));
-        return List.of(new HubRequests.Request(HubRequests.Kind.CHARTER_CONTEST, row.get().challenger(), name(p.server, row.get().challenger()), "", ticks));
+        return List.of(new HubRequests.Request(HubRequests.Kind.CHARTER_CONTEST, row.get().challenger(), ClanDiscipline.name(p.server, row.get().challenger()), "", ticks));
     }
 }

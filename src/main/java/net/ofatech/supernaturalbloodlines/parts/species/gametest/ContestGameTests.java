@@ -438,6 +438,21 @@ public final class ContestGameTests {
         helper.succeed();
     }
 
+    @GameTest(template = "empty", templateNamespace = NS, timeoutTicks = 100)
+    public static void aContestOfAGroupWithNoLeaderIsEndedAndItsChallengerToldWhy(GameTestHelper helper) {
+        Clan c = ready(helper);
+        try {
+            UUID gone = UUID.randomUUID();
+            groups(helper).setContest(gone, new ContestRow(c.a().getUUID(), ContestRow.Phase.PENDING, 1, 2, 0, 0));
+            Contests.tick(server(helper), DAYTIME[0]);
+            helper.assertTrue(groups(helper).contestOf(gone).isEmpty(), "the row stayed");
+            helper.assertTrue(c.a().received(CLAN + "contest_void"), "the challenger was not told it was called off");
+        } finally {
+            done(helper, c.all());
+        }
+        helper.succeed();
+    }
+
     // ---- a contest cannot be cancelled by removing its two people ----
 
     private static String id(TalkingDuelist p) {

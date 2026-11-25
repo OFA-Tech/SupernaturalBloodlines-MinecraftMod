@@ -558,6 +558,24 @@ public final class ClanRankGameTests {
     }
 
     @GameTest(template = "empty", templateNamespace = NS, timeoutTicks = 100)
+    public static void anEndedExileRowIsForgottenBySweepEvenWithCovensOff(GameTestHelper helper) {
+        long[] now = {2_000_000_000L};
+        PackIndex.overrideClock(() -> now[0]);
+        Clan c = clan(helper);
+        try {
+            UUID group = groupOf(helper, c.leader());
+            ClanDiscipline.exile(c.leader(), name(c.a()));
+            helper.assertTrue(groups(helper).banUntil(group.toString(), c.a().getUUID()) > 0, "setup: no ban row");
+            now[0] += 8 * DAY;
+            ClanDiscipline.sweep(server(helper));
+            helper.assertTrue(groups(helper).banUntil(group.toString(), c.a().getUUID()) == 0, "an ended exile row is still in the index");
+        } finally {
+            clean(helper, c.all());
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS, timeoutTicks = 100)
     public static void exileEndsAfterTheDays(GameTestHelper helper) {
         long[] now = {2_000_000_000L};
         PackIndex.overrideClock(() -> now[0]);

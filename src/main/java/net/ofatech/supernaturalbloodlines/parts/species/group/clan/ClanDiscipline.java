@@ -195,6 +195,7 @@ public final class ClanDiscipline {
 
     /** Every 200 ticks: each Night Walker who has been in a clan for the days, and was never demoted, becomes a Day Walker. */
     public static void sweep(MinecraftServer server) {
+        GroupIndex.get(server.overworld()).pruneBans(PackIndex.now());
         if (!GroupsConfig.clanPerksOn()) {
             return;
         }

@@ -56,7 +56,7 @@ public final class CovenRegistry {
                 return switch (name) {
                     case "moon_ring" -> GroupsConfig.moonlightRingEnabled();
                     case "sun_ring" -> GroupsConfig.sunRingForgeEnabled();
-                    case "sun_ring_day_walker_only" -> GroupsConfig.sunRingDayWalkerOnly();
+                    case "sun_ring_day_walker_only" -> GroupsConfig.sunRingDayWalkerOnly() && GroupsConfig.clanPerksOn();
                     default -> false;
                 };
             }

@@ -8,11 +8,17 @@ import net.minecraft.server.level.ServerPlayer;
 import net.ofatech.supernaturalbloodlines.core.group.GroupRank;
 import net.ofatech.supernaturalbloodlines.core.group.GroupType;
 import net.ofatech.supernaturalbloodlines.core.group.clan.CharterRules;
+import net.ofatech.supernaturalbloodlines.core.group.clan.ClanTime;
 import net.ofatech.supernaturalbloodlines.core.group.clan.CharterState;
+import net.ofatech.supernaturalbloodlines.core.group.clan.ClanTime;
 import net.ofatech.supernaturalbloodlines.core.group.clan.ClanView;
+import net.ofatech.supernaturalbloodlines.core.group.clan.ClanTime;
 import net.ofatech.supernaturalbloodlines.core.group.clan.ClanWire;
+import net.ofatech.supernaturalbloodlines.core.group.clan.ClanTime;
 import net.ofatech.supernaturalbloodlines.core.group.clan.ContestRules;
+import net.ofatech.supernaturalbloodlines.core.group.clan.ClanTime;
 import net.ofatech.supernaturalbloodlines.core.group.clan.SirelineBonus;
+import net.ofatech.supernaturalbloodlines.core.group.clan.ClanTime;
 import net.ofatech.supernaturalbloodlines.parts.species.group.GroupIndex;
 import net.ofatech.supernaturalbloodlines.parts.species.group.GroupIndex.CharterRow;
 import net.ofatech.supernaturalbloodlines.parts.species.group.GroupIndex.ContestRow;
@@ -22,7 +28,6 @@ import net.ofatech.supernaturalbloodlines.parts.species.pack.PackIndex;
 
 /** The viewer's own clan, as the hub draws it (R281): their own rank clock, the Charter, the contest and two counts. Only members' names, never an id, a species or a root. */
 public final class ClanViews {
-    private static final long DAY = 24L * 60 * 60 * 1000;
 
     private ClanViews() {
     }
@@ -62,12 +67,12 @@ public final class ClanViews {
         boolean head = p.getUUID().equals(clan.leader());
         boolean on = GroupsConfig.clanPerksOn();
         long since = head ? groups.typeSince(clan.group()) : packs.inPackSince(p.getUUID()).orElse(now);
-        int days = since <= 0 ? 0 : clampDays((now - since) / DAY);
+        int days = since <= 0 ? 0 : clampDays((now - since) / ClanTime.DAY);
         GroupRank rank = groups.rankOf(p.getUUID(), GroupType.CLAN);
         int auto = -1;
         boolean dayWalker = ClanScope.dayWalker(level, p.getUUID());
         if (on && !head && rank == GroupRank.NONE && ClanScope.mayBeDayWalker(level, p.getUUID()) && GroupsConfig.daywalkerDays() > 0 && groups.cooldownUntil(clan.group(), ClanDiscipline.noPromoteKey(p.getUUID())) == 0) {
-            auto = clampDays(Math.max(0, GroupsConfig.daywalkerDays() - (now - since) / DAY));
+            auto = clampDays(Math.max(0, GroupsConfig.daywalkerDays() - (now - since) / ClanTime.DAY));
         }
         int members = packs.roster(clan.leader()).size();
 
@@ -93,7 +98,7 @@ public final class ClanViews {
         if (charterOn) {
             Optional<ContestRow> c = groups.contestOf(clan.group());
             long cooldown = groups.cooldownUntil(clan.group(), Contests.COOLDOWN_KEY);
-            int cooldownDays = cooldown > now ? clampDays((cooldown - now + DAY - 1) / DAY) : 0;
+            int cooldownDays = cooldown > now ? clampDays((cooldown - now + ClanTime.DAY - 1) / ClanTime.DAY) : 0;
             if (c.isPresent()) {
                 ContestRow cr = c.get();
                 long left = cr.phase() == ContestRow.Phase.PENDING ? cr.acceptBy() - now : 0;

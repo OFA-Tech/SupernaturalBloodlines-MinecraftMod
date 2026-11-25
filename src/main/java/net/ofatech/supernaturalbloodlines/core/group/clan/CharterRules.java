@@ -7,8 +7,7 @@ import java.util.UUID;
 
 /** R271, R278: the Charter's state machine, when it is lost, who may forge or reforge, and which of several stacks is the real one. */
 public final class CharterRules {
-    private static final long DAY = 24L * 60 * 60 * 1000;
-    public static final long REFORGE_WAIT = 24L * 60 * 60 * 1000;
+    public static final long REFORGE_WAIT = ClanTime.DAY;
 
     /** One stack of the Charter found in an inventory; {@code index} is its place in the scan. */
     public record Sighting(UUID holder, int index) {
@@ -26,9 +25,9 @@ public final class CharterRules {
      */
     public static boolean isLost(long lastSeenMillis, boolean hasHolder, long holderOfflineSinceMillis, long nowMillis, int lostDays, int absentDays) {
         if (hasHolder) {
-            return absentDays > 0 && holderOfflineSinceMillis > 0 && nowMillis - holderOfflineSinceMillis >= absentDays * DAY;
+            return absentDays > 0 && holderOfflineSinceMillis > 0 && nowMillis - holderOfflineSinceMillis >= absentDays * ClanTime.DAY;
         }
-        return nowMillis - lastSeenMillis >= lostDays * DAY;
+        return nowMillis - lastSeenMillis >= lostDays * ClanTime.DAY;
     }
 
     /** Empty when allowed, else {@code too_few}, {@code lost_use_reforge} or {@code already}; {@code existing} is null when the clan has no row. */

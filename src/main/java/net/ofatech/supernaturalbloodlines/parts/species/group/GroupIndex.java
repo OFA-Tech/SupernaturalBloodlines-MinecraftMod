@@ -426,15 +426,26 @@ public final class GroupIndex extends SavedData {
 
     /** Forgets what is over: bans that ended, votes older than {@code maxAgeMillis}. */
     public void prune(long now, long maxAgeMillis) {
-        boolean changed = false;
-        for (Map<UUID, Long> m : bans.values()) {
-            changed |= m.values().removeIf(until -> until <= now);
-        }
-        changed |= bans.values().removeIf(Map::isEmpty);
+        boolean changed = pruneBansQuietly(now);
         changed |= votes.values().removeIf(v -> now - v.opened > maxAgeMillis);
         if (changed) {
             setDirty();
         }
+    }
+
+    /** Forgets only the bans (exiles and shunnings) that are over: a clan's sweep needs no coven to do it. */
+    public void pruneBans(long now) {
+        if (pruneBansQuietly(now)) {
+            setDirty();
+        }
+    }
+
+    private boolean pruneBansQuietly(long now) {
+        boolean changed = false;
+        for (Map<UUID, Long> m : bans.values()) {
+            changed |= m.values().removeIf(until -> until <= now);
+        }
+        return changed | bans.values().removeIf(Map::isEmpty);
     }
 
     /** The id goes to the new leader; when that leader already has a group, the old leader's group is gone (its members joined theirs). */

@@ -5,7 +5,6 @@ import net.ofatech.supernaturalbloodlines.core.group.GroupRank;
 
 /** R270: a new member is a Night Walker; the leader promotes and demotes; the clock promotes after the days unless the leader demoted them. */
 public final class ClanRanks {
-    private static final long DAY = 24L * 60 * 60 * 1000;
 
     public enum Refusal {
         NOT_LEADER, IS_LEADER, NOT_A_MEMBER, ALREADY_DAY_WALKER, NOT_A_DAY_WALKER;
@@ -20,7 +19,7 @@ public final class ClanRanks {
 
     /** {@code days} 0 means only the leader promotes. */
     public static boolean autoPromotionDue(long joinedAtMillis, long nowMillis, int days, boolean demotedByLeader) {
-        return days > 0 && !demotedByLeader && nowMillis - joinedAtMillis >= days * DAY;
+        return days > 0 && !demotedByLeader && nowMillis - joinedAtMillis >= days * ClanTime.DAY;
     }
 
     /** Who may be sent away: only the leader, never themselves, only somebody of this clan. */

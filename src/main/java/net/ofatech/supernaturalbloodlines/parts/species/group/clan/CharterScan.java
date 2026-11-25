@@ -18,7 +18,10 @@ import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.item.ItemStack;
 import net.ofatech.supernaturalbloodlines.SupernaturalBloodlines;
 import net.ofatech.supernaturalbloodlines.core.group.clan.CharterRules;
+import net.ofatech.supernaturalbloodlines.core.group.clan.ClanTime;
 import net.ofatech.supernaturalbloodlines.core.group.clan.CharterState;
+import net.ofatech.supernaturalbloodlines.core.group.clan.ClanTime;
+import net.ofatech.supernaturalbloodlines.core.group.clan.ClanTime;
 import net.ofatech.supernaturalbloodlines.parts.species.SpeciesConfig;
 import net.ofatech.supernaturalbloodlines.parts.species.group.GroupIndex;
 import net.ofatech.supernaturalbloodlines.parts.species.group.GroupIndex.CharterRow;
@@ -30,7 +33,6 @@ import net.ofatech.supernaturalbloodlines.parts.species.pack.PackIndex;
  * not a shulker box or any other container item. Sightings are collected first and the inventories edited after, so the loop never edits what it reads.
  */
 public final class CharterScan {
-    private static final long DAY = 24L * 60 * 60 * 1000;
 
     private static boolean entityLoaded(MinecraftServer server, CharterRow row) {
         if (row.entity().isEmpty()) {
@@ -45,7 +47,7 @@ public final class CharterScan {
     }
 
     /** A held Charter is seen again (and its row rewritten) only when its last sighting is this old. */
-    static final long STALE = 60L * 60 * 1000;
+    static final long STALE = ClanTime.HOUR;
     private static Supplier<List<ServerPlayer>> players;
     private static boolean warned;
 
@@ -87,6 +89,13 @@ public final class CharterScan {
         }
     }
 
+    private static void crumble(Found f, String line) {
+        f.clear();
+        ServerLevel at = f.player().serverLevel();
+        at.sendParticles(ParticleTypes.SMOKE, f.player().getX(), f.player().getY() + 1, f.player().getZ(), 12, 0.3, 0.4, 0.3, 0.01);
+        f.player().sendSystemMessage(ClanText.of(line));
+    }
+
     private static void run(MinecraftServer server) {
         if (!GroupsConfig.charterActive()) {
             return;
@@ -117,12 +126,15 @@ public final class CharterScan {
         }
 
         List<Found> dust = new ArrayList<>();
+        List<Found> replaced = new ArrayList<>();
         Map<UUID, List<Found>> valid = new LinkedHashMap<>();
         for (Found f : found) {
             UUID group = f.group();
             Optional<CharterRow> row = Charters.rowOf(groups, f.stack());
             UUID leader = group == null ? null : leaderOf.get(group);
-            if (row.isEmpty() || leader == null) {
+            if (leader != null && f.id() != null && groups.charterOf(group).filter(r -> !r.id().equals(f.id())).isPresent()) {
+                replaced.add(f); // the clan reforged: this was the true Charter once
+            } else if (row.isEmpty() || leader == null) {
                 dust.add(f);
             } else if (ClanScope.isClan(level, leader)) {
                 valid.computeIfAbsent(group, k -> new ArrayList<>()).add(f);
@@ -175,7 +187,7 @@ public final class CharterScan {
                     Charters.tellClan(server, leader, ClanText.key("charter_lost"));
                 }
             }
-            if (row.state() == CharterState.DROPPED && !entityLoaded(server, row) && now - row.seenAt() >= GroupsConfig.charterLostDays() * DAY) {
+            if (row.state() == CharterState.DROPPED && !entityLoaded(server, row) && now - row.seenAt() >= GroupsConfig.charterLostDays() * ClanTime.DAY) {
                 // its entity is in no loaded level and nothing has seen it for the days (a world that lost it, a jar that never knew the item): it is lost like any other
                 row = new CharterRow(row.id(), Optional.empty(), CharterState.LOST, row.forgedAt(), row.seenAt(), Optional.empty(), now);
                 Charters.tellClan(server, leader, ClanText.key("charter_lost"));
@@ -196,10 +208,10 @@ public final class CharterScan {
             }
         });
         for (Found f : dust) {
-            f.clear();
-            ServerLevel at = f.player().serverLevel();
-            at.sendParticles(ParticleTypes.SMOKE, f.player().getX(), f.player().getY() + 1, f.player().getZ(), 12, 0.3, 0.4, 0.3, 0.01);
-            f.player().sendSystemMessage(ClanText.of("charter_dust"));
+            crumble(f, "charter_dust");
+        }
+        for (Found f : replaced) {
+            crumble(f, "charter_replaced");
         }
         for (Found f : strip) {
             ItemStack stack = f.stack().copy();

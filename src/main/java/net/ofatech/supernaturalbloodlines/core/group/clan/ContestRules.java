@@ -6,8 +6,6 @@ import net.ofatech.supernaturalbloodlines.core.group.GroupRank;
 
 /** R272, R277: who may challenge for the Charter, when the Game of Kings ends and who then leads. */
 public final class ContestRules {
-    private static final long DAY = 24L * 60 * 60 * 1000;
-    private static final long HOUR = 60L * 60 * 1000;
     private static final long TICKS_PER_MINUTE = 1200;
 
     /** In the order they are checked. */
@@ -110,7 +108,7 @@ public final class ContestRules {
 
     /** The midnight has come (a day time at or after {@link #endsAt}, however it got there), or {@code maxHours} of wall time have passed. */
     public static boolean due(long startedDayTime, long nowDayTime, long startedMillis, long nowMillis, int minMinutes, int maxHours) {
-        return nowDayTime >= endsAt(startedDayTime, minMinutes) || nowMillis - startedMillis >= maxHours * HOUR;
+        return nowDayTime >= endsAt(startedDayTime, minMinutes) || nowMillis - startedMillis >= maxHours * ClanTime.HOUR;
     }
 
     public static boolean autoStart(long acceptBy, long now) {

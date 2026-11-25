@@ -481,6 +481,22 @@ public final class ClanHookGameTests {
         helper.succeed();
     }
 
+    @GameTest(template = "empty", templateNamespace = NS, timeoutTicks = 100)
+    public static void withClansOffTheRingRuleIsOffToo(GameTestHelper helper) {
+        try {
+            net.ofatech.supernaturalbloodlines.parts.species.group.GroupsConfig.override("sun_ring_day_walker_only", true);
+            helper.assertTrue(CircleQuery.switchOn("sun_ring_day_walker_only"), "setup: the rule is on");
+            net.ofatech.supernaturalbloodlines.parts.species.group.GroupsConfig.override("clans_enabled", false);
+            helper.assertTrue(!CircleQuery.switchOn("sun_ring_day_walker_only"), "with clans off a ring could be forged by nobody: the rule must be off with them");
+            net.ofatech.supernaturalbloodlines.parts.species.group.GroupsConfig.override("clans_enabled", null);
+            helper.assertTrue(CircleQuery.switchOn("sun_ring_day_walker_only"), "the rule did not come back");
+        } finally {
+            net.ofatech.supernaturalbloodlines.parts.species.group.GroupsConfig.override("clans_enabled", null);
+            net.ofatech.supernaturalbloodlines.parts.species.group.GroupsConfig.override("sun_ring_day_walker_only", null);
+        }
+        helper.succeed();
+    }
+
     // ---- the config ----
 
     @GameTest(template = "empty", templateNamespace = NS, timeoutTicks = 100)
