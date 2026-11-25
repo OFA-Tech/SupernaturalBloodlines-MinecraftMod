@@ -109,40 +109,40 @@ config="${mod_id}.devshots.mixins.json"
     side="BOTH"
 
 # Linked mods: all optional, features switch on per part when the mods are present. An optional dependency that is present but OUT of its range stops
-# the whole game from loading (checked, 13d), so each range spans the whole minor line of the tested version; LinkedMods warns in the log for any
+# the whole game from loading (checked, 13d), so each range has only a floor and no cap (a newer version must never block the game); LinkedMods warns in the log for any
 # version outside the tested series (LinkedMods.TESTED: tensura 2.0.1, manascore_race 4.0, vampirism 1.10.13, werewolves 2.0.3, enchanted 4.2.7, curios 9.5 and 9.6, each exactly that version or one that continues it with ".", "-" or "+", for example 2.0.1.5).
 [[dependencies.${mod_id}]]
     modId="tensura"
     type="optional"
-    versionRange="[2.0.1,2.1)"
+    versionRange="[2.0.1,)"
     ordering="AFTER"
     side="BOTH"
 
 [[dependencies.${mod_id}]]
     modId="manascore_race"
     type="optional"
-    versionRange="[4.0.0,4.1)"
+    versionRange="[4.0.0,)"
     ordering="AFTER"
     side="BOTH"
 
 [[dependencies.${mod_id}]]
     modId="vampirism"
     type="optional"
-    versionRange="[1.10.13,1.11)"
+    versionRange="[1.10.13,)"
     ordering="AFTER"
     side="BOTH"
 
 [[dependencies.${mod_id}]]
     modId="werewolves"
     type="optional"
-    versionRange="[2.0.3,2.1)"
+    versionRange="[2.0.3,)"
     ordering="AFTER"
     side="BOTH"
 
 [[dependencies.${mod_id}]]
     modId="enchanted"
     type="optional"
-    versionRange="[4.2.7,4.3)"
+    versionRange="[4.2.7,)"
     ordering="AFTER"
     side="BOTH"
 
@@ -166,13 +166,13 @@ config="${mod_id}.devshots.mixins.json"
 [[dependencies.${mod_id}]]
     modId="curios"
     type="optional"
-    versionRange="[9.5,10)"
+    versionRange="[9.5,)"
     ordering="AFTER"
     side="BOTH"
 [[dependencies.${mod_id}]]
     modId="geckolib"
     type="optional"
-    versionRange="[4.7,5)"
+    versionRange="[4.7,)"
     ordering="AFTER"
     side="BOTH"
 

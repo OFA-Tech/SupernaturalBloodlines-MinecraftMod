@@ -11,6 +11,7 @@
 - The Group page draws a coven's **tier, circle, meter, consent, share, votes and Elder actions**; the Home page shows a circle call and an open vote as cards; a member's Profile offers the Elder and shunning actions. 30 new settings, each on the Admin page.
 
 ### Changed
+- **No linked mod can block the game any more:** the optional dependencies (Tensura, ManasCore, Vampirism, Werewolves, Enchanted, Curios, GeckoLib) have only a minimum version. A newer one loads with an "untested version" warning instead of stopping the game.
 - EP now leaves a player in one place (`RiteEp`), which is what lets a circle split it.
 - `AdminCommands` has ten more rows (`C1` to `C10`, 72 in all).
 
