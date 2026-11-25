@@ -293,6 +293,13 @@ public final class AdminEntries {
         all.add(SettingEntry.of(GROUPS_FILE, gr, "charter_enabled", BOOL));
         all.add(SettingEntry.of(GROUPS_FILE, gr, "feed_share_enabled", BOOL));
         all.add(SettingEntry.of(GROUPS_FILE, gr, "charter_forge_cost", LIST));
+        for (String key : List.of("brotherhood_enabled", "lead_by_mark", "sight_share_enabled", "code_enabled", "curse_extends_enabled", "kol_warning_enabled")) {
+            all.add(SettingEntry.of(GROUPS_FILE, gr, key, BOOL));
+        }
+        for (String key : List.of("arms_percent", "arms_max_percent", "arms_radius", "sight_radius", "code_mark_penalty_percent", "code_breaker_hours", "code_strikes",
+                "code_strikes_days", "code_exile_days", "brotherhood_curse_hours")) {
+            all.add(SettingEntry.of(GROUPS_FILE, gr, key, INT));
+        }
         ALL = List.copyOf(all);
     }
 
