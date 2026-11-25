@@ -113,8 +113,8 @@ public final class GroupAbsenceGameTests {
         TalkingDuelist low = human(helper, 1.5);
         TalkingDuelist high = human(helper, 2.5);
         online(low, high);
-        BloodlineAccess.set(low, BloodlineState.NONE.toBuilder().markKills(3).build());
-        BloodlineAccess.set(high, BloodlineState.NONE.toBuilder().markKills(8).build());
+        BloodlineAccess.set(low, BloodlineState.NONE.toBuilder().species(net.ofatech.supernaturalbloodlines.core.bloodline.Species.HUNTER_OF_THE_FIVE).markKills(3).build());
+        BloodlineAccess.set(high, BloodlineState.NONE.toBuilder().species(net.ofatech.supernaturalbloodlines.core.bloodline.Species.HUNTER_OF_THE_FIVE).markKills(8).build());
         PackIndex index = PackIndex.get(helper.getLevel());
         GroupIndex groups = GroupIndex.get(helper.getLevel());
         long now = System.currentTimeMillis();

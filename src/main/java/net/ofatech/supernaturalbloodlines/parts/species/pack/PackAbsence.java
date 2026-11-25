@@ -126,9 +126,22 @@ public final class PackAbsence {
         List<GroupSuccession.Candidate> candidates = index.betasOf(leader).stream().map(id -> {
             ServerPlayer online = SireCall.player(server, id);
             return new GroupSuccession.Candidate(id, groups.rankOf(id, type), index.inPackSince(id).orElse(Long.MAX_VALUE),
-                    here(server, index, id, nowMillis, limit), online == null ? -1 : BloodlineAccess.get(online).markKills());
+                    here(server, index, id, nowMillis, limit), heirMark(server, type, id, online));
         }).toList();
         return GroupSuccession.heir(type, candidates).orElse(null);
+    }
+
+    /** -1 for somebody who cannot inherit by mark: offline, and in a brotherhood also one who does not fit it or is a Code-breaker. */
+    private static int heirMark(MinecraftServer server, GroupType type, UUID id, ServerPlayer online) {
+        if (online == null) {
+            return -1;
+        }
+        if (type == GroupType.BROTHERHOOD) {
+            return !net.ofatech.supernaturalbloodlines.parts.species.group.brotherhood.BrotherhoodScope.fits(online)
+                    || net.ofatech.supernaturalbloodlines.parts.species.group.brotherhood.Codes.isBreaker(server, id) ? -1
+                    : net.ofatech.supernaturalbloodlines.parts.species.group.brotherhood.BrotherhoodMarks.of(online);
+        }
+        return BloodlineAccess.get(online).markKills();
     }
 
     /** Online, or seen within the window. Somebody the index has no time for is not known to be here. */

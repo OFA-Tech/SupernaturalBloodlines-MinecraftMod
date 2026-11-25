@@ -363,6 +363,8 @@ public final class PackCommand {
         PartyLink.sync(p.server, p.getUUID(), true);
         p.sendSystemMessage(GroupText.of(type, "joined", name(alpha)));
         alpha.sendSystemMessage(GroupText.of(type, "joined_leader", name(p)));
+        // a brother who comes in with a higher mark than the leader's takes the lead now, not at the next sweep
+        net.ofatech.supernaturalbloodlines.parts.species.group.brotherhood.BrotherhoodRegistry.onMarkChanged(p);
         return null;
     }
 
