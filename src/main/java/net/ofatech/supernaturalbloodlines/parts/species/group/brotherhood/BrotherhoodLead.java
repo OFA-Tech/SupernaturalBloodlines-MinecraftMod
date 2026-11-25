@@ -53,6 +53,7 @@ public final class BrotherhoodLead {
             PackMembers.tell(server, id, BrotherhoodText.key(id.equals(next.get()) ? "lead_now" : "lead_lost"), id.equals(next.get()) ? "" : shown);
         }
         PackMembers.tell(server, leader, BrotherhoodText.key("lead_you"), shown);
+        BrotherhoodViews.push(server, next.get());
         return true;
     }
 }

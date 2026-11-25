@@ -32,7 +32,7 @@ public final class LadderNet {
      * Optional, so a client or server without this part still connects; but the channel only exists between two sides on the same version, so a
      * server and its clients on different protocol numbers cannot talk (the hub shows nothing from the server). Raise it with any payload change.
      */
-    static final String PROTOCOL = "18";
+    static final String PROTOCOL = "19";
 
     private LadderNet() {
     }
@@ -110,6 +110,9 @@ public final class LadderNet {
         registrar.playToClient(ClanViewPayload.TYPE, ClanViewPayload.STREAM_CODEC, FMLEnvironment.dist.isClient()
                 ? net.ofatech.supernaturalbloodlines.parts.supernatural.client.ClanClient::receive
                 : (payload, ctx) -> { });
+        registrar.playToClient(BrotherhoodViewPayload.TYPE, BrotherhoodViewPayload.STREAM_CODEC, FMLEnvironment.dist.isClient()
+                ? net.ofatech.supernaturalbloodlines.parts.supernatural.client.BrotherhoodClient::receive
+                : (payload, ctx) -> { });
         registrar.playToClient(net.ofatech.supernaturalbloodlines.parts.supernatural.tweaks.TweakSync.Payload.TYPE,
                 net.ofatech.supernaturalbloodlines.parts.supernatural.tweaks.TweakSync.Payload.STREAM_CODEC,
                 net.ofatech.supernaturalbloodlines.parts.supernatural.tweaks.TweakSync::onClient);
@@ -166,6 +169,9 @@ public final class LadderNet {
         }
         if (p.connection != null && p.connection.getConnection().isConnected() && p.connection.hasChannel(ClanViewPayload.TYPE)) {
             PacketDistributor.sendToPlayer(p, ClanViewPayload.of(p));
+        }
+        if (p.connection != null && p.connection.getConnection().isConnected() && p.connection.hasChannel(BrotherhoodViewPayload.TYPE)) {
+            PacketDistributor.sendToPlayer(p, BrotherhoodViewPayload.of(p));
         }
     }
 

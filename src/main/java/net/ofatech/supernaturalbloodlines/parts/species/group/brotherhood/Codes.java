@@ -107,6 +107,7 @@ public final class Codes {
             tellAll(server, roster, id, "code_expelled", name);
         }
         net.ofatech.supernaturalbloodlines.shared.supernatural.HubRequests.changed(killer);
+        BrotherhoodViews.push(server, b.leader());
     }
 
     private static void tellAll(MinecraftServer server, List<UUID> roster, UUID except, String key, String name) {

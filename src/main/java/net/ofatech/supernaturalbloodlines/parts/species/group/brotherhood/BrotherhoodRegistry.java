@@ -67,6 +67,9 @@ public final class BrotherhoodRegistry {
     /** Records the player's mark and lets the lead move. */
     public static void onMarkChanged(ServerPlayer p) {
         BrotherhoodMarks.record(p);
+        if (BrotherhoodScope.of(p.serverLevel(), p.getUUID()) != null) {
+            BrotherhoodViews.push(p.server, p.getUUID());
+        }
         BrotherhoodLead.check(p.server, p.getUUID());
     }
 
