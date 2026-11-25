@@ -47,6 +47,7 @@ public final class HomePage implements HubPageView {
             case DUEL -> List.of();
             case CIRCLE_CALL -> List.of(new Answer("join", "C3", true, true));
             case GROUP_VOTE -> List.of(new Answer("yes", "C9", true, true), new Answer("no", "C10", true, false));
+            case CHARTER_CONTEST -> List.of(new Answer("accept", "C12", false, true));
         };
     }
 
@@ -224,7 +225,7 @@ public final class HomePage implements HubPageView {
         List<Answer> answers = answers(q.kind());
         List<Component> labels = new ArrayList<>();
         answers.forEach(a -> labels.add(Component.translatable(KEY + "answer." + a.label())));
-        boolean dismissable = q.kind() != HubRequests.Kind.CHALLENGE && q.kind() != HubRequests.Kind.COMPULSION;
+        boolean dismissable = q.kind() != HubRequests.Kind.CHALLENGE && q.kind() != HubRequests.Kind.COMPULSION && q.kind() != HubRequests.Kind.CHARTER_CONTEST;
         if (dismissable) {
             labels.add(Component.translatable(KEY + "answer.dismiss"));
         }

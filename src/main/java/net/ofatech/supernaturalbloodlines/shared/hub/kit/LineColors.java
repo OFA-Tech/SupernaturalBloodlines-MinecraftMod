@@ -35,6 +35,11 @@ public final class LineColors {
         return target;
     }
 
+    /** {@code color} drawn at {@code alpha} over {@code bg}: the opaque colour that is seen. */
+    public static int over(int color, float alpha, int bg) {
+        return mix(0xFF000000 | (bg & 0xFFFFFF), 0xFF000000 | (color & 0xFFFFFF), Math.round(Math.max(0f, Math.min(1f, alpha)) * 100));
+    }
+
     private static int mix(int a, int b, int percent) {
         int out = 0xFF000000;
         for (int shift = 16; shift >= 0; shift -= 8) {

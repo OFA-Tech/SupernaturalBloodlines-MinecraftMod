@@ -37,6 +37,9 @@ An **Original, Original hybrid, hybrid or tribrid** can **call their sired**. Ev
 - Sired **creatures** loaded in the caller's dimension are told every second, for **30 seconds**, to walk to the caller. No chunk is loaded to reach them.
 - `/bloodline accept <token>` is what the button runs. It's not meant to be typed.
 
+## Sire-line bonus
+Clanmates of one sireline (the same root at any depth, even a dead sire or a creature) who stand within 32 blocks of each other hit 3% harder for each such mate, up to 15%. Only the count is shown. See [Groups](Groups#clans).
+
 ## Sire bond
 
 - **R43:** a **hybrid** type cannot hurt their sire: directly, by projectile, by area cloud or by pet. The sire can still hurt them. A cured player with a stale sire is not bound, and neither is one whose bond was severed.

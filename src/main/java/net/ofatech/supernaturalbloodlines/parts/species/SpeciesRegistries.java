@@ -91,6 +91,18 @@ public final class SpeciesRegistries {
     public static final DeferredItem<net.ofatech.supernaturalbloodlines.parts.species.unlock.RitePageItem> RITE_PAGE =
             ITEMS.register("rite_page", () -> new net.ofatech.supernaturalbloodlines.parts.species.unlock.RitePageItem(new Item.Properties().stacksTo(1).rarity(net.minecraft.world.item.Rarity.UNCOMMON)));
 
+    /** The Charter's id: the one the server's row knows; a stack with another id is dust. */
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<UUID>> CHARTER_ID =
+            COMPONENTS.registerComponentType("charter_id", b -> b.persistent(UUIDUtil.CODEC).networkSynchronized(UUIDUtil.STREAM_CODEC));
+
+    /** The clan a Charter belongs to, by its group id. */
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<UUID>> CHARTER_GROUP =
+            COMPONENTS.registerComponentType("charter_group", b -> b.persistent(UUIDUtil.CODEC).networkSynchronized(UUIDUtil.STREAM_CODEC));
+
+    /** The Clan Charter (plan 20c): not craftable, in no tab, one per clan. */
+    public static final DeferredItem<net.ofatech.supernaturalbloodlines.parts.species.item.CharterItem> CLAN_CHARTER =
+            ITEMS.register("clan_charter", () -> new net.ofatech.supernaturalbloodlines.parts.species.item.CharterItem(new Item.Properties().stacksTo(1).rarity(net.minecraft.world.item.Rarity.EPIC)));
+
     /** Whose blood a bottle of Original's Blood is. */
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<String>> BLOOD_SOURCE_NAME_COMPONENT =
             COMPONENTS.registerComponentType("blood_source_name", b -> b.persistent(com.mojang.serialization.Codec.STRING).networkSynchronized(net.minecraft.network.codec.ByteBufCodecs.STRING_UTF8));

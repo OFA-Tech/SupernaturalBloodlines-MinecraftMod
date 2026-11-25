@@ -204,3 +204,20 @@ Details are on [Tensura integration](Tensura-Integration#apex-evolutions).
 | **R266** | Great Harvest: crops grow, levels split, no creature harmed. |
 | **R267** | Mastery's Ultimate needs a circle of seven (waived when circles are off). |
 | **R268** | A coven casts the same grand rite once per 12 hours. |
+
+## Clans (R270 to R281)
+
+| Rule | What it says |
+|---|---|
+| **R270** | A new clan member is a Night Walker; the head promotes or demotes; the clock promotes after 14 days unless the head demoted them. |
+| **R271** | The Charter: forged by the head of a clan of three, one live Charter per clan; the server row is the truth, other stacks are dust. |
+| **R272** | A Day Walker with 7 days challenges; the head cannot refuse; one contest per clan per 7 days. |
+| **R273** | The coven Sun Ring is for a Day Walker or the head of a clan by default; the rank is read when it is forged. |
+| **R274** | A feed shares a little blood with clanmates nearby; never from bottles, blocks or between clanmates. |
+| **R275** | +3% attack per clanmate of your sireline within 32 blocks, up to 15%. |
+| **R276** | Exile bars a member from that clan for 7 days; a kick has no bar. |
+| **R277** | At the first midnight after the minimum, the online Day Walker or head holding the Charter leads. |
+| **R278** | A lost Charter can be reforged after 24 hours. |
+| **R279** | A dropped Charter cannot be picked up by outsiders, hurt or despawned. |
+| **R280** | A type switch or an off switch makes it all dormant; nothing is deleted. |
+| **R281** | Nothing about other clans, species or a sireline root reaches the hub. |

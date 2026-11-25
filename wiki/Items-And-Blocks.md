@@ -34,6 +34,11 @@ Part `artifacts`. Rings sit in a **Curios `ring` slot** if Curios is installed, 
 
 > **Release check pending:** with the ring in an **Accessories** slot (the OFA pack), the charge may be taken from a copy, so the ring could keep reviving. See [Known limits](Known-Limits).
 
+## Clan Charter (part `species`)
+| In-game name | What it does | How to get it |
+|---|---|---|
+| **Clan Charter** | The word of a clan. At midnight in a contest, the Day Walker who holds it leads. Only the clan can pick it up; it cannot be hurt and never despawns. Not in a creative tab. | The head of a clan of three forges it (`/group charter forge`: a book and quill and a gold block). A `/give` copy is dust. |
+
 ## Boss items (part `bosses`)
 
 | In-game name | What it does | How to get it |

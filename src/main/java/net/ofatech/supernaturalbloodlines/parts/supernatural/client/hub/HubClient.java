@@ -66,6 +66,7 @@ public final class HubClient {
             RequestsClient.clear();
             net.ofatech.supernaturalbloodlines.parts.supernatural.client.WardClient.clear();
             net.ofatech.supernaturalbloodlines.parts.supernatural.client.GroupClient.clear();
+            net.ofatech.supernaturalbloodlines.parts.supernatural.client.ClanClient.clear();
         });
         NeoForge.EVENT_BUS.addListener((ScreenEvent.Opening e) -> {
             if (e.getNewScreen() instanceof DeathScreen) {

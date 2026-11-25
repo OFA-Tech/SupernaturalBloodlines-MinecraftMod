@@ -57,8 +57,8 @@ class AdminCommandsTest {
         assertEquals(25, AdminCommands.ALL.stream().filter(r -> r.root().equals("pack")).count());
         assertEquals(19, AdminCommands.ALL.stream().filter(r -> r.root().equals("supernaturalbloodlines")).count());
         assertEquals(5, AdminCommands.ALL.stream().filter(r -> r.root().equals("ward")).count());
-        assertEquals(10, AdminCommands.ALL.stream().filter(r -> r.root().equals("group")).count());
-        assertEquals(72, AdminCommands.ALL.size());
+        assertEquals(17, AdminCommands.ALL.stream().filter(r -> r.root().equals("group")).count());
+        assertEquals(79, AdminCommands.ALL.size());
     }
 
     @Test

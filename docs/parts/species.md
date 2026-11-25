@@ -565,7 +565,7 @@ Tests: `LineRulesTest`, `RingFillTest`, `LineIndexTest`, `LineTreeTest`, `LineTr
 - [x] Founding gate, wording per type, `/group` tree with `/clan`, `/coven`, `/brotherhood`, `/sb group`.
 - [x] Type switch loses nobody; heir by type; Group page in the three themes; Profile "Group" fact.
 - [x] `GroupViewPayload` (hub protocol 14); Admin section Groups (5 rows).
-- [ ] Clan, coven and brotherhood perks (plans 20b to 20d).
+- [x] Clan perks (plan 20c, below). [ ] Brotherhood perks (plan 20d).
 
 | Setting (`supernaturalbloodlines-groups.toml`) | Default |
 |---|---|
@@ -592,3 +592,67 @@ Proved by `CovenHookGameTests` with a real gold chalk and a throwaway rite type 
 Settings (`supernaturalbloodlines-groups.toml`, 30 new keys, each an Admin row): `link_enabled`, `link_member_share`, `channel_cap`, `channel_other_factor`, `channel_regen_minutes`, `ep_keep_percent`, `potency_max_bonus`, `potency_falloff`, `tier1_members`, `tier2_members`, `tier3_members`, `link_window_seconds`, `link_death_damage_percent`, `link_death_lethal`, `link_shaken_minutes`, `elder_min_days`, `members_per_elder`, `vote_hours`, `election_cooldown_days`, `shun_days`, `moonlight_ring_enabled`, `sun_ring_forge_enabled`, `sun_ring_day_walker_only`, `mastery_ultimate_circle`, `grand_rites_enabled`, `grand_rite_cooldown_hours`, `grand_rite_radius`, `fete_minutes`, `harvest_xp_levels`, `harvest_max_blocks`.
 
 What vanishes with a switch: `link_enabled` off: no new circle, the staged plan is never built, Mastery's Ultimate needs no circle; nothing already paid is refunded. `covens_enabled` off: no new coven; existing covens, their Elders and their votes are kept. `grand_rites_enabled` off: the three grand rites refuse. `species` part off: groups, circles and the grand rites are gone; the artifacts part still loads, the `coven_forge` factory is registered and its two ring rite files are absent (they need the species part), with no circle behind the seam. Mastery's Ultimate gate is not reachable code with the evolution rites part off.
+
+## Clans (plan 20c)
+- [x] Ranks: Night Walker, Day Walker, promote, demote, the clock (R270).
+- [x] The Charter item, its forging, scan and protection (R271, R278, R279).
+- [x] The challenge and the Game of Kings at midnight (R272, R277).
+- [x] The coven Sun Ring for Day Walkers (R273).
+- [x] Shared feeding behind the `SharedFeed` guard (R274); the sire-line bonus (R275).
+- [x] Exile (R276). Dormancy (R280). Privacy (R281).
+- [x] The Group page, the Home request card and the Profile actions in the three themes (placeholder art for the ring set and the Charter texture).
+
+Settings (`supernaturalbloodlines-groups.toml`, section `groups`; every one has an Admin row, permission 2):
+
+| Key | Default | Range |
+|---|---|---|
+| `daywalker_days` | 14 | 0-365 (0: only the head promotes) |
+| `exile_days` | 7 | 1-365 |
+| `charter_enabled` | true | |
+| `charter_min_members` | 3 | 2-50 |
+| `charter_lost_days` | 7 | 1-365 |
+| `charter_forge_cost` | minecraft:writable_book, minecraft:gold_block | a list; `id` or `id=count`; never empty (an empty list is refused, and read as the default) |
+| `challenger_min_days` | 7 | 0-365 |
+| `contest_cooldown_days` | 7 | 0-365 |
+| `contest_accept_minutes` | 10 | 1-120 |
+| `contest_min_minutes` | 2 | 0-20 |
+| `contest_max_hours` | 1 | 1-24 |
+| `feed_share_enabled` | true | |
+| `feed_share_percent` | 10 | 1-100 |
+| `feed_share_max` | 2 | 1-20 |
+| `feed_share_radius` | 16 | 2-64 |
+| `feed_share_cap_per_minute` | 4 | 1-100 |
+| `sireline_bonus_percent` | 3 | 0-50 (0: off) |
+| `sireline_bonus_max_percent` | 15 | 0-100 |
+| `sun_ring_day_walker_only` | true (new files) | |
+
+What vanishes with the switches: `clans_enabled` off: no new clan, no promotion, no share, no bonus, no contest, every Charter inert; rows and ranks are kept. `charter_enabled` off: Charters inert and no contest. `feed_share_enabled` off: no shares. `sireline_bonus_percent` 0: no bonus. `sun_ring_day_walker_only` off: any vampire again for the coven Sun Ring.
+
+Where plan 20e (several types per group) will hook in: every clan perk asks `ClanScope` ("is this group a clan" and "does this member fit a clan"), the per-type rank and row reads are keyed by `GroupType`, and the Charter rows hang on the group id.
+### Round 1 panel rulings (plan 20c)
+- **The lock (R284).** While a contest is pending or running, the head cannot demote, exile or kick **the challenger or the holder of the Charter** (`Contests.lockRefusal`, the one place; `ClanDiscipline.demote/exile`, `PackCommand.kick` and the party link's `leavePack` ask it). Everybody else can still be removed.
+- **One Day Walker rule (R270).** `ClanScope.dayWalker(level, id)`: the head, or a stored `DAY_WALKER` rank and, when online, a member who **fits** (`Groups.derive(p) == CLAN`, the same definition the type derivation uses). The challenge, the hub, the midnight, the coven Sun Ring hook and the promotion all ask it; promotion (by the head and by the clock) skips a member who does not fit.
+- **R282.** A head who is away when the accept time runs out is waited for: the challenge stays pending and starts at their next login (it is no longer cancelled).
+- **R283.** A Charter that is `STORED` at midnight because the head was its last holder is forfeited: the challenger leads if they are online, alive and a Day Walker. The scan writes `CharterRow.byHead` when the head's Charter goes to `STORED`; a challenge copies it into `ContestRow.headStored` (and the scan keeps a pending or running contest in step), so a Charter stored **before** the challenge or in the accept window forfeits like one stored while it runs. A head who holds it **offline** at midnight forfeits it too (ruling of round 2). A Charter a member stored, or any other state with a holder named, changes nobody. A pending challenge whose challenger left is voided at the next tick, with no cooldown.
+- **The midnight talks.** `ContestRules.REASONS` each has a line (`contest_nochange.<reason>`), then the cooldown line (`contest_cooldown`).
+- **Round 3.** `GroupIndex.follow` clears `CharterRow.byHead` when the group id passes to a new leader (every hand-over, duel, absence transfer and succession goes through it); the head's `challenged_head`/`contest_started_head` lines carry the rule; `Contests.SETTLE_TICKS` (1200) keeps a contest from resolving in the first minute of a server (`Contests.overrideServerTicks` in tests).
+- **R285.** `charter_forge_cost` is never empty (spec validator, `CharterCost.parse`, the Admin row): the Charter always costs something.
+- **R286.** The hub shows the sire-line bonus only as "your line is near: +N% attack" (or none), never a count: a count would tell a viewer the moment a person of their line comes near.
+- **Exile.** The ban is written only after `PackMembers.remove` succeeded. The exiled hear the days and the UTC end (`exiled_until`); the head who invites somebody who brings an exiled member hears who (`exiled_brings`); the accept side stays the generic refusal.
+- **Scan.** A held Charter rewrites its row only when its state or holder changes, or its `seenAt` is 1 hour old, and pushes the clan only on a change (`Charters.refreshes()` counts). A dropped row whose entity is in no loaded level and unseen for `charter_lost_days` goes lost; a dropped row whose entity **is** loaded is seen again (`seenAt`, once an hour, and at the entity's join), so a restart after the days does not lose it. A `CharterGuard` join of a Charter of a group that is gone, or of a clan whose row has another id, is cancelled; one of a clan with **no row at all** (a row skipped on load) is left alone.
+- **Creative.** A creative copy cannot make a second Charter: the stack of one splits into stacks of one (duplicates are dust), a stack with no id is dust.
+- **With clans off** the `sun_ring_day_walker_only` rule is off too (`CovenRegistry.switchOn`): a ring would otherwise be forgeable by nobody.
+- **Dead code gone:** `Midnight.crossed`, `CharterRules.next/Event`, `SirelineBonus.sameLine`. `SirelineBonus.rootOf` now answers empty past the depth cap (a cut-short line has no root and equals nothing).
+
+## Clans: hooks read (plan 20c, Task 0)
+Proved by `ClanHookGameTests` (a failing proof would be a finding; all passed on the first run) and `FeedListenerAuditTest`:
+- `ItemEntityPickupEvent.Pre` with `setCanPickup(TriState.FALSE)` keeps a stack in the world for that player only (`playerTouch`). A hopper under a dropped stack empties the entity with **no** pickup event (the hole: the plan treats it as `STORED`).
+- A pick-up leaves the world with `RemovalReason.DISCARDED` and an **empty** stack **at the moment of `EntityLeaveLevelEvent`** (vanilla restores the count right after `discard()`, so the stack reads full again afterwards: the probe must read it inside the event). A void fall (`checkBelowWorld`) leaves `DISCARDED` and `/kill` `KILLED`, both `shouldDestroy()` with a non-empty stack. Unloads do not destroy.
+- `setInvulnerable(true)` + `setUnlimitedLifetime()` survives lava, fire and an explosion that destroys an ordinary item; the saved `Age` is -32768 and a reload keeps it. Void and `/kill` bypass the invulnerability (that is how a Charter is lost).
+- Midnight is `18000 mod 24000`, and it is reached by crossing it between two reads of `getDayTime()`: one crossing on an ordinary run, a 13000 to 24000 jump crosses, 24000 to 5000 does not, and with `doDaylightCycle` off the time never moves. (The contest never compares two reads: its row carries the day time it started at and `ContestRules.endsAt` is the first midnight at or after the minimum, so a jump over it ends the contest too. `Midnight.crossed` was dead code and is gone.)
+- `drinkBlood` on a mate fires one `PlayerDrinkBloodEvent` per call; a call with `IDrinkBloodContext.none()` has an empty source. `VampirismAPI.vampirePlayer(human)` is present for a human: the mate test is `VampirismSupernatural.isVampire`.
+- `AugustineRules.onDrinkBlood` rescales an empty-source drink (10 became 3) and sets the diet note: it needs the `SharedFeed` guard. The other listeners are in `FeedListenerAuditTest`: `VervainRules`, `Detectors`, `BloodMoonBite`, `BloodEffects`, `TurningHandler` and `GhoulGates` ignore an empty source; `AshDagger` empties the drink of a desiccated **drinker** (wanted for a share too: a desiccated mate gets nothing); `TensuraFeed` is a source, not a rule.
+- `BloodBottles.apply` and `applyWithoutConsent` (where `GiveBloodAction` and a forced feed end) fire no drink event at all: they cannot start a share.
+- `CircleQuery.dayWalker` is false for a clan leader and true for a member with `DAY_WALKER` (Task 9 changed it: the leader counts now; `theCovenRiteSeesAClanLeaderAsADayWalkerSincePlan20c`).
+- `ModConfigSpec.correct` keeps a stored `false` under a default of `true` and fills a missing key with `true`: the default flip of `sun_ring_day_walker_only` reaches new files only.
+- Not checked in source: Enhanced Celestials' use of `setDayTime` (All Rights Reserved, no source); the jump rule covers any forward jump and setup 15 runs it for real.

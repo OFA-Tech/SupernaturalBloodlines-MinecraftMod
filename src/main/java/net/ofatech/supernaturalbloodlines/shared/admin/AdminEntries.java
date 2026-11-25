@@ -285,6 +285,14 @@ public final class AdminEntries {
         all.add(SettingEntry.of(GROUPS_FILE, gr, "fete_minutes", INT));
         all.add(SettingEntry.of(GROUPS_FILE, gr, "harvest_xp_levels", INT));
         all.add(SettingEntry.of(GROUPS_FILE, gr, "harvest_max_blocks", INT));
+        for (String key : List.of("daywalker_days", "exile_days", "charter_min_members", "charter_lost_days", "challenger_min_days", "contest_cooldown_days",
+                "contest_accept_minutes", "contest_min_minutes", "contest_max_hours", "feed_share_percent", "feed_share_max", "feed_share_radius",
+                "feed_share_cap_per_minute", "sireline_bonus_percent", "sireline_bonus_max_percent")) {
+            all.add(SettingEntry.of(GROUPS_FILE, gr, key, INT));
+        }
+        all.add(SettingEntry.of(GROUPS_FILE, gr, "charter_enabled", BOOL));
+        all.add(SettingEntry.of(GROUPS_FILE, gr, "feed_share_enabled", BOOL));
+        all.add(SettingEntry.of(GROUPS_FILE, gr, "charter_forge_cost", LIST));
         ALL = List.copyOf(all);
     }
 

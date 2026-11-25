@@ -53,9 +53,7 @@ public final class CovenGovernance {
         }
 
         List<UUID> everyone() {
-            List<UUID> out = new ArrayList<>(index.betasOf(leader));
-            out.add(leader);
-            return out;
+            return index.roster(leader);
         }
     }
 

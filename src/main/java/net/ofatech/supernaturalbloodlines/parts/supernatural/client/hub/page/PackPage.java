@@ -70,6 +70,7 @@ public final class PackPage implements HubPageView {
             y = wolves.render(f, r, y + 2, wolf.lineage() != WolfState.Lineage.NONE, true);
         }
         y = CovenCards.render(f, r, y, gv, null);
+        y = ClanCards.render(f, r, y, gv, null);
         f.end(y);
 
         Rect s = f.region(HubLayout.SIDE);

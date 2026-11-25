@@ -50,6 +50,7 @@ public final class SpeciesHub {
         HubRequests.set(SpeciesHub::requests);
         net.ofatech.supernaturalbloodlines.shared.supernatural.HubGroups.set(net.ofatech.supernaturalbloodlines.parts.species.group.GroupViews::of);
         net.ofatech.supernaturalbloodlines.shared.supernatural.HubCoven.set(net.ofatech.supernaturalbloodlines.parts.species.group.coven.CovenViews::of);
+        net.ofatech.supernaturalbloodlines.shared.supernatural.HubClan.set(net.ofatech.supernaturalbloodlines.parts.species.group.clan.ClanViews::of);
     }
 
     static HubSocial.Social social(ServerPlayer p) {
@@ -88,6 +89,7 @@ public final class SpeciesHub {
         tokens(out, HubRequests.Kind.SIRE_CALL, SireCall.requests(), p, server, now);
         tokens(out, HubRequests.Kind.PACK_INVITE, PackCommand.requests(), p, server, now);
         tokens(out, HubRequests.Kind.ALLY_INVITE, PackCommand.allyRequests(), p, server, now);
+        out.addAll(net.ofatech.supernaturalbloodlines.parts.species.group.clan.Contests.requestsFor(p));
         tokens(out, HubRequests.Kind.CIRCLE_CALL, net.ofatech.supernaturalbloodlines.parts.species.group.circle.CircleLink.calls(), p, server, now);
         out.addAll(net.ofatech.supernaturalbloodlines.parts.species.group.coven.CovenGovernance.cardsFor(p));
         if (werewolves()) {

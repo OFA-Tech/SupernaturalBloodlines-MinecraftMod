@@ -14,6 +14,7 @@ import net.ofatech.supernaturalbloodlines.shared.hub.HubTheme;
 import net.ofatech.supernaturalbloodlines.shared.hub.Rect;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.Detail;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.LineColors;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.PackRing;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.RingLabels;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.TextCache;
@@ -223,6 +224,14 @@ public final class BookPackPage implements HubPageView {
         return !mayAccept(gv, grp);
     }
 
+    /** The height of the foot of the Grimoire page: the seal's, or for a group page that has no seal the buttons' and, for a member who can leave, the Leave link's. */
+    private int footer(HubScreen.Frame f, List<HubSocial.Member> pack) {
+        if (!grp || !leaderFirst()) {
+            return BookKit.SEAL;
+        }
+        return GroupLabels.mayLeave(pack, f.view.player().getName().getString()) ? BookKit.SEAL : PageWidgets.H + 4;
+    }
+
     private Component t(String packKey, String name, Object... args) {
         return GroupLabels.t(gv, packKey, name, args);
     }
@@ -251,7 +260,8 @@ public final class BookPackPage implements HubPageView {
         HubTheme t = f.theme();
         Rect r = f.region(ledgerRegion);
         if (style == Style.BOOK) {
-            f.reserve(ledgerRegion, BookKit.sealReserve()); // the ACCEPT seal and the line that says what it accepts are pinned at the foot of the page
+            // the ACCEPT seal and the line that says what it accepts are pinned at the foot of the page; a group page with no seal keeps only its buttons (and Leave)
+            f.reserve(ledgerRegion, !grp || !leaderFirst() ? BookKit.sealReserve() : footer(f, pack) + 4);
         }
         int y = BookKit.head(f, ledgerRegion, t(KEY + "title", "title"), t(BOOK + "subtitle", "subtitle"));
         if (!GroupLabels.neutral(gv)) {
@@ -315,6 +325,7 @@ public final class BookPackPage implements HubPageView {
             y += 2;
         }
         y = CovenCards.render(f, r, y, gv, chosen, style == Style.TENSURA);
+        y = ClanCards.render(f, r, y, gv, chosen);
         t.drawRule(f.g, r.x(), y + 3, r.w());
         y += 9;
         if (style == Style.BOOK && chosen != null) {
@@ -358,7 +369,7 @@ public final class BookPackPage implements HubPageView {
         f.end(y);
         if (style == Style.BOOK) {
             // the foot of the page: the seal, the two invite buttons beside it and, under them, the way out
-            int sy = r.bottom() - BookKit.SEAL;
+            int sy = r.bottom() - footer(f, pack);
             if (leaderFirst()) {
                 PackInvite.buttons(f, new Rect(r.x(), sy + 2, r.w(), PageWidgets.H), sy + 2, mayInvite);
             } else {
@@ -437,6 +448,21 @@ public final class BookPackPage implements HubPageView {
         f.detail(d.build());
     }
 
+    /** A rank ring's colour, opaque, and at least 3:1 against what it is drawn on (the Grimoire's paper, the Blood Moon's sky). */
+    static int ringColor(int roleColor, int background) {
+        return ringColor(roleColor, 1f, background);
+    }
+
+    /** The ring as it is drawn: the faintness of a role is folded into the colour first (over the background), and that colour is what must be 3:1. */
+    static int ringColor(int roleColor, float alpha, int background) {
+        int bg = 0xFF000000 | (background & 0xFFFFFF);
+        return LineColors.atLeast(LineColors.over(roleColor, alpha, bg), bg, LineColors.MIN_RATIO);
+    }
+
+    private int ringBackground(HubTheme t) {
+        return style == Style.MOON ? LineColors.MOON_SKY_TOP : t.paper();
+    }
+
     /** The viewer's own ring round the emblem in the centre, in the colour of their own rank: the legend names it, so the page must show it. */
     private void ownRing(HubScreen.Frame f, int cx, int cy, int radius) {
         String base = switch (gv.viewerRank()) {
@@ -445,7 +471,7 @@ public final class BookPackPage implements HubPageView {
             case GroupView.ELDER -> "elder";
             default -> "member";
         };
-        int color = 0xFF000000 | (GroupLabels.role(gv.type(), base).color() & 0xFFFFFF);
+        int color = ringColor(GroupLabels.role(gv.type(), base).color(), ringBackground(f.theme()));
         for (int dy = -radius; dy <= radius; dy++) {
             int outer = (int) Math.round(Math.sqrt((double) radius * radius - (double) dy * dy));
             int inner = Math.abs(dy) >= radius - 1 ? -1 : (int) Math.round(Math.sqrt((double) (radius - 2) * (radius - 2) - (double) dy * dy));
@@ -544,7 +570,7 @@ public final class BookPackPage implements HubPageView {
         int named_i = 0;
         for (PackRing.Slot slot : ring.slots()) {
             int size = slot.size();
-            int color = (slot.member().role().color() & 0xFFFFFF) | ((int) (slot.alpha() * 255) << 24);
+            int color = ringColor(slot.member().role().color(), slot.alpha(), ringBackground(t));
             BookKit.portrait(f.g, slot.member().id(), slot.x(), slot.y(), size, color, t.paper());
             if (named) {
                 Rect at = where.get(named_i++);

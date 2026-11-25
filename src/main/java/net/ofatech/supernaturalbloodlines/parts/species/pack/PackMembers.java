@@ -50,6 +50,7 @@ public final class PackMembers {
     static void departed(MinecraftServer server, UUID leader, UUID member, boolean tellCircle) {
         var groups = net.ofatech.supernaturalbloodlines.parts.species.group.GroupIndex.get(server.overworld());
         groups.clearRanks(member);
+        net.ofatech.supernaturalbloodlines.parts.species.group.clan.ClanDiscipline.memberDeparted(groups, leader, member);
         net.ofatech.supernaturalbloodlines.parts.species.group.coven.CovenGovernance.memberDeparted(server, leader, member);
         net.ofatech.supernaturalbloodlines.parts.species.group.circle.CircleLink.dropMember(server, member, tellCircle);
         ServerPlayer online = SireCall.player(server, member);

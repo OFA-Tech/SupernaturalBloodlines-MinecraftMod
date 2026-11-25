@@ -48,8 +48,7 @@ public final class CovenRegistry {
 
             @Override
             public boolean dayWalker(ServerLevel level, java.util.UUID player) {
-                var groups = net.ofatech.supernaturalbloodlines.parts.species.group.GroupIndex.get(level);
-                return groups.rankOf(player, net.ofatech.supernaturalbloodlines.core.group.GroupType.CLAN) == net.ofatech.supernaturalbloodlines.core.group.GroupRank.DAY_WALKER;
+                return GroupsConfig.clanPerksOn() && net.ofatech.supernaturalbloodlines.parts.species.group.clan.ClanScope.dayWalker(level, player);
             }
 
             @Override
@@ -57,7 +56,7 @@ public final class CovenRegistry {
                 return switch (name) {
                     case "moon_ring" -> GroupsConfig.moonlightRingEnabled();
                     case "sun_ring" -> GroupsConfig.sunRingForgeEnabled();
-                    case "sun_ring_day_walker_only" -> GroupsConfig.sunRingDayWalkerOnly();
+                    case "sun_ring_day_walker_only" -> GroupsConfig.sunRingDayWalkerOnly() && GroupsConfig.clanPerksOn();
                     default -> false;
                 };
             }

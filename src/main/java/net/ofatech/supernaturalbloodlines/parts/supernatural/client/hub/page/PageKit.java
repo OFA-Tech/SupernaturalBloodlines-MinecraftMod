@@ -109,6 +109,11 @@ final class PageKit {
      * caller draws it in the normal font).
      */
     static boolean themedTitle(HubScreen.Frame f, Component c, int x, int y, int w, int color, boolean shadow) {
+        return themedTitle(f, c, x, y, w, color, shadow, true);
+    }
+
+    /** {@code draw} false answers whether it would draw, and draws nothing (a heading that is not whole inside the clip). */
+    static boolean themedTitle(HubScreen.Frame f, Component c, int x, int y, int w, int color, boolean shadow, boolean draw) {
         String face = f.theme().titleFont();
         if (face == null || !TitleFont.supports(c.getString())) {
             return false;
@@ -118,25 +123,36 @@ final class PageKit {
             return false;
         }
         // a bitmap font draws its glyph from the baseline up by its ascent: 7 puts the glyph's top at y
-        f.g.drawString(f.font(), styled, x, y + 7, color, shadow);
+        if (draw) {
+            f.g.drawString(f.font(), styled, x, y + 7, color, shadow);
+        }
         return true;
     }
 
     /** A title in the theme's font when it can be, else at 1.5x when it fits the width, else at 1x. Returns the y under it. */
     static int title(HubScreen.Frame f, Component c, int x, int y, int w, int color) {
+        return title(f, c, x, y, w, color, f.theme().titleFont() != null ? net.ofatech.supernaturalbloodlines.shared.hub.kit.TitleFont.HEIGHT : 14);
+    }
+
+    /** {@link #title} that is drawn only when {@code room} pixels from {@code y} are whole inside the clip (a heading wants its rule and a line of text under it). */
+    static int title(HubScreen.Frame f, Component c, int x, int y, int w, int color, int room) {
         Font font = f.font();
-        if (themedTitle(f, c, x, y, w, color, false)) {
+        // a heading that is not whole between the top and the "more below" marker is not drawn (half a heading is worse than none)
+        boolean shown = y >= f.clipTop() && f.whole(y, room);
+        if (themedTitle(f, c, x, y, w, color, false, shown)) {
             return y + TitleFont.HEIGHT + 1;
         }
         float scale = font.width(c) * 1.5f <= w ? 1.5f : 1f;
         if (scale == 1f) {
             return wrapped(f, c, x, y, w, color);
         }
-        f.g.pose().pushPose();
-        f.g.pose().translate(x, y, 0);
-        f.g.pose().scale(scale, scale, 1f);
-        f.g.drawString(font, c, 0, 0, color, false);
-        f.g.pose().popPose();
+        if (shown) {
+            f.g.pose().pushPose();
+            f.g.pose().translate(x, y, 0);
+            f.g.pose().scale(scale, scale, 1f);
+            f.g.drawString(font, c, 0, 0, color, false);
+            f.g.pose().popPose();
+        }
         return y + 14;
     }
 

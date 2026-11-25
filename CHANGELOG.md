@@ -1,5 +1,33 @@
 # Changelog
 
+## Unreleased (plan 20c: clans)
+
+### Added
+- **Clans have ranks.** A new member is a **Night Walker**; the head promotes a member to **Day Walker** (`group promote|demote <player>`), or the clock does after 14 real days (`daywalker_days`; 0 means only the head). A demoted member is promoted again only by the head.
+- **Shared feeding.** A feed on a living creature gives each clanmate of the feeder within 16 blocks a little blood (10%, at least 1 and at most 2, 4 a minute for each mate). Bottles, blocks and bites between clanmates never share, and a share earns nothing else.
+- **The sire-line bonus:** +3% attack for each online clanmate of your sireline within 32 blocks, up to 15%.
+- **The Clan Charter** (`clan_charter`, not craftable, in no tab). The head forges it (`group charter forge`; a book and quill and a gold block, a clan of three) and reforges it when it is lost (`group charter reforge`, a day after). Only the clan can pick it up; it cannot be hurt and never despawns.
+- **The Game of Kings.** A Day Walker with 7 days in the clan challenges for the Charter (`group challenge`); the head cannot refuse (`group challenge accept`); at the next in-game midnight the online Day Walker or head holding the Charter leads. One contest per clan per 7 days.
+- **Exile** (`group exile <player>`): the head removes a member and bars them from that clan for 7 days. A kick has no bar.
+- The Group page draws the rank, the Charter card, the contest and two counts for a clan; Home shows a contest as a request card; a clanmate's Profile offers Promote, Demote and Exile.
+- 18 new settings in `supernaturalbloodlines-groups.toml` (`groups`), each with an Admin row; `AdminCommands` has seven more rows (`C11` to `C17`, 79 in all).
+
+### Changed
+- **The coven-forged Sun Ring is for a Day Walker or the head of a clan** by default (`sun_ring_day_walker_only` is now true for **new** config files; a server that ran the covens build keeps its stored value: set it in the Admin page).
+- `HubRequests.Kind` has a new last kind, `CHARTER_CONTEST`.
+
+- **Round 3 panel fixes:** a Charter row's "the head stored it" flag no longer outlives the head who set it (any lead change clears it); the head is told the rule of keeping the Charter on them and staying online until midnight (own `challenged_head` and `contest_started_head` lines); no contest is settled in the first 1200 ticks of a server (downtime cannot hand a win to whoever is there at the start).
+- **Round 2 panel fixes:** a head who stores the Charter before a challenge (or in its accept window) forfeits it like one who stores it while it runs; a head who holds it while offline at midnight forfeits it; a party kick cannot remove a contest's challenger or Charter holder; a pending challenge whose challenger left is called off with no cooldown; a dropped Charter in a loaded chunk is seen again, so a long restart does not lose it; the Grimoire's faint rings meet 3:1 as drawn; waits say a unit (`45 s`, `12 min`, `5 h`) and the exile its days and its end; the hub says how many days a "not long enough" or a cooldown refusal lasts, and an invite refused over an exile says how many days remain. The Charter row gains an optional `by_head` flag (older saves read as false).
+- **Round 1 panel fixes:** a contest's challenger and Charter holder cannot be removed while it is on; one Day Walker rule everywhere (a member who does not fit a clan is never promoted and never leads); the midnight says why nobody changed and that the cooldown began; a head who stored the Charter forfeits; a head who is away at the accept time is waited for; the exiled hear the days and the end; the Charter scan no longer rewrites and pushes every 2 seconds; a dropped Charter whose entity is gone goes lost; the hub shows why a button is grey, waits while it loads, and the sire-line bonus as a percent only; `charter_forge_cost` can no longer be empty.
+- **Upgrade note:** on the first boot with clans on, every Night Walker who has been in a clan for `daywalker_days` (14) real days or more becomes a Day Walker at the next sweep. Set `daywalker_days` to 0 before the first boot to keep promotion in the head's hands.
+- **With clans off,** the coven Sun Ring rule (`sun_ring_day_walker_only`) is off too, so a server that switches clans off can still forge the ring.
+
+### Network
+**The hub channel changed: update client and server together.** `LadderNet.PROTOCOL` is "18" (a new clan view payload and a new request kind).
+
+### Rolling back
+Set `clans_enabled` or `charter_enabled` to false for the soft way: Charters are inert, no shares, no bonus, no contest; ranks and rows are kept. The rows `charters` and `contests` stay in `supernaturalbloodlines_groups.dat`; a 20b jar keeps them as unknown keys; Day Walker rows are 20a's. **Pick every dropped Charter up first** (a dropped one is an item entity a 20b jar removes; the row then says dropped for good until `charter_lost_days` passes and the clan reforges). **The `clan_charter` item does not exist in a 20b jar: held Charters are removed when the world loads there, so before installing 20b put every Charter in a safe place you do not mind losing, or expect to reforge after the roll-forward** (the row still says held; the scan finds nothing, the row goes stored, then lost, and the head reforges). Let every running contest resolve (they end at the next midnight) before swapping jars: a 20b build does not know the row and would leave the head waiting on nothing. With the server stopped, back up the world and `supernaturalbloodlines-groups.toml` before changing builds; a 20b build can rewrite the file without the new keys.
+
 ## Unreleased (plan 20b: covens)
 
 ### Added

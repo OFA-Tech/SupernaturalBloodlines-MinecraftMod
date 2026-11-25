@@ -206,6 +206,7 @@ public final class CovenRingGameTests {
         Circle c = circleAt(helper, new BlockPos(8, 1, 8), 3);
         TalkingDuelist vampire = onCentre(helper);
         try {
+            GroupsConfig.override("sun_ring_day_walker_only", false);
             helper.assertTrue(type(helper, "coven_sun_ring").getPower() == 3000 && type(helper, "ward_of_daylight").getPower() == 6000, "the file powers are 3000 and 6000");
             int half = CovenCostGameTests.begin(helper, c, c.anchor().getUUID(), 3000, true);
             RiteCost.discard();
@@ -298,12 +299,187 @@ public final class CovenRingGameTests {
             helper.assertTrue(rings(helper, "supernaturalbloodlines:sun_ring").isEmpty() && vampire.receivedOnActionBar(NOT_FOR_YOU), "a vampire with no rank got the ring");
             helper.assertTrue(c.anchor().receivedOnActionBar(NO_EFFECT), "the performer was not told the generic line");
             clearDropped(helper);
+            clanOf(helper, vampire, false);
             GroupIndex.get(helper.getLevel()).setRank(vampire.getUUID(), GroupRank.DAY_WALKER);
             net.ofatech.supernaturalbloodlines.parts.species.group.circle.CircleStage.set(null);
             cast(helper, c, "coven_sun_ring", sunItems());
             helper.assertTrue(rings(helper, "supernaturalbloodlines:sun_ring").size() == 1, "a Day Walker did not get the ring");
         } finally {
             done(helper, c, vampire);
+        }
+        helper.succeed();
+    }
+
+    /** {@code p} in a clan of three whose other members are made up: as its head, or as a member of somebody else's clan. */
+    private static UUID clanOf(GameTestHelper helper, ServerPlayer p, boolean asHead) {
+        PackIndex packs = PackIndex.get(helper.getLevel());
+        UUID head = asHead ? p.getUUID() : UUID.randomUUID();
+        packs.join(head, UUID.randomUUID());
+        packs.join(head, asHead ? UUID.randomUUID() : p.getUUID());
+        GroupIndex.get(helper.getLevel()).ensure(head, net.ofatech.supernaturalbloodlines.core.group.GroupType.CLAN, PackIndex.now());
+        MADE.add(head);
+        return head;
+    }
+
+    private static final java.util.List<UUID> MADE = new java.util.ArrayList<>();
+
+    private static void unmake(GameTestHelper helper) {
+        PackIndex packs = PackIndex.get(helper.getLevel());
+        for (UUID head : MADE) {
+            for (UUID m : List.copyOf(packs.betasOf(head))) {
+                packs.leave(m);
+                GroupIndex.get(helper.getLevel()).clearRanks(m);
+            }
+            packs.leave(head);
+            GroupIndex.get(helper.getLevel()).drop(head);
+        }
+        MADE.clear();
+    }
+
+    private static void refused(GameTestHelper helper, Circle c, TalkingDuelist receiver, String why) {
+        cast(helper, c, "coven_sun_ring", sunItems());
+        helper.assertTrue(rings(helper, "supernaturalbloodlines:sun_ring").isEmpty() && receiver.receivedOnActionBar(NOT_FOR_YOU) && c.anchor().receivedOnActionBar(NO_EFFECT), why + ": the ring was made or the line differs");
+        clearDropped(helper);
+        net.ofatech.supernaturalbloodlines.parts.species.group.circle.CircleStage.set(null);
+    }
+
+    private static void asVampire(ServerPlayer p) {
+        de.teamlapen.vampirism.api.VampirismAPI.factionPlayerHandler(p).setFactionAndLevel(de.teamlapen.vampirism.api.VReference.VAMPIRE_FACTION, 1);
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aDayWalkerReceivesTheHalfPowerRing(GameTestHelper helper) {
+        if (skip(helper, false)) {
+            return;
+        }
+        Circle c = circleAt(helper, new BlockPos(8, 1, 8), 3);
+        TalkingDuelist v = onCentre(helper);
+        try {
+            asVampire(v);
+            clanOf(helper, v, false);
+            GroupIndex.get(helper.getLevel()).setRank(v.getUUID(), GroupRank.DAY_WALKER);
+            GroupsConfig.override("sun_ring_day_walker_only", true);
+            helper.assertTrue(type(helper, "coven_sun_ring").getPower() == 3000, "the rite is not the half-power one");
+            cast(helper, c, "coven_sun_ring", sunItems());
+            List<ItemEntity> made = rings(helper, "supernaturalbloodlines:sun_ring");
+            helper.assertTrue(made.size() == 1 && v.getUUID().equals(boundTo(made.get(0))), "a Day Walker did not get a ring bound to them");
+        } finally {
+            unmake(helper);
+            done(helper, c, v);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aClanLeaderReceivesIt(GameTestHelper helper) {
+        if (skip(helper, false)) {
+            return;
+        }
+        Circle c = circleAt(helper, new BlockPos(8, 1, 8), 3);
+        TalkingDuelist v = onCentre(helper);
+        try {
+            asVampire(v);
+            GroupsConfig.override("sun_ring_day_walker_only", true);
+            clanOf(helper, v, true);
+            cast(helper, c, "coven_sun_ring", sunItems());
+            helper.assertTrue(rings(helper, "supernaturalbloodlines:sun_ring").size() == 1, "the head of a clan did not get the ring");
+        } finally {
+            unmake(helper);
+            done(helper, c, v);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void theRefusalTextIsTheSameForEveryReason(GameTestHelper helper) {
+        if (skip(helper, false)) {
+            return;
+        }
+        Circle c = circleAt(helper, new BlockPos(8, 1, 8), 3);
+        TalkingDuelist v = onCentre(helper);
+        try {
+            GroupsConfig.override("sun_ring_day_walker_only", true);
+            refused(helper, c, v, "a human");
+            asVampire(v);
+            refused(helper, c, v, "a vampire with no clan");
+            clanOf(helper, v, false);
+            refused(helper, c, v, "a Night Walker");
+            unmake(helper);
+            PackIndex packs = PackIndex.get(helper.getLevel());
+            packs.join(v.getUUID(), UUID.randomUUID());
+            packs.join(v.getUUID(), UUID.randomUUID());
+            GroupIndex.get(helper.getLevel()).ensure(v.getUUID(), net.ofatech.supernaturalbloodlines.core.group.GroupType.PACK, PackIndex.now());
+            MADE.add(v.getUUID());
+            refused(helper, c, v, "a vampire who leads a pack");
+        } finally {
+            unmake(helper);
+            done(helper, c, v);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aDayWalkerOfADormantClanIsRefused(GameTestHelper helper) {
+        if (skip(helper, false)) {
+            return;
+        }
+        Circle c = circleAt(helper, new BlockPos(8, 1, 8), 3);
+        TalkingDuelist v = onCentre(helper);
+        try {
+            asVampire(v);
+            GroupsConfig.override("sun_ring_day_walker_only", true);
+            UUID head = clanOf(helper, v, false);
+            GroupIndex.get(helper.getLevel()).setRank(v.getUUID(), GroupRank.DAY_WALKER);
+            GroupIndex groups = GroupIndex.get(helper.getLevel());
+            groups.setType(groups.existingGroupOf(head).orElseThrow(), net.ofatech.supernaturalbloodlines.core.group.GroupType.COVEN, PackIndex.now());
+            refused(helper, c, v, "a Day Walker of a group that is a coven now");
+        } finally {
+            unmake(helper);
+            done(helper, c, v);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aRingForgedForADayWalkerStillWorksAfterADemotionOrAnExile(GameTestHelper helper) {
+        if (skip(helper, false)) {
+            return;
+        }
+        Circle c = circleAt(helper, new BlockPos(8, 1, 8), 3);
+        TalkingDuelist v = onCentre(helper);
+        try {
+            asVampire(v);
+            GroupsConfig.override("sun_ring_day_walker_only", true);
+            clanOf(helper, v, false);
+            GroupIndex.get(helper.getLevel()).setRank(v.getUUID(), GroupRank.DAY_WALKER);
+            cast(helper, c, "coven_sun_ring", sunItems());
+            List<ItemEntity> made = rings(helper, "supernaturalbloodlines:sun_ring");
+            helper.assertTrue(made.size() == 1, "setup: no ring");
+            ItemStack ring = made.get(0).getItem();
+            GroupIndex.get(helper.getLevel()).clearRanks(v.getUUID());
+            PackIndex.get(helper.getLevel()).leave(v.getUUID());
+            helper.assertTrue(v.getUUID().equals(ring.get(ArtifactItems.BOUND_TO.get())) && ArtifactItems.isBoundTo(ring, v.getUUID()), "the ring no longer answers to its owner after the rank went");
+        } finally {
+            unmake(helper);
+            done(helper, c, v);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void theSwitchOffAllowsAnyVampire(GameTestHelper helper) {
+        if (skip(helper, false)) {
+            return;
+        }
+        Circle c = circleAt(helper, new BlockPos(8, 1, 8), 3);
+        TalkingDuelist v = onCentre(helper);
+        try {
+            asVampire(v);
+            GroupsConfig.override("sun_ring_day_walker_only", false);
+            cast(helper, c, "coven_sun_ring", sunItems());
+            helper.assertTrue(rings(helper, "supernaturalbloodlines:sun_ring").size() == 1, "with the switch off a loner vampire got no ring");
+        } finally {
+            done(helper, c, v);
         }
         helper.succeed();
     }

@@ -123,6 +123,9 @@ public final class SpeciesPart {
         AdminSpecs.register(SpeciesConfig.FILE, SpeciesConfig.SPEC);
         container.registerConfig(ModConfig.Type.COMMON, net.ofatech.supernaturalbloodlines.parts.species.group.GroupsConfig.SPEC, net.ofatech.supernaturalbloodlines.parts.species.group.GroupsConfig.FILE);
         AdminSpecs.register(net.ofatech.supernaturalbloodlines.parts.species.group.GroupsConfig.FILE, net.ofatech.supernaturalbloodlines.parts.species.group.GroupsConfig.SPEC);
+        AdminSpecs.lineCheck(net.ofatech.supernaturalbloodlines.parts.species.group.GroupsConfig.FILE + ":charter_forge_cost",
+                line -> net.ofatech.supernaturalbloodlines.core.group.clan.CharterCost.parseLine(line)
+                        .filter(e -> net.minecraft.core.registries.BuiltInRegistries.ITEM.containsKey(net.minecraft.resources.ResourceLocation.parse(e.item()))).isPresent());
         net.ofatech.supernaturalbloodlines.parts.species.profile.SpeciesProfiles.register();
         AdminSpecs.choices(SpeciesConfig.FILE + ":species.original_visibility", List.of(SpeciesConfig.LINE_DISCOVERED, SpeciesConfig.LINE_ALWAYS));
         AdminSpecs.choices(SpeciesConfig.FILE + ":species.gene_visibility", List.of(SpeciesConfig.GENES_DISCOVERED, SpeciesConfig.GENES_ALWAYS));
@@ -347,6 +350,13 @@ public final class SpeciesPart {
             e.register(net.ofatech.supernaturalbloodlines.parts.species.gametest.CovenRiteGameTests.class);
             e.register(net.ofatech.supernaturalbloodlines.parts.species.gametest.CovenRingGameTests.class);
             e.register(net.ofatech.supernaturalbloodlines.parts.species.gametest.CovenViewGameTests.class);
+            e.register(net.ofatech.supernaturalbloodlines.parts.species.gametest.ClanHookGameTests.class);
+            e.register(net.ofatech.supernaturalbloodlines.parts.species.gametest.ClanRankGameTests.class);
+            e.register(net.ofatech.supernaturalbloodlines.parts.species.gametest.CharterGameTests.class);
+            e.register(net.ofatech.supernaturalbloodlines.parts.species.gametest.ContestGameTests.class);
+            e.register(net.ofatech.supernaturalbloodlines.parts.species.gametest.FeedShareGameTests.class);
+            e.register(net.ofatech.supernaturalbloodlines.parts.species.gametest.SirelineBonusGameTests.class);
+            e.register(net.ofatech.supernaturalbloodlines.parts.species.gametest.ClanViewGameTests.class);
             if (ModList.get().isLoaded("werewolves")) {
                 e.register(net.ofatech.supernaturalbloodlines.parts.species.gametest.GroupWolfGameTests.class);
                 e.register(net.ofatech.supernaturalbloodlines.parts.species.gametest.MoonWerewolfGameTests.class);

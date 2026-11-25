@@ -45,7 +45,7 @@ class UiReferencesTest {
 
     /** The places a page really runs a row: a command call, or the row id handed to an action, answer or act record. */
     private static boolean runsRow(String source, String id) {
-        return Pattern.compile("(runCommand\\(\\s*|new (?:Action|Answer|Act)\\(\"[a-z_]+\",\\s*(?:Kind\\.\\w+,\\s*)?|[?:]\\s*)\"" + id + "\"").matcher(source).find();
+        return Pattern.compile("(runCommand\\(\\s*|new (?:Action|Answer|Act|Button)\\(\"[a-z_:]+\",\\s*(?:Kind\\.\\w+,\\s*)?|[?:]\\s*)\"" + id + "\"").matcher(source).find();
     }
 
     /** The only rows that are a view, and the page each one must name; a new view-only row has to be added here on purpose. */
@@ -68,6 +68,7 @@ class UiReferencesTest {
         assertTrue(runsRow("HubClient.runCommand(\"B3\", List.of())", "B3"));
         assertTrue(runsRow("new Action(\"kick\", Kind.COMMAND, \"P4\", true)", "P4"));
         assertTrue(runsRow("new Answer(\"accept\", \"P2\", true)", "P2"));
+        assertTrue(runsRow("buttons.add(new Button(\"clan:charter_forge\", \"C16\", \"charter_forge\"", "C16"), "a plan button runs its row");
         assertTrue(!runsRow("String label = \"B3\";", "B3"), "a bare string is not a call site");
         assertTrue(!runsRow("", "B3"));
     }

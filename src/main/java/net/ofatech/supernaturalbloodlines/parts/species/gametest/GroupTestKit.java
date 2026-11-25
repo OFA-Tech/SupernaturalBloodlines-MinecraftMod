@@ -77,7 +77,13 @@ public final class GroupTestKit {
         GroupIndex groups = GroupIndex.get(helper.getLevel());
         SireCall.overridePlayerLookup(null);
         PackIndex.overrideClock(null);
-        for (String k : List.of("groups_enabled", "clans_enabled", "covens_enabled", "open_founding", "max_members")) {
+        net.ofatech.supernaturalbloodlines.parts.species.group.clan.CharterScan.overridePlayers(null);
+        net.ofatech.supernaturalbloodlines.parts.species.group.clan.Contests.overrideDayTime(null);
+        net.ofatech.supernaturalbloodlines.parts.species.group.clan.Contests.overrideServerTicks(null);
+        net.ofatech.supernaturalbloodlines.parts.species.group.clan.SharedFeeding.reset();
+        net.ofatech.supernaturalbloodlines.parts.species.group.clan.ClanViews.overrideNames(null);
+        net.ofatech.supernaturalbloodlines.parts.species.group.clan.SirelineBonuses.overridePlayers(null);
+        for (String k : List.of("groups_enabled", "clans_enabled", "covens_enabled", "open_founding", "max_members", "daywalker_days", "exile_days", "charter_enabled", "charter_min_members", "challenger_min_days", "contest_cooldown_days", "feed_share_enabled", "sireline_bonus_percent", "sun_ring_day_walker_only", "contest_accept_minutes", "contest_min_minutes", "contest_max_hours", "feed_share_percent", "feed_share_max", "feed_share_radius", "feed_share_cap_per_minute", "sireline_bonus_max_percent", "charter_forge_cost", "charter_lost_days")) {
             GroupsConfig.override(k, null);
         }
         for (ServerPlayer p : players) {
