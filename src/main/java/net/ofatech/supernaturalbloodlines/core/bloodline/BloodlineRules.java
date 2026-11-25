@@ -62,6 +62,8 @@ public final class BloodlineRules {
             case TURNING_FAILED -> turningFailed(s, c);
             case TURNING_GAVE_UP -> turningGaveUp(s);
             case RITE_OF_AUGUSTINE, AUGUSTINE_SYRINGE -> madeAugustine(s, c);
+            case CODE_BROKEN -> s.species() == Species.HUNTER_OF_THE_FIVE
+                    ? Outcome.of(s.toBuilder().markKills(net.ofatech.supernaturalbloodlines.core.group.brotherhood.Marks.after(s.markKills(), c.codePenaltyPercent())).build()) : unchanged(s);
         };
     }
 

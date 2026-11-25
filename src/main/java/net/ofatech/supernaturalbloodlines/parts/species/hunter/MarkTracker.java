@@ -6,6 +6,9 @@ import net.ofatech.supernaturalbloodlines.shared.supernatural.LadderQuery;
 import de.teamlapen.vampirism.api.VampirismAPI;
 import java.lang.ref.WeakReference;
 import java.util.HashMap;
+import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.function.Consumer;
 import java.util.Map;
 import java.util.UUID;
 import net.minecraft.core.Holder;
@@ -136,12 +139,33 @@ public final class MarkTracker {
         if (killer == null || killer == victim || e.getSource().is(LineDeath.DAMAGE_TYPE)) {
             return;
         }
+        // read before the mark is taken away: the species is gone after killedMarkedHunter
+        boolean victimWasMarked = victim instanceof ServerPlayer marked && BloodlineAccess.get(marked).species() == Species.HUNTER_OF_THE_FIVE;
         if (killer instanceof ServerPlayer k && isPrey(victim) && !samePack(k, victim)) {
             killedPrey(k);
         }
-        if (victim instanceof ServerPlayer v && BloodlineAccess.get(v).species() == Species.HUNTER_OF_THE_FIVE && isPrey(killer) && !samePack(v, killer)) {
+        if (victimWasMarked && victim instanceof ServerPlayer v && isPrey(killer) && !samePack(v, killer)) {
             killedMarkedHunter(v, killer);
         }
+        Resolved resolved = new Resolved(victim, killer, victimWasMarked);
+        for (Consumer<Resolved> hook : RESOLVED) {
+            try {
+                hook.accept(resolved);
+            } catch (RuntimeException failed) {
+                SupernaturalBloodlines.LOGGER.error("A hook of the kill feed failed", failed);
+            }
+        }
+    }
+
+    /** One death that counted for somebody: who died, who gets the credit (the same attribution the mark uses) and whether the victim was a Hunter of the Five. */
+    public record Resolved(LivingEntity victim, Entity killer, boolean victimWasMarked) {
+    }
+
+    private static final List<Consumer<Resolved>> RESOLVED = new CopyOnWriteArrayList<>();
+
+    /** The kill feed: each hook sees every death the mark sees (a real death, never a cancelled one), after the mark and the curse have been handled, in the order added. */
+    public static void onDeathResolved(Consumer<Resolved> hook) {
+        RESOLVED.add(hook);
     }
 
     /** Two players of one pack (plan 14), or who left it a moment ago: a kill between them gives no mark and no curse, in either direction. */

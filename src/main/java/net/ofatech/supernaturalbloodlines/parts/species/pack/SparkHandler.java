@@ -107,14 +107,11 @@ public final class SparkHandler {
     }
 
     /** A player who attacked the killer within this many ticks of dying was fighting them, not innocent. */
-    static final int FIGHT_WINDOW = 200;
+    static final int FIGHT_WINDOW = Innocence.FIGHT_WINDOW;
 
-    /** A villager, or a player who was not fighting the killer (did not hit them in the last 10 seconds). */
+    /** A villager, or a player who was not fighting the killer (did not hit them in the last 10 seconds): {@link Innocence#of}. */
     public static boolean isInnocent(ServerPlayer killer, LivingEntity victim) {
-        if (victim instanceof Villager) {
-            return true;
-        }
-        return victim instanceof Player p && !(p.getLastHurtMob() == killer && p.tickCount - p.getLastHurtMobTimestamp() <= FIGHT_WINDOW);
+        return Innocence.of(killer, victim);
     }
 
     private static PackContext context(@Nullable UUID otherAlpha, long now) {
