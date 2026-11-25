@@ -410,6 +410,11 @@ public final class PackCommand {
         if (!index.betasOf(leader.getUUID()).contains(target)) {
             return GroupText.error(type, "not_member", targetName);
         }
+        UUID ownGroup = GroupIndex.get(leader.serverLevel()).existingGroupOf(leader.getUUID()).orElse(null);
+        Component locked = ownGroup == null ? null : net.ofatech.supernaturalbloodlines.parts.species.group.clan.Contests.lockRefusal(leader.serverLevel(), ownGroup, target);
+        if (locked != null) {
+            return locked;
+        }
         PackMembers.remove(leader.server, target, GroupText.key(type, "kicked"), name(leader));
         leader.sendSystemMessage(GroupText.of(type, "kicked_ok", targetName));
         PartyLink.sync(leader.server, leader.getUUID(), true);

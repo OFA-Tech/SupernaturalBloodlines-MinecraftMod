@@ -140,6 +140,10 @@ public final class ClanDiscipline {
         if (target == null) {
             return ClanText.error("not_member");
         }
+        Component locked = Contests.lockRefusal(p.serverLevel(), c.clan().group(), target);
+        if (locked != null) {
+            return locked;
+        }
         Optional<ClanRanks.Refusal> no = ClanRanks.mayDemote(GroupRank.NONE, true, c.groups().rankOf(target, GroupType.CLAN), target.equals(c.clan().leader()), true);
         if (no.isPresent()) {
             return refusal(no.get());
@@ -170,6 +174,10 @@ public final class ClanDiscipline {
         }
         if (target.equals(c.clan().leader())) {
             return ClanText.error("leader_target");
+        }
+        Component locked = Contests.lockRefusal(p.serverLevel(), c.clan().group(), target);
+        if (locked != null) {
+            return locked;
         }
         String targetName = name(c.server(), target);
         c.groups().ban(c.clan().group().toString(), target, ExileRules.until(PackIndex.now(), GroupsConfig.exileDays()));

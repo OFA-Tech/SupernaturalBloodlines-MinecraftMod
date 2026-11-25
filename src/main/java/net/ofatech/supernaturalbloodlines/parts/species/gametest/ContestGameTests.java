@@ -412,6 +412,86 @@ public final class ContestGameTests {
         helper.succeed();
     }
 
+    // ---- a contest cannot be cancelled by removing its two people ----
+
+    private static String id(TalkingDuelist p) {
+        return p.getUUID().toString();
+    }
+
+    private static void locked(GameTestHelper helper, Clan c, TalkingDuelist target, String phase) {
+        said(helper, net.ofatech.supernaturalbloodlines.parts.species.group.clan.ClanDiscipline.demote(c.leader(), id(target)), ERR + "contest_running", phase + ": a demotion of a contest's person");
+        said(helper, net.ofatech.supernaturalbloodlines.parts.species.group.clan.ClanDiscipline.exile(c.leader(), id(target)), ERR + "contest_running", phase + ": an exile of a contest's person");
+        said(helper, PackCommand.kick(c.leader(), target.getUUID(), id(target)), ERR + "contest_running", phase + ": a kick of a contest's person");
+        helper.assertTrue(PackIndex.get(helper.getLevel()).leaderOf(target.getUUID()).equals(c.leader().getUUID()), phase + ": the person left the clan");
+        helper.assertTrue(groups(helper).banUntil(group(helper, c.leader()).toString(), target.getUUID()) == 0, phase + ": an exile row was written");
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS, timeoutTicks = 100)
+    public static void theChallengerCannotBeRemovedWhileItIsPendingOrRunning(GameTestHelper helper) {
+        Clan c = ready(helper);
+        try {
+            helper.assertTrue(Contests.challenge(c.a()) == null, "setup: the challenge");
+            locked(helper, c, c.a(), "pending");
+            helper.assertTrue(Contests.accept(c.leader()) == null, "setup: the accept");
+            locked(helper, c, c.a(), "running");
+            helper.assertTrue(groups(helper).rankOf(c.a().getUUID(), GroupType.CLAN) == GroupRank.DAY_WALKER, "the rank went");
+            helper.assertTrue(contest(helper, c.leader()).isPresent(), "the contest row went");
+        } finally {
+            done(helper, c.all());
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS, timeoutTicks = 100)
+    public static void theCharterHolderCannotBeRemovedWhileItIsPendingOrRunning(GameTestHelper helper) {
+        Clan c = ready(helper);
+        try {
+            groups(helper).setRank(c.b().getUUID(), GroupRank.DAY_WALKER);
+            pass(c.leader(), c.b());
+            CharterScan.scanNow(server(helper));
+            helper.assertTrue(groups(helper).charterOf(group(helper, c.leader())).orElseThrow().holder().equals(Optional.of(c.b().getUUID())), "setup: b holds it");
+            helper.assertTrue(Contests.challenge(c.a()) == null, "setup: the challenge");
+            locked(helper, c, c.b(), "pending");
+            helper.assertTrue(Contests.accept(c.leader()) == null, "setup: the accept");
+            locked(helper, c, c.b(), "running");
+        } finally {
+            done(helper, c.all());
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS, timeoutTicks = 100)
+    public static void anUninvolvedMemberCanStillBeDemotedExiledOrKickedDuringAContest(GameTestHelper helper) {
+        Clan c = ready(helper);
+        TalkingDuelist d = vampire(helper, 6.5);
+        online(c.leader(), c.a(), c.b(), d);
+        try {
+            helper.assertTrue(join(c.leader(), d), "setup: the fourth joined");
+            groups(helper).setRank(c.b().getUUID(), GroupRank.DAY_WALKER);
+            begin(helper, c, c.a());
+            helper.assertTrue(net.ofatech.supernaturalbloodlines.parts.species.group.clan.ClanDiscipline.demote(c.leader(), id(c.b())) == null, "an uninvolved Day Walker could not be demoted");
+            helper.assertTrue(PackCommand.kick(c.leader(), c.b().getUUID(), id(c.b())) == null, "an uninvolved member could not be kicked");
+            helper.assertTrue(net.ofatech.supernaturalbloodlines.parts.species.group.clan.ClanDiscipline.exile(c.leader(), id(d)) == null, "an uninvolved member could not be exiled");
+        } finally {
+            done(helper, c.leader(), c.a(), c.b(), d);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS, timeoutTicks = 100)
+    public static void theLockEndsWithTheContest(GameTestHelper helper) {
+        Clan c = ready(helper);
+        try {
+            begin(helper, c, c.a());
+            midnight(helper);
+            helper.assertTrue(contest(helper, c.leader()).isEmpty(), "setup: still running");
+            helper.assertTrue(net.ofatech.supernaturalbloodlines.parts.species.group.clan.ClanDiscipline.demote(c.leader(), id(c.a())) == null, "still locked after the contest");
+        } finally {
+            done(helper, c.all());
+        }
+        helper.succeed();
+    }
+
     // ---- resolve ----
 
     private static void midnight(GameTestHelper helper) {

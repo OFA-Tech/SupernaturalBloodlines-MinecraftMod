@@ -73,6 +73,21 @@ public final class Contests {
         });
     }
 
+    /**
+     * The refusal when {@code target} is the challenger or the holder of the Charter of a contest of this clan that is pending or running, else null:
+     * the head cannot cancel a Game of Kings by sending its people away.
+     */
+    @Nullable
+    public static Component lockRefusal(ServerLevel level, UUID group, UUID target) {
+        GroupIndex groups = GroupIndex.get(level);
+        Optional<ContestRow> row = groups.contestOf(group);
+        if (row.isEmpty()) {
+            return null;
+        }
+        boolean holder = groups.charterOf(group).flatMap(CharterRow::holder).filter(target::equals).isPresent();
+        return row.get().challenger().equals(target) || holder ? ClanText.error("contest_running") : null;
+    }
+
     private static Component noDecline(ServerPlayer p) {
         Component gate = ClanDiscipline.gate(p);
         return gate != null ? gate : ClanText.error("no_decline");
