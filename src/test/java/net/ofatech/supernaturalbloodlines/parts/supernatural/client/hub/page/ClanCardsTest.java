@@ -195,6 +195,22 @@ class ClanCardsTest {
         }
     }
 
+    /** The flat page, and the book page that serves the Grimoire, Blood Moon and Tensura themes, each draw the clan's cards from the same plan. */
+    @Test
+    void everyThemeDrawsTheClanCards() throws Exception {
+        java.nio.file.Path at = java.nio.file.Path.of("").toAbsolutePath();
+        while (!java.nio.file.Files.isDirectory(at.resolve("src/main/java"))) {
+            at = at.getParent();
+        }
+        java.nio.file.Path pages = at.resolve("src/main/java/net/ofatech/supernaturalbloodlines/parts/supernatural/client/hub/page");
+        for (String page : List.of("PackPage.java", "BookPackPage.java")) {
+            String src = java.nio.file.Files.readString(pages.resolve(page));
+            assertTrue(src.contains("ClanCards.render(f, r, y, gv"), page + " does not draw the clan cards");
+        }
+        String book = java.nio.file.Files.readString(pages.resolve("BookPackPage.java"));
+        assertTrue(book.contains("Style.BOOK") && book.contains("Style.MOON") && book.contains("Style.TENSURA"), "the book page no longer serves the three themes");
+    }
+
     private static List<String> ids(ClanPlan.Plan p) {
         return p.buttons().stream().map(Button::id).toList();
     }
