@@ -58,8 +58,11 @@ public final class ClanCards {
         for (ClanPlan.Line l : plan.lines()) {
             Component text = words(l.key(), l.args());
             if (l.tone() == ClanPlan.Tone.TITLE) {
+                boolean whole = f.whole(y + 2, 14) && y + 2 >= f.clipTop();
                 y = PageKit.title(f, text, r.x(), y + 2, r.w(), t.accent());
-                t.drawRule(f.g, r.x(), y + 2, r.w());
+                if (whole) {
+                    t.drawRule(f.g, r.x(), y + 2, r.w());
+                }
                 y += 6;
             } else {
                 int color = l.tone() == ClanPlan.Tone.INK ? t.ink() : l.tone() == ClanPlan.Tone.WARN ? PageWidgets.warn(t) : t.muted();

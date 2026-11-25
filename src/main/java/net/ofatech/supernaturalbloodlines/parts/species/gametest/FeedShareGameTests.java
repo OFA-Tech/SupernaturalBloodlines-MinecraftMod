@@ -191,12 +191,14 @@ public final class FeedShareGameTests {
         TalkingDuelist loner = vampire(helper, 9.5);
         online(c.leader(), c.a(), c.b(), loner);
         try {
-            drain(loner);
-            bite(loner, from(villager(helper)), 12);
+            drain(loner, c.a());
+            VampirismAPI.vampirePlayer(loner).drinkBlood(10, 0f, IDrinkBloodContext.none());
+            VampirismAPI.vampirePlayer(c.a()).drinkBlood(10, 0f, IDrinkBloodContext.none());
+            helper.assertTrue(blood(loner) == 10 && blood(c.a()) == 10, "setup: " + blood(loner) + " " + blood(c.a()));
+            bite(loner, from(villager(helper)), 5);
             int alone = blood(loner);
-            drain(c.a());
-            bite(c.a(), from(villager(helper)), 12);
-            helper.assertTrue(blood(c.a()) == alone, "having mates changed the feeder: " + blood(c.a()) + " against " + alone);
+            bite(c.a(), from(villager(helper)), 5);
+            helper.assertTrue(blood(c.a()) == alone && alone == 15, "having mates changed the feeder: " + blood(c.a()) + " against " + alone);
         } finally {
             clean(helper, c.leader(), c.a(), c.b(), loner);
         }
@@ -379,6 +381,22 @@ public final class FeedShareGameTests {
     }
 
     @GameTest(template = "empty", templateNamespace = NS, timeoutTicks = 100)
+    public static void aHumanClanmateAsVictimNeverShares(GameTestHelper helper) {
+        Clan c = clan(helper);
+        TalkingDuelist h = human(helper, 7.5);
+        online(c.leader(), c.a(), c.b(), h);
+        try {
+            helper.assertTrue(join(c.leader(), h), "setup: the human joined");
+            bite(c.leader(), from(h), 20);
+            helper.assertTrue(blood(c.leader()) > 0, "setup: the biter got nothing");
+            helper.assertTrue(blood(c.a()) == 0 && blood(c.b()) == 0, "a bite on a clanmate shared: " + blood(c.a()) + " " + blood(c.b()));
+        } finally {
+            clean(helper, c.leader(), c.a(), c.b(), h);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS, timeoutTicks = 100)
     public static void twoClanmatesBitingEachOtherFarmNothing(GameTestHelper helper) {
         Clan c = clan(helper);
         try {
@@ -415,7 +433,7 @@ public final class FeedShareGameTests {
         try {
             var nether = helper.getLevel().getServer().getLevel(net.minecraft.world.level.Level.NETHER);
             c.b().setServerLevel(nether);
-            c.b().setPos(c.a().getX(), 70, c.a().getZ());
+            c.b().setPos(c.a().getX(), c.a().getY(), c.a().getZ());
             bite(c.a(), from(villager(helper)), 20);
             helper.assertTrue(blood(c.b()) == 0 && blood(c.leader()) == 2, "the mate in the Nether got " + blood(c.b()));
         } finally {
@@ -429,10 +447,16 @@ public final class FeedShareGameTests {
     public static void aFullMateGetsNothing(GameTestHelper helper) {
         Clan c = clan(helper);
         try {
+            GroupsConfig.override("feed_share_cap_per_minute", 2);
             VampirismAPI.vampirePlayer(c.b()).drinkBlood(60, 0f, IDrinkBloodContext.none());
             int full = blood(c.b());
             bite(c.a(), from(villager(helper)), 20);
-            helper.assertTrue(blood(c.b()) == full && blood(c.leader()) == 2, "a full mate was given blood or the ledger was spent");
+            helper.assertTrue(blood(c.b()) == full && blood(c.leader()) == 2, "a full mate was given blood");
+            drain(c.b());
+            advance();
+            CLOCK[0] -= 10_000;
+            bite(c.a(), from(villager(helper)), 20);
+            helper.assertTrue(blood(c.b()) == 2, "a full mate used up the cap of the minute: " + blood(c.b()));
         } finally {
             clean(helper, c.all());
         }
@@ -448,8 +472,9 @@ public final class FeedShareGameTests {
         online(l, a, h);
         try {
             helper.assertTrue(join(l, a) && join(l, h), "setup");
-            drain(l, a);
+            drain(l, a, h);
             int humanBefore = blood(h);
+            helper.assertTrue(humanBefore < VampirismAPI.vampirePlayer(h).getBloodStats().getMaxBlood(), "setup: the human has room for blood");
             bite(a, from(villager(helper)), 20);
             helper.assertTrue(blood(l) == 2, "the vampire mate got " + blood(l));
             helper.assertTrue(!net.ofatech.supernaturalbloodlines.parts.vampirismenchanted.VampirismSupernatural.isVampire(h) && blood(h) == humanBefore, "the human clanmate was given blood");

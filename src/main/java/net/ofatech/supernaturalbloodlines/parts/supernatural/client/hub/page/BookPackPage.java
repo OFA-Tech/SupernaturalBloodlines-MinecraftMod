@@ -223,6 +223,14 @@ public final class BookPackPage implements HubPageView {
         return !mayAccept(gv, grp);
     }
 
+    /** The height of the foot of the Grimoire page: the seal's, or for a group page that has no seal the buttons' and, for a member who can leave, the Leave link's. */
+    private int footer(HubScreen.Frame f, List<HubSocial.Member> pack) {
+        if (!grp || !leaderFirst()) {
+            return BookKit.SEAL;
+        }
+        return GroupLabels.mayLeave(pack, f.view.player().getName().getString()) ? BookKit.SEAL : PageWidgets.H + 4;
+    }
+
     private Component t(String packKey, String name, Object... args) {
         return GroupLabels.t(gv, packKey, name, args);
     }
@@ -251,7 +259,8 @@ public final class BookPackPage implements HubPageView {
         HubTheme t = f.theme();
         Rect r = f.region(ledgerRegion);
         if (style == Style.BOOK) {
-            f.reserve(ledgerRegion, BookKit.sealReserve()); // the ACCEPT seal and the line that says what it accepts are pinned at the foot of the page
+            // the ACCEPT seal and the line that says what it accepts are pinned at the foot of the page; a group page with no seal keeps only its buttons (and Leave)
+            f.reserve(ledgerRegion, footer(f, pack) == BookKit.SEAL ? BookKit.sealReserve() : footer(f, pack) + 4);
         }
         int y = BookKit.head(f, ledgerRegion, t(KEY + "title", "title"), t(BOOK + "subtitle", "subtitle"));
         if (!GroupLabels.neutral(gv)) {
@@ -359,7 +368,7 @@ public final class BookPackPage implements HubPageView {
         f.end(y);
         if (style == Style.BOOK) {
             // the foot of the page: the seal, the two invite buttons beside it and, under them, the way out
-            int sy = r.bottom() - BookKit.SEAL;
+            int sy = r.bottom() - footer(f, pack);
             if (leaderFirst()) {
                 PackInvite.buttons(f, new Rect(r.x(), sy + 2, r.w(), PageWidgets.H), sy + 2, mayInvite);
             } else {

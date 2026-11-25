@@ -36,6 +36,11 @@ public final class ClanPlan {
         return new Line(KEY + key, List.of(args), tone);
     }
 
+    /** {@code key}, or {@code key.one} when the count (the last argument) is 1: "1 day", "30 days". */
+    private static Line counted(Tone tone, String key, int count, Object... args) {
+        return line(tone, count == 1 ? key + ".one" : key, args);
+    }
+
     private static String rankKey(byte viewerRank) {
         return switch (viewerRank) {
             case GroupView.LEADER -> "rank.head";
@@ -52,9 +57,9 @@ public final class ClanPlan {
     static List<Line> header(ClanView v, byte viewerRank) {
         List<Line> out = new ArrayList<>();
         out.add(line(Tone.TITLE, "title"));
-        out.add(line(Tone.INK, "you", new Key(KEY + rankKey(viewerRank)), v.daysInClan()));
+        out.add(v.daysInClan() == 1 ? line(Tone.INK, "you.one", new Key(KEY + rankKey(viewerRank))) : line(Tone.INK, "you", new Key(KEY + rankKey(viewerRank)), v.daysInClan()));
         if (viewerRank == GroupView.MEMBER) {
-            out.add(v.autoPromoteDaysLeft() >= 0 ? line(Tone.MUTED, "to_day_walker", v.autoPromoteDaysLeft()) : line(Tone.MUTED, "head_decides"));
+            out.add(v.autoPromoteDaysLeft() >= 0 ? counted(Tone.MUTED, "to_day_walker", v.autoPromoteDaysLeft(), v.autoPromoteDaysLeft()) : line(Tone.MUTED, "head_decides"));
         }
         return out;
     }
@@ -108,10 +113,10 @@ public final class ClanPlan {
                 String why = k.iMayChallenge() ? "" : "why." + ContestRules.Refusal.values()[Math.max(0, Math.min(ContestRules.Refusal.values().length - 1, k.challengeWhy() - 1))].id();
                 buttons.add(new Button("pack:challenge", "C11", "challenge", "challenge.what", k.iMayChallenge(), true, why, List.of()));
                 if (!k.iMayChallenge() && k.challengeWhy() == ContestRules.Refusal.COOLDOWN.ordinal() + 1) {
-                    lines.add(line(Tone.MUTED, "contest.cooldown", k.cooldownDaysLeft()));
+                    lines.add(counted(Tone.MUTED, "contest.cooldown", k.cooldownDaysLeft(), k.cooldownDaysLeft()));
                 }
             } else if (k.cooldownDaysLeft() > 0) {
-                lines.add(line(Tone.MUTED, "contest.cooldown", k.cooldownDaysLeft()));
+                lines.add(counted(Tone.MUTED, "contest.cooldown", k.cooldownDaysLeft(), k.cooldownDaysLeft()));
             }
         }
 

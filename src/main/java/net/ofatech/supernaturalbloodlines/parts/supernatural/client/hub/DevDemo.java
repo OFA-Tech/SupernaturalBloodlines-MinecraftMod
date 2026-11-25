@@ -140,6 +140,17 @@ final class DevDemo {
         if (type == net.ofatech.supernaturalbloodlines.core.group.GroupType.CLAN) {
             viewer = clan();
         }
+        if (viewer != net.ofatech.supernaturalbloodlines.core.group.GroupView.LEADER) {
+            // the viewer is a Day Walker or a Night Walker of Rowan's clan: Rowan is the head, the viewer's own row carries their own rank
+            boolean day = viewer == net.ofatech.supernaturalbloodlines.core.group.GroupView.DAY_WALKER;
+            net.ofatech.supernaturalbloodlines.parts.supernatural.client.GroupClient.demo(new net.ofatech.supernaturalbloodlines.core.group.GroupView(type, true, viewer, "Rowan", 4, List.of(
+                    new net.ofatech.supernaturalbloodlines.core.group.GroupView.Row("Rowan", "leader", none, true, Optional.of(id("Group|mate"))),
+                    new net.ofatech.supernaturalbloodlines.core.group.GroupView.Row(me, day ? "day_walker" : "member", day ? secondRank : none, true, Optional.of(v.player().getUUID())),
+                    new net.ofatech.supernaturalbloodlines.core.group.GroupView.Row("Mira", "member", none, true, Optional.of(id("Mira"))),
+                    new net.ofatech.supernaturalbloodlines.core.group.GroupView.Row("Cass", "member", none, false, Optional.of(id("Cass"))),
+                    new net.ofatech.supernaturalbloodlines.core.group.GroupView.Row("Scott", "ally", none, true, Optional.of(id("Scott"))))));
+            return;
+        }
         net.ofatech.supernaturalbloodlines.parts.supernatural.client.GroupClient.demo(new net.ofatech.supernaturalbloodlines.core.group.GroupView(type, true,
                 viewer, me, 4, List.of(
                         new net.ofatech.supernaturalbloodlines.core.group.GroupView.Row(me, "leader", none, true, Optional.of(v.player().getUUID())),

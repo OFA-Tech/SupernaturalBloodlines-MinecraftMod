@@ -35,11 +35,18 @@ public final class ClanViews {
         return (int) Math.max(0, Math.min(ClanWire.MAX_SECONDS, millis / 1000));
     }
 
+    private static java.util.function.Function<UUID, String> names;
+
+    /** For tests: the name a player has in the view; null restores the server's own. */
+    public static void overrideNames(java.util.function.Function<UUID, String> function) {
+        names = function;
+    }
+
     private static String nameIfMember(ServerPlayer viewer, UUID group, UUID id) {
         if (id == null || !Charters.isMember(viewer.server, id, group)) {
             return "";
         }
-        String name = PackAccess.nameOf(viewer.server, id);
+        String name = names != null ? names.apply(id) : PackAccess.nameOf(viewer.server, id);
         return name == null ? "" : name;
     }
 

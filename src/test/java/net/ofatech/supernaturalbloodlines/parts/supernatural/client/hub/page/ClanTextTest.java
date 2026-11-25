@@ -20,7 +20,7 @@ class ClanTextTest {
                 "charter.held", "charter.held_mate", "charter.stored", "charter.dropped", "charter.lost", "charter.inert", "charter.reforge_wait", "charter_forge", "charter_forge.what",
                 "charter_forge.few", "charter_reforge", "charter_reforge.what", "charter_reforge.wait", "contest.pending", "contest.pending_anon", "contest.pending_left", "contest.running",
                 "contest.cooldown", "challenge", "challenge.what", "accept", "accept.what", "feed", "line", "line_none", "member_title", "promote", "promote.what", "demote", "demote.what",
-                "exile", "exile.what", "exile.body")) {
+                "exile", "exile.what", "exile.body", "you.one", "to_day_walker.one", "contest.cooldown.one")) {
             k.add(H + s);
         }
         for (ContestRules.Refusal r : ContestRules.Refusal.values()) {

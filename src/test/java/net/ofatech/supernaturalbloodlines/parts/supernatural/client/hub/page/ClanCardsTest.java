@@ -139,6 +139,24 @@ class ClanCardsTest {
     }
 
     @Test
+    void oneDayIsOneDayAndNeverDaysInBrackets() throws Exception {
+        ClanView.Charter held = charter(ClanView.CHARTER_HELD, false, "x", false, 0);
+        ClanView one = new ClanView(true, 1, 1, held, new ClanView.Contest(ClanView.CONTEST_NONE, "", 0, 1, false, 7, false), true, 10, 0, 0);
+        List<String> keys = ClanPlan.of(one, GroupView.MEMBER).lines().stream().map(ClanPlan.Line::key).toList();
+        assertTrue(keys.contains(ClanPlan.KEY + "you.one") && keys.contains(ClanPlan.KEY + "to_day_walker.one"), keys.toString());
+        List<String> day = ClanPlan.of(one, GroupView.DAY_WALKER).lines().stream().map(ClanPlan.Line::key).toList();
+        assertTrue(day.contains(ClanPlan.KEY + "contest.cooldown.one"), day.toString());
+        ClanView many = new ClanView(true, 30, 2, held, NO_CONTEST, true, 10, 0, 0);
+        assertTrue(ClanPlan.of(many, GroupView.MEMBER).lines().stream().noneMatch(l -> l.key().endsWith(".one")));
+        JsonObject lang = GroupTextTest.lang();
+        for (String k : lang.keySet()) {
+            if (k.startsWith("supernaturalbloodlines.hub.clan.") || k.startsWith("supernaturalbloodlines.clan.")) {
+                assertFalse(lang.get(k).getAsString().contains("(s)"), k);
+            }
+        }
+    }
+
+    @Test
     void theAcceptCardHasNoDecline() {
         ClanView.Charter held = charter(ClanView.CHARTER_HELD, false, "x", false, 0);
         ClanView asked = view(held, new ClanView.Contest(ClanView.CONTEST_PENDING, "R", 60, 0, false, 0, true));

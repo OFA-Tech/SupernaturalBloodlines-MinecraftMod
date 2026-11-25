@@ -42,9 +42,14 @@ public final class ClanViewGameTests {
     private ClanViewGameTests() {
     }
 
+    private static String name(UUID id) {
+        return "N" + id.toString().substring(0, 6);
+    }
+
     private static TalkingDuelist[] clan(GameTestHelper helper, double x) {
         CLOCK[0] = 40_000_000_000L;
         PackIndex.overrideClock(() -> CLOCK[0]);
+        ClanViews.overrideNames(ClanViewGameTests::name);
         TalkingDuelist l = vampire(helper, x);
         TalkingDuelist a = human(helper, x + 1);
         TalkingDuelist b = human(helper, x + 2);
@@ -92,7 +97,8 @@ public final class ClanViewGameTests {
             ClanView day = ClanViews.of(c[1]);
             ClanView night = ClanViews.of(c[2]);
             helper.assertTrue(head.charter().mine() && !day.charter().mine() && !night.charter().mine(), "mine is wrong: " + head.charter().mine() + day.charter().mine() + night.charter().mine());
-            helper.assertTrue(head.charter().state() == ClanView.CHARTER_HELD && head.charter().holderName().isEmpty() == (net.ofatech.supernaturalbloodlines.parts.species.pack.PackAccess.nameOf(helper.getLevel().getServer(), c[0].getUUID()) == null), "the head's own Charter state or name is wrong");
+            helper.assertTrue(head.charter().state() == ClanView.CHARTER_HELD && head.charter().holderName().equals(name(c[0].getUUID())), "the head's own Charter state or name is wrong: " + head.charter());
+            helper.assertTrue(day.charter().holderName().equals(name(c[0].getUUID())) && night.charter().holderName().equals(name(c[0].getUUID())), "a clanmate does not read the holder's name");
             helper.assertTrue(day.contest().iMayChallenge() && !night.contest().iMayChallenge() && !head.contest().iMayChallenge(), "iMayChallenge is wrong");
             helper.assertTrue(night.autoPromoteDaysLeft() == 14 && day.autoPromoteDaysLeft() == -1 && head.autoPromoteDaysLeft() == -1, "the promotion clock: " + night.autoPromoteDaysLeft());
             CLOCK[0] += 10 * DAY;
@@ -139,8 +145,26 @@ public final class ClanViewGameTests {
             for (TalkingDuelist p : c) {
                 helper.assertTrue(ClanViews.of(p).charter().holderName().isEmpty(), "a stranger's name reached " + p.getUUID());
             }
+            GroupIndex.get(helper.getLevel()).setCharter(g, new CharterRow(r.id(), Optional.of(c[1].getUUID()), CharterState.HELD, r.forgedAt(), r.seenAt(), Optional.empty(), 0));
+            helper.assertTrue(ClanViews.of(c[2]).charter().holderName().equals(name(c[1].getUUID())), "a member holder's name is not shown");
         } finally {
             clean(helper, c[0], c[1], c[2], stranger);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS, timeoutTicks = 100)
+    public static void aViewerOutsideEveryClanSeesNothingWhileAClanExists(GameTestHelper helper) {
+        TalkingDuelist[] c = clan(helper, 1.5);
+        TalkingDuelist outsider = human(helper, 6.5);
+        try {
+            online(c[0], c[1], c[2], outsider);
+            c[0].getInventory().add(new ItemStack(Items.WRITABLE_BOOK));
+            c[0].getInventory().add(new ItemStack(Items.GOLD_BLOCK));
+            helper.assertTrue(Charters.forge(c[0]) == null, "setup: forge");
+            helper.assertTrue(ClanViews.of(outsider).equals(ClanView.NONE), "a viewer in no clan saw " + ClanViews.of(outsider));
+        } finally {
+            clean(helper, c[0], c[1], c[2], outsider);
         }
         helper.succeed();
     }
