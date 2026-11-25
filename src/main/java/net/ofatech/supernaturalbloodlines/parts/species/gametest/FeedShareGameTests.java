@@ -322,6 +322,40 @@ public final class FeedShareGameTests {
     }
 
     @GameTest(template = "empty", templateNamespace = NS, timeoutTicks = 100)
+    public static void aDrinkInsideTheGuardIsNeverShared(GameTestHelper helper) {
+        Clan c = clan(helper);
+        try {
+            net.ofatech.supernaturalbloodlines.shared.supernatural.SharedFeed.run(() -> bite(c.a(), from(villager(helper)), 20));
+            helper.assertTrue(blood(c.leader()) == 0 && blood(c.b()) == 0, "a drink made inside a share was shared again");
+        } finally {
+            clean(helper, c.all());
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS, timeoutTicks = 100)
+    public static void appliesToNeedsTheLeadersGroupToBeAClanAndTheMemberToFit(GameTestHelper helper) {
+        Clan c = clan(helper);
+        TalkingDuelist human = human(helper, 7.5);
+        TalkingDuelist wolfLeader = human(helper, 8.5);
+        TalkingDuelist packMate = vampire(helper, 9.5);
+        online(c.leader(), c.a(), c.b(), human, wolfLeader, packMate);
+        try {
+            var level = helper.getLevel();
+            helper.assertTrue(net.ofatech.supernaturalbloodlines.parts.species.group.clan.ClanScope.appliesTo(level, c.leader().getUUID(), c.a()), "a vampire of a clan does not fit");
+            helper.assertTrue(!net.ofatech.supernaturalbloodlines.parts.species.group.clan.ClanScope.appliesTo(level, c.leader().getUUID(), human), "a human fits a clan");
+            PackIndex.get(level).join(wolfLeader.getUUID(), packMate.getUUID());
+            GroupIndex.get(level).ensure(wolfLeader.getUUID(), GroupType.PACK, PackIndex.now());
+            helper.assertTrue(!net.ofatech.supernaturalbloodlines.parts.species.group.clan.ClanScope.appliesTo(level, wolfLeader.getUUID(), packMate), "a vampire in a pack counts as a clanmate");
+        } finally {
+            PackIndex.get(helper.getLevel()).leave(packMate.getUUID());
+            GroupIndex.get(helper.getLevel()).drop(wolfLeader.getUUID());
+            clean(helper, c.leader(), c.a(), c.b(), human, wolfLeader, packMate);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS, timeoutTicks = 100)
     public static void aShareFiresNoOtherFeedRule(GameTestHelper helper) {
         Clan c = clan(helper);
         try {
