@@ -694,9 +694,12 @@ public final class FeedShareGameTests {
     public static void clansOffMeansNoShare(GameTestHelper helper) {
         Clan c = clan(helper);
         try {
-            GroupsConfig.override("clans_enabled", false);
             bite(c.a(), from(villager(helper)), 20);
-            helper.assertTrue(blood(c.leader()) == 0, "a share with clans off");
+            int control = blood(c.leader());
+            helper.assertTrue(control > 0, "the control bite with clans on shared nothing (" + control + "): the clans-off check below would prove nothing");
+            GroupsConfig.override("clans_enabled", false);
+            bite(c.b(), from(villager(helper)), 20); // another feeder, so the spacing of the first cannot be what stops it
+            helper.assertTrue(blood(c.leader()) == control, "a share with clans off: " + control + " became " + blood(c.leader()));
         } finally {
             clean(helper, c.all());
         }
