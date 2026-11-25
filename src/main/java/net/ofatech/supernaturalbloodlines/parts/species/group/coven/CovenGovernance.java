@@ -297,8 +297,14 @@ public final class CovenGovernance {
             return;
         }
         if (!stillValid(c, v)) {
+            List<UUID> told = new ArrayList<>(c.electors());
+            if (!told.contains(v.caller) && c.everyone().contains(v.caller)) {
+                told.add(v.caller);
+            }
+            for (UUID id : told) {
+                PackMembers.tell(c.server, id, CovenText.key("vote_void"), name(c.server, v.subject));
+            }
             c.groups.cancelVote(v);
-
             refreshCards(c);
             return;
         }

@@ -705,4 +705,26 @@ public final class CovenGovernanceGameTests {
         }
         helper.succeed();
     }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aVoteThatBecomesVoidTellsTheElectorsAndTheProposer(GameTestHelper helper) {
+        Coven c = coven(helper, 2, 1);
+        try {
+            TalkingDuelist subject = c.members().get(0);
+            helper.assertTrue(CovenGovernance.elderAdd(c.regent(), name(subject)) == null, "the proposal did not open");
+            helper.assertTrue(CovenGovernance.vote(c.elders().get(0), true, "elder_add") == null, "the first yes was refused");
+            GroupsConfig.override("members_per_elder", 2);
+            var last = CovenGovernance.vote(c.elders().get(1), true, "elder_add");
+            helper.assertTrue(last != null && key(last).equals("supernaturalbloodlines.coven.err.vote_gone"), "the voter was not told the vote was closed: " + key(last));
+            helper.assertTrue(!isElder(helper, subject) && groups(helper).openVotes(groupOf(helper, c)).isEmpty(), "the void vote stayed open or took effect");
+            String void_ = "supernaturalbloodlines.coven.vote_void";
+            for (TalkingDuelist elector : List.of(c.regent(), c.elders().get(0), c.elders().get(1))) {
+                helper.assertTrue(elector.count(void_) == 1, "an elector was not told once that the vote was void: " + elector.count(void_));
+            }
+            helper.assertTrue(!subject.received(void_), "somebody who is no elector was told");
+        } finally {
+            tidy(helper, c);
+        }
+        helper.succeed();
+    }
 }
