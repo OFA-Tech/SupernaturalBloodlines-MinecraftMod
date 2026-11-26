@@ -560,6 +560,22 @@ public final class BrotherCurseGameTests {
         helper.succeed();
     }
     @GameTest(template = "empty", templateNamespace = NS)
+    public static void aVampireTheBrotherhoodWasFightingIsNotCursed(GameTestHelper helper) {
+        Bh g = bh(helper);
+        TalkingDuelist vampire = GroupTestKit.vampire(helper, 4.5);
+        online(g.leader(), g.hunter(), g.human(), vampire);
+        HunterMarkGameTests.online(g.leader(), g.hunter(), g.human(), vampire);
+        try {
+            // another brother struck the vampire; the one it kills had not
+            vampire.hurt(g.leader().damageSources().playerAttack(g.leader()), 1f);
+            kill(vampire, g.human());
+            helper.assertTrue(!cursed(vampire), "a vampire the brotherhood was fighting was cursed for killing a brother");
+        } finally {
+            finish(helper, g, vampire);
+        }
+        helper.succeed();
+    }
+    @GameTest(template = "empty", templateNamespace = NS)
     public static void aBrothersThornsDoNotExemptTheVampire(GameTestHelper helper) {
         Bh g = bh(helper);
         TalkingDuelist vampire = GroupTestKit.vampire(helper, 4.5);

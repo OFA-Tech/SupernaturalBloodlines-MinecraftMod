@@ -1187,6 +1187,21 @@ public final class BrotherhoodCodeGameTests {
         }
         helper.succeed();
     }
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aSnowballAtTheBrotherIsNotFighting(GameTestHelper helper) {
+        Bh g = bh(helper, 20);
+        ServerPlayer victim = HunterMarkGameTests.human(helper);
+        try {
+            net.minecraft.world.entity.projectile.Snowball ball = new net.minecraft.world.entity.projectile.Snowball(helper.getLevel(), victim);
+            g.a().hurt(g.a().damageSources().thrown(ball, victim), 0f);
+            kill(g.a(), victim);
+            helper.assertTrue(breaker(helper, g.a()), "a 0-damage snowball at the brother counted as fighting");
+        } finally {
+            HunterMarkGameTests.reset(victim);
+            finish(helper, g);
+        }
+        helper.succeed();
+    }
     private static List<Object> args(Component c) {
         return List.of(((net.minecraft.network.chat.contents.TranslatableContents) c.getContents()).getArgs());
     }
