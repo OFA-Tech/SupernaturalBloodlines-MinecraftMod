@@ -48,3 +48,5 @@ All of it works without Werewolves, and the numbers are in [Configuration](Confi
 ## Brotherhood
 
 Hunters can found a Brotherhood. Plain humans can join and lead one; with open founding off, they cannot found one. The First Brother leads until an eligible online brother has a strictly higher mark. A tie keeps the leader. Nearby fitting brothers add attack damage and can share prey sight, but never kills. The Group page shows the Map and Code and only your mark and the First Brother's.
+
+The Code judges a brother who kills an innocent: a villager, or a player who did not deliberately damage the brother in the last 10 seconds (melee, or their own arrow, potion or TNT; thorns and pets do not count). A tamed pet's kill counts for its owner. A death by fire, lava, a fall, poison or drowning within 10 seconds of the brother's own hit also counts; the void, /kill and kill credit alone do not.

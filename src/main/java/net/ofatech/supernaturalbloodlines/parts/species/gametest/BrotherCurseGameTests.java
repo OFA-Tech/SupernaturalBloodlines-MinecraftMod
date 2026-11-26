@@ -542,6 +542,22 @@ public final class BrotherCurseGameTests {
     }
 
     @GameTest(template = "empty", templateNamespace = NS)
+    public static void aBrothersThornsDoNotExemptTheVampire(GameTestHelper helper) {
+        Bh g = bh(helper);
+        TalkingDuelist vampire = GroupTestKit.vampire(helper, 4.5);
+        online(g.leader(), g.hunter(), g.human(), vampire);
+        HunterMarkGameTests.online(g.leader(), g.hunter(), g.human(), vampire);
+        try {
+            vampire.hurt(g.human().damageSources().thorns(g.human()), 1f);
+            helper.assertTrue(vampire.getLastHurtByMob() == g.human(), "setup: the thorns did not land");
+            kill(vampire, g.human());
+            helper.assertTrue(cursed(vampire), "a brother's thorns let the vampire off as self-defence");
+        } finally {
+            finish(helper, g, vampire);
+        }
+        helper.succeed();
+    }
+    @GameTest(template = "empty", templateNamespace = NS)
     public static void theKillerHearsTheCurseStartAndLift(GameTestHelper helper) {
         Bh g = bh(helper);
         TalkingDuelist killer = GroupTestKit.vampire(helper, 4.5);

@@ -333,23 +333,21 @@ public final class BrotherhoodHookGameTests {
         try {
             BloodlineAccess.set(witch, BloodlineState.NONE.toBuilder().species(Species.WITCH).build());
             BloodlineAccess.set(siphoner, BloodlineState.NONE.toBuilder().species(Species.SIPHONER).build());
-            fought100.setLastHurtMob(killer);
-            fought100.tickCount += 100;
-            fought300.setLastHurtMob(killer);
-            fought300.tickCount += 300;
-            foughtAtEdge.setLastHurtMob(killer);
-            foughtAtEdge.tickCount += net.ofatech.supernaturalbloodlines.parts.species.pack.Innocence.FIGHT_WINDOW;
-            foughtPastEdge.setLastHurtMob(killer);
-            foughtPastEdge.tickCount += net.ofatech.supernaturalbloodlines.parts.species.pack.Innocence.FIGHT_WINDOW + 1;
+            long now = 1_800_000_000_000L;
+            net.ofatech.supernaturalbloodlines.parts.species.pack.PackIndex.overrideClock(() -> now);
+            net.ofatech.supernaturalbloodlines.parts.species.pack.FightLedger.record(fought100.getUUID(), killer.getUUID(), now - 5_000);
+            net.ofatech.supernaturalbloodlines.parts.species.pack.FightLedger.record(fought300.getUUID(), killer.getUUID(), now - 15_000);
+            net.ofatech.supernaturalbloodlines.parts.species.pack.FightLedger.record(foughtAtEdge.getUUID(), killer.getUUID(), now - net.ofatech.supernaturalbloodlines.parts.species.pack.FightLedger.WINDOW_MILLIS);
+            net.ofatech.supernaturalbloodlines.parts.species.pack.FightLedger.record(foughtPastEdge.getUUID(), killer.getUUID(), now - net.ofatech.supernaturalbloodlines.parts.species.pack.FightLedger.WINDOW_MILLIS - 1);
             record Row(String name, LivingEntity victim, boolean innocent, boolean prey) {
             }
             List<Row> table = new ArrayList<>(List.of(
                     new Row("villager", villager, true, false),
                     new Row("human", human, true, false),
-                    new Row("human who hit the killer 100 ticks ago", fought100, false, false),
-                    new Row("human who hit the killer 300 ticks ago", fought300, true, false),
+                    new Row("human who hit the killer 5 s ago", fought100, false, false),
+                    new Row("human who hit the killer 15 s ago", fought300, true, false),
                     new Row("human who hit the killer exactly the window ago", foughtAtEdge, false, false),
-                    new Row("human who hit the killer one tick past the window", foughtPastEdge, true, false),
+                    new Row("human who hit the killer 1 ms past the window", foughtPastEdge, true, false),
                     new Row("witch who did not fight", witch, true, false),
                     new Row("siphoner who did not fight", siphoner, true, false),
                     new Row("vampire", vampire, true, true),
@@ -367,6 +365,7 @@ public final class BrotherhoodHookGameTests {
             villager.discard();
             zombie.discard();
             cow.discard();
+            net.ofatech.supernaturalbloodlines.parts.species.pack.PackIndex.overrideClock(null);
             HunterMarkGameTests.reset(killer, human, fought100, fought300, witch, siphoner, vampire);
         }
         helper.succeed();

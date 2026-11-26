@@ -30,14 +30,8 @@ public final class BrotherhoodCurse {
             return;
         }
         ServerLevel level = victim.serverLevel();
-        if (r.victimWasMarked()) {
-            // the old path cursed the killer already (the kill feed runs after it): its curse is not the timed one
-            if (BloodlineAccess.get(killer).hunterCurse()) {
-                GroupIndex.get(level).clearCurse(killer.getUUID());
-            }
-            return;
-        }
-        if (!GroupsConfig.curseExtendsEnabled() || !GroupsConfig.brotherhoodPerksOn()) {
+        // a marked victim is the old path's (MarkTracker), which also drops any timed end the killer had
+        if (r.victimWasMarked() || !GroupsConfig.curseExtendsEnabled() || !GroupsConfig.brotherhoodPerksOn()) {
             return;
         }
         BrotherhoodScope.Brotherhood b = BrotherhoodScope.of(level, victim.getUUID());

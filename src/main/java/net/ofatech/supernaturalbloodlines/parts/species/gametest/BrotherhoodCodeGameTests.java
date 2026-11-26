@@ -197,14 +197,12 @@ public final class BrotherhoodCodeGameTests {
         ServerPlayer recent = HunterMarkGameTests.human(helper);
         ServerPlayer old = HunterMarkGameTests.human(helper);
         try {
-            recent.setLastHurtMob(g.a());
-            recent.tickCount += 100;
+            net.ofatech.supernaturalbloodlines.parts.species.pack.FightLedger.record(recent.getUUID(), g.a().getUUID(), T0 - 5_000);
             kill(g.a(), recent);
-            helper.assertTrue(!breaker(helper, g.a()), "a player who hit the killer 100 ticks ago was judged innocent");
-            old.setLastHurtMob(g.a());
-            old.tickCount += 300;
+            helper.assertTrue(!breaker(helper, g.a()), "a player who hit the killer 5 s ago was judged innocent");
+            net.ofatech.supernaturalbloodlines.parts.species.pack.FightLedger.record(old.getUUID(), g.a().getUUID(), T0 - 15_000);
             kill(g.a(), old);
-            helper.assertTrue(breaker(helper, g.a()), "a player who hit the killer 300 ticks ago was not innocent");
+            helper.assertTrue(breaker(helper, g.a()), "a player who hit the killer 15 s ago was not innocent");
         } finally {
             HunterMarkGameTests.reset(recent, old);
             finish(helper, g);
@@ -864,7 +862,7 @@ public final class BrotherhoodCodeGameTests {
     }
 
     @GameTest(template = "empty", templateNamespace = NS)
-    public static void aVictimWhosePetBitTheKillerWasFighting(GameTestHelper helper) {
+    public static void aVictimWhosePetBitTheKillerWasNotFighting(GameTestHelper helper) {
         Bh g = bh(helper, 20);
         ServerPlayer victim = HunterMarkGameTests.human(helper);
         net.minecraft.world.entity.animal.Wolf wolf = helper.spawnWithNoFreeWill(EntityType.WOLF, new BlockPos(3, 1, 3));
@@ -874,7 +872,7 @@ public final class BrotherhoodCodeGameTests {
             g.a().setLastHurtByPlayer(victim);
             helper.assertTrue(g.a().getLastHurtByMob() == wolf && g.a().getKillCredit() == victim, "setup: the bite was not the owner's");
             kill(g.a(), victim);
-            helper.assertTrue(!breaker(helper, g.a()), "a victim whose wolf bit the killer counted as innocent");
+            helper.assertTrue(breaker(helper, g.a()), "a pet's bite counted as the victim fighting (round 3: pets never count)");
         } finally {
             wolf.discard();
             HunterMarkGameTests.reset(victim);
@@ -919,6 +917,7 @@ public final class BrotherhoodCodeGameTests {
             helper.assertTrue(in(helper, g.leader()), "the leader was expelled after being passed by the mark loss of the same break");
             helper.assertTrue(!GroupGate.exiled(helper.getLevel().getServer(), group(helper, g.a()), g.leader().getUUID()), "the old leader is barred");
             helper.assertTrue(strikes(helper, g.leader()) == 0 && breaker(helper, g.leader()), "the leader's third break is not the leader's rule");
+            helper.assertTrue(g.b().count(BH + "code_leader") == 0 && g.b().count(BH + "code_broken") == 3, "a leader the loss had just passed was still called the leader");
         } finally {
             finish(helper, g);
         }
@@ -959,6 +958,119 @@ public final class BrotherhoodCodeGameTests {
         helper.succeed();
     }
 
+    // ---- round 3: what is a deliberate hit, and which deaths are a brother's ----
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void thornsAloneAreNotFighting(GameTestHelper helper) {
+        Bh g = bh(helper, 20);
+        ServerPlayer victim = HunterMarkGameTests.human(helper);
+        try {
+            g.a().hurt(victim.damageSources().thorns(victim), 1f);
+            helper.assertTrue(g.a().getLastHurtByMob() == victim, "setup: the thorns did not land");
+            kill(g.a(), victim);
+            helper.assertTrue(breaker(helper, g.a()), "a victim whose thorns hurt the killer counted as fighting");
+        } finally {
+            HunterMarkGameTests.reset(victim);
+            finish(helper, g);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aVictimsArrowCountsForTheWholeTenSeconds(GameTestHelper helper) {
+        Bh g = bh(helper, 20);
+        ServerPlayer victim = HunterMarkGameTests.human(helper);
+        ServerPlayer late = HunterMarkGameTests.human(helper);
+        try {
+            net.minecraft.world.entity.projectile.Arrow arrow = new net.minecraft.world.entity.projectile.Arrow(EntityType.ARROW, helper.getLevel());
+            arrow.setOwner(victim);
+            g.a().hurt(victim.damageSources().arrow(arrow, victim), 1f);
+            net.minecraft.world.entity.projectile.Arrow other = new net.minecraft.world.entity.projectile.Arrow(EntityType.ARROW, helper.getLevel());
+            other.setOwner(late);
+            g.a().hurt(late.damageSources().arrow(other, late), 1f);
+            // seven seconds on: vanilla has cleared its own 100-tick memory of the attacker, the 10 s rule has not
+            g.a().setLastHurtByPlayer(null);
+            g.a().setLastHurtByMob(null);
+            at(T0 + 7_000);
+            kill(g.a(), victim);
+            helper.assertTrue(!breaker(helper, g.a()), "a victim who shot the killer 7 s ago counted as innocent");
+            at(T0 + 10_001);
+            kill(g.a(), late);
+            helper.assertTrue(breaker(helper, g.a()), "a shot just over 10 s ago still counted as fighting");
+        } finally {
+            HunterMarkGameTests.reset(victim, late);
+            finish(helper, g);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aDeathInLavaAfterTheBrothersHitIsJudged(GameTestHelper helper) {
+        Bh g = bh(helper, 20);
+        TalkingDuelist victim = human(helper, 4.5);
+        online(g.leader(), g.a(), g.b(), victim);
+        try {
+            victim.hurt(g.a().damageSources().playerAttack(g.a()), 1f);
+            helper.assertTrue(victim.getLastHurtByMob() == g.a(), "setup: the brother's hit did not land");
+            NeoForge.EVENT_BUS.post(new LivingDeathEvent(victim, victim.damageSources().lava()));
+            helper.assertTrue(breaker(helper, g.a()), "a brother who knocked an innocent into lava was not judged");
+        } finally {
+            HunterMarkGameTests.reset(victim);
+            finish(helper, g);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aDeathInTheVoidAfterTheBrothersHitIsNotJudged(GameTestHelper helper) {
+        Bh g = bh(helper, 20);
+        TalkingDuelist victim = human(helper, 4.5);
+        online(g.leader(), g.a(), g.b(), victim);
+        try {
+            victim.hurt(g.a().damageSources().playerAttack(g.a()), 1f);
+            helper.assertTrue(victim.getLastHurtByMob() == g.a(), "setup: the brother's hit did not land");
+            NeoForge.EVENT_BUS.post(new LivingDeathEvent(victim, victim.damageSources().fellOutOfWorld()));
+            helper.assertTrue(!breaker(helper, g.a()), "a death in the void was judged");
+        } finally {
+            HunterMarkGameTests.reset(victim);
+            finish(helper, g);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aKillCommandAfterTheBrothersHitIsNotJudged(GameTestHelper helper) {
+        Bh g = bh(helper, 20);
+        TalkingDuelist victim = human(helper, 4.5);
+        online(g.leader(), g.a(), g.b(), victim);
+        try {
+            victim.hurt(g.a().damageSources().playerAttack(g.a()), 1f);
+            helper.assertTrue(victim.getLastHurtByMob() == g.a(), "setup: the brother's hit did not land");
+            NeoForge.EVENT_BUS.post(new LivingDeathEvent(victim, victim.damageSources().genericKill()));
+            helper.assertTrue(!breaker(helper, g.a()), "a /kill was judged on the brother who hit last");
+        } finally {
+            HunterMarkGameTests.reset(victim);
+            finish(helper, g);
+        }
+        helper.succeed();
+    }
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aKillByABrothersPetIsTheBrothers(GameTestHelper helper) {
+        Bh g = bh(helper, 20);
+        Villager v = villager(helper);
+        net.minecraft.world.entity.animal.Wolf wolf = helper.spawnWithNoFreeWill(EntityType.WOLF, new BlockPos(3, 1, 3));
+        try {
+            wolf.setTame(true, false);
+            wolf.setOwnerUUID(g.a().getUUID());
+            NeoForge.EVENT_BUS.post(new LivingDeathEvent(v, v.damageSources().mobAttack(wolf)));
+            helper.assertTrue(breaker(helper, g.a()), "a villager killed by a brother's wolf did not count for the brother");
+        } finally {
+            wolf.discard();
+            v.discard();
+            finish(helper, g);
+        }
+        helper.succeed();
+    }
     private static List<Object> args(Component c) {
         return List.of(((net.minecraft.network.chat.contents.TranslatableContents) c.getContents()).getArgs());
     }

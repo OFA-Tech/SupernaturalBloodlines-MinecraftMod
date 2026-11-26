@@ -147,7 +147,10 @@ public final class MarkTracker {
         if (victimWasMarked && victim instanceof ServerPlayer v && isPrey(killer) && !samePack(v, killer)) {
             killedMarkedHunter(v, killer);
         }
-        Resolved resolved = new Resolved(victim, killer, victimWasMarked, e.getSource().getEntity() == killer);
+        DamageSource source = e.getSource();
+        boolean environmental = source.getEntity() == null && !source.is(net.minecraft.world.damagesource.DamageTypes.GENERIC_KILL)
+                && !source.is(net.minecraft.world.damagesource.DamageTypes.FELL_OUT_OF_WORLD);
+        Resolved resolved = new Resolved(victim, killer, victimWasMarked, source.getEntity() == killer, environmental);
         for (Consumer<Resolved> hook : RESOLVED) {
             try {
                 hook.accept(resolved);
@@ -159,9 +162,9 @@ public final class MarkTracker {
 
     /**
      * One death that counted for somebody: who died, who gets the credit (the same attribution the mark uses), whether the victim was a Hunter of the Five,
-     * and whether the killer dealt the killing blow (false for kill credit alone: a fall or lava after their hit).
+     * whether the killer dealt the killing blow, and whether the world did with no attacker at all (fire, lava, a fall, poison, drowning; not the void or /kill).
      */
-    public record Resolved(LivingEntity victim, Entity killer, boolean victimWasMarked, boolean killingBlow) {
+    public record Resolved(LivingEntity victim, Entity killer, boolean victimWasMarked, boolean killingBlow, boolean environmental) {
     }
 
     private static final List<Consumer<Resolved>> RESOLVED = new CopyOnWriteArrayList<>();
@@ -191,6 +194,10 @@ public final class MarkTracker {
         BloodlineAccess.applyEvent(hunter, BloodlineEvent.KILLED_BY_PREY, SpeciesContext.of(hunter, null));
         if (killer instanceof ServerPlayer k) {
             HunterCurse.curse(k);
+            // this curse ends only at an awakening (R83): a timed brotherhood curse the killer carried is replaced
+            if (BloodlineAccess.get(k).hunterCurse()) {
+                net.ofatech.supernaturalbloodlines.parts.species.group.GroupIndex.get(k.serverLevel()).clearCurse(k.getUUID());
+            }
         }
         PotentialChooser.owe(hunter.server, hunter.getUUID());
     }

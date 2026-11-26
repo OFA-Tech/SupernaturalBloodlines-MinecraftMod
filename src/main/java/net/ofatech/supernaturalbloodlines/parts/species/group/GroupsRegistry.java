@@ -22,6 +22,7 @@ public final class GroupsRegistry {
         PackAbsence.register();
         PartyLink.register();
         AllyProtection.register();
+        net.ofatech.supernaturalbloodlines.parts.species.pack.FightLedger.register();
         GroupIndex.register();
         GroupSwitcher.register();
         net.ofatech.supernaturalbloodlines.parts.species.group.coven.CovenRegistry.register();

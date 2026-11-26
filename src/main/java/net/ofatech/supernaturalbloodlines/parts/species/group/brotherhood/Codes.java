@@ -19,6 +19,7 @@ import net.ofatech.supernaturalbloodlines.parts.species.group.GroupIndex;
 import net.ofatech.supernaturalbloodlines.parts.species.group.GroupIndex.BreakerRow;
 import net.ofatech.supernaturalbloodlines.parts.species.group.GroupsConfig;
 import net.ofatech.supernaturalbloodlines.parts.species.hunter.MarkTracker;
+import net.ofatech.supernaturalbloodlines.parts.species.pack.FightLedger;
 import net.ofatech.supernaturalbloodlines.parts.species.pack.Innocence;
 import net.ofatech.supernaturalbloodlines.parts.species.pack.PackIndex;
 import net.ofatech.supernaturalbloodlines.parts.species.pack.PackMembers;
@@ -44,11 +45,29 @@ public final class Codes {
         return GroupIndex.get(server.overworld()).breakerOf(id).map(r -> CodeRules.isBreaker(r.until(), PackIndex.now())).orElse(false);
     }
 
-    /** The kill feed: only a brother who dealt the killing blow is judged; kill credit alone (lava, a fall after their hit) is not a kill. */
+    /**
+     * The kill feed: a brother is judged for a killing blow (their own, or their tamed pet's), or for a death the world dealt (fire, lava, a fall) within 10
+     * seconds of their own deliberate hit on the victim. Kill credit with no hit is not a kill, and neither is the void or /kill.
+     */
     static void onResolved(MarkTracker.Resolved r) {
-        if (r.killingBlow() && r.killer() instanceof ServerPlayer killer) {
+        ServerPlayer killer = ownerOrSelf(r.killer());
+        if (killer == null) {
+            return;
+        }
+        if (r.killingBlow() || r.environmental() && FightLedger.struck(killer.getUUID(), r.victim().getUUID(), PackIndex.now())) {
             judge(killer, r.victim());
         }
+    }
+
+    /** The player behind a kill: the player, or the owner of a tamed pet. */
+    private static ServerPlayer ownerOrSelf(net.minecraft.world.entity.Entity e) {
+        if (e instanceof ServerPlayer p) {
+            return p;
+        }
+        if (e instanceof net.minecraft.world.entity.OwnableEntity pet && pet.getOwnerUUID() != null && e.getServer() != null) {
+            return net.ofatech.supernaturalbloodlines.parts.species.sireline.SireCall.player(e.getServer(), pet.getOwnerUUID());
+        }
+        return null;
     }
 
     /** What the Code makes of this kill; public so a test can say a kill happened without a death. */
@@ -102,7 +121,8 @@ public final class Codes {
             tellAll(server, roster, null, "code_broken", name);
         } else if (wasLeader) {
             groups.setBreaker(id, new BreakerRow(until, List.of()));
-            tellAll(server, roster, null, "code_leader", name);
+            // a leader the mark loss has just passed is no longer the one who leads: the plain line says what happened
+            tellAll(server, roster, null, b.leader().equals(id) ? "code_leader" : "code_broken", name);
         } else {
             String leaderName = BrotherhoodText.nameOf(server, b.leader());
             PackMembers.remove(server, id, BrotherhoodText.key(leaderName != null ? "broke_code" : "broke_code.someone"), leaderName != null ? leaderName : "");
