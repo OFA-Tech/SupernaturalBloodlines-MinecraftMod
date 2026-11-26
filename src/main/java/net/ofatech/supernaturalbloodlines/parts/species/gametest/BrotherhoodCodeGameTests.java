@@ -1191,12 +1191,18 @@ public final class BrotherhoodCodeGameTests {
     public static void aSnowballAtTheBrotherIsNotFighting(GameTestHelper helper) {
         Bh g = bh(helper, 20);
         ServerPlayer victim = HunterMarkGameTests.human(helper);
+        net.minecraft.world.entity.animal.Wolf wolf = helper.spawnWithNoFreeWill(EntityType.WOLF, new BlockPos(3, 1, 3));
         try {
             net.minecraft.world.entity.projectile.Snowball ball = new net.minecraft.world.entity.projectile.Snowball(helper.getLevel(), victim);
             g.a().hurt(g.a().damageSources().thrown(ball, victim), 0f);
+            // a player ignores a 0-damage hit before any event; a pet does not, so the snowball at his wolf is the real check
+            wolf.setTame(true, false);
+            wolf.setOwnerUUID(g.a().getUUID());
+            wolf.hurt(wolf.damageSources().thrown(ball, victim), 0f);
             kill(g.a(), victim);
-            helper.assertTrue(breaker(helper, g.a()), "a 0-damage snowball at the brother counted as fighting");
+            helper.assertTrue(breaker(helper, g.a()), "a 0-damage snowball at the brother or his wolf counted as fighting");
         } finally {
+            wolf.discard();
             HunterMarkGameTests.reset(victim);
             finish(helper, g);
         }
