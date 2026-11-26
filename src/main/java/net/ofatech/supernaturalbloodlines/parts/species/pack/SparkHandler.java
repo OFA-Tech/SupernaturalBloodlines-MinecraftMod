@@ -106,8 +106,6 @@ public final class SparkHandler {
         }
     }
 
-    /** A player who attacked the killer within this many ticks of dying was fighting them, not innocent. */
-
     /** A villager, or a player who was not fighting the killer (did not hit them in the last 10 seconds): {@link Innocence#of}. */
     public static boolean isInnocent(ServerPlayer killer, LivingEntity victim) {
         return Innocence.of(killer, victim);

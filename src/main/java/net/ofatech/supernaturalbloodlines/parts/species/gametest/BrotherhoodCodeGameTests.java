@@ -1010,7 +1010,7 @@ public final class BrotherhoodCodeGameTests {
         TalkingDuelist victim = human(helper, 4.5);
         online(g.leader(), g.a(), g.b(), victim);
         try {
-            victim.hurt(g.a().damageSources().playerAttack(g.a()), 1f);
+            g.a().attack(victim);
             helper.assertTrue(victim.getLastHurtByMob() == g.a(), "setup: the brother's hit did not land");
             NeoForge.EVENT_BUS.post(new LivingDeathEvent(victim, victim.damageSources().lava()));
             helper.assertTrue(breaker(helper, g.a()), "a brother who knocked an innocent into lava was not judged");
@@ -1027,7 +1027,7 @@ public final class BrotherhoodCodeGameTests {
         TalkingDuelist victim = human(helper, 4.5);
         online(g.leader(), g.a(), g.b(), victim);
         try {
-            victim.hurt(g.a().damageSources().playerAttack(g.a()), 1f);
+            g.a().attack(victim);
             helper.assertTrue(victim.getLastHurtByMob() == g.a(), "setup: the brother's hit did not land");
             NeoForge.EVENT_BUS.post(new LivingDeathEvent(victim, victim.damageSources().fellOutOfWorld()));
             helper.assertTrue(!breaker(helper, g.a()), "a death in the void was judged");
@@ -1044,7 +1044,7 @@ public final class BrotherhoodCodeGameTests {
         TalkingDuelist victim = human(helper, 4.5);
         online(g.leader(), g.a(), g.b(), victim);
         try {
-            victim.hurt(g.a().damageSources().playerAttack(g.a()), 1f);
+            g.a().attack(victim);
             helper.assertTrue(victim.getLastHurtByMob() == g.a(), "setup: the brother's hit did not land");
             NeoForge.EVENT_BUS.post(new LivingDeathEvent(victim, victim.damageSources().genericKill()));
             helper.assertTrue(!breaker(helper, g.a()), "a /kill was judged on the brother who hit last");
@@ -1067,6 +1067,122 @@ public final class BrotherhoodCodeGameTests {
         } finally {
             wolf.discard();
             v.discard();
+            finish(helper, g);
+        }
+        helper.succeed();
+    }
+    // ---- round 4: the hit that decides a death, what still counts as a hit, and defending a brother ----
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aHitTheKillerShrugsOffStillCounts(GameTestHelper helper) {
+        Bh g = bh(helper, 20);
+        ServerPlayer victim = HunterMarkGameTests.human(helper);
+        try {
+            g.a().addEffect(new net.minecraft.world.effect.MobEffectInstance(net.minecraft.world.effect.MobEffects.DAMAGE_RESISTANCE, 200, 4));
+            g.a().hurt(victim.damageSources().playerAttack(victim), 1f);
+            kill(g.a(), victim);
+            helper.assertTrue(!breaker(helper, g.a()), "a hit that Resistance soaked up did not count as the victim fighting");
+        } finally {
+            g.a().removeAllEffects();
+            HunterMarkGameTests.reset(victim);
+            finish(helper, g);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aSnowballThatStealsTheCreditDoesNotSaveTheBrother(GameTestHelper helper) {
+        Bh g = bh(helper, 20);
+        TalkingDuelist victim = human(helper, 4.5);
+        ServerPlayer thrower = HunterMarkGameTests.human(helper);
+        online(g.leader(), g.a(), g.b(), victim);
+        try {
+            g.a().attack(victim);
+            net.minecraft.world.entity.projectile.Snowball ball = new net.minecraft.world.entity.projectile.Snowball(helper.getLevel(), thrower);
+            victim.hurt(victim.damageSources().thrown(ball, thrower), 0f);
+            victim.setLastHurtByPlayer(thrower);
+            victim.setLastHurtByMob(thrower);
+            NeoForge.EVENT_BUS.post(new LivingDeathEvent(victim, victim.damageSources().lava()));
+            helper.assertTrue(breaker(helper, g.a()), "a snowball after the brother's punch let the brother off");
+        } finally {
+            HunterMarkGameTests.reset(victim, thrower);
+            finish(helper, g);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aSweepOrAStrayArrowThenLavaIsNotJudged(GameTestHelper helper) {
+        Bh g = bh(helper, 20);
+        TalkingDuelist swept = human(helper, 4.5);
+        TalkingDuelist shot = human(helper, 5.5);
+        online(g.leader(), g.a(), g.b(), swept, shot);
+        try {
+            // a sweep is a player-attack hit on a body the brother did not swing at
+            swept.hurt(g.a().damageSources().playerAttack(g.a()), 1f);
+            NeoForge.EVENT_BUS.post(new LivingDeathEvent(swept, swept.damageSources().lava()));
+            helper.assertTrue(!breaker(helper, g.a()), "a sweep then lava was judged");
+            net.minecraft.world.entity.projectile.Arrow arrow = new net.minecraft.world.entity.projectile.Arrow(EntityType.ARROW, helper.getLevel());
+            arrow.setOwner(g.a());
+            shot.hurt(shot.damageSources().arrow(arrow, g.a()), 1f);
+            NeoForge.EVENT_BUS.post(new LivingDeathEvent(shot, shot.damageSources().lava()));
+            helper.assertTrue(!breaker(helper, g.a()), "a stray arrow then lava was judged");
+        } finally {
+            HunterMarkGameTests.reset(swept, shot);
+            finish(helper, g);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aDeathSevenSecondsAfterAPunchIsJudged(GameTestHelper helper) {
+        Bh g = bh(helper, 20);
+        TalkingDuelist victim = human(helper, 4.5);
+        online(g.leader(), g.a(), g.b(), victim);
+        try {
+            g.a().attack(victim);
+            // vanilla forgets its attacker after 100 ticks; the 10 s rule does not
+            victim.setLastHurtByPlayer(null);
+            victim.setLastHurtByMob(null);
+            at(T0 + 7_000);
+            NeoForge.EVENT_BUS.post(new LivingDeathEvent(victim, victim.damageSources().fall()));
+            helper.assertTrue(breaker(helper, g.a()), "a fall 7 s after the brother's punch was not judged");
+        } finally {
+            HunterMarkGameTests.reset(victim);
+            finish(helper, g);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void killingAPlayerWhoHitAnotherBrotherIsNotABreak(GameTestHelper helper) {
+        Bh g = bh(helper, 20);
+        ServerPlayer victim = HunterMarkGameTests.human(helper);
+        try {
+            g.b().hurt(victim.damageSources().playerAttack(victim), 1f);
+            kill(g.a(), victim);
+            helper.assertTrue(!breaker(helper, g.a()), "defending a brother broke the Code");
+        } finally {
+            HunterMarkGameTests.reset(victim);
+            finish(helper, g);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aHitOnTheBrothersPetIsAHitOnHim(GameTestHelper helper) {
+        Bh g = bh(helper, 20);
+        ServerPlayer victim = HunterMarkGameTests.human(helper);
+        net.minecraft.world.entity.animal.Wolf wolf = helper.spawnWithNoFreeWill(EntityType.WOLF, new BlockPos(3, 1, 3));
+        try {
+            wolf.setTame(true, false);
+            wolf.setOwnerUUID(g.a().getUUID());
+            wolf.hurt(victim.damageSources().playerAttack(victim), 1f);
+            kill(g.a(), victim);
+            helper.assertTrue(!breaker(helper, g.a()), "a player who hit the brother's wolf counted as innocent");
+        } finally {
+            wolf.discard();
+            HunterMarkGameTests.reset(victim);
             finish(helper, g);
         }
         helper.succeed();

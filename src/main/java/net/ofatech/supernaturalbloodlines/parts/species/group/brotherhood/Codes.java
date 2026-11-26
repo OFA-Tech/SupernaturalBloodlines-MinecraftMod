@@ -45,18 +45,37 @@ public final class Codes {
         return GroupIndex.get(server.overworld()).breakerOf(id).map(r -> CodeRules.isBreaker(r.until(), PackIndex.now())).orElse(false);
     }
 
-    /**
-     * The kill feed: a brother is judged for a killing blow (their own, or their tamed pet's), or for a death the world dealt (fire, lava, a fall) within 10
-     * seconds of their own deliberate hit on the victim. Kill credit with no hit is not a kill, and neither is the void or /kill.
-     */
+    /** The kill feed: the Code judges the player behind the death ({@link #culprit}). */
     static void onResolved(MarkTracker.Resolved r) {
-        ServerPlayer killer = ownerOrSelf(r.killer());
-        if (killer == null) {
-            return;
-        }
-        if (r.killingBlow() || r.environmental() && FightLedger.struck(killer.getUUID(), r.victim().getUUID(), PackIndex.now())) {
+        ServerPlayer killer = culprit(r);
+        if (killer != null) {
             judge(killer, r.victim());
         }
+    }
+
+    /**
+     * The player a death is put on (R294, R295): whoever dealt the killing blow, or owns the tamed pet that did; for a death the world dealt (fire, lava, a
+     * fall, poison, wither, drowning), the player whose direct melee hit last landed on the victim in the last 10 seconds ({@link FightLedger}), never the kill
+     * credit, which a later snowball can steal. Kill credit with no such hit, the void and /kill are nobody's.
+     */
+    static ServerPlayer culprit(MarkTracker.Resolved r) {
+        if (r.environmental()) {
+            UUID striker = FightLedger.lastMeleeStriker(r.victim().getUUID(), PackIndex.now());
+            return striker == null || r.victim().getServer() == null ? null
+                    : net.ofatech.supernaturalbloodlines.parts.species.sireline.SireCall.player(r.victim().getServer(), striker);
+        }
+        return r.killingBlow() ? ownerOrSelf(r.killer()) : null;
+    }
+
+    /** Whether, in the last 10 seconds, {@code outsider} deliberately hurt any brother of this brotherhood ({@code outsiderStruck}), or any brother hurt them. */
+    static boolean fought(ServerLevel level, UUID leader, UUID outsider, boolean outsiderStruck) {
+        long now = PackIndex.now();
+        for (UUID brother : PackIndex.get(level).roster(leader)) {
+            if (outsiderStruck ? FightLedger.struck(outsider, brother, now) : FightLedger.struck(brother, outsider, now)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /** The player behind a kill: the player, or the owner of a tamed pet. */
@@ -81,7 +100,8 @@ public final class Codes {
             return;
         }
         CodeRules.Kind kind = victim instanceof Villager ? CodeRules.Kind.VILLAGER : victim instanceof Player ? CodeRules.Kind.PLAYER : CodeRules.Kind.OTHER;
-        boolean fighting = victim instanceof Player && !Innocence.of(killer, victim);
+        // defending a brother: a victim who hurt any brother of this brotherhood was fighting every one of them
+        boolean fighting = victim instanceof Player && (!Innocence.of(killer, victim) || fought(level, b.leader(), victim.getUUID(), true));
         if (!CodeRules.breaks(new CodeRules.Victim(kind, MarkTracker.isPrey(victim), fighting))) {
             return;
         }

@@ -26,7 +26,8 @@ public final class BrotherhoodCurse {
     }
 
     static void onResolved(MarkTracker.Resolved r) {
-        if (!(r.killer() instanceof ServerPlayer killer) || !(r.victim() instanceof ServerPlayer victim)) {
+        ServerPlayer killer = Codes.culprit(r);
+        if (killer == null || !(r.victim() instanceof ServerPlayer victim)) {
             return;
         }
         ServerLevel level = victim.serverLevel();
@@ -35,7 +36,8 @@ public final class BrotherhoodCurse {
             return;
         }
         BrotherhoodScope.Brotherhood b = BrotherhoodScope.of(level, victim.getUUID());
-        if (b == null || !BrotherhoodScope.appliesTo(level, b.leader(), victim) || !MarkTracker.isPrey(killer) || !Innocence.of(killer, victim)) {
+        if (b == null || !BrotherhoodScope.appliesTo(level, b.leader(), victim) || !MarkTracker.isPrey(killer)
+                || !Innocence.of(killer, victim) || Codes.fought(level, b.leader(), killer.getUUID(), false)) {
             return;
         }
         if (BloodlineAccess.get(killer).hunterCurse()) {

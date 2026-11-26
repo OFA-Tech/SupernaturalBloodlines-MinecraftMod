@@ -542,6 +542,24 @@ public final class BrotherCurseGameTests {
     }
 
     @GameTest(template = "empty", templateNamespace = NS)
+    public static void aPreyPetsKillCursesItsOwner(GameTestHelper helper) {
+        Bh g = bh(helper);
+        TalkingDuelist vampire = GroupTestKit.vampire(helper, 4.5);
+        online(g.leader(), g.hunter(), g.human(), vampire);
+        HunterMarkGameTests.online(g.leader(), g.hunter(), g.human(), vampire);
+        net.minecraft.world.entity.animal.Wolf wolf = helper.spawnWithNoFreeWill(net.minecraft.world.entity.EntityType.WOLF, new net.minecraft.core.BlockPos(3, 1, 3));
+        try {
+            wolf.setTame(true, false);
+            wolf.setOwnerUUID(vampire.getUUID());
+            net.neoforged.neoforge.common.NeoForge.EVENT_BUS.post(new net.neoforged.neoforge.event.entity.living.LivingDeathEvent(g.human(), g.human().damageSources().mobAttack(wolf)));
+            helper.assertTrue(cursed(vampire), "a brother killed by a vampire's wolf did not curse the vampire");
+        } finally {
+            wolf.discard();
+            finish(helper, g, vampire);
+        }
+        helper.succeed();
+    }
+    @GameTest(template = "empty", templateNamespace = NS)
     public static void aBrothersThornsDoNotExemptTheVampire(GameTestHelper helper) {
         Bh g = bh(helper);
         TalkingDuelist vampire = GroupTestKit.vampire(helper, 4.5);

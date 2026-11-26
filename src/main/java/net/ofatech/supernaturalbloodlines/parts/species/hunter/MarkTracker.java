@@ -134,9 +134,13 @@ public final class MarkTracker {
         if (victim.level().isClientSide) {
             return;
         }
-        Entity killer = killerOf(victim, e.getSource());
+        DamageSource source = e.getSource();
+        // the world dealt it with no attacker (fire, lava, a fall, poison, drowning); the void and /kill are never anyone's
+        boolean environmental = source.getEntity() == null && !source.is(net.minecraft.world.damagesource.DamageTypes.GENERIC_KILL)
+                && !source.is(net.minecraft.world.damagesource.DamageTypes.FELL_OUT_OF_WORLD);
+        Entity killer = killerOf(victim, source);
         // a sireline death is the Original's, not the credit of whoever hurt the victim last
-        if (killer == null || killer == victim || e.getSource().is(LineDeath.DAMAGE_TYPE)) {
+        if (killer == victim || source.is(LineDeath.DAMAGE_TYPE) || killer == null && !environmental) {
             return;
         }
         // read before the mark is taken away: the species is gone after killedMarkedHunter
@@ -144,13 +148,10 @@ public final class MarkTracker {
         if (killer instanceof ServerPlayer k && isPrey(victim) && !samePack(k, victim)) {
             killedPrey(k);
         }
-        if (victimWasMarked && victim instanceof ServerPlayer v && isPrey(killer) && !samePack(v, killer)) {
+        if (killer != null && victimWasMarked && victim instanceof ServerPlayer v && isPrey(killer) && !samePack(v, killer)) {
             killedMarkedHunter(v, killer);
         }
-        DamageSource source = e.getSource();
-        boolean environmental = source.getEntity() == null && !source.is(net.minecraft.world.damagesource.DamageTypes.GENERIC_KILL)
-                && !source.is(net.minecraft.world.damagesource.DamageTypes.FELL_OUT_OF_WORLD);
-        Resolved resolved = new Resolved(victim, killer, victimWasMarked, source.getEntity() == killer, environmental);
+        Resolved resolved = new Resolved(victim, killer, victimWasMarked, killer != null && source.getEntity() == killer, environmental);
         for (Consumer<Resolved> hook : RESOLVED) {
             try {
                 hook.accept(resolved);
@@ -162,7 +163,7 @@ public final class MarkTracker {
 
     /**
      * One death that counted for somebody: who died, who gets the credit (the same attribution the mark uses), whether the victim was a Hunter of the Five,
-     * whether the killer dealt the killing blow, and whether the world did with no attacker at all (fire, lava, a fall, poison, drowning; not the void or /kill).
+     * whether the killer dealt the killing blow, and whether the world did with no attacker at all (fire, lava, a fall, poison, drowning; not the void or /kill). The killer (kill credit) can be null for such a death.
      */
     public record Resolved(LivingEntity victim, Entity killer, boolean victimWasMarked, boolean killingBlow, boolean environmental) {
     }
