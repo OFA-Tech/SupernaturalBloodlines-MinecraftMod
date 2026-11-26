@@ -852,9 +852,31 @@ public final class BrotherhoodCodeGameTests {
         try {
             g.a().hurt(victim.damageSources().indirectMagic(victim, victim), 1f);
             helper.assertTrue(g.a().getLastHurtByMob() == victim, "setup: the potion did not land");
+            // the player credit lasts 100 ticks, the fight window 200: past the first, the last attacker alone must still count
+            g.a().setLastHurtByPlayer(null);
             kill(g.a(), victim);
             helper.assertTrue(!breaker(helper, g.a()), "a victim who hurt the killer with a potion counted as innocent");
         } finally {
+            HunterMarkGameTests.reset(victim);
+            finish(helper, g);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aVictimWhosePetBitTheKillerWasFighting(GameTestHelper helper) {
+        Bh g = bh(helper, 20);
+        ServerPlayer victim = HunterMarkGameTests.human(helper);
+        net.minecraft.world.entity.animal.Wolf wolf = helper.spawnWithNoFreeWill(EntityType.WOLF, new BlockPos(3, 1, 3));
+        try {
+            g.a().hurt(g.a().damageSources().mobAttack(wolf), 1f);
+            // vanilla credits a tame pet's bite to its owner (lastHurtByPlayer); a fake owner is no level player, so that credit is set as vanilla would
+            g.a().setLastHurtByPlayer(victim);
+            helper.assertTrue(g.a().getLastHurtByMob() == wolf && g.a().getKillCredit() == victim, "setup: the bite was not the owner's");
+            kill(g.a(), victim);
+            helper.assertTrue(!breaker(helper, g.a()), "a victim whose wolf bit the killer counted as innocent");
+        } finally {
+            wolf.discard();
             HunterMarkGameTests.reset(victim);
             finish(helper, g);
         }
