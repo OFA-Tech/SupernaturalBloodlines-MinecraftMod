@@ -13,11 +13,21 @@ public final class Innocence {
     private Innocence() {
     }
 
-    /** A villager, or a player who was not fighting the killer (did not hit them in the last 10 seconds). */
+    /** A villager, or a player who was not fighting the killer (did not hurt them in the last 10 seconds, by any means). */
     public static boolean of(ServerPlayer killer, LivingEntity victim) {
         if (victim instanceof Villager) {
             return true;
         }
-        return victim instanceof Player p && !(p.getLastHurtMob() == killer && p.tickCount - p.getLastHurtMobTimestamp() <= FIGHT_WINDOW);
+        return victim instanceof Player p && !fought(p, killer);
+    }
+
+    /**
+     * The victim's own last target, or the killer's last attacker: the second covers what the first misses (a potion, an arrow's owner, TNT, a tamed wolf,
+     * or a victim who hit the killer and then something else).
+     */
+    private static boolean fought(Player victim, ServerPlayer killer) {
+        boolean struck = victim.getLastHurtMob() == killer && victim.tickCount - victim.getLastHurtMobTimestamp() <= FIGHT_WINDOW;
+        boolean hurtBy = killer.getLastHurtByMob() == victim && killer.tickCount - killer.getLastHurtByMobTimestamp() <= FIGHT_WINDOW;
+        return struck || hurtBy || killer.getKillCredit() == victim;
     }
 }

@@ -22,6 +22,11 @@ public final class CodeRules {
         return times.stream().filter(t -> now - t < windowMillis).toList();
     }
 
+    /** The strike window of {@code days} real days. */
+    public static long windowMillis(int days) {
+        return days * 24L * 3_600_000L;
+    }
+
     public static boolean expels(int strikes, int limit) {
         return strikes >= limit;
     }

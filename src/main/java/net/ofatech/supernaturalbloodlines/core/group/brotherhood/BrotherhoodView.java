@@ -11,10 +11,13 @@ package net.ofatech.supernaturalbloodlines.core.group.brotherhood;
  * @param armsPercent the bonus the viewer has now, in percent
  * @param strikes the breaks that still count towards an expulsion
  * @param breakerSecondsLeft seconds of the Code-breaker day left, 0 when none
+ * @param penaltyPercent the share of the mark a break costs, from the config
+ * @param strikeDays the days a break counts towards an expulsion, from the config
  */
 public record BrotherhoodView(boolean inBrotherhood, boolean fits, boolean perksOn, int ownMark, int leaderMark, boolean anyHasMax, int armsBrothers, int armsPercent,
-                              boolean sightOn, boolean codeOn, int strikes, int strikeLimit, int breakerSecondsLeft, boolean leadByMark) {
-    public static final BrotherhoodView NONE = new BrotherhoodView(false, false, false, 0, 0, false, 0, 0, false, false, 0, 0, 0, false);
+                              boolean sightOn, boolean codeOn, int strikes, int strikeLimit, int breakerSecondsLeft, boolean leadByMark,
+                              int penaltyPercent, int strikeDays) {
+    public static final BrotherhoodView NONE = new BrotherhoodView(false, false, false, 0, 0, false, 0, 0, false, false, 0, 0, 0, false, 0, 0);
 
     public BrotherhoodView {
         ownMark = BrotherhoodWire.clamp(ownMark, BrotherhoodWire.MAX_MARK);
@@ -24,6 +27,8 @@ public record BrotherhoodView(boolean inBrotherhood, boolean fits, boolean perks
         strikes = BrotherhoodWire.clamp(strikes, BrotherhoodWire.MAX_STRIKES);
         strikeLimit = BrotherhoodWire.clamp(strikeLimit, BrotherhoodWire.MAX_STRIKES);
         breakerSecondsLeft = BrotherhoodWire.clamp(breakerSecondsLeft, BrotherhoodWire.MAX_SECONDS);
+        penaltyPercent = BrotherhoodWire.clamp(penaltyPercent, BrotherhoodWire.MAX_PERCENT);
+        strikeDays = BrotherhoodWire.clamp(strikeDays, BrotherhoodWire.MAX_DAYS);
     }
 
     /** True when the viewer is a breaker now. */

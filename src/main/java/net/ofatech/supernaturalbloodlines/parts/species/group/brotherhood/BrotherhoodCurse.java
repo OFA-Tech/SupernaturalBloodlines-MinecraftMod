@@ -1,7 +1,6 @@
 package net.ofatech.supernaturalbloodlines.parts.species.group.brotherhood;
 
 import java.util.Map;
-import java.util.OptionalLong;
 import java.util.UUID;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
@@ -12,36 +11,47 @@ import net.ofatech.supernaturalbloodlines.parts.species.group.GroupIndex;
 import net.ofatech.supernaturalbloodlines.parts.species.group.GroupsConfig;
 import net.ofatech.supernaturalbloodlines.parts.species.hunter.HunterCurse;
 import net.ofatech.supernaturalbloodlines.parts.species.hunter.MarkTracker;
+import net.ofatech.supernaturalbloodlines.parts.species.pack.Innocence;
 import net.ofatech.supernaturalbloodlines.parts.species.pack.PackIndex;
 import net.ofatech.supernaturalbloodlines.parts.species.sireline.SireCall;
 
 /**
  * The Hunter's Curse for every brother (R295): prey who kill any brother who is not marked are cursed by the same curse, and it ends by itself after
- * {@code brotherhood_curse_hours} unless a Potential awakens first. The curse of a marked hunter is the old path, with no timer. A curse already carried
- * is never touched. The end runs whatever the switches say: switching a perk off never leaves a curse running forever.
+ * {@code brotherhood_curse_hours} unless a Potential awakens first. The curse of a marked hunter is the old path, with no timer, and it takes over a timed
+ * one (R83: it ends only at an awakening). A killer who was fighting back (the brother hurt them first) is not cursed, and being in the same group spares
+ * nobody. The end runs whatever the switches say: switching a perk off never leaves a curse running forever.
  */
 public final class BrotherhoodCurse {
     private BrotherhoodCurse() {
     }
 
     static void onResolved(MarkTracker.Resolved r) {
-        if (!GroupsConfig.curseExtendsEnabled() || !GroupsConfig.brotherhoodPerksOn() || r.victimWasMarked()
-                || !(r.killer() instanceof ServerPlayer killer) || !(r.victim() instanceof ServerPlayer victim)) {
+        if (!(r.killer() instanceof ServerPlayer killer) || !(r.victim() instanceof ServerPlayer victim)) {
             return;
         }
         ServerLevel level = victim.serverLevel();
-        BrotherhoodScope.Brotherhood b = BrotherhoodScope.of(level, victim.getUUID());
-        if (b == null || !BrotherhoodScope.appliesTo(level, b.leader(), victim) || !MarkTracker.isPrey(killer) || PackIndex.samePack(killer, victim)) {
+        if (r.victimWasMarked()) {
+            // the old path cursed the killer already (the kill feed runs after it): its curse is not the timed one
+            if (BloodlineAccess.get(killer).hunterCurse()) {
+                GroupIndex.get(level).clearCurse(killer.getUUID());
+            }
             return;
         }
-        boolean already = BloodlineAccess.get(killer).hunterCurse();
-        if (already) {
+        if (!GroupsConfig.curseExtendsEnabled() || !GroupsConfig.brotherhoodPerksOn()) {
+            return;
+        }
+        BrotherhoodScope.Brotherhood b = BrotherhoodScope.of(level, victim.getUUID());
+        if (b == null || !BrotherhoodScope.appliesTo(level, b.leader(), victim) || !MarkTracker.isPrey(killer) || !Innocence.of(killer, victim)) {
+            return;
+        }
+        if (BloodlineAccess.get(killer).hunterCurse()) {
             return;
         }
         HunterCurse.curse(killer);
         if (BloodlineAccess.get(killer).hunterCurse()) {
-            OptionalLong end = CurseExtend.endAt(false, false, PackIndex.now(), GroupsConfig.brotherhoodCurseHours());
-            end.ifPresent(until -> GroupIndex.get(level).setCurse(killer.getUUID(), until));
+            int hours = GroupsConfig.brotherhoodCurseHours();
+            GroupIndex.get(level).setCurse(killer.getUUID(), CurseExtend.endAt(PackIndex.now(), hours));
+            killer.sendSystemMessage(BrotherhoodText.of("curse_start", hours));
         }
     }
 
@@ -60,6 +70,7 @@ public final class BrotherhoodCurse {
                     HunterCurse.liftLater(server, row.getKey());
                 }
                 groups.clearCurse(row.getKey());
+                net.ofatech.supernaturalbloodlines.parts.species.pack.PackMembers.tell(server, row.getKey(), BrotherhoodText.key("curse_lifted"), "");
             }
         }
     }

@@ -307,6 +307,27 @@ public final class BrotherhoodViewGameTests {
     }
 
     @GameTest(template = "empty", templateNamespace = NS)
+    public static void aPreyMemberSeesAPotentialAsABrother(GameTestHelper helper) {
+        Bh g = bh(helper, 12);
+        TalkingDuelist vampire = GroupTestKit.vampire(helper, 4.5);
+        online(g.leader(), g.a(), g.b(), vampire);
+        try {
+            helper.assertTrue(join(g.leader(), vampire), "the vampire could not join");
+            BloodlineAccess.set(g.a(), BloodlineState.NONE.toBuilder().species(Species.POTENTIAL).build());
+            helper.assertTrue(rankOf(GroupViews.of(vampire), g.a()).equals("member"), "a prey member was shown who is a Potential");
+            helper.assertTrue(rankOf(GroupViews.of(g.a()), g.a()).equals("potential"), "the Potential does not see their own word");
+            helper.assertTrue(rankOf(GroupViews.of(g.b()), g.a()).equals("potential"), "a fitting brother does not see the Potential");
+        } finally {
+            finish(helper, g, vampire);
+        }
+        helper.succeed();
+    }
+
+    private static String rankOf(GroupView view, ServerPlayer member) {
+        return view.members().stream().filter(r -> r.id().filter(member.getUUID()::equals).isPresent()).findFirst().map(GroupView.Row::rank).orElse("none");
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
     public static void aGroupOfAnotherTypeGetsNone(GameTestHelper helper) {
         TalkingDuelist witch = GroupTestKit.witch(helper, 1.5);
         TalkingDuelist member = human(helper, 2.5);

@@ -62,4 +62,4 @@ No skills, **+10% max aura**. Apex race: **Eternal Hunter** (not undead). See [T
 
 ### In a Brotherhood
 
-A Code break costs a Hunter of the Five a quarter of their mark by default, but does not change their species or reset the instinct clock. A prey player outside the group who kills an unmarked brother receives the same Hunter's Curse, limited to 48 real hours by default or until a Potential awakens. An existing curse keeps its end.
+A Code break costs a Hunter of the Five a quarter of their mark by default, but does not change their species or reset the instinct clock. A prey player who kills an unmarked brother receives the same Hunter's Curse, limited to 48 real hours by default or until a Potential awakens; a prey member of the same brotherhood is not spared, but a prey player who was fighting back (the brother hurt them first) is. Killing a marked brother brings the old curse, which then ends only when a Potential awakens, even if a timed curse was already running.

@@ -259,6 +259,8 @@ public final class BrotherhoodLeadGameTests {
         online(founder, brother);
         try {
             helper.assertTrue(join(founder, brother), "no brotherhood");
+            // the sweep records an online leader's mark; an absent leader with no record is never passed
+            GroupIndex.get(helper.getLevel()).setMark(founder.getUUID(), 0);
             online(brother);
             BloodlineAccess.set(brother, hof(1));
             helper.assertTrue(leads(helper, brother), "the lead did not move");
@@ -383,6 +385,26 @@ public final class BrotherhoodLeadGameTests {
             helper.assertTrue(leads(helper, leader), "a vampire member took the lead");
         } finally {
             clean(helper, leader, vampire);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void anOfflineLeaderWithNoRecordedMarkKeepsTheLead(GameTestHelper helper) {
+        TalkingDuelist leader = GroupTestKit.hunter(helper, 1.5);
+        TalkingDuelist brother = human(helper, 2.5);
+        online(leader, brother);
+        try {
+            helper.assertTrue(join(leader, brother), "no brotherhood");
+            // a group from before the update: nobody's mark is recorded yet, and the leader is away
+            GroupIndex.get(helper.getLevel()).clearMark(leader.getUUID());
+            online(brother);
+            BloodlineAccess.set(brother, hof(3));
+            BrotherhoodRegistry.sweep(helper.getLevel().getServer());
+            helper.assertTrue(leads(helper, leader), "an absent leader whose mark was never recorded lost the lead as if it were 0");
+        } finally {
+            online(leader, brother);
+            clean(helper, leader, brother);
         }
         helper.succeed();
     }
@@ -587,6 +609,27 @@ public final class BrotherhoodLeadGameTests {
             helper.assertTrue(leads(helper, newcomer) && ledBy(helper, leader, newcomer), "the newcomer with a mark did not take the lead at once");
         } finally {
             clean(helper, leader, newcomer);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aMemberAJoiningLeaderBringsWithTheHighestMarkTakesItAtOnce(GameTestHelper helper) {
+        TalkingDuelist leader = GroupTestKit.hunter(helper, 1.5);
+        TalkingDuelist joiner = human(helper, 2.5);
+        TalkingDuelist brought = marked(helper, 3.5, 3);
+        online(leader, joiner, brought);
+        try {
+            GroupsConfig.override("open_founding", true);
+            GroupsConfig.override("lead_by_mark", false);
+            helper.assertTrue(join(joiner, brought), "setup: the joiner has no group");
+            GroupsConfig.override("lead_by_mark", null);
+            helper.assertTrue(join(leader, joiner), "could not join");
+            helper.assertTrue(leads(helper, brought) && ledBy(helper, leader, brought), "a marked member brought along did not take the lead at once");
+        } finally {
+            GroupsConfig.override("open_founding", null);
+            GroupsConfig.override("lead_by_mark", null);
+            clean(helper, leader, joiner, brought);
         }
         helper.succeed();
     }

@@ -18,8 +18,6 @@ import net.ofatech.supernaturalbloodlines.shared.supernatural.HubRequests;
 
 /** The viewer's own brotherhood, as the hub draws it (R297): their own mark and bonus, the leader's recorded mark, and the Code's counts. Never another brother's kills. */
 public final class BrotherhoodViews {
-    private static final long DAY = 24L * 3_600_000L;
-
     private BrotherhoodViews() {
     }
 
@@ -32,7 +30,7 @@ public final class BrotherhoodViews {
         boolean fits = BrotherhoodScope.fits(p);
         boolean perks = GroupsConfig.brotherhoodPerksOn();
         if (!BrotherhoodScope.appliesTo(level, b.leader(), p)) {
-            return new BrotherhoodView(true, fits, perks, 0, 0, false, 0, 0, false, false, 0, 0, 0, false);
+            return new BrotherhoodView(true, fits, perks, 0, 0, false, 0, 0, false, false, 0, 0, 0, false, 0, 0);
         }
         PackIndex packs = PackIndex.get(level);
         GroupIndex groups = GroupIndex.get(level);
@@ -41,10 +39,11 @@ public final class BrotherhoodViews {
         int leaderMark = p.getUUID().equals(b.leader()) ? own : BrotherhoodMarks.recorded(level, b.leader());
         Map<UUID, Integer> recorded = groups.marks();
         boolean anyMax = own >= MarkTracker.CAP || packs.roster(b.leader()).stream().anyMatch(id -> recorded.getOrDefault(id, 0) >= MarkTracker.CAP);
-        int strikes = groups.breakerOf(p.getUUID()).map(r -> CodeRules.strikesIn(r.strikes(), now, GroupsConfig.codeStrikesDays() * DAY).size()).orElse(0);
+        int strikes = groups.breakerOf(p.getUUID()).map(r -> CodeRules.strikesIn(r.strikes(), now, CodeRules.windowMillis(GroupsConfig.codeStrikesDays())).size()).orElse(0);
         int seconds = groups.breakerOf(p.getUUID()).map(r -> BrotherhoodWire.clamp((r.until() - now) / 1000, BrotherhoodWire.MAX_SECONDS)).orElse(0);
         return new BrotherhoodView(true, true, true, own, leaderMark, anyMax, BrotherhoodArms.brothersNear(p), (int) Math.round(BrotherhoodArms.bonusFor(p) * 100),
-                GroupsConfig.sightShareEnabled(), GroupsConfig.codeEnabled(), strikes, GroupsConfig.codeStrikes(), seconds, GroupsConfig.leadByMark());
+                GroupsConfig.sightShareEnabled(), GroupsConfig.codeEnabled(), strikes, GroupsConfig.codeStrikes(), seconds, GroupsConfig.leadByMark(),
+                GroupsConfig.codeMarkPenaltyPercent(), GroupsConfig.codeStrikesDays());
     }
 
     /** Something about the brotherhood changed (a mark, a strike, a breaker, the lead): every online member's page is refreshed. */

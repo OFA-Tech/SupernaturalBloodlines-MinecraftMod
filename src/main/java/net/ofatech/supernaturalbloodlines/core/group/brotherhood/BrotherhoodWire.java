@@ -8,6 +8,8 @@ public final class BrotherhoodWire {
     public static final int MAX_SECONDS = 720 * 3600;
     public static final int MAX_COUNT = 100;
     public static final int MAX_PERCENT = 100;
+    /** The longest strike window the config allows. */
+    public static final int MAX_DAYS = 365;
 
     private BrotherhoodWire() {
     }

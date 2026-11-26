@@ -43,6 +43,12 @@ class CodeRulesTest {
     }
 
     @Test
+    void theWindowIsTheDaysInMillis() {
+        assertEquals(7 * DAY, CodeRules.windowMillis(7));
+        assertEquals(DAY, CodeRules.windowMillis(1));
+    }
+
+    @Test
     void aLimitOfFiveNeedsFive() {
         assertFalse(CodeRules.expels(4, 5));
         assertTrue(CodeRules.expels(5, 5));

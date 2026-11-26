@@ -180,14 +180,17 @@ public final class BrotherCurseGameTests {
     }
 
     @GameTest(template = "empty", templateNamespace = NS)
-    public static void aTimedCurseThenAMarkedKillKeepsTheTimedEnd(GameTestHelper helper) {
+    public static void aMarkedKillAfterATimedCurseDropsTheTimedEnd(GameTestHelper helper) {
         Bh g = bh(helper);
         try {
             kill(g.vampire(), g.human());
-            long until = end(helper, g.vampire()).orElse(-1);
+            helper.assertTrue(end(helper, g.vampire()).isPresent(), "setup: no timed end");
             BloodlineAccess.set(g.hunter(), HunterMarkGameTests.state(Species.HUNTER_OF_THE_FIVE, 3));
             kill(g.vampire(), g.hunter());
-            helper.assertTrue(cursed(g.vampire()) && end(helper, g.vampire()).orElse(-2) == until, "the timed end was dropped or moved by a marked kill");
+            helper.assertTrue(cursed(g.vampire()) && end(helper, g.vampire()).isEmpty(), "a marked hunter's curse kept a timed end: " + end(helper, g.vampire()));
+            at(T0 + 49 * HOUR);
+            BrotherhoodRegistry.sweep(helper.getLevel().getServer());
+            helper.assertTrue(cursed(g.vampire()), "the cheap timed curse ended the curse a marked hunter's death brought");
         } finally {
             finish(helper, g);
         }
@@ -328,14 +331,14 @@ public final class BrotherCurseGameTests {
     }
 
     @GameTest(template = "empty", templateNamespace = NS)
-    public static void aKillerInTheSameGroupIsExempt(GameTestHelper helper) {
+    public static void aPreyMemberWhoKillsHisOwnBrotherIsCursed(GameTestHelper helper) {
         Bh g = bh(helper);
         TalkingDuelist prey = GroupTestKit.vampire(helper, 4.5);
         online(g.leader(), g.hunter(), g.human(), prey);
         try {
             helper.assertTrue(join(g.leader(), prey), "a vampire could not join");
             kill(prey, g.human());
-            helper.assertTrue(!cursed(prey) && end(helper, prey).isEmpty(), "a prey member of the same brotherhood was cursed");
+            helper.assertTrue(cursed(prey) && end(helper, prey).isPresent(), "a prey member who killed his own brother was spared");
         } finally {
             finish(helper, g, prey);
         }
@@ -515,6 +518,45 @@ public final class BrotherCurseGameTests {
         } finally {
             GroupIndex.get(helper.getLevel()).clearCurse(stranger);
             finish(helper, g);
+        }
+        helper.succeed();
+    }
+
+    // ---- round 2 ----
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aVampireWhoKillsABrotherWhoAttackedFirstIsNotCursed(GameTestHelper helper) {
+        Bh g = bh(helper);
+        TalkingDuelist vampire = GroupTestKit.vampire(helper, 4.5);
+        online(g.leader(), g.hunter(), g.human(), vampire);
+        HunterMarkGameTests.online(g.leader(), g.hunter(), g.human(), vampire);
+        try {
+            vampire.hurt(g.human().damageSources().playerAttack(g.human()), 1f);
+            helper.assertTrue(vampire.getLastHurtByMob() == g.human(), "setup: the brother's hit did not land");
+            kill(vampire, g.human());
+            helper.assertTrue(!cursed(vampire) && end(helper, vampire).isEmpty(), "a vampire who killed a brother in self-defence was cursed");
+        } finally {
+            finish(helper, g, vampire);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void theKillerHearsTheCurseStartAndLift(GameTestHelper helper) {
+        Bh g = bh(helper);
+        TalkingDuelist killer = GroupTestKit.vampire(helper, 4.5);
+        online(g.leader(), g.hunter(), g.human(), killer);
+        HunterMarkGameTests.online(g.leader(), g.hunter(), g.human(), killer);
+        try {
+            kill(killer, g.human());
+            var start = killer.message("supernaturalbloodlines.brotherhood.curse_start");
+            helper.assertTrue(start != null && List.of(((net.minecraft.network.chat.contents.TranslatableContents) start.getContents()).getArgs()).equals(List.of(48)),
+                    "the start line: " + start);
+            at(T0 + 48 * HOUR);
+            BrotherhoodRegistry.sweep(helper.getLevel().getServer());
+            helper.assertTrue(!cursed(killer) && killer.received("supernaturalbloodlines.brotherhood.curse_lifted"), "no line when the curse lifted");
+        } finally {
+            finish(helper, g, killer);
         }
         helper.succeed();
     }

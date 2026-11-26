@@ -78,7 +78,7 @@ public final class BrotherhoodRegistry {
         PackIndex packs = PackIndex.get(server.overworld());
         BrotherhoodCurse.expire(server);
         net.ofatech.supernaturalbloodlines.parts.species.group.GroupIndex.get(server.overworld()).pruneCode(PackIndex.now(),
-                net.ofatech.supernaturalbloodlines.parts.species.group.GroupsConfig.codeStrikesDays() * 24L * 3_600_000L);
+                net.ofatech.supernaturalbloodlines.core.group.brotherhood.CodeRules.windowMillis(net.ofatech.supernaturalbloodlines.parts.species.group.GroupsConfig.codeStrikesDays()));
         for (UUID leader : List.copyOf(packs.leaders())) {
             if (BrotherhoodScope.isBrotherhood(server.overworld(), leader)) {
                 for (UUID id : packs.pack(leader)) {

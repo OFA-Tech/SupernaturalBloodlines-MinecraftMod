@@ -4,24 +4,12 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.util.OptionalLong;
 import org.junit.jupiter.api.Test;
 
 class CurseExtendTest {
     @Test
     void anUnmarkedBrothersCurseEndsAfterTheHours() {
-        assertEquals(OptionalLong.of(1000 + 48 * 3_600_000L), CurseExtend.endAt(false, false, 1000, 48));
-    }
-
-    @Test
-    void aMarkedBrothersCurseGetsNoTimer() {
-        assertTrue(CurseExtend.endAt(false, true, 1000, 48).isEmpty());
-    }
-
-    @Test
-    void anAlreadyCursedKillerGetsNothingNew() {
-        assertTrue(CurseExtend.endAt(true, false, 1000, 48).isEmpty());
-        assertTrue(CurseExtend.endAt(true, true, 1000, 48).isEmpty());
+        assertEquals(1000 + 48 * 3_600_000L, CurseExtend.endAt(1000, 48));
     }
 
     @Test

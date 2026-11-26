@@ -5,13 +5,13 @@
 - A plain human now leads a Brotherhood rather than a Coven. Founding still requires a hunter unless open founding is enabled. Members stay when a leader changes the group's type.
 - The highest eligible mark takes the lead; a tie keeps the incumbent. Nearby brothers add 3% attack damage each, up to 12%. Shared sight forwards the prey outline, not kills or mark progress.
 - Killing an innocent costs part of the mark and starts a Code-breaker day. Three strikes in a week expel and bar a member for seven days; the leader cannot be expelled while leading.
-- Killing an unmarked brother can bring the Hunter's Curse to a prey player for 48 real hours or until a Potential awakens. A curse in progress keeps its original end. When Kol hunts a brother, fitting online brothers get a warning that names only the target.
+- Killing an unmarked brother can bring the Hunter's Curse to a prey player for 48 real hours or until a Potential awakens. A curse in progress keeps its original end, except that killing a marked brother turns it into the untimed curse. Same-group prey killers are cursed too; a killer who was fighting back is not. When Kol hunts a brother, fitting online brothers get a warning that names only the target.
 - The Group page shows the viewer's mark, the First Brother's mark, the Map and the Code. Map and ring art are placeholders; the Map is not a route to the Cure. The attack bonus line reflects the last hub snapshot (requests are limited to once per 20 ticks).
 - Sixteen settings are available from the operator-only Admin page. No command rows were added. The optional hub channel moved to protocol **19**: update client and server together.
 
 ### Rolling back
 
-Turn `brotherhood_enabled` off to disable founding and perks without deleting rows; timed curses still expire. Before swapping jars, stop the server and back up the world and `supernaturalbloodlines-groups.toml`. A 20c jar preserves the unknown `marks`, `curses` and `code_breakers` rows in `supernaturalbloodlines_groups.dat`; the existing `bans` rows survive too. Human-led groups derive Coven again, with Brotherhood data dormant. A 20c jar does not know the 48-hour deadline: let timed curses expire on 20d or apply `HUNTER_CURSE_LIFTED` via `/sb debug` before downgrading. The `CODE_BROKEN` event itself is never saved. An older jar can rewrite the config without the new settings.
+Turn `brotherhood_enabled` off to disable founding and perks without deleting rows; timed curses still expire. Before swapping jars, stop the server and back up the world and `supernaturalbloodlines-groups.toml`. A 20c jar preserves the unknown `marks`, `curses` and `code_breakers` rows in `supernaturalbloodlines_groups.dat`; the existing `bans` rows survive too. Human-led groups derive Coven again, with Brotherhood data dormant. A 20c jar (hub protocol 18) does not know the 48-hour deadline, so timed curses never expire after a rollback: let them expire on 20d or apply `HUNTER_CURSE_LIFTED` via `/sb debug` before downgrading. The `CODE_BROKEN` event itself is never saved. An older jar can rewrite the config without the new settings.
 
 ## Unreleased (plan 20c: clans)
 

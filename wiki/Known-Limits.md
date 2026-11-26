@@ -151,4 +151,4 @@ If you find something that behaves differently from this wiki, please [open an i
 
 ## Brotherhood
 
-A member who does not fit can stay but receives no perks. Type-specific joining is not part of 20d. The attack bonus display reflects the most recent hub snapshot, and a Potential is a roster label, not another rank. The map and ring use placeholder art; the Cure road and Mikael's call are not implemented here.
+A member who does not fit can stay but receives no perks. Type-specific joining is not part of 20d. The attack bonus display reflects the most recent hub snapshot, and a Potential is a roster label, not another rank. The map and ring use placeholder art; the Cure road and Mikael's call are not implemented here. After a rollback to a 20c jar (hub protocol 18), timed Hunter's Curses no longer expire by themselves.

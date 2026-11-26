@@ -36,6 +36,8 @@ final class BrotherhoodCards {
         if (mark < 0) {
             return y;
         }
+        var text = BrotherhoodPlan.markLine(mark);
+        y = PageKit.wrapped(f, Component.translatable(KEY + text.key(), text.args().toArray()), r.x() + 8, y, r.w() - 8, f.theme().muted());
         int count = BrotherhoodWire.MAX_MARK;
         int step = Math.min(4, (r.w() - 8) / count);
         if (step >= 2 && f.whole(y, 5) && y >= f.clipTop()) {

@@ -26,13 +26,13 @@ class BrotherhoodViewWireTest {
     }
 
     private static BrotherhoodView sample() {
-        return new BrotherhoodView(true, true, true, 12, 20, true, 4, 12, true, true, 2, 3, 43_200, true);
+        return new BrotherhoodView(true, true, true, 12, 20, true, 4, 12, true, true, 2, 3, 43_200, true, 25, 7);
     }
 
     @Test
     void roundTrip() {
         assertEquals(sample(), roundTrip(sample()));
-        BrotherhoodView edge = new BrotherhoodView(true, true, true, 20, 20, true, 100, 100, false, false, 100, 20, BrotherhoodWire.MAX_SECONDS, false);
+        BrotherhoodView edge = new BrotherhoodView(true, true, true, 20, 20, true, 100, 100, false, false, 100, 20, BrotherhoodWire.MAX_SECONDS, false, 100, BrotherhoodWire.MAX_DAYS);
         assertEquals(edge, roundTrip(edge));
     }
 
@@ -43,6 +43,10 @@ class BrotherhoodViewWireTest {
     }
 
     private static ByteBuf wire(int own, int leader, int strikes, int seconds) {
+        return wire(own, leader, strikes, seconds, 25, 7);
+    }
+
+    private static ByteBuf wire(int own, int leader, int strikes, int seconds, int penalty, int days) {
         ByteBuf buf = Unpooled.buffer();
         buf.writeBoolean(true);
         buf.writeBoolean(true);
@@ -58,6 +62,8 @@ class BrotherhoodViewWireTest {
         ByteBufCodecs.VAR_INT.encode(buf, 3);
         ByteBufCodecs.VAR_INT.encode(buf, seconds);
         buf.writeBoolean(true);
+        ByteBufCodecs.VAR_INT.encode(buf, penalty);
+        ByteBufCodecs.VAR_INT.encode(buf, days);
         return buf;
     }
 
@@ -71,16 +77,20 @@ class BrotherhoodViewWireTest {
         assertEquals(BrotherhoodWire.MAX_SECONDS, BrotherhoodViewPayload.STREAM_CODEC.decode(wire(0, 0, 0, BrotherhoodWire.MAX_SECONDS)).view().breakerSecondsLeft());
         assertThrows(DecoderException.class, () -> BrotherhoodViewPayload.STREAM_CODEC.decode(wire(0, 0, 0, BrotherhoodWire.MAX_SECONDS + 1)));
         assertThrows(DecoderException.class, () -> BrotherhoodViewPayload.STREAM_CODEC.decode(wire(-1, 0, 0, 0)));
+        assertThrows(DecoderException.class, () -> BrotherhoodViewPayload.STREAM_CODEC.decode(wire(0, 0, 0, 0, 101, 7)));
+        assertThrows(DecoderException.class, () -> BrotherhoodViewPayload.STREAM_CODEC.decode(wire(0, 0, 0, 0, 25, BrotherhoodWire.MAX_DAYS + 1)));
     }
 
     @Test
     void theRecordNeverHoldsANumberOverTheBound() {
-        BrotherhoodView v = new BrotherhoodView(true, true, true, 99, -4, false, 500, 500, true, true, 900, 900, Integer.MAX_VALUE, true);
+        BrotherhoodView v = new BrotherhoodView(true, true, true, 99, -4, false, 500, 500, true, true, 900, 900, Integer.MAX_VALUE, true, 900, 9000);
         assertEquals(20, v.ownMark());
         assertEquals(0, v.leaderMark());
         assertEquals(100, v.armsBrothers());
         assertEquals(100, v.strikes());
         assertEquals(BrotherhoodWire.MAX_SECONDS, v.breakerSecondsLeft());
+        assertEquals(100, v.penaltyPercent());
+        assertEquals(BrotherhoodWire.MAX_DAYS, v.strikeDays());
         assertEquals(v, roundTrip(v));
     }
 
@@ -93,12 +103,12 @@ class BrotherhoodViewWireTest {
             }
         }
         assertEquals(List.of(), bad, "a view that carries more than booleans and numbers");
-        assertEquals(14, BrotherhoodView.class.getRecordComponents().length);
+        assertEquals(16, BrotherhoodView.class.getRecordComponents().length);
     }
 
     @Test
     void theBreakerFlagIsTheSecondsLeft() {
-        assertTrue(new BrotherhoodView(true, true, true, 0, 0, false, 0, 0, true, true, 1, 3, 1, true).breaker());
-        assertFalse(new BrotherhoodView(true, true, true, 0, 0, false, 0, 0, true, true, 1, 3, 0, true).breaker());
+        assertTrue(new BrotherhoodView(true, true, true, 0, 0, false, 0, 0, true, true, 1, 3, 1, true, 25, 7).breaker());
+        assertFalse(new BrotherhoodView(true, true, true, 0, 0, false, 0, 0, true, true, 1, 3, 0, true, 25, 7).breaker());
     }
 }

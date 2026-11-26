@@ -9,7 +9,6 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.npc.Villager;
 import net.minecraft.world.entity.player.Player;
-import net.ofatech.supernaturalbloodlines.SupernaturalBloodlines;
 import net.ofatech.supernaturalbloodlines.core.BloodlineAccess;
 import net.ofatech.supernaturalbloodlines.core.bloodline.BloodlineEvent;
 import net.ofatech.supernaturalbloodlines.core.group.brotherhood.CodeLedger;
@@ -21,7 +20,6 @@ import net.ofatech.supernaturalbloodlines.parts.species.group.GroupIndex.Breaker
 import net.ofatech.supernaturalbloodlines.parts.species.group.GroupsConfig;
 import net.ofatech.supernaturalbloodlines.parts.species.hunter.MarkTracker;
 import net.ofatech.supernaturalbloodlines.parts.species.pack.Innocence;
-import net.ofatech.supernaturalbloodlines.parts.species.pack.PackAccess;
 import net.ofatech.supernaturalbloodlines.parts.species.pack.PackIndex;
 import net.ofatech.supernaturalbloodlines.parts.species.pack.PackMembers;
 
@@ -31,7 +29,6 @@ import net.ofatech.supernaturalbloodlines.parts.species.pack.PackMembers;
  * so it follows the player to another brotherhood and ends by the clock.
  */
 public final class Codes {
-    private static final long DAY = 24L * 3_600_000L;
     private static CodeLedger ledger = new CodeLedger();
 
     private Codes() {
@@ -47,9 +44,9 @@ public final class Codes {
         return GroupIndex.get(server.overworld()).breakerOf(id).map(r -> CodeRules.isBreaker(r.until(), PackIndex.now())).orElse(false);
     }
 
-    /** The kill feed: only a player who is a brother is ever judged. */
+    /** The kill feed: only a brother who dealt the killing blow is judged; kill credit alone (lava, a fall after their hit) is not a kill. */
     static void onResolved(MarkTracker.Resolved r) {
-        if (r.killer() instanceof ServerPlayer killer && !killer.level().isClientSide) {
+        if (r.killingBlow() && r.killer() instanceof ServerPlayer killer) {
             judge(killer, r.victim());
         }
     }
@@ -80,7 +77,9 @@ public final class Codes {
         MinecraftServer server = killer.server;
         ServerLevel level = killer.serverLevel();
         UUID id = killer.getUUID();
-        // the mark first: a leader who drops below a brother can be passed by it, and what follows is about the group as it stands then
+        // read before the mark loss: a leader that loss lets a brother pass is still judged as the leader who broke the Code
+        BrotherhoodScope.Brotherhood before = BrotherhoodScope.of(level, id);
+        boolean wasLeader = before != null && before.leader().equals(id);
         BloodlineAccess.applyEvent(killer, BloodlineEvent.CODE_BROKEN, SpeciesContext.of(killer, null));
         BrotherhoodScope.Brotherhood b = BrotherhoodScope.of(level, id);
         if (b == null) {
@@ -89,19 +88,25 @@ public final class Codes {
         GroupIndex groups = GroupIndex.get(level);
         List<Long> strikes = new ArrayList<>(groups.breakerOf(id).map(BreakerRow::strikes).orElse(List.of()));
         strikes.add(now);
-        List<Long> counting = CodeRules.strikesIn(strikes, now, GroupsConfig.codeStrikesDays() * DAY);
+        List<Long> counting = CodeRules.strikesIn(strikes, now, CodeRules.windowMillis(GroupsConfig.codeStrikesDays()));
         long until = CodeRules.breakerUntil(now, GroupsConfig.codeBreakerHours());
         List<UUID> roster = PackIndex.get(level).roster(b.leader());
         String name = killer.getGameProfile().getName();
-        if (!CodeRules.expels(counting.size(), GroupsConfig.codeStrikes())) {
+        int hours = GroupsConfig.codeBreakerHours();
+        int limit = GroupsConfig.codeStrikes();
+        boolean marked = BloodlineAccess.get(killer).species() == net.ofatech.supernaturalbloodlines.core.bloodline.Species.HUNTER_OF_THE_FIVE;
+        killer.sendSystemMessage(marked ? BrotherhoodText.of("code_you", BloodlineAccess.get(killer).markKills(), hours, counting.size(), limit)
+                : BrotherhoodText.of("code_you.unmarked", hours, counting.size(), limit));
+        if (!CodeRules.expels(counting.size(), limit)) {
             groups.setBreaker(id, new BreakerRow(until, counting));
             tellAll(server, roster, null, "code_broken", name);
-        } else if (b.leader().equals(id)) {
+        } else if (wasLeader) {
             groups.setBreaker(id, new BreakerRow(until, List.of()));
             tellAll(server, roster, null, "code_leader", name);
         } else {
-            String leaderName = PackAccess.nameOf(server, b.leader());
-            PackMembers.remove(server, id, BrotherhoodText.key("broke_code"), leaderName != null ? leaderName : b.leader().toString().substring(0, 8));
+            String leaderName = BrotherhoodText.nameOf(server, b.leader());
+            PackMembers.remove(server, id, BrotherhoodText.key(leaderName != null ? "broke_code" : "broke_code.someone"), leaderName != null ? leaderName : "");
+            killer.sendSystemMessage(BrotherhoodText.of("code_out_days", GroupsConfig.codeExileDays()));
             groups.ban(b.group().toString(), id, ExileRules.until(now, GroupsConfig.codeExileDays()));
             groups.setBreaker(id, new BreakerRow(until, List.of()));
             tellAll(server, roster, id, "code_expelled", name);
@@ -116,9 +121,5 @@ public final class Codes {
                 PackMembers.tell(server, member, BrotherhoodText.key(key), name);
             }
         }
-    }
-
-    static void warnOnce(Exception e) {
-        SupernaturalBloodlines.LOGGER.error("The Code failed on a kill", e);
     }
 }

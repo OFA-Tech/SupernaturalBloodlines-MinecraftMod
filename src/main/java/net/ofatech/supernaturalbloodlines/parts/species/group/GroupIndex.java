@@ -457,7 +457,7 @@ public final class GroupIndex extends SavedData {
         boolean[] changed = {false};
         for (UUID player : List.copyOf(breakers.keySet())) {
             BreakerRow row = breakers.get(player);
-            List<Long> kept = row.strikes().stream().filter(t -> now - t < windowMillis).toList();
+            List<Long> kept = net.ofatech.supernaturalbloodlines.core.group.brotherhood.CodeRules.strikesIn(row.strikes(), now, windowMillis);
             if (kept.isEmpty() && row.until() <= now) {
                 breakers.remove(player);
                 changed[0] = true;

@@ -52,8 +52,14 @@ public final class GroupViews {
         return new GroupView(type, true, viewer, GroupView.clip(name == null ? leader.toString().substring(0, 8) : name, GroupWire.MAX_NAME), days, rows);
     }
 
-    /** A brotherhood's member row says so for a Potential who is here: the one word the spec takes from a kind. Somebody who is away is a Brother to everyone. */
+    /**
+     * A brotherhood's member row says so for a Potential who is here: the one word the spec takes from a kind. Only the Potential and brothers who fit read
+     * it (a prey member must not learn who will be the next hunter); somebody who is away is a Brother to everyone.
+     */
     private static boolean isPotential(ServerPlayer viewer, UUID id) {
+        if (!viewer.getUUID().equals(id) && !net.ofatech.supernaturalbloodlines.parts.species.group.brotherhood.BrotherhoodScope.fits(viewer)) {
+            return false;
+        }
         ServerPlayer member = SireCall.player(viewer.server, id);
         return member != null && net.ofatech.supernaturalbloodlines.core.BloodlineAccess.get(member).species() == net.ofatech.supernaturalbloodlines.core.bloodline.Species.POTENTIAL;
     }

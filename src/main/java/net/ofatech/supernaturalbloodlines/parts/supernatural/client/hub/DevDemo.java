@@ -193,10 +193,14 @@ final class DevDemo {
                                 none, true, Optional.of(head ? id("Rowan") : v.player().getUUID())),
                         new net.ofatech.supernaturalbloodlines.core.group.GroupView.Row("Mira", "member", none, true, Optional.of(id("Mira"))),
                         new net.ofatech.supernaturalbloodlines.core.group.GroupView.Row("Cass", "member", none, false, Optional.of(id("Cass"))))));
+        if (state.equals("loading")) {
+            net.ofatech.supernaturalbloodlines.parts.supernatural.client.BrotherhoodClient.clear();
+            return;
+        }
         net.ofatech.supernaturalbloodlines.parts.supernatural.client.BrotherhoodClient.demo(
                 new net.ofatech.supernaturalbloodlines.core.group.brotherhood.BrotherhoodView(true, fits, on, visible ? mark : 0,
                         visible ? head ? mark : complete ? 20 : Math.max(12, mark) : 0, visible && complete,
-                        nearby, nearby * 3, visible, visible, visible ? strikes : 0, visible ? 3 : 0, breaker ? 43_200 : 0, visible));
+                        nearby, nearby * 3, visible, visible, visible ? strikes : 0, visible ? 3 : 0, breaker ? 43_200 : 0, visible, 25, 7));
     }
 
     /**

@@ -9,9 +9,9 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.ofatech.supernaturalbloodlines.core.group.GroupType;
 import net.ofatech.supernaturalbloodlines.core.group.brotherhood.LeadByMark;
+import net.ofatech.supernaturalbloodlines.parts.species.group.GroupIndex;
 import net.ofatech.supernaturalbloodlines.parts.species.group.GroupLead;
 import net.ofatech.supernaturalbloodlines.parts.species.group.GroupsConfig;
-import net.ofatech.supernaturalbloodlines.parts.species.pack.PackAccess;
 import net.ofatech.supernaturalbloodlines.parts.species.pack.PackIndex;
 import net.ofatech.supernaturalbloodlines.parts.species.pack.PackMembers;
 import net.ofatech.supernaturalbloodlines.parts.species.sireline.SireCall;
@@ -33,6 +33,10 @@ public final class BrotherhoodLead {
             return false;
         }
         ServerPlayer leaderOnline = SireCall.player(server, leader);
+        // an absent leader whose mark was never recorded (a group from before this update) is not a 0 to be passed
+        if (leaderOnline == null && GroupIndex.get(level).markOf(leader).isEmpty()) {
+            return false;
+        }
         int leaderMark = leaderOnline != null ? BrotherhoodMarks.of(leaderOnline) : BrotherhoodMarks.recorded(level, leader);
         List<LeadByMark.Candidate> candidates = new ArrayList<>();
         for (UUID id : packs.betasOf(leader)) {
@@ -47,12 +51,13 @@ public final class BrotherhoodLead {
         }
         List<UUID> members = packs.betasOf(leader);
         GroupLead.handOver(server, packs, leader, next.get(), GroupType.BROTHERHOOD);
-        String name = PackAccess.nameOf(server, next.get());
-        String shown = name != null ? name : next.get().toString().substring(0, 8);
+        String name = BrotherhoodText.nameOf(server, next.get());
+        String unknown = name == null ? ".someone" : "";
+        String shown = name == null ? "" : name;
         for (UUID id : members) {
-            PackMembers.tell(server, id, BrotherhoodText.key(id.equals(next.get()) ? "lead_now" : "lead_lost"), id.equals(next.get()) ? "" : shown);
+            PackMembers.tell(server, id, BrotherhoodText.key(id.equals(next.get()) ? "lead_now" : "lead_lost" + unknown), id.equals(next.get()) ? "" : shown);
         }
-        PackMembers.tell(server, leader, BrotherhoodText.key("lead_you"), shown);
+        PackMembers.tell(server, leader, BrotherhoodText.key("lead_you" + unknown), shown);
         BrotherhoodViews.push(server, next.get());
         return true;
     }

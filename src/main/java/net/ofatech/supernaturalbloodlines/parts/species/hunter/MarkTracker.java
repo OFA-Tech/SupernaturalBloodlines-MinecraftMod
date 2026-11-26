@@ -147,7 +147,7 @@ public final class MarkTracker {
         if (victimWasMarked && victim instanceof ServerPlayer v && isPrey(killer) && !samePack(v, killer)) {
             killedMarkedHunter(v, killer);
         }
-        Resolved resolved = new Resolved(victim, killer, victimWasMarked);
+        Resolved resolved = new Resolved(victim, killer, victimWasMarked, e.getSource().getEntity() == killer);
         for (Consumer<Resolved> hook : RESOLVED) {
             try {
                 hook.accept(resolved);
@@ -157,8 +157,11 @@ public final class MarkTracker {
         }
     }
 
-    /** One death that counted for somebody: who died, who gets the credit (the same attribution the mark uses) and whether the victim was a Hunter of the Five. */
-    public record Resolved(LivingEntity victim, Entity killer, boolean victimWasMarked) {
+    /**
+     * One death that counted for somebody: who died, who gets the credit (the same attribution the mark uses), whether the victim was a Hunter of the Five,
+     * and whether the killer dealt the killing blow (false for kill credit alone: a fall or lava after their hit).
+     */
+    public record Resolved(LivingEntity victim, Entity killer, boolean victimWasMarked, boolean killingBlow) {
     }
 
     private static final List<Consumer<Resolved>> RESOLVED = new CopyOnWriteArrayList<>();

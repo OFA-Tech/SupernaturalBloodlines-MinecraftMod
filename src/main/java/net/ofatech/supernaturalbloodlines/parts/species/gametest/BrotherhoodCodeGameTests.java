@@ -706,13 +706,13 @@ public final class BrotherhoodCodeGameTests {
     // ---- attribution ----
 
     @GameTest(template = "empty", templateNamespace = NS)
-    public static void aKillCreditWithNoSourceIsJudged(GameTestHelper helper) {
+    public static void aKillCreditWithNoSourceIsNotJudged(GameTestHelper helper) {
         Bh g = bh(helper, 20);
         Villager v = villager(helper);
         try {
             v.setLastHurtByPlayer(g.a());
             net.neoforged.neoforge.common.NeoForge.EVENT_BUS.post(new LivingDeathEvent(v, v.damageSources().genericKill()));
-            helper.assertTrue(breaker(helper, g.a()), "a kill with credit and no source was not judged");
+            helper.assertTrue(!breaker(helper, g.a()), "kill credit with no killing blow was judged (round 2: only the killing blow counts)");
         } finally {
             v.discard();
             finish(helper, g);
@@ -822,5 +822,122 @@ public final class BrotherhoodCodeGameTests {
             finish(helper, g);
         }
         helper.succeed();
+    }
+
+    // ---- round 2: who was fighting, and who did the killing ----
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aVictimWhoHitTheKillerThenAChickenWasStillFighting(GameTestHelper helper) {
+        Bh g = bh(helper, 20);
+        ServerPlayer victim = HunterMarkGameTests.human(helper);
+        LivingEntity chicken = helper.spawnWithNoFreeWill(EntityType.CHICKEN, new BlockPos(3, 1, 3));
+        try {
+            g.a().hurt(victim.damageSources().playerAttack(victim), 1f);
+            helper.assertTrue(g.a().getLastHurtByMob() == victim, "setup: the hit did not land");
+            victim.setLastHurtMob(chicken);
+            kill(g.a(), victim);
+            helper.assertTrue(!breaker(helper, g.a()), "a victim who hit the killer and then a chicken counted as innocent");
+        } finally {
+            chicken.discard();
+            HunterMarkGameTests.reset(victim);
+            finish(helper, g);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aVictimWhoHurtTheKillerWithAPotionWasFighting(GameTestHelper helper) {
+        Bh g = bh(helper, 20);
+        ServerPlayer victim = HunterMarkGameTests.human(helper);
+        try {
+            g.a().hurt(victim.damageSources().indirectMagic(victim, victim), 1f);
+            helper.assertTrue(g.a().getLastHurtByMob() == victim, "setup: the potion did not land");
+            kill(g.a(), victim);
+            helper.assertTrue(!breaker(helper, g.a()), "a victim who hurt the killer with a potion counted as innocent");
+        } finally {
+            HunterMarkGameTests.reset(victim);
+            finish(helper, g);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aKillerWhoIsOnlyCreditedIsNotJudged(GameTestHelper helper) {
+        Bh g = bh(helper, 20);
+        ServerPlayer victim = HunterMarkGameTests.human(helper);
+        try {
+            victim.setLastHurtByPlayer(g.a());
+            NeoForge.EVENT_BUS.post(new LivingDeathEvent(victim, victim.damageSources().lava()));
+            helper.assertTrue(!breaker(helper, g.a()), "a brother credited with a death in lava broke the Code");
+        } finally {
+            HunterMarkGameTests.reset(victim);
+            finish(helper, g);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aLeaderPassedByTheMarkLossOfTheThirdBreakIsNotExpelled(GameTestHelper helper) {
+        Bh g = bh(helper, 20);
+        try {
+            for (int i = 0; i < 2; i++) {
+                at(T0 + i * DAY);
+                Villager v = villager(helper);
+                kill(g.leader(), v);
+                v.discard();
+            }
+            int afterTwo = mark(g.leader());
+            BloodlineAccess.set(g.a(), hof(afterTwo - 1));
+            helper.assertTrue(PackIndex.get(helper.getLevel()).isLeader(g.leader().getUUID()), "setup: the lead moved too early");
+            at(T0 + 2 * DAY);
+            Villager v = villager(helper);
+            kill(g.leader(), v);
+            v.discard();
+            helper.assertTrue(mark(g.leader()) < afterTwo - 1, "setup: the third break did not drop the leader below the brother: " + mark(g.leader()));
+            helper.assertTrue(in(helper, g.leader()), "the leader was expelled after being passed by the mark loss of the same break");
+            helper.assertTrue(!GroupGate.exiled(helper.getLevel().getServer(), group(helper, g.a()), g.leader().getUUID()), "the old leader is barred");
+            helper.assertTrue(strikes(helper, g.leader()) == 0 && breaker(helper, g.leader()), "the leader's third break is not the leader's rule");
+        } finally {
+            finish(helper, g);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void theBreakerHearsTheMarkTheDayAndTheStrikes(GameTestHelper helper) {
+        Bh g = bh(helper, 20);
+        Villager v = villager(helper);
+        Villager w = villager(helper);
+        try {
+            BloodlineAccess.set(g.a(), hof(12));
+            kill(g.a(), v);
+            Component marked = g.a().message(BH + "code_you");
+            helper.assertTrue(marked != null && args(marked).equals(List.of(9, 24, 1, 3)), "the marked breaker's line: " + marked);
+            kill(g.b(), w);
+            Component plain = g.b().message(BH + "code_you.unmarked");
+            helper.assertTrue(plain != null && args(plain).equals(List.of(24, 1, 3)), "the plain breaker's line: " + plain);
+        } finally {
+            v.discard();
+            w.discard();
+            finish(helper, g);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void theExpelledHearTheDays(GameTestHelper helper) {
+        Bh g = bh(helper, 20);
+        try {
+            expel(helper, g);
+            Component days = g.a().message(BH + "code_out_days");
+            helper.assertTrue(days != null && args(days).equals(List.of(7)), "no days in the expulsion: " + days);
+        } finally {
+            finish(helper, g);
+        }
+        helper.succeed();
+    }
+
+    private static List<Object> args(Component c) {
+        return List.of(((net.minecraft.network.chat.contents.TranslatableContents) c.getContents()).getArgs());
     }
 }

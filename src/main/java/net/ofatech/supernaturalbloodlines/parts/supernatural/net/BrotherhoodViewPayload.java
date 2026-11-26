@@ -45,7 +45,9 @@ public record BrotherhoodViewPayload(BrotherhoodView view) implements CustomPack
             int limit = bounded(buf, BrotherhoodWire.MAX_STRIKES, "strike limit");
             int seconds = bounded(buf, BrotherhoodWire.MAX_SECONDS, "breaker seconds");
             boolean lead = buf.readBoolean();
-            return new BrotherhoodView(in, fits, perks, own, leader, anyMax, brothers, percent, sight, code, strikes, limit, seconds, lead);
+            int penalty = bounded(buf, BrotherhoodWire.MAX_PERCENT, "penalty");
+            int days = bounded(buf, BrotherhoodWire.MAX_DAYS, "strike days");
+            return new BrotherhoodView(in, fits, perks, own, leader, anyMax, brothers, percent, sight, code, strikes, limit, seconds, lead, penalty, days);
         }
 
         @Override
@@ -64,6 +66,8 @@ public record BrotherhoodViewPayload(BrotherhoodView view) implements CustomPack
             put(buf, v.strikeLimit());
             put(buf, v.breakerSecondsLeft());
             buf.writeBoolean(v.leadByMark());
+            put(buf, v.penaltyPercent());
+            put(buf, v.strikeDays());
         }
     };
 
