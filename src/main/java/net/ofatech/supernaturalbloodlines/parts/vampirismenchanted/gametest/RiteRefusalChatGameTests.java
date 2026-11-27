@@ -83,8 +83,8 @@ public final class RiteRefusalChatGameTests {
     }
 
     /**
-     * Every rite of this mod, worked by a plain human at noon with no ingredients: every line it says on the action bar is said there once, and every
-     * refusal is in chat once too. Most rites refuse such a caster; at least one refusal of each kind of factory is seen.
+     * Every rite of this mod, worked by a plain human at noon with no ingredients: nothing is said twice on a channel, and every action-bar line such a
+     * caster gets is a refusal (nothing succeeds for them), so it is in chat too. An answer that was always a chat line (the lineage reveal) stays one.
      */
     @GameTest(template = "empty", templateNamespace = NS, timeoutTicks = 400)
     public static void everyRiteRefusesAPlainCasterOnBothChannels(GameTestHelper helper) {
@@ -116,13 +116,16 @@ public final class RiteRefusalChatGameTests {
                     wrong.add(id.getPath() + ": " + key + " bar=" + bar + " chat=" + chat);
                 }
                 refusedHere |= bar == 1 && chat == 1;
+                if (bar == 1 && chat == 0) {
+                    wrong.add(id.getPath() + ": " + key + " came to a plain caster at noon on the action bar only");
+                }
             }
             bothChannels += refusedHere ? 1 : 0;
         }
         helper.getLevel().setDayTime(timeBefore);
         SupernaturalBloodlines.LOGGER.info("RiteRefusalChat sweep {}", told);
         helper.assertTrue(wrong.isEmpty(), "rites that said a line more than once or threw: " + wrong);
-        helper.assertTrue(bothChannels >= told.size() / 2, "only " + bothChannels + " of " + told.size() + " rites refused on both channels: " + told);
+        helper.assertTrue(bothChannels > 0, "no rite refused a plain caster on both channels: " + told);
         helper.succeed();
     }
 
