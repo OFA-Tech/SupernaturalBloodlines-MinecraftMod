@@ -1,5 +1,6 @@
 package net.ofatech.supernaturalbloodlines.parts.species.blood;
 
+import net.ofatech.supernaturalbloodlines.core.death.DamageProbe;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
@@ -155,7 +156,7 @@ public final class GiveBloodAction implements ExtraActions.Action {
      */
     // shortcut: onPlayerAttackTarget also calls the held item's onLeftClickEntity (as BiteService does), so a held item that reacts to a left click acts on a feed; fine while nothing of ours does, revisit if one starts to
     private static boolean allowedHere(ServerPlayer giver, ServerPlayer receiver, boolean willing, boolean downed) {
-        boolean claims = willing ? CommonHooks.onPlayerAttackTarget(giver, receiver) : TargetChecks.mayAttack(giver, receiver);
+        boolean claims = willing ? DamageProbe.run(() -> CommonHooks.onPlayerAttackTarget(giver, receiver)) : TargetChecks.mayAttack(giver, receiver);
         return claims && (downed || TargetChecks.damageWouldLand(receiver, giver.damageSources().playerAttack(giver), TargetChecks.PROBE));
     }
 

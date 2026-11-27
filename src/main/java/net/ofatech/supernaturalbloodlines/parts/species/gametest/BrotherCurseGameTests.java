@@ -576,6 +576,32 @@ public final class BrotherCurseGameTests {
         helper.succeed();
     }
     @GameTest(template = "empty", templateNamespace = NS)
+    public static void aWillingFeedThenAFallDoesNotCurseTheGiver(GameTestHelper helper) {
+        Bh g = bh(helper);
+        TalkingDuelist giver = net.ofatech.supernaturalbloodlines.gametest.TestPlayers.createTalkingDuelist(helper);
+        try {
+            de.teamlapen.vampirism.api.VampirismAPI.factionPlayerHandler(giver).setFactionAndLevel(de.teamlapen.vampirism.api.VReference.VAMPIRE_FACTION, 1);
+            BloodlineAccess.set(giver, BloodlineState.NONE.toBuilder().species(net.ofatech.supernaturalbloodlines.core.bloodline.Species.HYBRID).build());
+            online(g.leader(), g.hunter(), g.human(), giver);
+            HunterMarkGameTests.online(g.leader(), g.hunter(), g.human(), giver);
+            g.human().setPos(helper.absoluteVec(new net.minecraft.world.phys.Vec3(1.5, 1, 3.0)));
+            g.human().setShiftKeyDown(true);
+            boolean pvp = helper.getLevel().getServer().isPvpAllowed();
+            helper.getLevel().getServer().setPvpAllowed(false);
+            try {
+                helper.assertTrue(net.ofatech.supernaturalbloodlines.parts.species.blood.GiveBloodAction.INSTANCE.trigger(giver, g.human()) == null, "setup: the willing feed was refused");
+            } finally {
+                helper.getLevel().getServer().setPvpAllowed(pvp);
+            }
+            net.neoforged.neoforge.common.NeoForge.EVENT_BUS.post(new net.neoforged.neoforge.event.entity.living.LivingDeathEvent(g.human(), g.human().damageSources().fall()));
+            helper.assertTrue(!cursed(giver), "a willing feed then a fall cursed the giver");
+        } finally {
+            g.human().setShiftKeyDown(false);
+            finish(helper, g, giver);
+        }
+        helper.succeed();
+    }
+    @GameTest(template = "empty", templateNamespace = NS)
     public static void aBrothersThornsDoNotExemptTheVampire(GameTestHelper helper) {
         Bh g = bh(helper);
         TalkingDuelist vampire = GroupTestKit.vampire(helper, 4.5);

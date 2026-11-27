@@ -59,34 +59,22 @@ public final class Codes {
      * credit, which a later snowball can steal. Kill credit with no such hit, the void and /kill are nobody's.
      */
     static ServerPlayer culprit(MarkTracker.Resolved r) {
-        if (r.environmental()) {
-            UUID striker = FightLedger.lastMeleeStriker(r.victim().getUUID(), PackIndex.now());
-            return striker == null || r.victim().getServer() == null ? null
-                    : net.ofatech.supernaturalbloodlines.parts.species.sireline.SireCall.player(r.victim().getServer(), striker);
-        }
-        return r.killingBlow() ? ownerOrSelf(r.killer()) : null;
+        ServerPlayer p = r.environmental() ? MarkTracker.lastStriker(r.victim())
+                : r.killingBlow() && MarkTracker.ownerOrSelf(r.killer()) instanceof ServerPlayer owner ? owner : null;
+        // your own pet that killed you puts the death on nobody
+        return p == r.victim() ? null : p;
     }
 
     /** Whether, in the last 10 seconds, {@code outsider} deliberately hurt any brother of this brotherhood ({@code outsiderStruck}), or any brother hurt them. */
     static boolean fought(ServerLevel level, UUID leader, UUID outsider, boolean outsiderStruck) {
         long now = PackIndex.now();
         for (UUID brother : PackIndex.get(level).roster(leader)) {
-            if (outsiderStruck ? FightLedger.struck(outsider, brother, now) : FightLedger.struck(brother, outsider, now)) {
+            // a brother who started the fight himself licenses no other brother to "defend" him
+            if (outsiderStruck ? FightLedger.struck(outsider, brother, now) && !FightLedger.startedIt(brother, outsider, now) : FightLedger.struck(brother, outsider, now)) {
                 return true;
             }
         }
         return false;
-    }
-
-    /** The player behind a kill: the player, or the owner of a tamed pet. */
-    private static ServerPlayer ownerOrSelf(net.minecraft.world.entity.Entity e) {
-        if (e instanceof ServerPlayer p) {
-            return p;
-        }
-        if (e instanceof net.minecraft.world.entity.OwnableEntity pet && pet.getOwnerUUID() != null && e.getServer() != null) {
-            return net.ofatech.supernaturalbloodlines.parts.species.sireline.SireCall.player(e.getServer(), pet.getOwnerUUID());
-        }
-        return null;
     }
 
     /** What the Code makes of this kill; public so a test can say a kill happened without a death. */

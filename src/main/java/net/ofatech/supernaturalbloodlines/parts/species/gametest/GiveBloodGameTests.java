@@ -211,6 +211,31 @@ public final class GiveBloodGameTests {
     }
 
     @GameTest(template = "empty", templateNamespace = NS)
+    public static void aWillingFeedAndAProbeAreNotHits(GameTestHelper helper) {
+        TestPlayers.TalkingDuelist giver = vampire(helper, Species.HYBRID);
+        TestPlayers.TalkingDuelist target = human(helper);
+        TestPlayers.TalkingDuelist probed = human(helper);
+        try {
+            pvp(helper, false);
+            target.setShiftKeyDown(true);
+            helper.assertTrue(ACTION.trigger(giver, target) == null && marked(target), "setup: the willing feed was refused");
+            long now = net.ofatech.supernaturalbloodlines.parts.species.pack.PackIndex.now();
+            helper.assertTrue(!net.ofatech.supernaturalbloodlines.parts.species.pack.FightLedger.struck(giver.getUUID(), target.getUUID(), now) && net.ofatech.supernaturalbloodlines.parts.species.pack.FightLedger.lastMeleeStriker(target.getUUID(), now) == null,
+                    "a willing feed was recorded as a hit");
+            DamageProbe.run(() -> {
+                net.neoforged.neoforge.common.CommonHooks.onPlayerAttackTarget(giver, probed);
+                return net.neoforged.neoforge.common.NeoForge.EVENT_BUS.post(new net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent(probed,
+                        new net.neoforged.neoforge.common.damagesource.DamageContainer(giver.damageSources().playerAttack(giver), 1f)));
+            });
+            helper.assertTrue(!net.ofatech.supernaturalbloodlines.parts.species.pack.FightLedger.struck(giver.getUUID(), probed.getUUID(), now) && net.ofatech.supernaturalbloodlines.parts.species.pack.FightLedger.lastMeleeStriker(probed.getUUID(), now) == null,
+                    "a damage probe was recorded as a hit");
+        } finally {
+            restorePvp(helper);
+            clean(giver, target, probed);
+        }
+        helper.succeed();
+    }
+    @GameTest(template = "empty", templateNamespace = NS)
     public static void vervainBlocksEvenAWillingTargetButOnlyAfterConsent(GameTestHelper helper) {
         if (!BuiltInRegistries.ITEM.containsKey(ResourceLocation.fromNamespaceAndPath(NS, "vervain"))) {
             helper.succeed(); // no artifacts part: nothing keeps vampire blood out

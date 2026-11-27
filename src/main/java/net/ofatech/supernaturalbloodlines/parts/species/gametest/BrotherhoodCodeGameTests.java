@@ -1208,6 +1208,74 @@ public final class BrotherhoodCodeGameTests {
         }
         helper.succeed();
     }
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aBrotherKilledByHisOwnPetIsNotJudged(GameTestHelper helper) {
+        Bh g = bh(helper, 20);
+        net.minecraft.world.entity.animal.Wolf wolf = helper.spawnWithNoFreeWill(EntityType.WOLF, new BlockPos(3, 1, 3));
+        try {
+            wolf.setTame(true, false);
+            wolf.setOwnerUUID(g.a().getUUID());
+            NeoForge.EVENT_BUS.post(new LivingDeathEvent(g.a(), g.a().damageSources().mobAttack(wolf)));
+            helper.assertTrue(!breaker(helper, g.a()), "a brother killed by his own wolf broke the Code");
+        } finally {
+            wolf.discard();
+            finish(helper, g);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aBrotherWhoStartedTheFightLicensesNobody(GameTestHelper helper) {
+        Bh g = bh(helper, 20);
+        TalkingDuelist baited = human(helper, 4.5);
+        TalkingDuelist bitten = human(helper, 5.5);
+        net.minecraft.world.entity.animal.Wolf wolf = helper.spawnWithNoFreeWill(EntityType.WOLF, new BlockPos(3, 1, 3));
+        online(g.leader(), g.a(), g.b(), baited, bitten);
+        try {
+            // A hits V first, V hits back, and B kills V: that is not defending A
+            baited.hurt(g.a().damageSources().playerAttack(g.a()), 1f);
+            at(T0 + 1_000);
+            g.a().hurt(baited.damageSources().playerAttack(baited), 1f);
+            kill(g.b(), baited);
+            helper.assertTrue(breaker(helper, g.b()), "a brother killed a player another brother had baited, and it was called defence");
+            // the same when A's wolf started it
+            at(T0 + 2 * DAY);
+            wolf.setTame(true, false);
+            wolf.setOwnerUUID(g.a().getUUID());
+            bitten.hurt(bitten.damageSources().mobAttack(wolf), 1f);
+            at(T0 + 2 * DAY + 1_000);
+            g.a().hurt(bitten.damageSources().playerAttack(bitten), 1f);
+            int before = strikes(helper, g.b());
+            kill(g.b(), bitten);
+            helper.assertTrue(strikes(helper, g.b()) == before + 1, "a fight A's wolf started was called defence");
+        } finally {
+            wolf.discard();
+            HunterMarkGameTests.reset(baited, bitten);
+            finish(helper, g);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void everyTargetOfOneSwingIsADirectMeleeHit(GameTestHelper helper) {
+        Bh g = bh(helper, 20);
+        TalkingDuelist first = human(helper, 4.5);
+        TalkingDuelist second = human(helper, 5.5);
+        online(g.leader(), g.a(), g.b(), first, second);
+        try {
+            // Better Combat strikes each body of one swing through Player.attack, one after the other, in the same tick
+            g.a().attack(first);
+            g.a().attack(second);
+            long now = net.ofatech.supernaturalbloodlines.parts.species.pack.PackIndex.now();
+            helper.assertTrue(g.a().getUUID().equals(net.ofatech.supernaturalbloodlines.parts.species.pack.FightLedger.lastMeleeStriker(first.getUUID(), now))
+                    && g.a().getUUID().equals(net.ofatech.supernaturalbloodlines.parts.species.pack.FightLedger.lastMeleeStriker(second.getUUID(), now)),
+                    "a body of a multi-target swing was not a direct melee hit");
+        } finally {
+            HunterMarkGameTests.reset(first, second);
+            finish(helper, g);
+        }
+        helper.succeed();
+    }
     private static List<Object> args(Component c) {
         return List.of(((net.minecraft.network.chat.contents.TranslatableContents) c.getContents()).getArgs());
     }

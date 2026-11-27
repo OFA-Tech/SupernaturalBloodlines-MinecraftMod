@@ -148,8 +148,11 @@ public final class MarkTracker {
         if (killer instanceof ServerPlayer k && isPrey(victim) && !samePack(k, victim)) {
             killedPrey(k);
         }
-        if (killer != null && victimWasMarked && victim instanceof ServerPlayer v && isPrey(killer) && !samePack(v, killer)) {
-            killedMarkedHunter(v, killer);
+        // the one who costs a marked hunter the mark is found the way the Code finds a culprit: the owner of the pet that killed, or for a death by the world
+        // the last direct melee striker (R295), never the kill credit alone
+        Entity marker = environmental ? lastStriker(victim) : ownerOrSelf(killer);
+        if (marker != null && marker != victim && victimWasMarked && victim instanceof ServerPlayer v && isPrey(marker) && !samePack(v, marker)) {
+            killedMarkedHunter(v, marker);
         }
         Resolved resolved = new Resolved(victim, killer, victimWasMarked, killer != null && source.getEntity() == killer, environmental);
         for (Consumer<Resolved> hook : RESOLVED) {
@@ -161,6 +164,21 @@ public final class MarkTracker {
         }
     }
 
+    /** The player whose direct melee hit last landed on {@code victim} in the last 10 seconds (FightLedger), if online, or null. */
+    public static ServerPlayer lastStriker(LivingEntity victim) {
+        UUID striker = net.ofatech.supernaturalbloodlines.parts.species.pack.FightLedger.lastMeleeStriker(victim.getUUID(),
+                net.ofatech.supernaturalbloodlines.parts.species.pack.PackIndex.now());
+        return striker == null || victim.getServer() == null ? null : net.ofatech.supernaturalbloodlines.parts.species.sireline.SireCall.player(victim.getServer(), striker);
+    }
+
+    /** The online owner of a tamed pet, or the entity itself (null stays null). */
+    public static Entity ownerOrSelf(Entity e) {
+        if (e instanceof net.minecraft.world.entity.OwnableEntity pet && pet.getOwnerUUID() != null && e.getServer() != null) {
+            ServerPlayer owner = net.ofatech.supernaturalbloodlines.parts.species.sireline.SireCall.player(e.getServer(), pet.getOwnerUUID());
+            return owner != null ? owner : e;
+        }
+        return e;
+    }
     /**
      * One death that counted for somebody: who died, who gets the credit (the same attribution the mark uses), whether the victim was a Hunter of the Five,
      * whether the killer dealt the killing blow, and whether the world did with no attacker at all (fire, lava, a fall, poison, drowning; not the void or /kill). The killer (kill credit) can be null for such a death.

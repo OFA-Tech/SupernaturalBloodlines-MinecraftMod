@@ -30,7 +30,7 @@ A Hunter of the Five with **no prey kill for 3 in-game days** (72,000 ticks; the
 
 ## Losing the mark
 
-If a marked hunter is **killed by prey** (any entity, mobs too), they **lose the mark** and a random **online human-like hunter** (with no species) becomes a **potential**. With nobody online, the choice waits until the next hunter joins. A potential's **first prey kill completes the Five**: they become a Hunter of the Five. A potential who leaves the hunters owes a new one, like a lost mark.
+If a marked hunter is **killed by prey** (any entity, mobs too; a tamed pet's kill counts for its owner; a death by fire, lava or a fall counts for whoever last punched them in the last 10 seconds, never for kill credit alone), they **lose the mark** and a random **online human-like hunter** (with no species) becomes a **potential**. With nobody online, the choice waits until the next hunter joins. A potential's **first prey kill completes the Five**: they become a Hunter of the Five. A potential who leaves the hunters owes a new one, like a lost mark.
 
 ## Hunter's curse
 

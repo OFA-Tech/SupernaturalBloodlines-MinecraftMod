@@ -4,6 +4,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import net.minecraft.world.damagesource.DamageSource;
+import net.ofatech.supernaturalbloodlines.core.death.DamageProbe;
 import net.minecraft.world.damagesource.DamageTypes;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.OwnableEntity;
@@ -37,7 +38,11 @@ public final class FightLedger {
     private record Swing(UUID target, long tick) {
     }
 
+    private record Fight(long first, long last) {
+    }
+
     private static final Map<Key, Long> LAST = new ConcurrentHashMap<>();
+    private static final Map<Key, Fight> AGGRO = new ConcurrentHashMap<>();
     private static final Map<UUID, Hit> MELEE = new ConcurrentHashMap<>();
     private static final Map<UUID, Swing> SWINGS = new ConcurrentHashMap<>();
     private static boolean registered;
@@ -51,12 +56,13 @@ public final class FightLedger {
         }
         registered = true;
         NeoForge.EVENT_BUS.addListener((AttackEntityEvent e) -> {
-            if (!e.getEntity().level().isClientSide) {
+            // a probe asks what a blow would meet without striking (a willing feed, a skill's check): never a swing
+            if (!e.getEntity().level().isClientSide && !DamageProbe.active()) {
                 SWINGS.put(e.getEntity().getUUID(), new Swing(e.getTarget().getUUID(), e.getEntity().level().getGameTime()));
             }
         });
         NeoForge.EVENT_BUS.addListener(EventPriority.LOWEST, false, LivingIncomingDamageEvent.class, e -> {
-            if (!e.getEntity().level().isClientSide && e.getContainer().getOriginalDamage() > 0) {
+            if (!e.getEntity().level().isClientSide && e.getContainer().getOriginalDamage() > 0 && !DamageProbe.active()) {
                 onHit(e.getEntity(), e.getSource());
             }
         });
@@ -65,22 +71,32 @@ public final class FightLedger {
             MELEE.remove(dead);
             if (!(e.getEntity() instanceof Player)) {
                 LAST.keySet().removeIf(k -> k.target().equals(dead));
+                AGGRO.keySet().removeIf(k -> k.target().equals(dead));
             }
         });
         NeoForge.EVENT_BUS.addListener((PlayerEvent.PlayerLoggedOutEvent e) -> forget(e.getEntity().getUUID()));
         NeoForge.EVENT_BUS.addListener((ServerStoppedEvent e) -> {
             LAST.clear();
+            AGGRO.clear();
             MELEE.clear();
             SWINGS.clear();
         });
     }
 
     private static void onHit(Entity target, DamageSource source) {
+        long now = PackIndex.now();
+        UUID victim = target instanceof Player || target instanceof Villager ? target.getUUID()
+                : target instanceof OwnableEntity pet ? pet.getOwnerUUID() : null;
+        // who started a fight: a player's own hits and their pets' bites both count here (R294 "defending a brother")
+        UUID aggressor = deliberate(source) instanceof Player hitter ? hitter.getUUID()
+                : source.getEntity() instanceof OwnableEntity pet ? pet.getOwnerUUID() : null;
+        if (victim != null && aggressor != null && !aggressor.equals(victim)) {
+            AGGRO.merge(new Key(aggressor, victim), new Fight(now, now), (old, fresh) -> now - old.last() > WINDOW_MILLIS ? fresh : new Fight(old.first(), now));
+        }
         Player p = deliberate(source);
         if (p == null || p == target) {
             return;
         }
-        long now = PackIndex.now();
         if (target instanceof Player || target instanceof Villager) {
             record(p.getUUID(), target.getUUID(), now);
             Swing swing = SWINGS.get(p.getUUID());
@@ -101,6 +117,8 @@ public final class FightLedger {
     public static void record(UUID attacker, UUID target, long now) {
         if (LAST.size() >= PRUNE_AT) {
             LAST.values().removeIf(at -> now - at > WINDOW_MILLIS);
+            AGGRO.values().removeIf(f -> now - f.last() > WINDOW_MILLIS);
+            MELEE.values().removeIf(h -> now - h.at() > WINDOW_MILLIS);
         }
         LAST.put(new Key(attacker, target), now);
     }
@@ -117,8 +135,22 @@ public final class FightLedger {
         return hit != null && now - hit.at() <= WINDOW_MILLIS ? hit.by() : null;
     }
 
+    /**
+     * Whether {@code brother} (or his pet) started the fight with {@code other}: he hit them in the last 10 seconds, and no later than their first hit on him in
+     * that fight. A fight he started licenses no other brother to "defend" him.
+     */
+    public static boolean startedIt(UUID brother, UUID other, long now) {
+        Fight mine = AGGRO.get(new Key(brother, other));
+        if (mine == null || now - mine.last() > WINDOW_MILLIS) {
+            return false;
+        }
+        Fight theirs = AGGRO.get(new Key(other, brother));
+        return theirs == null || mine.first() <= theirs.first();
+    }
+
     private static void forget(UUID player) {
         LAST.keySet().removeIf(k -> k.attacker().equals(player) || k.target().equals(player));
+        AGGRO.keySet().removeIf(k -> k.attacker().equals(player) || k.target().equals(player));
         MELEE.remove(player);
         SWINGS.remove(player);
     }

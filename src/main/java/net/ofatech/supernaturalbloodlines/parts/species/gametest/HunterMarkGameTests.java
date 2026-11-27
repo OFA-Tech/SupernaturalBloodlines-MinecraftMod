@@ -507,10 +507,11 @@ public final class HunterMarkGameTests {
             NeoForge.EVENT_BUS.post(new LivingDeathEvent(victim, victim.damageSources().genericKill()));
             helper.assertTrue(BloodlineAccess.get(hunter).markKills() == 1, "credit kill gave " + BloodlineAccess.get(hunter).markKills());
 
+            // a death by the world goes to the last direct melee striker (R295, round 5), never to the kill credit alone
             lost.setLastHurtByMob(killer);
             NeoForge.EVENT_BUS.post(new LivingDeathEvent(lost, lost.damageSources().fall()));
-            helper.assertTrue(BloodlineAccess.get(lost).species() == Species.NONE, "a hunter pushed to death by a vampire kept the mark");
-            helper.assertTrue(BloodlineAccess.get(killer).hunterCurse(), "the credited vampire was not cursed");
+            helper.assertTrue(BloodlineAccess.get(lost).species() == Species.HUNTER_OF_THE_FIVE && !BloodlineAccess.get(killer).hunterCurse(),
+                    "kill credit alone cost the hunter the mark or cursed the vampire");
         } finally {
             clearHooks();
             reset(hunter, victim, lost, killer);
@@ -680,6 +681,102 @@ public final class HunterMarkGameTests {
             assertPerks(helper, p, 0.05, 0.025);
         } finally {
             reset(p);
+        }
+        helper.succeed();
+    }
+    // ---- round 5: the marked hunter's death is put on a player the way the Code does it ----
+
+    /** A marked hunter other players can really hit (a plain test player refuses every blow from a player). */
+    static ServerPlayer markedDuelist(GameTestHelper helper, int kills) {
+        ServerPlayer p = TestPlayers.createDuelist(helper);
+        handler(p).setFactionAndLevel(VReference.HUNTER_FACTION, 1);
+        BloodlineAccess.set(p, state(Species.HUNTER_OF_THE_FIVE, kills));
+        return p;
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aPreyPetsKillOfAMarkedHunterCursesTheOwner(GameTestHelper helper) {
+        ServerPlayer hunter = markedDuelist(helper, 5);
+        ServerPlayer owner = vampire(helper);
+        net.minecraft.world.entity.animal.Wolf wolf = helper.spawnWithNoFreeWill(net.minecraft.world.entity.EntityType.WOLF, new net.minecraft.core.BlockPos(3, 1, 3));
+        try {
+            GroupTestKit.online(hunter, owner);
+            wolf.setTame(true, false);
+            wolf.setOwnerUUID(owner.getUUID());
+            NeoForge.EVENT_BUS.post(new LivingDeathEvent(hunter, hunter.damageSources().mobAttack(wolf)));
+            helper.assertTrue(BloodlineAccess.get(hunter).species() == Species.NONE, "a hunter killed by a vampire's wolf kept the mark");
+            helper.assertTrue(BloodlineAccess.get(owner).hunterCurse(), "the wolf's owner was not cursed");
+        } finally {
+            wolf.discard();
+            clearHooks();
+            reset(hunter, owner);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void anArrowThenLavaDoesNotCostTheMark(GameTestHelper helper) {
+        ServerPlayer hunter = markedDuelist(helper, 5);
+        ServerPlayer killer = vampire(helper);
+        try {
+            GroupTestKit.online(hunter, killer);
+            net.minecraft.world.entity.projectile.Arrow arrow = new net.minecraft.world.entity.projectile.Arrow(net.minecraft.world.entity.EntityType.ARROW, helper.getLevel());
+            arrow.setOwner(killer);
+            hunter.hurt(hunter.damageSources().arrow(arrow, killer), 1f);
+            // an arrow leaves the archer the kill credit (set here too, in case the test world's difficulty drops the arrow's damage)
+            hunter.setLastHurtByPlayer(killer);
+            hunter.setLastHurtByMob(killer);
+            NeoForge.EVENT_BUS.post(new LivingDeathEvent(hunter, hunter.damageSources().lava()));
+            helper.assertTrue(BloodlineAccess.get(hunter).species() == Species.HUNTER_OF_THE_FIVE && !BloodlineAccess.get(killer).hunterCurse(),
+                    "an arrow then lava cost the mark or cursed the archer");
+        } finally {
+            clearHooks();
+            reset(hunter, killer);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aPunchThenLavaFourSecondsLaterCostsTheMark(GameTestHelper helper) {
+        ServerPlayer hunter = markedDuelist(helper, 5);
+        ServerPlayer killer = vampire(helper);
+        long t0 = 1_800_000_000_000L;
+        try {
+            GroupTestKit.online(hunter, killer);
+            net.ofatech.supernaturalbloodlines.parts.species.pack.PackIndex.overrideClock(() -> t0);
+            killer.attack(hunter);
+            hunter.setLastHurtByPlayer(null);
+            hunter.setLastHurtByMob(null);
+            net.ofatech.supernaturalbloodlines.parts.species.pack.PackIndex.overrideClock(() -> t0 + 4_000);
+            NeoForge.EVENT_BUS.post(new LivingDeathEvent(hunter, hunter.damageSources().lava()));
+            helper.assertTrue(BloodlineAccess.get(hunter).species() == Species.NONE, "a punch then lava 4 s later kept the mark");
+            helper.assertTrue(BloodlineAccess.get(killer).hunterCurse(), "the vampire who punched was not cursed");
+        } finally {
+            net.ofatech.supernaturalbloodlines.parts.species.pack.PackIndex.overrideClock(null);
+            clearHooks();
+            reset(hunter, killer);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aSnowballThatStealsTheCreditDoesNotSaveTheVampire(GameTestHelper helper) {
+        ServerPlayer hunter = markedDuelist(helper, 5);
+        ServerPlayer killer = vampire(helper);
+        ServerPlayer alt = human(helper);
+        try {
+            GroupTestKit.online(hunter, killer, alt);
+            killer.attack(hunter);
+            net.minecraft.world.entity.projectile.Snowball ball = new net.minecraft.world.entity.projectile.Snowball(helper.getLevel(), alt);
+            hunter.hurt(hunter.damageSources().thrown(ball, alt), 0f);
+            hunter.setLastHurtByPlayer(alt);
+            hunter.setLastHurtByMob(alt);
+            NeoForge.EVENT_BUS.post(new LivingDeathEvent(hunter, hunter.damageSources().lava()));
+            helper.assertTrue(BloodlineAccess.get(hunter).species() == Species.NONE && BloodlineAccess.get(killer).hunterCurse(),
+                    "a human's snowball after the vampire's punch saved the vampire");
+        } finally {
+            clearHooks();
+            reset(hunter, killer, alt);
         }
         helper.succeed();
     }
