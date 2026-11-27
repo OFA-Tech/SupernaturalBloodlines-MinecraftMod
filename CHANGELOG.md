@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased (plan 23 PR-0: proofs)
+
+- No player-visible change. New game tests record what the race, human-like, menu and key hooks of the playtest fixes really do (`docs/superpowers/research/plan-23-hooks.md`), and a unit test checks every covered key id against the pack's key list.
+
+### Rolling back
+
+Nothing is stored: revert the commit.
+
 ## Unreleased (plan 20d: brotherhoods)
 
 - A plain human now leads a Brotherhood rather than a Coven. Founding still requires a hunter unless open founding is enabled. Members stay when a leader changes the group's type.

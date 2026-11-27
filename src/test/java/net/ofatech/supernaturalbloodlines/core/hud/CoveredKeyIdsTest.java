@@ -22,7 +22,7 @@ class CoveredKeyIdsTest {
 
     /** Keys that are not skill keys: never covered, whatever the flags. */
     private static final List<String> LEFT_ALONE = List.of(
-            "tensura.keybinding.main_gui", "tensura.keybinding.next_mode", "tensura.keybinding.previous_mode", "tensura.keybinding.dodge", "tensura.keybinding.naming",
+            "tensura.keybinding.main_gui", "tensura.keybinding.next_mode", "tensura.keybinding.previous_mode", "tensura.keybinding.dodge", "tensura.keybinding.name",
             "keys.vampirism.skill_screen", "keys.vampirism.select_skills",
             "key.greatsage.voice", "key.greatsage.panic",
             "key.infinity.soul_release");

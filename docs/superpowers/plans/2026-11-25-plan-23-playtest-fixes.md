@@ -101,6 +101,17 @@ Read on `origin/main` (`36bb58c7`, 2026-11-25) in a worktree, with `javap` on th
 8. **An eclipse is not accepted by the full-moon check today (E).** Either the sentence is dropped or the code is changed; the owner asked for the sentence, so Task 3 changes the code through a shared predicate (the species part installs it).
 9. **`RaceLinks` stops being a book rule (E/A).** After A a direwolf pick gives the faction, so the book keys on the faction; a pick that was **refused** (R103) must not unlock the book.
 
+**Task 0 findings (2026-11-26, `docs/superpowers/research/plan-23-hooks.md`; each amends the task named, and wins over the task's text):**
+
+10. **P1 (Task 14):** `/tensura edit race <targets> set <race>` reaches `SET_RACE` with exactly the flags of our own `setRace(id, false)` (evolution false, changeable false, no message). Only the open `ReincarnationMenu` (and, as a second marker, the changeable flag, true only for a pick) separates a pick. The first-login random pick goes through the same `clickMenuButton` path and needs no marker of its own.
+11. **P5 (Task 14):** `setFactionAndLevel` (so `WerewolfFaction.join`) does **not** post `CanJoinFaction`: a raw join of a ghoul, slime or wight succeeds. R103 holds only where `canJoin`/`joinAllowed` is asked first (`GeneHandler.awakenHuman` does). The wolf mapping must never call a raw join.
+12. **P5b (Task 14):** `awakenHuman(p, GENE_AWAKENED)` refuses a player with no werewolf gene (`refusal.no_gene`), so it cannot be the wolf mapping as written; Task 14 needs its own pack event (Omega, born, no gene) or a gene grant first. The PR-4 author decides and records it.
+13. **P6 (Task 17):** the filter must **not** remove `#tensura:no_blood`: it holds `#tensura:spiritual`, and the saint and divine tiers of the five lines are spiritual (ten races of today's list). Closure minus `#tensura:undead`, `#tensura:daemon` and the vampire line equals `HumanLikeLine.EVOLVED` both ways.
+14. **P6 (Task 17, decided):** with the pack's addons the closure also takes in Ascension's kitsune line (`kitsune`, `three_tail_fox`, `six_tail_fox`, `nine_tail_fox`, `divine_kitsune`); Horizons' three races are in as expected. `noOtherAddonRaceIsHumanLike` is false on the pack. **Owner decision 2026-11-27: the kitsune line stays human-like by default** (removable per world, Task 19).
+15. **P8 (Task 9):** Vampirism's server opens `VampirismMenu` for the menu packet only for a player in a faction; for anyone else it does nothing, so the "Vampirism: Menu" button is disabled for a player in no faction.
+16. **P9 (Task 11):** `ConfigValue.set` writes memory only, but any later `save()` of Vampirism's client spec (its own settings screen) would write the value: the in-memory route must restore the value before such a save, or Task 11 takes the widget-removal route.
+17. **P12 (Task 13):** the ids match the plan's list; `mysticism:rimefang_drake` contains "fang", so the table lists ids and never matches a substring.
+
 **Not verified (each has a task that proves it first):**
 
 1. What a Tensura reincarnation pick looks like **to a `SET_RACE` listener** (the second flag, the `Changeable`, the `message`), versus our own `setRace(id, false)`, versus an evolution, versus `/tensura race` (Task 0 P1); and that a race a later listener refused is seen unchanged one tick later (P2).
