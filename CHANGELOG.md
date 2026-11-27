@@ -1,5 +1,14 @@
 # Changelog
 
+## Unreleased (plan 23 PR-1a: portraits)
+
+- **A player's face sits in a square frame everywhere** (Home, Profile, and the pack, clan, coven and brotherhood rings): the frame is the face plus 4 pixels, its four corner pixels cut, so no corner of the face sticks out of a round ring any more. The faces are 2 px larger inside the same footprint; Home's and Profile's frame no longer starts a pixel left of its column.
+- In a crowded ring a few faces may be a little smaller (or one more member counted under "+N more"): the ring now also keeps a pixel between the square frames of two neighbours where the ring runs diagonally.
+
+### Rolling back
+
+Nothing is stored: revert the commit.
+
 ## Unreleased (plan 20d: brotherhoods)
 
 - A plain human now leads a Brotherhood rather than a Coven. Founding still requires a hunter unless open founding is enabled. Members stay when a leader changes the group's type.

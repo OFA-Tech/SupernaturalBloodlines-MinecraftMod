@@ -3,7 +3,9 @@ package net.ofatech.supernaturalbloodlines.shared.hub.kit;
 /** Pixel rows of the medallion shapes: for each row of a {@code size x size} box, where the shape starts and how wide it is. Pure. */
 public final class Shapes {
     public enum Shape {
-        ROUND, HEX, SQUARE
+        ROUND, HEX, SQUARE,
+        /** A square without its four corner pixels (from size 8; smaller it is the square): the frame of a player's face. */
+        SOFT
     }
 
     /** A filled run: from column {@code x}, {@code w} wide. */
@@ -60,6 +62,7 @@ public final class Shapes {
             double yc = y + 0.5;
             int w = switch (shape) {
                 case SQUARE -> size;
+                case SOFT -> size >= 8 && (y == 0 || y == size - 1) ? size - 2 : size;
                 case ROUND -> {
                     double half = size / 2.0;
                     double dy = yc - half;

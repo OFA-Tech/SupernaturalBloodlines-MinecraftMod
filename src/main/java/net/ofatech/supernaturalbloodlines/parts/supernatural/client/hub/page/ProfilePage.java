@@ -29,6 +29,7 @@ import net.ofatech.supernaturalbloodlines.shared.hub.HubTheme;
 import net.ofatech.supernaturalbloodlines.shared.hub.Rect;
 import net.ofatech.supernaturalbloodlines.shared.hub.Contrast;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.Detail;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.PortraitGeometry;
 import net.ofatech.supernaturalbloodlines.shared.hub.profile.ProfileActions;
 import net.ofatech.supernaturalbloodlines.shared.supernatural.HubSocial;
 import net.ofatech.supernaturalbloodlines.shared.supernatural.profile.Fact;
@@ -144,11 +145,11 @@ public final class ProfilePage implements HubPageView {
         HubTheme t = f.theme();
         int face = f.layout().chrome().detail() != null && f.layout().chrome().detail().h() >= 60 ? 48 : r.w() >= 150 ? 40 : 28;
         boolean leader = payload != null && payload.facts().get(Fact.RANK) != null && payload.facts().get(Fact.RANK).contains("alpha");
-        BookKit.portrait(f.g, route.name(), r.x() + face / 2 + 1, y + face / 2 + 1, face, route.id().equals(f.view.player().getUUID()) ? t.accent() : t.muted(), t.paper());
+        BookKit.portrait(f.g, route.name(), PortraitGeometry.cxAt(r.x(), face), y + face / 2 + 1, face, route.id().equals(f.view.player().getUUID()) ? t.accent() : t.muted(), t.paper());
         List<String> rank = payload == null ? null : payload.facts().get(Fact.RANK);
         Component chip = rank == null || rank.isEmpty() ? null : value(Fact.RANK, rank);
         // beside the portrait when the name and the chip fit there, else under it (a narrow column must not squeeze or cut them)
-        int besideX = r.x() + face + 8;
+        int besideX = PortraitGeometry.besideX(r.x(), face);
         boolean beside = r.right() - besideX >= Math.max(f.font().width(route.name()) + (leader ? 12 : 0), chip == null ? 0 : f.font().width(chip) + 8);
         int tx = beside ? besideX : r.x();
         int top = beside ? y : y + face + 3;

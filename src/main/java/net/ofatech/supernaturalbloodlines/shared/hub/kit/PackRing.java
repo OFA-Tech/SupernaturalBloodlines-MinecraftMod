@@ -55,13 +55,30 @@ public final class PackRing {
     /** The ring round a portrait is 2 px outside its face on each side; this is what must stay clear between the centres of two neighbours, on top of the faces: the two rings, 2 px of air and a pixel for the rounding of the positions. */
     public static final int GAP = 7;
 
-    /** How many portraits of {@code size} fit round a ring of {@code radius}: the chord between two neighbours (not the arc) is at least {@code size + GAP}. */
+    /**
+     * How many portraits of {@code size} fit round a ring of {@code radius}: the chord between two neighbours (not the arc) is at least {@code size + GAP},
+     * and the square frames of two neighbours ({@code size + 4}, {@link PortraitGeometry}) keep a pixel of air between them where the ring runs diagonally.
+     */
     public static int capacity(int radius, int size) {
         int n = 1;
-        while (n < 200 && 2 * radius * Math.sin(Math.PI / (n + 1)) >= size + GAP) {
+        while (n < 200 && 2 * radius * Math.sin(Math.PI / (n + 1)) >= size + GAP && squaresClear(radius, size, n + 1)) {
             n++;
         }
         return n;
+    }
+
+    /** Whether {@code n} square frames placed as {@link #layout} places them (rounded the same way) stay a pixel apart. */
+    private static boolean squaresClear(int radius, int size, int n) {
+        for (int i = 0; i < n; i++) {
+            double a = -Math.PI / 2 + 2 * Math.PI * i / n;
+            double b = -Math.PI / 2 + 2 * Math.PI * ((i + 1) % n) / n;
+            long dx = Math.abs(Math.round(radius * Math.cos(a)) - Math.round(radius * Math.cos(b)));
+            long dy = Math.abs(Math.round(radius * Math.sin(a)) - Math.round(radius * Math.sin(b)));
+            if (n > 1 && Math.max(dx, dy) < size + 5) {
+                return false;
+            }
+        }
+        return true;
     }
 
     /**
