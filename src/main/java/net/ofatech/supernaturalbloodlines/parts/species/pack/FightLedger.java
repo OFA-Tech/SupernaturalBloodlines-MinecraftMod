@@ -58,7 +58,7 @@ public final class FightLedger {
         NeoForge.EVENT_BUS.addListener((AttackEntityEvent e) -> {
             // a probe asks what a blow would meet without striking (a willing feed, a skill's check): never a swing
             if (!e.getEntity().level().isClientSide && !DamageProbe.active()) {
-                SWINGS.put(e.getEntity().getUUID(), new Swing(e.getTarget().getUUID(), e.getEntity().level().getGameTime()));
+                swing(e.getEntity(), e.getTarget());
             }
         });
         NeoForge.EVENT_BUS.addListener(EventPriority.LOWEST, false, LivingIncomingDamageEvent.class, e -> {
@@ -107,6 +107,11 @@ public final class FightLedger {
         } else if (target instanceof OwnableEntity pet && pet.getOwnerUUID() != null && !pet.getOwnerUUID().equals(p.getUUID())) {
             record(p.getUUID(), pet.getOwnerUUID(), now);
         }
+    }
+
+    /** A blow aimed at {@code target} this tick, for a strike that does not go through Player.attack (the Hybrid Leap): its hit is a direct melee hit. */
+    public static void swing(Player p, Entity target) {
+        SWINGS.put(p.getUUID(), new Swing(target.getUUID(), p.level().getGameTime()));
     }
 
     /** The player who meant this damage, or null (thorns, a pet, the world). */

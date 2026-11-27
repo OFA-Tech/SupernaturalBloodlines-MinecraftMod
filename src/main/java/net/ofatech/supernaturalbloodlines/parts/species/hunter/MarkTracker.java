@@ -148,13 +148,12 @@ public final class MarkTracker {
         if (killer instanceof ServerPlayer k && isPrey(victim) && !samePack(k, victim)) {
             killedPrey(k);
         }
-        // the one who costs a marked hunter the mark is found the way the Code finds a culprit: the owner of the pet that killed, or for a death by the world
-        // the last direct melee striker (R295), never the kill credit alone
-        Entity marker = environmental ? lastStriker(victim) : ownerOrSelf(killer);
-        if (marker != null && marker != victim && victimWasMarked && victim instanceof ServerPlayer v && isPrey(marker) && !samePack(v, marker)) {
+        Resolved resolved = new Resolved(victim, killer, victimWasMarked, killer != null && source.getEntity() == killer, environmental);
+        // the one who costs a marked hunter the mark is the death's culprit, as for the Code; a brother of the same brotherhood is no exception (R82, R295)
+        Entity marker = culprit(resolved);
+        if (marker != null && victimWasMarked && victim instanceof ServerPlayer v && isPrey(marker) && !(samePack(v, marker) && !sameBrotherhood(v, marker))) {
             killedMarkedHunter(v, marker);
         }
-        Resolved resolved = new Resolved(victim, killer, victimWasMarked, killer != null && source.getEntity() == killer, environmental);
         for (Consumer<Resolved> hook : RESOLVED) {
             try {
                 hook.accept(resolved);
@@ -162,6 +161,23 @@ public final class MarkTracker {
                 SupernaturalBloodlines.LOGGER.error("A hook of the kill feed failed", failed);
             }
         }
+    }
+
+    /**
+     * The one a death is put on (R82, R294, R295): whoever dealt the killing blow (a mob too), or the online owner of the tamed pet that did; for a death the
+     * world dealt (fire, lava, a fall, poison, wither, drowning), the player whose direct melee hit last landed on the victim in the last 10 seconds, never the
+     * kill credit, which a later snowball can steal. The void, /kill and credit alone are nobody's, and so is a death by your own pet. The hunter's own gain
+     * (killedPrey) stays on the credit.
+     */
+    public static Entity culprit(Resolved r) {
+        Entity e = r.environmental() ? lastStriker(r.victim()) : r.killingBlow() ? ownerOrSelf(r.killer()) : null;
+        return e == r.victim() ? null : e;
+    }
+
+    private static boolean sameBrotherhood(ServerPlayer a, Entity b) {
+        var mine = net.ofatech.supernaturalbloodlines.parts.species.group.brotherhood.BrotherhoodScope.of(a.serverLevel(), a.getUUID());
+        var theirs = net.ofatech.supernaturalbloodlines.parts.species.group.brotherhood.BrotherhoodScope.of(a.serverLevel(), b.getUUID());
+        return mine != null && theirs != null && mine.group().equals(theirs.group());
     }
 
     /** The player whose direct melee hit last landed on {@code victim} in the last 10 seconds (FightLedger), if online, or null. */
@@ -193,7 +209,10 @@ public final class MarkTracker {
         RESOLVED.add(hook);
     }
 
-    /** Two players of one pack (plan 14), or who left it a moment ago: a kill between them gives no mark and no curse, in either direction. */
+    /**
+     * Two players of one pack (plan 14), or who left it a moment ago: a kill between them gives no mark and no curse, in either direction. A marked hunter's
+     * brotherhood is not such a group: a brother who kills him still costs the mark (R82, R295).
+     */
     static boolean samePack(Entity a, Entity b) {
         return net.neoforged.fml.ModList.get().isLoaded("werewolves") && net.ofatech.supernaturalbloodlines.parts.species.pack.PackIndex.samePack(a, b);
     }

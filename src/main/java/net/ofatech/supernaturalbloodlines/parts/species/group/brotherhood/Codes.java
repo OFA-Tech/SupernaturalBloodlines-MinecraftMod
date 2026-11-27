@@ -47,30 +47,19 @@ public final class Codes {
 
     /** The kill feed: the Code judges the player behind the death ({@link #culprit}). */
     static void onResolved(MarkTracker.Resolved r) {
-        ServerPlayer killer = culprit(r);
+        ServerPlayer killer = MarkTracker.culprit(r) instanceof ServerPlayer p ? p : null;
         if (killer != null) {
             judge(killer, r.victim());
         }
-    }
-
-    /**
-     * The player a death is put on (R294, R295): whoever dealt the killing blow, or owns the tamed pet that did; for a death the world dealt (fire, lava, a
-     * fall, poison, wither, drowning), the player whose direct melee hit last landed on the victim in the last 10 seconds ({@link FightLedger}), never the kill
-     * credit, which a later snowball can steal. Kill credit with no such hit, the void and /kill are nobody's.
-     */
-    static ServerPlayer culprit(MarkTracker.Resolved r) {
-        ServerPlayer p = r.environmental() ? MarkTracker.lastStriker(r.victim())
-                : r.killingBlow() && MarkTracker.ownerOrSelf(r.killer()) instanceof ServerPlayer owner ? owner : null;
-        // your own pet that killed you puts the death on nobody
-        return p == r.victim() ? null : p;
     }
 
     /** Whether, in the last 10 seconds, {@code outsider} deliberately hurt any brother of this brotherhood ({@code outsiderStruck}), or any brother hurt them. */
     static boolean fought(ServerLevel level, UUID leader, UUID outsider, boolean outsiderStruck) {
         long now = PackIndex.now();
         for (UUID brother : PackIndex.get(level).roster(leader)) {
-            // a brother who started the fight himself licenses no other brother to "defend" him
-            if (outsiderStruck ? FightLedger.struck(outsider, brother, now) && !FightLedger.startedIt(brother, outsider, now) : FightLedger.struck(brother, outsider, now)) {
+            // a brother who started the fight himself licenses no other brother to "defend" him; mirrored, a prey player who started it with a brother is
+            // not shielded by that brother hitting back (the dead brother's own fight is Innocence's plain rule)
+            if (outsiderStruck ? FightLedger.struck(outsider, brother, now) && !FightLedger.startedIt(brother, outsider, now) : FightLedger.struck(brother, outsider, now) && !FightLedger.startedIt(outsider, brother, now)) {
                 return true;
             }
         }

@@ -136,6 +136,29 @@ public final class HybridLeapGameTests {
     }
 
     @GameTest(template = "empty", templateNamespace = NS)
+    public static void theLeapsBlowIsADirectMeleeHit(GameTestHelper helper) {
+        if (skipped(helper)) {
+            return;
+        }
+        TestPlayers.TalkingDuelist p = hybrid(helper);
+        TestPlayers.TalkingDuelist target = TestPlayers.createTalkingDuelist(helper);
+        boolean pvp = helper.getLevel().getServer().isPvpAllowed();
+        try {
+            helper.getLevel().getServer().setPvpAllowed(true);
+            target.setPos(helper.absoluteVec(new Vec3(1.5, 2, 6.5)));
+            look(p, target);
+            helper.assertTrue(HybridLeapAction.INSTANCE.trigger(p, target) == null, "the leap was refused");
+            arriveAt(p, target);
+            helper.assertTrue(target.getHealth() < target.getMaxHealth(), "setup: the blow did not land");
+            helper.assertTrue(p.getUUID().equals(net.ofatech.supernaturalbloodlines.parts.species.pack.FightLedger.lastMeleeStriker(target.getUUID(),
+                    net.ofatech.supernaturalbloodlines.parts.species.pack.PackIndex.now())), "the leap's blow was not a direct melee hit");
+        } finally {
+            helper.getLevel().getServer().setPvpAllowed(pvp);
+            clean(p, target);
+        }
+        helper.succeed();
+    }
+    @GameTest(template = "empty", templateNamespace = NS)
     public static void anOriginalHybridHasItAndAWerewolfFormIsNotNeeded(GameTestHelper helper) {
         if (skipped(helper)) {
             return;

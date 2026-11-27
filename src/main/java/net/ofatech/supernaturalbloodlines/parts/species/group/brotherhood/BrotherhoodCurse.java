@@ -26,7 +26,7 @@ public final class BrotherhoodCurse {
     }
 
     static void onResolved(MarkTracker.Resolved r) {
-        ServerPlayer killer = Codes.culprit(r);
+        ServerPlayer killer = MarkTracker.culprit(r) instanceof ServerPlayer p ? p : null;
         if (killer == null || !(r.victim() instanceof ServerPlayer victim)) {
             return;
         }

@@ -390,7 +390,21 @@ public final class BrotherhoodHookGameTests {
             boolean wolves = ModList.get().isLoaded("werewolves");
             helper.assertTrue(group, "PackIndex.samePack is false for two members of one group");
             helper.assertTrue(wolfGuard == wolves, "MarkTracker.samePack is " + wolfGuard + " with werewolves loaded=" + wolves);
-            say("two members of a brotherhood: PackIndex.samePack=" + group + ", MarkTracker.samePack=" + wolfGuard + " (werewolves loaded=" + wolves + ")");
+            // being in the same brotherhood spares nobody (R82, R295): a vampire member who kills the marked leader costs the mark and is cursed
+            TalkingDuelist vampire = GroupTestKit.vampire(helper, 3.5);
+            online(leader, member, vampire);
+            net.ofatech.supernaturalbloodlines.parts.species.gametest.HunterMarkGameTests.online(leader, member, vampire);
+            BloodlineAccess.set(leader, BloodlineState.NONE.toBuilder().species(Species.HUNTER_OF_THE_FIVE).markKills(5).build());
+            try {
+                helper.assertTrue(join(leader, vampire) && PackIndex.samePack(leader, vampire), "setup: the vampire is not in the brotherhood");
+                net.ofatech.supernaturalbloodlines.parts.species.gametest.HunterMarkGameTests.kill(vampire, leader);
+                helper.assertTrue(BloodlineAccess.get(leader).species() != Species.HUNTER_OF_THE_FIVE, "a vampire of the same brotherhood killed the marked leader and the mark stayed");
+                helper.assertTrue(BloodlineAccess.get(vampire).hunterCurse(), "a vampire of the same brotherhood was not cursed for the marked leader");
+            } finally {
+                net.ofatech.supernaturalbloodlines.parts.species.gametest.HunterMarkGameTests.clearHooks();
+                net.ofatech.supernaturalbloodlines.parts.species.gametest.HunterMarkGameTests.reset(leader, vampire);
+                clean(helper, vampire);
+            }
         } finally {
             clean(helper, leader, member);
         }

@@ -263,6 +263,9 @@ public final class HybridLeapAction implements ExtraActions.Action {
             return;
         }
         float damage = (float) SpeciesConfig.hybridLeapDamage();
+        if (damage > 0.0F) {
+            net.ofatech.supernaturalbloodlines.parts.species.pack.FightLedger.swing(p, target);
+        }
         boolean landed = damage > 0.0F ? target.hurt(attack(p), damage) : TargetChecks.damageWouldLand(target, attack(p), TargetChecks.PROBE);
         if (landed && SpeciesConfig.hybridLeapWeaknessTicks() > 0) {
             target.addEffect(new MobEffectInstance(MobEffects.WEAKNESS, SpeciesConfig.hybridLeapWeaknessTicks(), 0));

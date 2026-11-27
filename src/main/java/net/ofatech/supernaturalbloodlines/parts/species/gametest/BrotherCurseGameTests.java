@@ -602,6 +602,24 @@ public final class BrotherCurseGameTests {
         helper.succeed();
     }
     @GameTest(template = "empty", templateNamespace = NS)
+    public static void aVampireWhoStartedTheFightIsNotShieldedByTheBrotherWhoHitBack(GameTestHelper helper) {
+        Bh g = bh(helper);
+        TalkingDuelist vampire = GroupTestKit.vampire(helper, 4.5);
+        online(g.leader(), g.hunter(), g.human(), vampire);
+        HunterMarkGameTests.online(g.leader(), g.hunter(), g.human(), vampire);
+        try {
+            // the vampire hits the leader first, the leader hits back, then the vampire kills another brother
+            g.leader().hurt(vampire.damageSources().playerAttack(vampire), 1f);
+            at(T0 + 1_000);
+            vampire.hurt(g.leader().damageSources().playerAttack(g.leader()), 1f);
+            kill(vampire, g.human());
+            helper.assertTrue(cursed(vampire), "a vampire who started the fight was shielded by the brother who hit back");
+        } finally {
+            finish(helper, g, vampire);
+        }
+        helper.succeed();
+    }
+    @GameTest(template = "empty", templateNamespace = NS)
     public static void aBrothersThornsDoNotExemptTheVampire(GameTestHelper helper) {
         Bh g = bh(helper);
         TalkingDuelist vampire = GroupTestKit.vampire(helper, 4.5);

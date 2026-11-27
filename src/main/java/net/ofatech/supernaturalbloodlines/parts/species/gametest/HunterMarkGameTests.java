@@ -780,6 +780,28 @@ public final class HunterMarkGameTests {
         }
         helper.succeed();
     }
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void theVoidOrAKillCommandAfterAPunchKeepsTheMark(GameTestHelper helper) {
+        ServerPlayer voided = markedDuelist(helper, 5);
+        ServerPlayer killed = markedDuelist(helper, 5);
+        ServerPlayer killer = vampire(helper);
+        try {
+            GroupTestKit.online(voided, killed, killer);
+            killer.attack(voided);
+            helper.assertTrue(voided.getKillCredit() == killer, "setup: the punch left no kill credit");
+            NeoForge.EVENT_BUS.post(new LivingDeathEvent(voided, voided.damageSources().fellOutOfWorld()));
+            helper.assertTrue(BloodlineAccess.get(voided).species() == Species.HUNTER_OF_THE_FIVE && !BloodlineAccess.get(killer).hunterCurse(),
+                    "a fall into the void after a punch cost the mark or cursed the vampire");
+            killer.attack(killed);
+            NeoForge.EVENT_BUS.post(new LivingDeathEvent(killed, killed.damageSources().genericKill()));
+            helper.assertTrue(BloodlineAccess.get(killed).species() == Species.HUNTER_OF_THE_FIVE && !BloodlineAccess.get(killer).hunterCurse(),
+                    "a /kill after a punch cost the mark or cursed the vampire");
+        } finally {
+            clearHooks();
+            reset(voided, killed, killer);
+        }
+        helper.succeed();
+    }
     private static void assertPerks(GameTestHelper helper, ServerPlayer p, double attack, double speed) {
         AttributeModifier a = mark(p, Attributes.ATTACK_DAMAGE);
         AttributeModifier s = mark(p, Attributes.MOVEMENT_SPEED);
