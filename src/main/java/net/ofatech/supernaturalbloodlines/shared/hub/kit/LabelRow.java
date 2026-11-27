@@ -2,7 +2,8 @@ package net.ofatech.supernaturalbloodlines.shared.hub.kit;
 
 /**
  * A row of short labels under equal cells (the moon calendar's days). When a label is wider than its cell, every other one is left out so the
- * rest have two cells; a label is kept inside the row. Pure.
+ * rest have two cells, but the marked column (the full moon) always keeps its label and its two neighbours give way; a label is kept inside the row.
+ * Pure.
  */
 public final class LabelRow {
     /** The space kept between two labels. */
@@ -16,9 +17,9 @@ public final class LabelRow {
         return widest > cell - GAP;
     }
 
-    /** Whether the label of column {@code col} is drawn. */
-    public static boolean shown(int col, boolean thin) {
-        return !thin || col % 2 == 0;
+    /** Whether the label of column {@code col} is drawn; {@code marked} is the column whose label must stay (-1 for none). */
+    public static boolean shown(int col, boolean thin, int marked) {
+        return !thin || col == marked || col % 2 == 0 && Math.abs(col - marked) != 1;
     }
 
     /** The left x of a label of {@code width} centred under its cell and kept inside {@code [left, left + cols * cell)}. */

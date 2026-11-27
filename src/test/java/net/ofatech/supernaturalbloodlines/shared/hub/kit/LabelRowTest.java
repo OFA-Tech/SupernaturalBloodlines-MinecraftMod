@@ -18,6 +18,7 @@ class LabelRowTest {
     @Test
     void noTwoDrawnLabelsTouchAndNoneLeavesTheRow() {
         for (int cell = 12; cell <= 40; cell++) {
+            for (int marked = 0; marked < COLS; marked++) {
             for (int rowStart : new int[] {0, COLS}) {
                 int widest = 0;
                 for (int col = 0; col < COLS; col++) {
@@ -26,7 +27,8 @@ class LabelRowTest {
                 boolean thin = LabelRow.thin(widest, cell);
                 int lastRight = Integer.MIN_VALUE / 2;
                 for (int col = 0; col < COLS; col++) {
-                    if (!LabelRow.shown(col, thin)) {
+                    if (!LabelRow.shown(col, thin, marked)) {
+                        assertTrue(col != marked, "the full moon lost its label");
                         continue;
                     }
                     int w = width(rowStart + col);
@@ -35,6 +37,7 @@ class LabelRowTest {
                     assertTrue(x >= lastRight + LabelRow.GAP, "label " + (rowStart + col) + " touches the one before at cell " + cell);
                     lastRight = x + w;
                 }
+            }
             }
         }
     }
@@ -48,6 +51,6 @@ class LabelRowTest {
     @Test
     void theMoonPageUsesIt() {
         String src = SourceTree.read("src/main/java/net/ofatech/supernaturalbloodlines/parts/supernatural/client/hub/page/MoonPage.java");
-        assertTrue(src.contains("LabelRow.thin(") && src.contains("LabelRow.shown(") && src.contains("LabelRow.x("), "MoonPage places its day labels itself");
+        assertTrue(src.contains("LabelRow.thin(") && src.contains("LabelRow.shown(col, thin[row], MoonCalendar.daysToFull(phase) % COLUMNS)") && src.contains("LabelRow.x("), "MoonPage places its day labels itself");
     }
 }

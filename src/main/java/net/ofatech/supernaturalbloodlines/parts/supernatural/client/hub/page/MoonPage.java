@@ -73,7 +73,7 @@ public final class MoonPage implements HubPageView {
                 KitDraw.tickRing(f.g, x + icon / 2, gy + icon / 2, icon / 2 + 2, 16, 1f, color, color);
             });
             KitDraw.icon(f.g, Icons.moon(day.phase()), x, gy, icon, day.full() ? t.accent() : t.ink());
-            if (LabelRow.shown(col, thin[row])) {
+            if (LabelRow.shown(col, thin[row], MoonCalendar.daysToFull(phase) % COLUMNS)) {
                 Component label = dayLabel(day.offset());
                 f.g.drawString(f.font(), label, LabelRow.x(r.x(), col, cell, COLUMNS, f.font().width(label)), gy + icon + 2, day.full() ? t.accent() : t.muted(), false);
             }
