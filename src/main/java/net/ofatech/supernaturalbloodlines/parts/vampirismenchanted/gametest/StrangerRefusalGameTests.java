@@ -84,8 +84,8 @@ public final class StrangerRefusalGameTests {
 
     @GameTest(template = "empty", templateNamespace = NS)
     public static void theRiteOfTheMoonOnAWrongFactionStrangerIsGeneric(GameTestHelper helper) {
-        if (!ModList.get().isLoaded("werewolves")) {
-            SupernaturalBloodlines.LOGGER.info("StrangerRefusal SKIPPED: the Rite of the Moon needs Werewolves");
+        if (!ModList.get().isLoaded("werewolves") || !EnabledParts.isEnabled("species")) {
+            SupernaturalBloodlines.LOGGER.info("StrangerRefusal SKIPPED: the Rite of the Moon needs Werewolves and the species part");
             helper.succeed();
             return;
         }
