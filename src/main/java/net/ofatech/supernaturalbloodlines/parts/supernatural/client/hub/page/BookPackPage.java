@@ -223,6 +223,10 @@ public final class BookPackPage implements HubPageView {
         return invited && (!grp || viewerRank == GroupView.NOT_IN || viewerRank == GroupView.LEADER);
     }
 
+    static boolean acceptIsPrimary(boolean leads) {
+        return !leads;
+    }
+
     private boolean leaderFirst() {
         return !mayAccept(gv, grp);
     }
@@ -425,7 +429,8 @@ public final class BookPackPage implements HubPageView {
             }
         }
         if (!leaderFirst()) {
-            d.action("accept", t(KEY + "accept", "accept"), true, true, () -> BloodlinePage.command(cmd("accept")));
+            // a leader's main action is their own pack's; an invitation waiting for them is a second button
+            d.action("accept", t(KEY + "accept", "accept"), acceptIsPrimary(leads(f, pack)), true, () -> BloodlinePage.command(cmd("accept")));
         }
         if (canKick(f, pack, chosen)) {
             d.action(new Detail.Action("kick", t(KEY + "kick", "kick"), false, true, null,
@@ -573,6 +578,16 @@ public final class BookPackPage implements HubPageView {
             List<Rect> taken = new ArrayList<>(blocked);
             where.stream().filter(java.util.Objects::nonNull).forEach(taken::add);
             where.set(i, RingLabels.underOrOver(asked.get(i), slot.x(), slot.y(), slot.size(), taken, nameBounds, RING_NAME_MIN, RING_NAME_PAD));
+        }
+        for (int i = 0; i < where.size(); i++) {
+            PackRing.Slot slot = ring.slots().get(i);
+            List<Rect> taken = new ArrayList<>(blocked);
+            for (int j = 0; j < where.size(); j++) {
+                if (j != i && where.get(j) != null) {
+                    taken.add(where.get(j));
+                }
+            }
+            where.set(i, RingLabels.preferWhole(asked.get(i), where.get(i), slot.x(), slot.y(), slot.size(), taken, nameBounds, RING_NAME_PAD));
         }
         int named_i = 0;
         for (PackRing.Slot slot : ring.slots()) {
