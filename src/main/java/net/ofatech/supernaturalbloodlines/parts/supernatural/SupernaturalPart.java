@@ -114,6 +114,7 @@ public final class SupernaturalPart {
             e.register(SupernaturalStateGameTests.class);
             e.register(LadderDataGameTests.class);
             e.register(DetectorGameTests.class);
+            e.register(net.ofatech.supernaturalbloodlines.parts.supernatural.gametest.HubKindGameTests.class);
             e.register(ClaimGameTests.class);
             e.register(MigrationGameTests.class);
             e.register(SkillGameTests.class);

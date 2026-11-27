@@ -15,10 +15,14 @@ public final class PlayerRaces {
     }
 
     public static List<SupernaturalRace> of(Player p) {
-        BloodlineState b = BloodlineAccess.get(p);
         IPlayableFaction<?> f = VampirismAPI.factionPlayerHandler(p).getCurrentFaction();
+        return of(BloodlineAccess.get(p), f == null ? null : f.getID().toString());
+    }
+
+    /** The races from the two things they are made of: the bloodline and the Vampirism faction id (null for none). */
+    public static List<SupernaturalRace> of(BloodlineState b, @org.jetbrains.annotations.Nullable String factionId) {
         List<SupernaturalRace> out = new ArrayList<>();
-        out.add(SupernaturalRace.creature(b, f == null ? null : f.getID().toString()));
+        out.add(SupernaturalRace.creature(b, factionId));
         SupernaturalRace.magic(b).ifPresent(out::add);
         return out;
     }
