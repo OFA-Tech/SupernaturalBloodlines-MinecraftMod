@@ -1,5 +1,6 @@
 package net.ofatech.supernaturalbloodlines.parts.species.unlock;
 
+import net.ofatech.supernaturalbloodlines.shared.rite.RiteTell;
 import java.util.List;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
@@ -41,7 +42,7 @@ public final class RitePageItem extends Item {
             return InteractionResultHolder.sidedSuccess(stack, level.isClientSide);
         }
         if (RiteUnlocks.learnLore(p, loreOf(stack)) == 0) {
-            p.displayClientMessage(Component.translatable("supernaturalbloodlines.rites.nothing_new"), true);
+            RiteTell.refuse(p, "supernaturalbloodlines.rites.nothing_new");
         }
         return InteractionResultHolder.success(stack);
     }

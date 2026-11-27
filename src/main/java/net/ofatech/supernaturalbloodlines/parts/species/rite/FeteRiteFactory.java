@@ -1,5 +1,6 @@
 package net.ofatech.supernaturalbloodlines.parts.species.rite;
 
+import net.ofatech.supernaturalbloodlines.shared.rite.RiteTell;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
@@ -63,7 +64,7 @@ public record FeteRiteFactory(int minCircle) implements RiteFactory {
             Optional<String> refused = GrandGate.check(level, params.caster, id, minCircle);
             if (refused.isPresent()) {
                 if (level.getPlayerByUUID(params.caster) instanceof ServerPlayer caster) {
-                    caster.displayClientMessage(Component.translatable(refused.get()), true);
+                    RiteTell.refuse(caster, refused.get());
                 }
                 return cancel();
             }
@@ -76,7 +77,7 @@ public record FeteRiteFactory(int minCircle) implements RiteFactory {
                 if (dx * dx + dz * dz <= r2) {
                     p.addEffect(new MobEffectInstance(MobEffects.LUCK, ticks, 0));
                     p.addEffect(new MobEffectInstance(MobEffects.REGENERATION, ticks, 0));
-                    p.displayClientMessage(Component.translatable(DONE), true);
+                    RiteTell.say(p, DONE);
                 }
             }
             GrandGate.stamp(level, params.caster, id);

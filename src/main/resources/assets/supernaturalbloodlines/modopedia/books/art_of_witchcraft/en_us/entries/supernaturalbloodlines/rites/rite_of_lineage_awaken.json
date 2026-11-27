@@ -20,7 +20,7 @@
       "components": [
         {
           "template": "modopedia:page/headered_text",
-          "text": "Refused for hunters, for people who already are werewolves and for heretics. Werewolves must be installed.",
+          "text": "Refused for hunters, for people who already are werewolves and for heretics.\n\nA vampire or Original made a hybrid this way is bound: it cannot shift until the Rite of the Moon. A refusal gives the ingredients back.",
           "header": "Lineage: Awaken"
         }
       ]
@@ -29,7 +29,7 @@
       "components": [
         {
           "template": "modopedia:page/headered_text",
-          "text": "A vampire or Original made a hybrid this way is bound: it cannot shift until the Rite of the Moon. A refusal gives the ingredients back.",
+          "text": "Moonstone: craft it from an amethyst shard and a silver ingot, in any order.\n\nNeeds the Werewolves mod.",
           "header": "Lineage: Awaken"
         }
       ]

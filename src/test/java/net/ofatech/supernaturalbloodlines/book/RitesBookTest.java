@@ -174,7 +174,8 @@ class RitesBookTest {
             JsonObject factory = RitesBook.rite(ROOT, path).getAsJsonObject("factory");
             boolean flag = factory.has("requires_full_moon") && factory.get("requires_full_moon").getAsBoolean();
             assertEquals(FULL_MOON_BY_CODE.contains(path), flag, path + ": the rite file and the code disagree about the full moon");
-            assertEquals(flag, all(path).contains("full-moon night only"), path + ": the text and the rite file disagree about the full moon");
+            // the evolution and mastery rites need one by their tier, not their file: MoonTextTest checks every rite both ways
+            assertTrue(!flag || all(path).contains("needs a full moon:"), path + ": the rite file wants a full moon and the text does not say so");
         }
     }
 

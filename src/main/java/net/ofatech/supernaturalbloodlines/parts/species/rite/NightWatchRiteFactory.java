@@ -1,5 +1,7 @@
 package net.ofatech.supernaturalbloodlines.parts.species.rite;
 
+import net.ofatech.supernaturalbloodlines.core.moon.MoonRule;
+import net.ofatech.supernaturalbloodlines.shared.rite.RiteTell;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
@@ -31,15 +33,7 @@ public record NightWatchRiteFactory(int minCircle) implements RiteFactory {
     public static final String DAY = "supernaturalbloodlines.rite.grand.night_watch_day";
     public static final MapCodec<NightWatchRiteFactory> CODEC = RecordCodecBuilder.mapCodec(i -> i.group(
             Codec.INT.optionalFieldOf("min_circle", 0).forGetter(NightWatchRiteFactory::minCircle)).apply(i, NightWatchRiteFactory::new));
-    /** Night ends when the day's tick leaves this range. */
-    public static final long NIGHT_START = 13000;
-    public static final long NIGHT_END = 23000;
     private static final int PERIOD = 40;
-
-    public static boolean isNight(long dayTime) {
-        long t = Math.floorMod(dayTime, 24000L);
-        return t >= NIGHT_START && t < NIGHT_END;
-    }
 
     @Override
     public Rite create(Rite.BaseRiteParams base, Rite.RiteParams params) {
@@ -73,10 +67,10 @@ public record NightWatchRiteFactory(int minCircle) implements RiteFactory {
         @Override
         protected boolean onStart(RiteParams params) {
             long now = level.getDayTime();
-            if (!isNight(now)) {
+            if (!MoonRule.isNight(level.dimensionType().hasFixedTime(), now)) {
                 // nothing is paid and no cooldown is stamped: the rite cancels itself
                 if (level.getPlayerByUUID(params.caster) instanceof ServerPlayer caster) {
-                    caster.displayClientMessage(Component.translatable(DAY), true);
+                    RiteTell.refuse(caster, DAY);
                 }
                 return cancel();
             }
@@ -84,15 +78,15 @@ public record NightWatchRiteFactory(int minCircle) implements RiteFactory {
             Optional<String> refused = GrandGate.check(level, params.caster, id, minCircle);
             if (refused.isPresent()) {
                 if (level.getPlayerByUUID(params.caster) instanceof ServerPlayer caster) {
-                    caster.displayClientMessage(Component.translatable(refused.get()), true);
+                    RiteTell.refuse(caster, refused.get());
                 }
                 return cancel();
             }
             radius = FeteRiteFactory.radius();
-            dawn = now - Math.floorMod(now, 24_000L) + NIGHT_END;
+            dawn = now - Math.floorMod(now, 24_000L) + MoonRule.NIGHT_END;
             GrandGate.stamp(level, params.caster, id);
             if (level.getPlayerByUUID(params.caster) instanceof ServerPlayer caster) {
-                caster.displayClientMessage(Component.translatable(STARTED), true);
+                RiteTell.say(caster, STARTED);
             }
             return true;
         }
@@ -108,7 +102,7 @@ public record NightWatchRiteFactory(int minCircle) implements RiteFactory {
 
         @Override
         protected boolean onTick(RiteParams params) {
-            if (!isNight(level.getDayTime())) {
+            if (!MoonRule.isNight(level.dimensionType().hasFixedTime(), level.getDayTime())) {
                 return false;
             }
             if (params.ticks() % PERIOD == 0) {
@@ -131,7 +125,7 @@ public record NightWatchRiteFactory(int minCircle) implements RiteFactory {
         protected void loadAdditional(CompoundTag tag, ServerLevel level) {
             radius = tag.getInt("radius");
             long now = level.getDayTime();
-            dawn = tag.contains("dawn") ? tag.getLong("dawn") : isNight(now) ? now - Math.floorMod(now, 24_000L) + NIGHT_END : now;
+            dawn = tag.contains("dawn") ? tag.getLong("dawn") : MoonRule.isNight(false, now) ? now - Math.floorMod(now, 24_000L) + MoonRule.NIGHT_END : now;
         }
     }
 }

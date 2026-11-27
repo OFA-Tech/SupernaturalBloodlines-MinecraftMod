@@ -1,5 +1,16 @@
 # Changelog
 
+## Unreleased (plan 23 PR-1b: rites)
+
+- **Every rite refusal now also goes to chat**, once, as well as the action bar, so a refusal is not lost when the bar fades. Successes stay on the action bar. A rite of the werewolves without the Werewolves mod says so. Three vague refusals now name what is missing (a closed evolution rite, the item a binding rite needs, the circle's experience levels).
+- **An eclipse counts as a full moon** for every rite that needs one (the Rite of the Moon, the Silver Moon, Immortality, Severance, the Alpha Trial, the Valet Pike, the Frequency, and the evolution and mastery rites below Ultimate), between dusk and dawn.
+- **One night for every rite:** the Night Watch now starts at dusk (12786) like the moon rites, not at 13000.
+- **The rite texts say what a full moon is** (phase 0, dusk to dawn, the Overworld, an eclipse counts, the moon calendar shows the next), how an eclipse happens, the Moonstone recipe, and which rites need Werewolves. The book is regenerated. The wiki has a "What counts as a full moon" section and the `/time set` behaviour of Enhanced Celestials.
+
+### Rolling back
+
+Nothing is stored: revert the commit.
+
 ## Unreleased (plan 23 PR-1a: portraits)
 
 - **A player's face sits in a square frame everywhere** (Home, Profile, and the pack, clan, coven and brotherhood rings): the frame is the face plus 4 pixels, its four corner pixels cut, so no corner of the face sticks out of a round ring any more. The faces are 2 px larger inside the same footprint; Home's and Profile's frame no longer starts a pixel left of its column.

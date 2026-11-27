@@ -1,5 +1,6 @@
 package net.ofatech.supernaturalbloodlines.parts.species.rite;
 
+import net.ofatech.supernaturalbloodlines.shared.rite.RiteTell;
 
 import com.mojang.serialization.MapCodec;
 import java.util.List;
@@ -72,15 +73,16 @@ public record SeveranceRiteFactory(boolean requiresFullMoon) implements RiteFact
         protected boolean onStart(RiteParams params) {
             Optional<ServerPlayer> found = RiteTargets.centrePlayerOrCaster(this, params, level);
             if (found.isEmpty()) {
-                return cancel();
+                return cancel(); // silent: no player on the centre
             }
             ServerPlayer target = found.get();
             ServerPlayer caster = RiteTargets.performer(findEntity(params.caster), params.caster, target).orElse(null);
             if (caster == null) {
-                return cancel(); // the performer left: only the performer may stand for themselves, so nobody is asked and nobody is changed
+                return cancel(); // silent: the performer left: only the performer may stand for themselves, so nobody is asked and nobody is changed
             }
 
-            if (requiresFullMoon && !MoonRule.isFullMoonNight(level.dimensionType().hasFixedTime(), level.getMoonPhase(), level.getDayTime())) {
+            if (requiresFullMoon && !MoonRule.nightFor(true, level.dimensionType().hasFixedTime(), level.getMoonPhase(), level.getDayTime(),
+                    net.ofatech.supernaturalbloodlines.shared.moon.EclipseFeed.active(level.getServer()))) {
                 return refuse(caster, FactionRiteFactory.NEEDS_FULL_MOON);
             }
             if (!isWitchType(BloodlineAccess.get(caster).species())) {
@@ -99,12 +101,12 @@ public record SeveranceRiteFactory(boolean requiresFullMoon) implements RiteFact
                 return cancel();
             }
             BloodlineAccess.applyEvent(target, BloodlineEvent.RITE_OF_SEVERANCE, ctx);
-            target.displayClientMessage(Component.translatable(DONE), true);
+            RiteTell.say(target, DONE);
             return false;
         }
 
         private boolean refuse(ServerPlayer caster, String key) {
-            caster.displayClientMessage(Component.translatable(key), true);
+            RiteTell.refuse(caster, key);
             return cancel();
         }
     }

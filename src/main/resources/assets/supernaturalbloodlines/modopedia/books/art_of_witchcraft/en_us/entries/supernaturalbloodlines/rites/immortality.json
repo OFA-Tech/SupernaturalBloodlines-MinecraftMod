@@ -11,16 +11,7 @@
       "components": [
         {
           "template": "modopedia:page/headered_text",
-          "text": "Circle: medium circle, ritual chalk.\n\nTurns the human on the centre into an Original vampire.",
-          "header": "Rite of Immortality"
-        }
-      ]
-    },
-    {
-      "components": [
-        {
-          "template": "modopedia:page/headered_text",
-          "text": "Full-moon night only. The target must be human: no faction and no species. A villager must stand in the circle: it is the sacrifice, and it is killed.",
+          "text": "Circle: medium circle, ritual chalk.\n\nTurns the human on the centre into an Original vampire.\n\nThe target must be human: no faction and no species. A villager must stand in the circle: it is the sacrifice, and it is killed.",
           "header": "Rite of Immortality"
         }
       ]
@@ -30,6 +21,15 @@
         {
           "template": "modopedia:page/headered_text",
           "text": "A server can cap how many Originals exist; at the cap the rite is refused and the ingredients come back.",
+          "header": "Rite of Immortality"
+        }
+      ]
+    },
+    {
+      "components": [
+        {
+          "template": "modopedia:page/headered_text",
+          "text": "Needs a full moon: the moon must be full (phase 0) between dusk and dawn, in the Overworld. An eclipse counts too. The hub's moon calendar shows when the next one rises.",
           "header": "Rite of Immortality"
         }
       ]

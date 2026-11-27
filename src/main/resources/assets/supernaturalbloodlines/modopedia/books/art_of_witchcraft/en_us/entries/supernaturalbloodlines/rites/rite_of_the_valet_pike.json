@@ -11,7 +11,7 @@
       "components": [
         {
           "template": "modopedia:page/headered_text",
-          "text": "Makes the Valet Pike, the only weapon that hurts the Spirit of the Beast, and only in a direct blow. A full-moon night only, in a medium circle: iron, wolfsbane, mountain ash dust and sire's blood.",
+          "text": "Circle: medium circle, ritual chalk.\n\nMakes the Valet Pike, the only weapon that hurts the Spirit of the Beast, and only in a direct blow. In a medium circle: iron, wolfsbane, mountain ash dust and sire's blood.",
           "header": "The Valet Pike"
         }
       ]
@@ -30,6 +30,15 @@
         {
           "template": "modopedia:page/headered_text",
           "text": "A refusal about the blood always reads the same and spends everything, so it cannot tell you what somebody is. A caster who is no witch type, or a night that is not a full moon night, gets everything back.",
+          "header": "The Valet Pike"
+        }
+      ]
+    },
+    {
+      "components": [
+        {
+          "template": "modopedia:page/headered_text",
+          "text": "Needs a full moon: the moon must be full (phase 0) between dusk and dawn, in the Overworld. An eclipse counts too. The hub's moon calendar shows when the next one rises.\n\nNeeds the Werewolves mod.",
           "header": "The Valet Pike"
         }
       ]

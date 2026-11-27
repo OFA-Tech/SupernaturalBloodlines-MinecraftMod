@@ -1,5 +1,6 @@
 package net.ofatech.supernaturalbloodlines.parts.vampirismenchanted.rite;
 
+import net.ofatech.supernaturalbloodlines.shared.rite.RiteTell;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
@@ -118,10 +119,6 @@ public record FactionRiteFactory(BloodlineEvent event, Faction faction, boolean 
         };
     }
 
-    private static void tell(ServerPlayer to, String key) {
-        to.displayClientMessage(Component.translatable(key), true);
-    }
-
     /** The faction a JOIN action goes to; null for other actions, and for the werewolves when they are not installed. */
     private static IPlayableFaction<?> joinTarget(Outcome.Action a) {
         return switch (a) {
@@ -182,20 +179,21 @@ public record FactionRiteFactory(BloodlineEvent event, Faction faction, boolean 
         protected boolean onStart(RiteParams params) {
             Optional<ServerPlayer> found = RiteTargets.centrePlayerOrCaster(this, params, level);
             if (found.isEmpty()) {
-                return cancel();
+                return cancel(); // silent: no player on the centre
             }
             ServerPlayer target = found.get();
             ServerPlayer caster = RiteTargets.performer(findEntity(params.caster), params.caster, target).orElse(null);
             if (caster == null) {
-                return cancel(); // the performer left: only the performer may stand for themselves, so nobody is asked and nobody is changed
+                return cancel(); // silent: the performer left: only the performer may stand for themselves, so nobody is asked and nobody is changed
             }
 
-            if (factory.requiresFullMoon
-                    && !MoonRule.isFullMoonNight(level.dimensionType().hasFixedTime(), level.getMoonPhase(), level.getDayTime())) {
-                tell(caster, NEEDS_FULL_MOON);
+            if (factory.requiresFullMoon && !MoonRule.nightFor(true, level.dimensionType().hasFixedTime(), level.getMoonPhase(), level.getDayTime(),
+                    net.ofatech.supernaturalbloodlines.shared.moon.EclipseFeed.active(level.getServer()))) {
+                RiteTell.refuse(caster, NEEDS_FULL_MOON);
                 return cancel();
             }
             if (factory.faction == Faction.WEREWOLF && !ModList.get().isLoaded("werewolves")) {
+                RiteTell.refuse(caster, RiteTell.NEEDS_WEREWOLVES);
                 return cancel();
             }
             // a rite that changes the target needs their consent when the caster is someone else, and says nothing of what they are (R201)
@@ -203,8 +201,8 @@ public record FactionRiteFactory(BloodlineEvent event, Faction faction, boolean 
             if (consents) {
                 RiteTargets.Told asked = RiteTargets.consentAnswer(caster == target, target.isShiftKeyDown(), RiteTargets.SNEAK_TO_BE_MADE_AUGUSTINE);
                 if (asked != null) {
-                    tell(caster, asked.caster());
-                    tell(target, asked.target());
+                    RiteTell.refuse(caster, asked.caster());
+                    RiteTell.refuse(target, asked.target());
                     return cancel();
                 }
             }
@@ -215,7 +213,7 @@ public record FactionRiteFactory(BloodlineEvent event, Faction faction, boolean 
                 if (consents) {
                     RiteTargets.refuseAbout(caster, target, WRONG_FACTION);
                 } else {
-                    tell(caster, WRONG_FACTION);
+                    RiteTell.refuse(caster, WRONG_FACTION);
                 }
                 return cancel();
             }
@@ -228,25 +226,25 @@ public record FactionRiteFactory(BloodlineEvent event, Faction faction, boolean 
                     // the Moon rite's refusals (no gene, not an Original) are two answers to "do they carry the gene?": the target is told, the caster is not
                     RiteTargets.refuseAbout(caster, target, preview.refusalKey());
                 } else {
-                    tell(caster, preview.refusalKey());
+                    RiteTell.refuse(caster, preview.refusalKey());
                 }
                 return cancel();
             }
             if (preview.actions().isEmpty() && preview.state().equals(before)) {
-                tell(caster, NO_EFFECT);
+                RiteTell.refuseGeneric(caster, NO_EFFECT);
                 return cancel();
             }
             boolean leaves = preview.actions().contains(Outcome.Action.LEAVE_FACTION);
             for (Outcome.Action a : preview.actions()) {
                 IPlayableFaction<?> to = joinTarget(a);
                 if (to != null && !joinAllowed(h, to, leaves)) {
-                    tell(caster, JOIN_DENIED);
+                    RiteTell.refuse(caster, JOIN_DENIED);
                     return cancel();
                 }
             }
 
             if (consents && caster != target) {
-                tell(target, RITE_TAKES_YOU);
+                RiteTell.say(target, RITE_TAKES_YOU);
             }
             FactionRiteHooks.run(target, BloodlineAccess.applyEvent(target, factory.event, ctx));
             return false;

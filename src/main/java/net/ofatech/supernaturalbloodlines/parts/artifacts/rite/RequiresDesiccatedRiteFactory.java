@@ -1,5 +1,6 @@
 package net.ofatech.supernaturalbloodlines.parts.artifacts.rite;
 
+import net.ofatech.supernaturalbloodlines.shared.rite.RiteTell;
 
 import com.mojang.serialization.MapCodec;
 import java.util.List;
@@ -53,7 +54,7 @@ public record RequiresDesiccatedRiteFactory() implements RiteFactory {
             boolean found = !level.getEntitiesOfClass(ServerPlayer.class, new AABB(pos).inflate(RADIUS), CureRite::desiccatedOriginal).isEmpty();
             if (!found) {
                 if (findEntity(params.caster) instanceof ServerPlayer caster) {
-                    caster.displayClientMessage(Component.translatable(NEEDS_DESICCATED), true);
+                    RiteTell.refuse(caster, NEEDS_DESICCATED);
                 }
                 return cancel();
             }

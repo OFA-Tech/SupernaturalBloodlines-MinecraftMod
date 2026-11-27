@@ -1,5 +1,6 @@
 package net.ofatech.supernaturalbloodlines.parts.species.pack;
 
+import net.ofatech.supernaturalbloodlines.shared.rite.RiteTell;
 import com.mojang.serialization.MapCodec;
 import de.teamlapen.vampirism.api.VampirismAPI;
 import de.teamlapen.werewolves.util.FormHelper;
@@ -87,7 +88,7 @@ public record AlphaTrialRiteFactory(String faction, boolean requiresFullMoon) im
         var wolf = PackAccess.wolf(p);
         TrialRules.Refusal refusal = TrialRules.gate(SpeciesConfig.trial().enabled(), wolf, VampirismSupernatural.isWerewolf(p),
                 VampirismAPI.factionPlayerHandler(p).getCurrentLevel(), SpeciesConfig.trial().minLevel(),
-                MoonRule.nightFor(needsFullMoon, level.dimensionType().hasFixedTime(), level.getMoonPhase(), level.getDayTime()), true, false, false, false);
+                MoonRule.nightFor(needsFullMoon, level.dimensionType().hasFixedTime(), level.getMoonPhase(), level.getDayTime(), LunarEclipse.active(level.getServer())), true, false, false, false);
         return TrialRules.notice(() -> AlphaTrialBoss.running(level, p.getUUID()), refusal);
     }
 
@@ -107,7 +108,7 @@ public record AlphaTrialRiteFactory(String faction, boolean requiresFullMoon) im
         var wolf = PackAccess.wolf(p);
         TrialRules.Refusal refusal = TrialRules.gate(SpeciesConfig.trial().enabled(), wolf, VampirismSupernatural.isWerewolf(p),
                 VampirismAPI.factionPlayerHandler(p).getCurrentLevel(), SpeciesConfig.trial().minLevel(),
-                MoonRule.nightFor(needsFullMoon, level.dimensionType().hasFixedTime(), level.getMoonPhase(), level.getDayTime()), transformed,
+                MoonRule.nightFor(needsFullMoon, level.dimensionType().hasFixedTime(), level.getMoonPhase(), level.getDayTime(), LunarEclipse.active(level.getServer())), transformed,
                 AlphaTrialBoss.running(level, p.getUUID()), TrueAlphaWarning.applies(wolf.rank(), PackRules.pathOpen(wolf)), LEDGER.valid(p.getUUID(), now));
         switch (refusal) {
             case NONE -> {
@@ -170,19 +171,20 @@ public record AlphaTrialRiteFactory(String faction, boolean requiresFullMoon) im
         @Override
         protected boolean onStart(RiteParams params) {
             if (!ModList.get().isLoaded("werewolves")) {
+                RiteTell.refuse(level.getPlayerByUUID(params.caster), RiteTell.NEEDS_WEREWOLVES);
                 return cancel();
             }
             // the challenger is the CASTER and nobody else: whoever stands on the centre cannot be given a boss, or a warning, by someone else's rite
             if (!(level.getPlayerByUUID(params.caster) instanceof ServerPlayer caster)) {
-                return cancel();
+                return cancel(); // silent: the performer left
             }
             if (!othersOnCentre(level, getPos(), caster).isEmpty()) {
-                caster.displayClientMessage(Component.translatable(KEY + "not_alone"), true);
+                RiteTell.refuse(caster, KEY + "not_alone");
                 return cancel();
             }
             String refusal = tryStart(level, getPos(), caster, transformed(caster), requiresFullMoon);
             if (refusal != null) {
-                caster.displayClientMessage(Component.translatable(refusal, SpeciesConfig.trial().minLevel()), true);
+                RiteTell.refuse(caster, refusal, SpeciesConfig.trial().minLevel());
                 return cancel();
             }
             return false;

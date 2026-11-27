@@ -20,7 +20,7 @@
       "components": [
         {
           "template": "modopedia:page/headered_text",
-          "text": "Anyone can perform it. The target stands on the centre (the caster if nobody does). Werewolves must be installed.",
+          "text": "Anyone can perform it. The target stands on the centre (the caster if nobody does).\n\nNeeds the Werewolves mod.",
           "header": "Lineage: Reveal"
         }
       ]

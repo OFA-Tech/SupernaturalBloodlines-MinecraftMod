@@ -1,5 +1,6 @@
 package net.ofatech.supernaturalbloodlines.parts.artifacts.rite;
 
+import net.ofatech.supernaturalbloodlines.shared.rite.RiteTell;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
@@ -70,19 +71,19 @@ public record CovenForgeRiteFactory(Item output, Faction faction, int minCircle,
         protected boolean onStart(RiteParams params) {
             Optional<ServerPlayer> found = RiteTargets.centrePlayerOrCaster(this, params, level);
             if (found.isEmpty()) {
-                return cancel();
+                return cancel(); // silent: no player on the centre
             }
             ServerPlayer receiver = found.get();
             ServerPlayer caster = RiteTargets.performer(findEntity(params.caster), params.caster, receiver).orElse(null);
             if (caster == null) {
-                return cancel();
+                return cancel(); // silent: the performer left
             }
             if (!CircleQuery.switchOn(factory.ring)) {
-                caster.displayClientMessage(Component.translatable(OFF), true);
+                RiteTell.refuse(caster, OFF);
                 return cancel();
             }
             if (!RingRules.circleOk(CircleQuery.staged(), factory.minCircle)) {
-                caster.displayClientMessage(Component.translatable(CIRCLE), true);
+                RiteTell.refuse(caster, CIRCLE);
                 return cancel();
             }
             boolean factionOk = factory.faction.accepts(FactionRiteFactory.baseFaction(VampirismAPI.factionPlayerHandler(receiver)));

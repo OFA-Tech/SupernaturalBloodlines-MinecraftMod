@@ -1,5 +1,6 @@
 package net.ofatech.supernaturalbloodlines.parts.bosses.rite;
 
+import net.ofatech.supernaturalbloodlines.shared.rite.RiteTell;
 import com.mojang.serialization.MapCodec;
 import java.util.List;
 import net.favouriteless.enchanted.api.circle_magic.RiteFactory;
@@ -53,7 +54,7 @@ public record CloakingRiteFactory() implements RiteFactory {
         @Override
         protected boolean onStart(RiteParams params) {
             if (!(findEntity(params.caster) instanceof ServerPlayer caster)) {
-                return cancel();
+                return cancel(); // silent: the performer left
             }
             if (!SeveranceRiteFactory.isWitchType(BloodlineAccess.get(caster).species())) {
                 return refuse(caster, NOT_WITCH);
@@ -66,12 +67,12 @@ public record CloakingRiteFactory() implements RiteFactory {
             CloakAccess.set(caster, Cloak.renewed(CloakAccess.until(caster), now, BossesConfig.kolCloakMinutes()));
             // the grimoire is a key, not an ingredient: it goes back to the circle
             level.addFreshEntity(new ItemEntity(level, pos.getX() + 0.5, pos.getY() + 1, pos.getZ() + 0.5, grimoire.copy()));
-            caster.displayClientMessage(Component.translatable(DONE, BossesConfig.kolCloakMinutes()), true);
+            RiteTell.say(caster, DONE, BossesConfig.kolCloakMinutes());
             return false;
         }
 
         private boolean refuse(ServerPlayer caster, String key) {
-            caster.displayClientMessage(Component.translatable(key), true);
+            RiteTell.refuse(caster, key);
             return cancel();
         }
     }

@@ -1,5 +1,6 @@
 package net.ofatech.supernaturalbloodlines.parts.species.rite;
 
+import net.ofatech.supernaturalbloodlines.shared.rite.RiteTell;
 import com.mojang.serialization.MapCodec;
 import java.util.List;
 import java.util.Optional;
@@ -85,7 +86,7 @@ public record ImprisonedOriginalRiteFactory() implements RiteFactory {
         @Override
         protected boolean onStart(RiteParams params) {
             if (!(findEntity(params.caster) instanceof ServerPlayer performer)) {
-                return cancel();
+                return cancel(); // silent: the performer left
             }
             if (!SpeciesConfig.lineRitesEnabled()) {
                 return refuse(performer, BrokenLineRiteFactory.RITES_OFF);
@@ -154,7 +155,7 @@ public record ImprisonedOriginalRiteFactory() implements RiteFactory {
         }
 
         private boolean refuse(ServerPlayer performer, String key) {
-            performer.displayClientMessage(Component.translatable(key), true);
+            RiteTell.refuse(performer, key);
             return cancel();
         }
     }

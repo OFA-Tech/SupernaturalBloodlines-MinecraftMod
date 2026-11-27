@@ -1,5 +1,6 @@
 package net.ofatech.supernaturalbloodlines.parts.artifacts.rite;
 
+import net.ofatech.supernaturalbloodlines.shared.rite.RiteTell;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
@@ -81,7 +82,7 @@ public record LocatorRiteFactory(boolean blood) implements RiteFactory {
         @Override
         protected boolean onStart(RiteParams params) {
             if (!(findEntity(params.caster) instanceof ServerPlayer caster)) {
-                return cancel();
+                return cancel(); // silent: the performer left
             }
             Optional<LocatorTargets.Settings> settings = LocatorTargets.settings();
             Optional<UUID> target = targetOf(params.consumedItems, blood);
@@ -90,7 +91,7 @@ public record LocatorRiteFactory(boolean blood) implements RiteFactory {
             boolean works = settings.isPresent() && settings.get().enabled() && BloodlineAccess.get(caster).species().witchType()
                     && compass.isPresent() && seal.isPresent();
             if (!works) {
-                caster.displayClientMessage(Component.translatable(WONT_ANSWER), true);
+                RiteTell.refuse(caster, WONT_ANSWER);
                 return false; // not cancelled: the rest of the ingredients and the power are spent, whatever the reason
             }
             UUID owner = target.orElseThrow();
@@ -98,7 +99,7 @@ public record LocatorRiteFactory(boolean blood) implements RiteFactory {
             if (level.getServer().getPlayerList().getPlayer(owner) == null
                     && java.util.stream.StreamSupport.stream(level.getServer().getAllLevels().spliterator(), false)
                             .noneMatch(world -> world.getPlayerByUUID(owner) instanceof ServerPlayer)) {
-                caster.displayClientMessage(Component.translatable("supernaturalbloodlines.gene.refusal.owner_away"), true);
+                RiteTell.refuse(caster, "supernaturalbloodlines.gene.refusal.owner_away");
                 return false;
             }
             long until = level.getGameTime() + settings.get().minutes() * 1200L;

@@ -1,5 +1,6 @@
 package net.ofatech.supernaturalbloodlines.parts.species.rite;
 
+import net.ofatech.supernaturalbloodlines.shared.rite.RiteTell;
 import com.mojang.serialization.MapCodec;
 import java.util.List;
 import java.util.Optional;
@@ -56,7 +57,7 @@ public record BrokenLineRiteFactory() implements RiteFactory {
         @Override
         protected boolean onStart(RiteParams params) {
             if (!(findEntity(params.caster) instanceof ServerPlayer caster)) {
-                return cancel();
+                return cancel(); // silent: the performer left
             }
             MinecraftServer server = level.getServer();
             if (!SpeciesConfig.lineRitesEnabled()) {
@@ -85,7 +86,7 @@ public record BrokenLineRiteFactory() implements RiteFactory {
         }
 
         private boolean refuse(ServerPlayer caster, String key) {
-            caster.displayClientMessage(Component.translatable(key), true);
+            RiteTell.refuse(caster, key);
             return cancel();
         }
     }

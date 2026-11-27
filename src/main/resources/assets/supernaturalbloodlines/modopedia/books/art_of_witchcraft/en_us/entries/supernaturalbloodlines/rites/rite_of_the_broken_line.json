@@ -37,6 +37,15 @@
     {
       "components": [
         {
+          "template": "modopedia:page/headered_text",
+          "text": "An eclipse happens on some full-moon nights (the server's chance). It lasts until dawn, and an eclipse also counts as a full moon for every rite that needs one.",
+          "header": "The Broken Line"
+        }
+      ]
+    },
+    {
+      "components": [
+        {
           "template": "supernaturalbloodlines:page/rite",
           "rite": "supernaturalbloodlines:rite_of_the_broken_line",
           "header": "The Broken Line"

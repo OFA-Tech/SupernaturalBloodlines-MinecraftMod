@@ -1,5 +1,6 @@
 package net.ofatech.supernaturalbloodlines.parts.species.rite;
 
+import net.ofatech.supernaturalbloodlines.shared.rite.RiteTell;
 import com.mojang.serialization.MapCodec;
 import java.util.List;
 import java.util.UUID;
@@ -75,7 +76,7 @@ public record RevelationRiteFactory() implements RiteFactory {
                     : !(owner instanceof ServerPlayer) ? PLAYERS_ONLY : null;
             if (refusal != null) {
                 if (findEntity(params.caster) instanceof ServerPlayer caster) {
-                    caster.displayClientMessage(Component.translatable(refusal), true);
+                    RiteTell.refuse(caster, refusal);
                 }
                 return cancel();
             }

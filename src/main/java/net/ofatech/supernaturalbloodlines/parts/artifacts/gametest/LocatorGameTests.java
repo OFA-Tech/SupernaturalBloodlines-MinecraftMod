@@ -211,8 +211,9 @@ public final class LocatorGameTests {
         try {
             long now = helper.getLevel().getGameTime();
             net.ofatech.supernaturalbloodlines.parts.species.SpeciesConfig.overrideLocator("locator_range", 0);
-            // the target stands 10 blocks into a 32 block square, so a step of one or two blocks can never cross its edge (the world position of this cell differs per run)
-            target.setPos(Math.floor(target.getX() / 32) * 32 + 10.5, target.getY(), Math.floor(target.getZ() / 32) * 32 + 10.5);
+            // the target stands 2 blocks into a 32 block square, so a step of one or two blocks can never cross its edge (the world position of this cell differs
+            // per run), and the blurred point, always 8 to 24 blocks into the square (LocatorRules.blur), can never land on its block: no random flake
+            target.setPos(Math.floor(target.getX() / 32) * 32 + 2.5, target.getY(), Math.floor(target.getZ() / 32) * 32 + 2.5);
             // control: findable, a blurred point, an answer in hundreds
             ItemStack found = attuned(target.getUUID(), now + 5000);
             LodestoneTracker aimed = aim(helper, found, holder);

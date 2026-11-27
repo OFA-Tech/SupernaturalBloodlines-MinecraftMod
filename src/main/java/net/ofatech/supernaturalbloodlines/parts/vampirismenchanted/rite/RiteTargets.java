@@ -1,5 +1,6 @@
 package net.ofatech.supernaturalbloodlines.parts.vampirismenchanted.rite;
 
+import net.ofatech.supernaturalbloodlines.shared.rite.RiteTell;
 import java.util.Comparator;
 import java.util.Optional;
 import net.favouriteless.enchanted.common.enchanted.circle_magic.rites.Rite;
@@ -68,18 +69,18 @@ public final class RiteTargets {
         if (told == null) {
             return true;
         }
-        caster.displayClientMessage(net.minecraft.network.chat.Component.translatable(told.caster()), true);
+        RiteTell.refuse(caster, told.caster());
         if (told.target() != null) {
-            target.displayClientMessage(net.minecraft.network.chat.Component.translatable(told.target()), true);
+            RiteTell.refuse(target, told.target());
         }
         return false;
     }
 
     public static void refuseAbout(net.minecraft.server.level.ServerPlayer caster, net.minecraft.server.level.ServerPlayer target, String key) {
         Told told = refusalAbout(caster == target, key);
-        caster.displayClientMessage(net.minecraft.network.chat.Component.translatable(told.caster()), true);
+        RiteTell.refuseGeneric(caster, told.caster());
         if (told.target() != null) {
-            target.displayClientMessage(net.minecraft.network.chat.Component.translatable(told.target()), true);
+            RiteTell.refuse(target, told.target());
         }
     }
 

@@ -21,9 +21,15 @@ public final class MoonRule {
         return !hasFixedTime && timeOfDay > NIGHT_START && timeOfDay < NIGHT_END;
     }
 
-    /** The night a rite wants: a full-moon night when its file says {@code requires_full_moon}, else any night. */
-    public static boolean nightFor(boolean needsFullMoon, boolean hasFixedTime, int phase, long dayTime) {
-        return needsFullMoon ? isFullMoonNight(hasFixedTime, phase, dayTime) : isNight(hasFixedTime, dayTime);
+    /**
+     * The night a rite wants: a full-moon night when its file says {@code requires_full_moon}, else any night. A running lunar eclipse counts as a
+     * full moon (R358), inside the same night window.
+     */
+    public static boolean nightFor(boolean needsFullMoon, boolean hasFixedTime, int phase, long dayTime, boolean eclipse) {
+        if (!needsFullMoon) {
+            return isNight(hasFixedTime, dayTime);
+        }
+        return isFullMoonNight(hasFixedTime, phase, dayTime) || eclipse && isNight(hasFixedTime, dayTime);
     }
 
     /** Dimensions with a fixed time (the Nether, the End) report phase 0 forever, which is not a full moon. */

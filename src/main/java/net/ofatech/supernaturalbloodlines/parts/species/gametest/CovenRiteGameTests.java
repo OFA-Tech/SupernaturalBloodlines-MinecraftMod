@@ -297,7 +297,7 @@ public final class CovenRiteGameTests {
                 var loaded = type(helper, "night_watch").create(level, unloaded);
                 loaded.load(saved);
                 helper.assertTrue(loaded.tick(), "an older save with no dawn ended at once when loaded at night");
-                level.setDayTime(level.getDayTime() - Math.floorMod(level.getDayTime(), 24_000L) + NightWatchRiteFactory.NIGHT_END);
+                level.setDayTime(level.getDayTime() - Math.floorMod(level.getDayTime(), 24_000L) + net.ofatech.supernaturalbloodlines.core.moon.MoonRule.NIGHT_END);
                 helper.assertTrue(!loaded.tick(), "an older save with no dawn did not end at the next dawn");
             });
         } finally {

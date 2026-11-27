@@ -699,3 +699,10 @@ All rows are under Groups in the operator-only Admin page (`supernaturalbloodlin
 | `curse_extends_enabled` | true | Extend the old curse rule to unmarked brothers |
 | `brotherhood_curse_hours` | 48 | New timed curse duration in real hours |
 | `kol_warning_enabled` | true | Warn the other fitting online brothers |
+
+## Rites: refusals and the moon (plan 23 PR-1b)
+
+- [x] Every rite refusal goes through `shared.rite.RiteTell` (action bar and chat, once each; successes on the action bar). `RiteRefusalRoutingTest` fails by file for a rite that talks to a player directly or cancels with no word and no `// silent:` reason. (R357)
+- [x] `MoonRule.nightFor(needsFullMoon, fixedTime, phase, dayTime, eclipse)`: an eclipse counts as a full moon inside the night window. The species part installs `shared.moon.EclipseFeed` (`LunarEclipse::active`); with the species part off there is never an eclipse, so a moon rite of another part needs the real full moon. (R358)
+- [x] The Night Watch reads `MoonRule.isNight`; its own 13000 to 23000 are gone.
+- [x] The rite texts state the moon, the eclipse, the Moonstone recipe and the Werewolves need (`MoonTextTest`); the book is regenerated.

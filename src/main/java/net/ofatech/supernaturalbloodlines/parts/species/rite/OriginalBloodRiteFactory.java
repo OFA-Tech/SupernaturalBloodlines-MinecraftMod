@@ -1,5 +1,6 @@
 package net.ofatech.supernaturalbloodlines.parts.species.rite;
 
+import net.ofatech.supernaturalbloodlines.shared.rite.RiteTell;
 
 import net.ofatech.supernaturalbloodlines.shared.supernatural.LadderQuery;
 import com.mojang.serialization.MapCodec;
@@ -57,12 +58,12 @@ public record OriginalBloodRiteFactory() implements RiteFactory {
         protected boolean onStart(RiteParams params) {
             Optional<ServerPlayer> found = RiteTargets.centrePlayerOrCaster(this, params, level);
             if (found.isEmpty()) {
-                return cancel();
+                return cancel(); // silent: no player on the centre
             }
             ServerPlayer target = found.get();
             ServerPlayer caster = RiteTargets.performer(findEntity(params.caster), params.caster, target).orElse(null);
             if (caster == null) {
-                return cancel(); // the performer left: only the performer may stand for themselves, so nobody is asked and nobody is changed
+                return cancel(); // silent: the performer left: only the performer may stand for themselves, so nobody is asked and nobody is changed
             }
             if (!RiteTargets.askForBlood(caster, target, OriginalRules.isOriginal(BloodlineAccess.get(target).species()), NOT_ORIGINAL, NO_ORIGINAL_BLOOD)) {
                 return cancel();
