@@ -19,6 +19,8 @@ An Enhanced Celestials event is **a second layer on top of the real moon**. A Bl
 | **Super Blue Moon** | The Werewolves **forced full-moon shift is skipped for everybody** (`super_blue_skips_forced_shift`, on by default): one calm full moon. Shifting at will follows the usual rule. |
 | **Our lunar eclipse** | It becomes an Enhanced Celestials event: the moon turns dark orange and the light turns red. Our chat notice is the only one. If another event is already running, our eclipse still happens (the werewolf weakness is ours) and our own chat line and sky are used. |
 
+**`/time set` with Enhanced Celestials:** Enhanced Celestials replaces the command. `/time set <time>` moves the world to that time of the **next** day (the day number goes up by one); `/time set <time> true` sets the time without moving the day. Its lunar events are scheduled per day, so after the jump the event of the new day is shown, not the one of the day before. (Read from Enhanced Celestials 2 Core 2.0.3.4; not checked in a game.)
+
 Every number is in [Configuration](Configuration#celestials-supernaturalbloodlines-celestialstoml) and on the Admin page of the [hub](Supernatural-Hub). `1` turns an effect off. The part switch is `celestials` (restart required); without Enhanced Celestials, or with the part off, nothing changes.
 
 ## The hub

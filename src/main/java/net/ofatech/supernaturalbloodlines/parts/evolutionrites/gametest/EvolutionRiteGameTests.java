@@ -172,6 +172,25 @@ public final class EvolutionRiteGameTests {
         helper.succeed();
     }
 
+    /** R358, one eclipse rule: an eclipse that is running at noon is no full moon for an evolution rite. */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void anEclipseAtNoonIsNoFullMoon(GameTestHelper helper) {
+        if (noRite(helper)) {
+            return;
+        }
+        RecordingPlayer caster = performer(helper, Species.WITCH);
+        RecordingPlayer target = onTheCircle(helper, true, EP);
+        try {
+            give(target, SAGE, 500);
+            EvoTestSupport.atEclipseAtNoon(helper, () -> start(helper, RITE, caster, items()));
+            helper.assertTrue(!has(target, GREAT_SAGE), "Great Sage from an eclipse at noon");
+            helper.assertTrue(caster.received("supernaturalbloodlines.rite.needs_full_moon"), "the performer heard " + caster.heard());
+        } finally {
+            clean(helper, caster, target);
+        }
+        helper.succeed();
+    }
+
     @GameTest(template = "empty", templateNamespace = NS)
     public static void onlyAWitchTypeWorksIt(GameTestHelper helper) {
         if (noRite(helper)) {
@@ -202,6 +221,7 @@ public final class EvolutionRiteGameTests {
             atNight(helper, true, () -> start(helper, RITE, caster, items()));
             helper.assertTrue(!has(target, GREAT_SAGE), "an unwilling target was evolved");
             helper.assertTrue(target.receivedOnActionBar("supernaturalbloodlines.rite.sneak_to_evolve"), "the target was not asked: " + target.heard());
+            helper.assertTrue(target.countInChat("supernaturalbloodlines.rite.sneak_to_evolve") == 0, "a request to sneak went to chat: " + target.heard());
             helper.assertTrue(caster.heard().equals(FactionRiteFactory.NO_EFFECT), "the performer heard " + caster.heard());
             helper.assertTrue(dropped(helper, "minecraft:ender_eye") == 2, "the ingredients were not given back");
         } finally {

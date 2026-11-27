@@ -1,5 +1,6 @@
 package net.ofatech.supernaturalbloodlines.parts.vampirismenchanted.rite;
 
+import net.ofatech.supernaturalbloodlines.shared.rite.RiteTell;
 import java.util.Comparator;
 import java.util.Optional;
 import net.favouriteless.enchanted.common.enchanted.circle_magic.rites.Rite;
@@ -68,19 +69,34 @@ public final class RiteTargets {
         if (told == null) {
             return true;
         }
-        caster.displayClientMessage(net.minecraft.network.chat.Component.translatable(told.caster()), true);
-        if (told.target() != null) {
-            target.displayClientMessage(net.minecraft.network.chat.Component.translatable(told.target()), true);
-        }
+        tell(caster, target, told);
         return false;
     }
 
     public static void refuseAbout(net.minecraft.server.level.ServerPlayer caster, net.minecraft.server.level.ServerPlayer target, String key) {
-        Told told = refusalAbout(caster == target, key);
-        caster.displayClientMessage(net.minecraft.network.chat.Component.translatable(told.caster()), true);
-        if (told.target() != null) {
-            target.displayClientMessage(net.minecraft.network.chat.Component.translatable(told.target()), true);
+        tell(caster, target, refusalAbout(caster == target, key));
+    }
+
+    /**
+     * Says a {@link Told}: the caster hears their line (the generic one when the rite was about someone else), the one on the centre hears theirs.
+     * A request to sneak is a prompt, not a refusal: action bar only, so a bystander's chat is not filled by someone else's rites.
+     */
+    public static void tell(net.minecraft.server.level.ServerPlayer caster, net.minecraft.server.level.ServerPlayer target, Told told) {
+        if (told.target() == null) {
+            RiteTell.refuse(caster, told.caster());
+            return;
         }
+        RiteTell.refuseGeneric(caster, told.caster());
+        if (isPrompt(told.target())) {
+            RiteTell.say(target, told.target());
+        } else {
+            RiteTell.refuse(target, told.target());
+        }
+    }
+
+    /** A line that asks the one on the centre to sneak (to give blood, to accept, to own a ward). */
+    public static boolean isPrompt(String key) {
+        return key.contains(".sneak_to_");
     }
 
     /**

@@ -1,5 +1,18 @@
 # Changelog
 
+## Unreleased (plan 23 PR-1b: rites)
+
+- **Every rite refusal now also goes to chat**, once, as well as the action bar, so a refusal is not lost when the bar fades. Successes stay on the action bar. A rite of the werewolves without the Werewolves mod says so. Three vague refusals now name what is missing (a closed evolution rite, the item a binding rite needs, the circle's experience levels).
+- **An eclipse counts as a full moon** for every rite that needs one (the Rite of the Moon, the Silver Moon, Immortality, Severance, the Alpha Trial, the Valet Pike, the Frequency, and the evolution and mastery rites below Ultimate), between dusk and dawn.
+- **One night for every rite:** the Night Watch now runs from dusk to dawn like the moon rites (12787 to 23215, was 13000 to 23000), and only in the Overworld: in the Nether and the End it refuses with "The Night Watch can only be raised at night (dusk to dawn), in the Overworld." An eclipse counts only at night, in the Overworld, for every rite (the evolution and mastery rites read it the same way now).
+- **A rite worked on someone else tells its caster nothing about them** (owner, 2026-11-27): Cleansing Blood, the Silver Moon, Immortality, the Rite of the Five and the binding rites still need no consent, but a refusal about the one on the centre (their faction, an Original's cure, a faction that will not take them) gives the caster only "The rite would change nothing"; the one on the centre hears why.
+- **Long refusals are short on the action bar** ("This rite needs a full moon (see chat).") and whole in chat, with "The next full moon is in N days." A request to sneak (to give blood, to accept) stays on the action bar, so bystanders' chat is not filled. The moon calendar's day labels no longer run together in a narrow column, and the one-time "Rites now live in The Art of Witchcraft" line also shows as a toast when a screen is open.
+- **The rite texts say what a full moon is** (the moon full, dusk to dawn, the Overworld, an eclipse counts, the moon calendar shows the next), how an eclipse happens, the Moonstone recipe, and which rites need Werewolves. The book is regenerated. The wiki has a "What counts as a full moon" section and the `/time set` behaviour of Enhanced Celestials.
+
+### Rolling back
+
+Nothing is stored: revert the commit.
+
 ## Unreleased (plan 23 PR-1a: portraits)
 
 - **A player's face sits in a square frame everywhere** (Home, Profile, and the pack, clan, coven and brotherhood rings): the frame is the face plus 4 pixels, its four corner pixels cut, so no corner of the face sticks out of a round ring any more. The faces are 2 px larger inside the same footprint; Home's and Profile's frame no longer starts a pixel left of its column.

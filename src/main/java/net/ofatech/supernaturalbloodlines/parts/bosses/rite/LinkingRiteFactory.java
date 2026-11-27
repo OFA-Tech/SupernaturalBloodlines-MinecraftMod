@@ -1,5 +1,6 @@
 package net.ofatech.supernaturalbloodlines.parts.bosses.rite;
 
+import net.ofatech.supernaturalbloodlines.shared.rite.RiteTell;
 import com.mojang.serialization.MapCodec;
 import java.util.List;
 import net.favouriteless.enchanted.api.circle_magic.RiteFactory;
@@ -72,10 +73,10 @@ public record LinkingRiteFactory() implements RiteFactory {
         @Override
         protected boolean onStart(RiteParams params) {
             if (!(findEntity(params.caster) instanceof ServerPlayer caster)) {
-                return cancel();
+                return cancel(); // silent: the performer left
             }
             if (!SeveranceRiteFactory.isWitchType(BloodlineAccess.get(caster).species())) {
-                caster.displayClientMessage(Component.translatable(LinkRules.NOT_WITCH), true);
+                RiteTell.refuse(caster, LinkRules.NOT_WITCH);
                 return cancel();
             }
             // links that ran out are taken out first: an old one must never stand in front of the new one
@@ -96,12 +97,12 @@ public record LinkingRiteFactory() implements RiteFactory {
             params.consumedItems.stream().filter(s -> s.is(BossItems.ESTHER_GRIMOIRE.get())).findFirst()
                     .ifPresent(g -> level.addFreshEntity(new ItemEntity(level, pos.getX() + 0.5, pos.getY() + 1, pos.getZ() + 0.5, g.copy())));
             if (refuses) {
-                caster.displayClientMessage(Component.translatable(LinkRules.WONT_HOLD), true);
+                RiteTell.refuse(caster, LinkRules.WONT_HOLD);
                 return false; // not cancelled: the rest of the ingredients and the power are spent
             }
             int seconds = (int) Math.round(net.ofatech.supernaturalbloodlines.parts.species.group.circle.CovenPotency.scale(BossesConfig.linkSeconds()));
             Links.link(level.getServer(), inside.get(0), inside.get(1), seconds, caster.getUUID());
-            caster.displayClientMessage(Component.translatable(DONE, seconds), true);
+            RiteTell.say(caster, DONE, seconds);
             return false;
         }
     }

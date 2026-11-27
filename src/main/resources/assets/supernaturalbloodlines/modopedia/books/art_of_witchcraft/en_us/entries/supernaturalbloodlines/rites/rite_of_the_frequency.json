@@ -11,7 +11,7 @@
       "components": [
         {
           "template": "modopedia:page/headered_text",
-          "text": "Calls the Host of the Beast near you (once), or makes the Host that is waiting change now. A full-moon night only, in the overworld; it needs the Valet Pike (given back), a Hearing Device and an echo shard.",
+          "text": "Circle: medium circle, ritual chalk.\n\nCalls the Host of the Beast near you (once), or makes the Host that is waiting change now, in the Overworld. It needs the Valet Pike (given back), a Hearing Device and an echo shard.",
           "header": "The Frequency"
         }
       ]
@@ -20,7 +20,16 @@
       "components": [
         {
           "template": "modopedia:page/headered_text",
-          "text": "A werewolf works it; Werewolves must be installed and the Beast switched on. If it cannot do anything it says why and gives everything back; a story that is over or under way only says that the frequency is silent.",
+          "text": "A werewolf works it, with the Beast switched on. If it cannot do anything it says why and gives everything back; a story that is over or under way only says that the frequency is silent.",
+          "header": "The Frequency"
+        }
+      ]
+    },
+    {
+      "components": [
+        {
+          "template": "modopedia:page/headered_text",
+          "text": "Needs a full moon: the moon must be full, between dusk and dawn, in the Overworld. An eclipse counts too. The hub's moon calendar shows when the next one rises.\n\nThis rite needs the Werewolves mod.",
           "header": "The Frequency"
         }
       ]

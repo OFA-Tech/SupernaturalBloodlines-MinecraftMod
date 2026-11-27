@@ -28,6 +28,15 @@
     {
       "components": [
         {
+          "template": "modopedia:page/headered_text",
+          "text": "Needs a full moon: the moon must be full, between dusk and dawn, in the Overworld. An eclipse counts too. The hub's moon calendar shows when the next one rises.",
+          "header": "Rite of the Butcher"
+        }
+      ]
+    },
+    {
+      "components": [
+        {
           "template": "supernaturalbloodlines:page/rite",
           "rite": "supernaturalbloodlines:evolve_butcher",
           "header": "Rite of the Butcher"

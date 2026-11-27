@@ -20,7 +20,7 @@
       "components": [
         {
           "template": "modopedia:page/headered_text",
-          "text": "Full-moon night only. Only a werewolf Beta or Omega in beast form, at or above the server's trial level (10 by default), can try it. Nobody else may stand on the centre.",
+          "text": "Only a werewolf Beta or Omega in beast form, at or above the server's trial level (10 by default), can try it. Nobody else may stand on the centre.",
           "header": "Alpha Trial"
         }
       ]
@@ -30,6 +30,24 @@
         {
           "template": "modopedia:page/headered_text",
           "text": "If your path to True Alpha is still open, winning would end it for good: you are asked first, and the rite starts only once you answer (within 2 minutes).",
+          "header": "Alpha Trial"
+        }
+      ]
+    },
+    {
+      "components": [
+        {
+          "template": "modopedia:page/headered_text",
+          "text": "Needs a full moon: the moon must be full, between dusk and dawn, in the Overworld. An eclipse counts too. The hub's moon calendar shows when the next one rises.",
+          "header": "Alpha Trial"
+        }
+      ]
+    },
+    {
+      "components": [
+        {
+          "template": "modopedia:page/headered_text",
+          "text": "Moonstone: craft it from an amethyst shard and a silver ingot (from Werewolves), in any order.\n\nThis rite needs the Werewolves mod.",
           "header": "Alpha Trial"
         }
       ]

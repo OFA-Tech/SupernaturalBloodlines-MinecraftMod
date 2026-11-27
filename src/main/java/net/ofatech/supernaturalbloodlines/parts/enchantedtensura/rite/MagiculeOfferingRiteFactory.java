@@ -1,5 +1,6 @@
 package net.ofatech.supernaturalbloodlines.parts.enchantedtensura.rite;
 
+import net.ofatech.supernaturalbloodlines.shared.rite.RiteTell;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
@@ -58,12 +59,12 @@ public record MagiculeOfferingRiteFactory(double magicules, int count) implement
         @Override
         protected boolean onStart(RiteParams params) {
             if (!(findEntity(params.caster) instanceof LivingEntity caster)) {
-                return cancel();
+                return cancel(); // silent: the performer left
             }
             IExistence existence = TensuraStorages.getExistenceFrom(caster);
             if (existence.getMagicule() < magicules) {
                 if (caster instanceof ServerPlayer player) {
-                    player.displayClientMessage(Component.translatable(OFFERING_FAILED), true);
+                    RiteTell.refuse(player, OFFERING_FAILED);
                 }
                 return cancel();
             }

@@ -1,5 +1,6 @@
 package net.ofatech.supernaturalbloodlines.parts.bosses.rite;
 
+import net.ofatech.supernaturalbloodlines.shared.rite.RiteTell;
 import com.mojang.serialization.MapCodec;
 import java.util.List;
 import java.util.UUID;
@@ -81,25 +82,26 @@ public record PikeRiteFactory(boolean requiresFullMoon) implements RiteFactory {
         @Override
         protected boolean onStart(RiteParams params) {
             if (!(findEntity(params.caster) instanceof ServerPlayer caster)) {
-                return cancel();
+                return cancel(); // silent: the performer left
             }
-            if (requiresFullMoon && !net.ofatech.supernaturalbloodlines.core.moon.MoonRule.isFullMoonNight(level.dimensionType().hasFixedTime(), level.getMoonPhase(), level.getDayTime())) {
-                caster.displayClientMessage(Component.translatable(net.ofatech.supernaturalbloodlines.parts.vampirismenchanted.rite.FactionRiteFactory.NEEDS_FULL_MOON), true);
+            if (requiresFullMoon && !net.ofatech.supernaturalbloodlines.core.moon.MoonRule.nightFor(true, level.dimensionType().hasFixedTime(), level.getMoonPhase(), level.getDayTime(),
+                    net.ofatech.supernaturalbloodlines.shared.moon.EclipseFeed.active(level.getServer()))) {
+                RiteTell.refuse(caster, net.ofatech.supernaturalbloodlines.parts.vampirismenchanted.rite.FactionRiteFactory.NEEDS_FULL_MOON);
                 return cancel();
             }
             if (!SeveranceRiteFactory.isWitchType(BloodlineAccess.get(caster).species())) {
-                caster.displayClientMessage(Component.translatable(NOT_WITCH), true);
+                RiteTell.refuse(caster, NOT_WITCH);
                 return cancel();
             }
             ItemStack blood = params.consumedItems.stream().filter(s -> s.is(net.ofatech.supernaturalbloodlines.parts.species.SpeciesRegistries.SIRES_BLOOD.get())).findFirst()
                     .orElse(ItemStack.EMPTY);
             if (!PikeRules.qualifies(giver(level.getServer(), blood.isEmpty() ? null : SiresBloodItem.sourceOf(blood)))) {
                 // the same message and the same cost whoever the blood was: nothing is learnt about the giver
-                caster.displayClientMessage(Component.translatable(WEAK), true);
+                RiteTell.refuse(caster, WEAK);
                 return false;
             }
             level.addFreshEntity(new ItemEntity(level, pos.getX() + 0.5, pos.getY() + 1, pos.getZ() + 0.5, new ItemStack(BossItems.VALET_PIKE.get())));
-            caster.displayClientMessage(Component.translatable(DONE), true);
+            RiteTell.say(caster, DONE);
             return false;
         }
     }

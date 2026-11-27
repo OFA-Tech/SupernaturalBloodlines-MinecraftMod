@@ -219,6 +219,7 @@ public final class SpeciesPart {
                 net.ofatech.supernaturalbloodlines.parts.species.moon.AwakeningQueue.pending(p),
                 ModList.get().isLoaded("werewolves") ? net.ofatech.supernaturalbloodlines.parts.species.pack.AlphaTrialRiteFactory.noticeOf(p).ordinal() : 0));
         net.ofatech.supernaturalbloodlines.parts.species.group.GroupsRegistry.registerAlways(); // every group type, with or without Werewolves
+        net.ofatech.supernaturalbloodlines.shared.moon.EclipseFeed.install(LunarEclipse::active); // the evolution rites read it with or without Werewolves too
         if (ModList.get().isLoaded("werewolves")) {
             net.ofatech.supernaturalbloodlines.parts.species.moon.DelayedAwakening.register();
             FormBlocks.register();
@@ -295,6 +296,7 @@ public final class SpeciesPart {
         }
         modBus.addListener((RegisterGameTestsEvent e) -> {
             e.register(SpeciesGameTests.class);
+            e.register(net.ofatech.supernaturalbloodlines.parts.species.gametest.EclipseFullMoonGameTests.class);
             e.register(OriginalGameTests.class);
             e.register(net.ofatech.supernaturalbloodlines.parts.species.gametest.AugustineGameTests.class);
             e.register(net.ofatech.supernaturalbloodlines.parts.species.gametest.TargetedSkillGameTests.class);

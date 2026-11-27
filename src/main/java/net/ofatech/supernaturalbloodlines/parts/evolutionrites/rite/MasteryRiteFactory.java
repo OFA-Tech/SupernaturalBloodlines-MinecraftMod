@@ -1,5 +1,6 @@
 package net.ofatech.supernaturalbloodlines.parts.evolutionrites.rite;
 
+import net.ofatech.supernaturalbloodlines.shared.rite.RiteTell;
 import com.mojang.serialization.MapCodec;
 import io.github.manasmods.manascore.skill.api.ManasSkillInstance;
 import io.github.manasmods.tensura.util.EnergyHelper;
@@ -83,22 +84,22 @@ public record MasteryRiteFactory(Tier tier) implements RiteFactory {
         protected boolean onStart(RiteParams params) {
             Optional<ServerPlayer> found = RiteTargets.centrePlayerOrCaster(this, params, level);
             if (found.isEmpty()) {
-                return cancel();
+                return cancel(); // silent: no player on the centre
             }
             ServerPlayer target = found.get();
             ServerPlayer caster = RiteTargets.performer(findEntity(params.caster), params.caster, target).orElse(null);
             if (caster == null) {
-                return cancel(); // the performer left: nobody is asked and nobody is changed
+                return cancel(); // silent: the performer left: nobody is asked and nobody is changed
             }
 
             if (!MasteryRules.circleOk(riteTier, CircleStage.size(), GroupsConfig.masteryUltimateCircle(), !GroupsConfig.linkEnabled() || !GroupsConfig.covensEnabled())) {
-                caster.displayClientMessage(Component.translatable(MasteryRules.keyOf(MasteryRules.Reason.CIRCLE, riteTier)), true); // one line for every target, good or bad
+                RiteTell.refuse(caster, MasteryRules.keyOf(MasteryRules.Reason.CIRCLE, riteTier)); // one line for every target, good or bad
                 return cancel();
             }
 
             // before anything about the target is read, so a short offering says nothing of them; a cancel gives back what was taken, the extras too
             if (!takeOffering(params)) {
-                caster.displayClientMessage(Component.translatable(SHORT_OFFERING), true);
+                RiteTell.refuse(caster, SHORT_OFFERING);
                 return cancel();
             }
 
@@ -109,7 +110,7 @@ public record MasteryRiteFactory(Tier tier) implements RiteFactory {
             boolean fullMoon = MoonRule.isFullMoonNight(level.dimensionType().hasFixedTime(), level.getMoonPhase(), level.getDayTime());
             MasteryRules.Facts facts = new MasteryRules.Facts(EvolutionRitesConfig.masteryEnabled() && EvolutionRitesConfig.ritesEnabled()
                     && (riteTier != Tier.ULTIMATE || EvolutionRitesConfig.ultimateRitesEnabled()),
-                    SeveranceRiteFactory.isWitchType(BloodlineAccess.get(caster).species()), fullMoon, LunarEclipse.active(level.getServer()), caster == target,
+                    SeveranceRiteFactory.isWitchType(BloodlineAccess.get(caster).species()), fullMoon, MoonRule.eclipseNight(level.dimensionType().hasFixedTime(), level.getDayTime(), net.ofatech.supernaturalbloodlines.shared.moon.EclipseFeed.active(level.getServer())), caster == target,
                     target.isShiftKeyDown(), choice.isPresent(), inst.isPresent(), inst.map(ManasSkillInstance::isTemporarySkill).orElse(false),
                     inst.map(i -> MasteryApply.done(target, i)).orElse(false), skillTier, riteTier,
                     choice.map(id -> EvolutionRitesConfig.masteryRefusedSkills().contains(id.toString())).orElse(false),
@@ -137,9 +138,9 @@ public record MasteryRiteFactory(Tier tier) implements RiteFactory {
             RiteEp.charge(target, cost);
             MasteryChoice.markRite(target);
             MasteryChoice.clear(target);
-            target.displayClientMessage(Component.translatable(DONE), true);
+            RiteTell.say(target, DONE);
             if (caster != target) {
-                caster.displayClientMessage(Component.translatable(DONE_CASTER), true);
+                RiteTell.say(caster, DONE_CASTER);
             }
             return false;
         }
@@ -216,10 +217,9 @@ public record MasteryRiteFactory(Tier tier) implements RiteFactory {
                 sayAbout(caster, target, Component.translatable(key));
             } else if (reason == MasteryRules.Reason.NO_CONSENT) {
                 RiteTargets.Told told = RiteTargets.consentAnswer(false, false, key);
-                caster.displayClientMessage(Component.translatable(told.caster()), true);
-                target.displayClientMessage(Component.translatable(told.target()), true);
+                RiteTargets.tell(caster, target, told);
             } else {
-                caster.displayClientMessage(Component.translatable(key), true);
+                RiteTell.refuse(caster, key);
             }
             return cancel();
         }
@@ -227,10 +227,10 @@ public record MasteryRiteFactory(Tier tier) implements RiteFactory {
         /** The same split as {@link RiteTargets#refuseAbout}, for a message with an argument. */
         private static void sayAbout(ServerPlayer caster, ServerPlayer target, Component targetLine) {
             if (caster == target) {
-                target.displayClientMessage(targetLine, true);
+                RiteTell.refuse(target, targetLine);
             } else {
-                caster.displayClientMessage(Component.translatable(net.ofatech.supernaturalbloodlines.parts.vampirismenchanted.rite.FactionRiteFactory.NO_EFFECT), true);
-                target.displayClientMessage(targetLine, true);
+                RiteTell.refuseGeneric(caster, net.ofatech.supernaturalbloodlines.parts.vampirismenchanted.rite.FactionRiteFactory.NO_EFFECT);
+                RiteTell.refuse(target, targetLine);
             }
         }
     }

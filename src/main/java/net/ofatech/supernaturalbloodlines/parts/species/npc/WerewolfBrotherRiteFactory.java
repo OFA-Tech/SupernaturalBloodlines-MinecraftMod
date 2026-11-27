@@ -1,5 +1,6 @@
 package net.ofatech.supernaturalbloodlines.parts.species.npc;
 
+import net.ofatech.supernaturalbloodlines.shared.rite.RiteTell;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
@@ -99,15 +100,16 @@ public record WerewolfBrotherRiteFactory(String faction) implements RiteFactory 
         @Override
         protected boolean onStart(RiteParams params) {
             if (!ModList.get().isLoaded("werewolves")) {
+                RiteTell.refuse(level.getPlayerByUUID(params.caster), RiteTell.NEEDS_WEREWOLVES);
                 return cancel();
             }
             if (!(level.getPlayerByUUID(params.caster) instanceof ServerPlayer caster)) {
-                return cancel();
+                return cancel(); // silent: the performer left
             }
             Mob wolf = wolfNear(level, getPos());
             String refusal = wolf == null ? KEY + "refuse.no_wolf" : recruit(caster, wolf);
             if (refusal != null) {
-                caster.displayClientMessage(Component.translatable(refusal), true);
+                RiteTell.refuse(caster, refusal);
                 return cancel();
             }
             return false;

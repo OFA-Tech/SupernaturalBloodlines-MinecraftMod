@@ -1,5 +1,7 @@
 package net.ofatech.supernaturalbloodlines.parts.species.rite;
 
+import net.ofatech.supernaturalbloodlines.core.moon.MoonRule;
+import net.ofatech.supernaturalbloodlines.shared.rite.RiteTell;
 import com.mojang.serialization.MapCodec;
 import java.util.List;
 import java.util.Optional;
@@ -56,7 +58,7 @@ public record BrokenLineRiteFactory() implements RiteFactory {
         @Override
         protected boolean onStart(RiteParams params) {
             if (!(findEntity(params.caster) instanceof ServerPlayer caster)) {
-                return cancel();
+                return cancel(); // silent: the performer left
             }
             MinecraftServer server = level.getServer();
             if (!SpeciesConfig.lineRitesEnabled()) {
@@ -67,7 +69,7 @@ public record BrokenLineRiteFactory() implements RiteFactory {
             ServerPlayer target = pair.map(p -> hereOnline(server, p.target())).orElse(null);
             boolean anyBloodHere = bloods.stream().anyMatch(id -> hereOnline(server, id) != null);
             Optional<String> refusal = LineRules.brokenLineRefusal(new LineRules.BrokenLineFacts(
-                    SeveranceRiteFactory.isWitchType(BloodlineAccess.get(caster).species()), LunarEclipse.active(server), bloods.size(), pair,
+                    SeveranceRiteFactory.isWitchType(BloodlineAccess.get(caster).species()), MoonRule.eclipseNight(level.dimensionType().hasFixedTime(), level.getDayTime(), net.ofatech.supernaturalbloodlines.shared.moon.EclipseFeed.active(server)), bloods.size(), pair,
                     anyBloodHere, target != null, pair.isPresent() && Lines.isOriginalId(server, pair.get().target())));
             if (refusal.isPresent()) {
                 return refuse(caster, refusal.get());
@@ -85,7 +87,7 @@ public record BrokenLineRiteFactory() implements RiteFactory {
         }
 
         private boolean refuse(ServerPlayer caster, String key) {
-            caster.displayClientMessage(Component.translatable(key), true);
+            RiteTell.refuse(caster, key);
             return cancel();
         }
     }

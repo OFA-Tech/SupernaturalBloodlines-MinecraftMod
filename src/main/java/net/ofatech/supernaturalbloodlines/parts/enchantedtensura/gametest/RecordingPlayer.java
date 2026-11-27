@@ -13,6 +13,7 @@ import net.neoforged.neoforge.common.util.FakePlayer;
 public final class RecordingPlayer extends FakePlayer {
     private final List<String> keys = new ArrayList<>();
     private final List<String> actionBarKeys = new ArrayList<>();
+    private final List<String> chatKeys = new ArrayList<>();
 
     private RecordingPlayer(GameTestHelper helper, UUID id) {
         super(helper.getLevel(), new GameProfile(id, "test-" + id.toString().substring(0, 8)));
@@ -45,6 +46,11 @@ public final class RecordingPlayer extends FakePlayer {
         return (int) keys.stream().filter(key::equals).count();
     }
 
+    /** Every distinct key sent. */
+    public java.util.Set<String> heardKeys() {
+        return new java.util.LinkedHashSet<>(keys);
+    }
+
     /** Every key sent, in order: for a failure message. */
     public String heard() {
         return String.join(", ", keys);
@@ -54,12 +60,44 @@ public final class RecordingPlayer extends FakePlayer {
         return actionBarKeys.contains(key);
     }
 
+    /** How many times this key came on the action bar. */
+    public int countOnActionBar(String key) {
+        return (int) actionBarKeys.stream().filter(key::equals).count();
+    }
+
+    /** How many times this key came in chat. */
+    public int countInChat(String key) {
+        return (int) chatKeys.stream().filter(key::equals).count();
+    }
+
+    /** A rite refusal as R357 wants it: once on the action bar and once in chat (a night refusal's chat line is its whole text, {@code .detail}). */
+    public boolean refusedOnBothChannels(String key) {
+        return countOnActionBar(key) == 1 && countInChat(chatKeyOf(key)) == 1;
+    }
+
+    /** The key a refusal's chat copy carries. */
+    public static String chatKeyOf(String key) {
+        String detail = net.ofatech.supernaturalbloodlines.shared.rite.RiteTell.FULL_MOON_DETAIL.get(key);
+        if (detail == null) {
+            detail = net.ofatech.supernaturalbloodlines.shared.rite.RiteTell.ECLIPSE_DETAIL.get(key);
+        }
+        return detail == null ? key : detail;
+    }
+
+    private boolean lastWasBar;
+
+    /**
+     * A rite refusal comes on the action bar and then, the same line, in chat ({@code RiteTell}): in {@link #heard()}, {@link #count} and
+     * {@link #received} that is one line heard, the way a player reads it; {@link #countInChat} sees the copy.
+     */
     private void record(Component message, boolean actionBar) {
         if (message.getContents() instanceof TranslatableContents t) {
-            keys.add(t.getKey());
-            if (actionBar) {
-                actionBarKeys.add(t.getKey());
+            boolean copyOfBar = !actionBar && lastWasBar && !keys.isEmpty() && chatKeyOf(keys.get(keys.size() - 1)).equals(t.getKey());
+            if (!copyOfBar) {
+                keys.add(t.getKey());
             }
+            (actionBar ? actionBarKeys : chatKeys).add(t.getKey());
+            lastWasBar = actionBar;
         }
     }
 

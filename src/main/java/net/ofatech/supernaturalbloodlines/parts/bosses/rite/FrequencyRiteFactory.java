@@ -1,5 +1,6 @@
 package net.ofatech.supernaturalbloodlines.parts.bosses.rite;
 
+import net.ofatech.supernaturalbloodlines.shared.rite.RiteTell;
 import com.mojang.serialization.MapCodec;
 import java.util.List;
 import net.favouriteless.enchanted.api.circle_magic.RiteFactory;
@@ -50,12 +51,14 @@ public record FrequencyRiteFactory() implements RiteFactory {
         @Override
         protected boolean onStart(RiteParams params) {
             if (!(findEntity(params.caster) instanceof ServerPlayer caster)) {
-                return cancel();
+                return cancel(); // silent: the performer left
             }
             BossIndex.Entry entry = BossIndex.get(level.getServer()).of(BossId.BEAST_OF_GEVAUDAN);
             FrequencyRules.Result result = FrequencyRules.act(entry.phase, entry.hostsMade, BossDirector.modsPresent(BossId.BEAST_OF_GEVAUDAN),
                     BossesConfig.enabled(BossId.BEAST_OF_GEVAUDAN), net.ofatech.supernaturalbloodlines.parts.artifacts.werewolves.WolfsbaneStrains.isWerewolfType(caster),
-                    level.dimension() == net.minecraft.world.level.Level.OVERWORLD, BossDirector.fullMoonNightNow(level.getServer().overworld()));
+                    level.dimension() == net.minecraft.world.level.Level.OVERWORLD, BossDirector.fullMoonNightNow(level.getServer().overworld())
+                    || net.ofatech.supernaturalbloodlines.core.moon.MoonRule.eclipseNight(false, level.getServer().overworld().getDayTime(),
+                            net.ofatech.supernaturalbloodlines.shared.moon.EclipseFeed.active(level.getServer())));
             boolean done = switch (result) {
                 case MAKE_HOST -> BeastDirector.spawnHost(level, caster, null).isPresent();
                 case FORCE_CHANGE -> BeastDirector.change(level.getServer().overworld());
@@ -64,13 +67,13 @@ public record FrequencyRiteFactory() implements RiteFactory {
             if (!done) {
                 // a refusal tells the caster why and gives everything back: a Host with no ground to stand on has its own answer, one that could not be reached is "silent"
                 FrequencyRules.Result why = result == FrequencyRules.Result.MAKE_HOST ? FrequencyRules.Result.NO_GROUND : result == FrequencyRules.Result.FORCE_CHANGE ? FrequencyRules.Result.BUSY : result;
-                caster.displayClientMessage(Component.translatable(FrequencyRules.messageKey(why)), true);
+                RiteTell.refuse(caster, FrequencyRules.messageKey(why));
                 return cancel();
             }
             // the pike is a key, not an ingredient: it goes back to the circle
             params.consumedItems.stream().filter(s -> s.is(BossItems.VALET_PIKE.get())).findFirst()
                     .ifPresent(pike -> level.addFreshEntity(new ItemEntity(level, pos.getX() + 0.5, pos.getY() + 1, pos.getZ() + 0.5, pike.copy())));
-            caster.displayClientMessage(Component.translatable(FrequencyRules.messageKey(result)), true);
+            RiteTell.say(caster, FrequencyRules.messageKey(result));
             return false;
         }
     }

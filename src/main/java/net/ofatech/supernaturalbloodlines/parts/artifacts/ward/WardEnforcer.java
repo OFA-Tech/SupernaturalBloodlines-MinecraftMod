@@ -1,5 +1,6 @@
 package net.ofatech.supernaturalbloodlines.parts.artifacts.ward;
 
+import net.ofatech.supernaturalbloodlines.shared.rite.RiteTell;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -182,7 +183,7 @@ public final class WardEnforcer {
         Long last = TOLD.get(player.getUUID());
         if (last == null || now - last >= TELL_EVERY || now < last) {
             TOLD.put(player.getUUID(), now);
-            player.displayClientMessage(Component.translatable(CANNOT_ENTER), true);
+            RiteTell.say(player, CANNOT_ENTER);
         }
     }
 
@@ -196,7 +197,7 @@ public final class WardEnforcer {
         Long last = ALERTED.get(ward.owner());
         if (owner != null && (last == null || now - last >= ALERT_EVERY || now < last)) {
             ALERTED.put(ward.owner(), now);
-            owner.displayClientMessage(Component.translatable(TESTED), true);
+            RiteTell.say(owner, TESTED);
         }
     }
 

@@ -28,6 +28,15 @@
     {
       "components": [
         {
+          "template": "modopedia:page/headered_text",
+          "text": "This rite needs the Werewolves mod.",
+          "header": "Doppelgänger"
+        }
+      ]
+    },
+    {
+      "components": [
+        {
           "template": "supernaturalbloodlines:page/rite",
           "rite": "supernaturalbloodlines:doppelganger_blood",
           "header": "Doppelgänger"

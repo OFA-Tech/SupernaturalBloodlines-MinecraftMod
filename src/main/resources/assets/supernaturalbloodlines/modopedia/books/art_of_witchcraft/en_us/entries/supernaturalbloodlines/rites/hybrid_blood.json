@@ -20,7 +20,7 @@
       "components": [
         {
           "template": "modopedia:page/headered_text",
-          "text": "The hybrid on the centre must be a hybrid, an Original hybrid or a tribrid. Someone else's blood needs their consent: they must sneak on the centre. Werewolves must be installed.",
+          "text": "The hybrid on the centre must be a hybrid, an Original hybrid or a tribrid. Someone else's blood needs their consent: they must sneak on the centre.",
           "header": "Hybrid's Blood"
         }
       ]
@@ -30,6 +30,15 @@
         {
           "template": "modopedia:page/headered_text",
           "text": "Without the consent, or if the one on the centre is not a hybrid, nothing is made, the bottle comes back and the caster is told only that the rite would change nothing: it never says who is a hybrid.",
+          "header": "Hybrid's Blood"
+        }
+      ]
+    },
+    {
+      "components": [
+        {
+          "template": "modopedia:page/headered_text",
+          "text": "This rite needs the Werewolves mod.",
           "header": "Hybrid's Blood"
         }
       ]

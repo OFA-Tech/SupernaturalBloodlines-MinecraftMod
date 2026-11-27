@@ -29,6 +29,7 @@ public final class HubClient {
     private static volatile HubSnapshotPayload snapshot = HubSnapshotPayload.EMPTY;
     private static HubPage lastPage = HubPage.HOME;
     private static final HubReturn RETURN = new HubReturn();
+    static final String RITES_MOVED = "supernaturalbloodlines.rites.moved";
 
     private HubClient() {
     }
@@ -72,6 +73,13 @@ public final class HubClient {
         NeoForge.EVENT_BUS.addListener((ScreenEvent.Opening e) -> {
             if (e.getNewScreen() instanceof DeathScreen) {
                 RETURN.clear();
+            }
+        });
+        // the one-time "rites moved" line comes at login, often while a screen (the book, the hub) hides the chat: it is shown as a toast too
+        NeoForge.EVENT_BUS.addListener((net.neoforged.neoforge.client.event.ClientChatReceivedEvent.System e) -> {
+            if (Minecraft.getInstance().screen != null && e.getMessage().getContents() instanceof net.minecraft.network.chat.contents.TranslatableContents tc
+                    && tc.getKey().equals(RITES_MOVED)) {
+                net.ofatech.supernaturalbloodlines.parts.supernatural.client.book.EnchantedBook.tell(e.getMessage());
             }
         });
         NeoForge.EVENT_BUS.addListener((ClientTickEvent.Post e) -> {

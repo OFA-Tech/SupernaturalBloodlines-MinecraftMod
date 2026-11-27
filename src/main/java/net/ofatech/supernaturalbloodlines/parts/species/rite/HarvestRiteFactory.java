@@ -1,5 +1,6 @@
 package net.ofatech.supernaturalbloodlines.parts.species.rite;
 
+import net.ofatech.supernaturalbloodlines.shared.rite.RiteTell;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
@@ -68,7 +69,7 @@ public record HarvestRiteFactory(int minCircle) implements RiteFactory {
             Optional<String> refused = GrandGate.check(level, params.caster, id, minCircle);
             if (refused.isPresent()) {
                 if (caster != null) {
-                    caster.displayClientMessage(Component.translatable(refused.get()), true);
+                    RiteTell.refuse(caster, refused.get());
                 }
                 return cancel();
             }
@@ -85,7 +86,7 @@ public record HarvestRiteFactory(int minCircle) implements RiteFactory {
             for (ServerPlayer p : payers.values()) {
                 if (p.experienceLevel < shares[i++]) {
                     if (caster != null) {
-                        caster.displayClientMessage(Component.translatable(LEVELS), true);
+                        RiteTell.refuse(caster, LEVELS, GroupsConfig.harvestXpLevels(), java.util.Arrays.stream(shares).max().orElse(0));
                     }
                     return cancel();
                 }
@@ -97,7 +98,7 @@ public record HarvestRiteFactory(int minCircle) implements RiteFactory {
             grow(FeteRiteFactory.radius(), GroupsConfig.harvestMaxBlocks());
             GrandGate.stamp(level, params.caster, id);
             if (caster != null) {
-                caster.displayClientMessage(Component.translatable(DONE), true);
+                RiteTell.say(caster, DONE);
             }
             return false;
         }

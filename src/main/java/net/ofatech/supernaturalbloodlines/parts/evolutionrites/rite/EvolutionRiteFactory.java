@@ -1,5 +1,6 @@
 package net.ofatech.supernaturalbloodlines.parts.evolutionrites.rite;
 
+import net.ofatech.supernaturalbloodlines.shared.rite.RiteTell;
 import com.mojang.serialization.MapCodec;
 import io.github.manasmods.manascore.skill.api.ManasSkill;
 import io.github.manasmods.manascore.skill.api.ManasSkillInstance;
@@ -146,12 +147,12 @@ public record EvolutionRiteFactory(EvolutionRecipe recipe) implements RiteFactor
         protected boolean onStart(RiteParams params) {
             Optional<ServerPlayer> found = RiteTargets.centrePlayerOrCaster(this, params, level);
             if (found.isEmpty()) {
-                return cancel();
+                return cancel(); // silent: no player on the centre
             }
             ServerPlayer target = found.get();
             ServerPlayer caster = RiteTargets.performer(findEntity(params.caster), params.caster, target).orElse(null);
             if (caster == null) {
-                return cancel(); // the performer left: only the performer may stand for themselves, so nobody is asked and nobody is changed
+                return cancel(); // silent: the performer left: only the performer may stand for themselves, so nobody is asked and nobody is changed
             }
 
             Optional<AddonProbe> probe = Recipes.usableProbe(recipe, Recipes::modLoaded);
@@ -170,9 +171,9 @@ public record EvolutionRiteFactory(EvolutionRecipe recipe) implements RiteFactor
                 }
                 case DONE -> { }
             }
-            target.displayClientMessage(Component.translatable(DONE), true);
+            RiteTell.say(target, DONE);
             if (caster != target) {
-                caster.displayClientMessage(Component.translatable(DONE_CASTER), true);
+                RiteTell.say(caster, DONE_CASTER);
             }
             if (recipe.tier() == Tier.ULTIMATE && EvolutionRitesConfig.announceUltimates()) {
                 target.server.getPlayerList().broadcastSystemMessage(Component.translatable(ANNOUNCE, target.getDisplayName()), false);
@@ -195,7 +196,7 @@ public record EvolutionRiteFactory(EvolutionRecipe recipe) implements RiteFactor
             boolean retired = grant.isPresent() && EvoSkills.retired(level.getServer(), grant.get());
             boolean enabled = EvolutionRitesConfig.recipeOpen(recipe.id(), recipe.tier()) && probe.map(p -> p.enabledIn(level)).orElse(true);
             return new EvolutionRules.Facts(enabled, Recipes.modLoaded(recipe.requiresMod()), hooks, roadOpen,
-                    SeveranceRiteFactory.isWitchType(BloodlineAccess.get(caster).species()), fullMoon, LunarEclipse.active(level.getServer()), caster == target,
+                    SeveranceRiteFactory.isWitchType(BloodlineAccess.get(caster).species()), fullMoon, MoonRule.eclipseNight(level.dimensionType().hasFixedTime(), level.getDayTime(), net.ofatech.supernaturalbloodlines.shared.moon.EclipseFeed.active(level.getServer())), caster == target,
                     target.isShiftKeyDown(), holds, kindOk, needs, satisfied, owned, enoughEp, retired);
         }
 
@@ -205,10 +206,9 @@ public record EvolutionRiteFactory(EvolutionRecipe recipe) implements RiteFactor
                 RiteTargets.refuseAbout(caster, target, key);
             } else if (reason == EvolutionRules.Reason.NO_CONSENT) {
                 RiteTargets.Told told = RiteTargets.consentAnswer(false, false, key);
-                caster.displayClientMessage(Component.translatable(told.caster()), true);
-                target.displayClientMessage(Component.translatable(told.target()), true);
+                RiteTargets.tell(caster, target, told);
             } else {
-                caster.displayClientMessage(Component.translatable(key), true);
+                RiteTell.refuse(caster, key);
             }
             return cancel();
         }

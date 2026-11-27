@@ -4,10 +4,19 @@ Every rite in this mod is an **Enchanted circle-magic rite**: you draw a chalk c
 
 - **Small circle** and **medium circle** are Enchanted's circle shapes. The chalk is Enchanted's **ritual chalk**, except the two curses, which need **nether chalk**.
 - **Target:** the person who stands on the **centre block** of the circle (the closest player in the 1x2x1 column), or the **caster** if nobody does.
-- A rite that **refuses** its target gives the ingredients back, takes no power, and shows the reason to the caster on the action bar.
-- **Full moon** means the **night** of the overworld's full moon: moon phase 0 and the time of day between 12786 and 23216 (Werewolves' own full-moon window). Noon of the full-moon day is refused with "This rite can only be performed on a full-moon night." The Nether and the End never have one. This holds for the Rite of the Moon, the Silver Moon, Immortality and Severance.
+- A rite that **refuses** its target gives the ingredients back, takes no power, and shows the reason to the caster on the action bar **and in chat** (once each), naming what is missing. A success stays on the action bar.
+- **Full moon:** see [What counts as a full moon](#what-counts-as-a-full-moon).
 - Ingredients **in bold** come from another mod. "Silver" is Werewolves' Silver Ingot.
 - Costs are before the witch bonus (x0.75), Emissary bonus (x0.9) and siphoned power. See [Witches and siphoners](Witches-And-Siphoners).
+
+## What counts as a full moon
+
+- A **full moon** is the **night** of the full moon in the **Overworld**: moon phase 0, and the time of day after dusk (12786) and before dawn (23216), the window Werewolves uses. Noon of the full-moon day is not one. The Nether and the End never have one (their time stands still).
+- A **lunar eclipse** counts as a full moon for **every rite that needs one**, inside the same window. An eclipse happens on some full-moon nights (the server's `lunar_eclipse_chance`), or when an operator starts one with `/supernaturalbloodlines debug eclipse start`; it lasts until dawn.
+- The rites that need a full moon: Alpha Trial, Immortality, Severance, the Frequency, the Rite of the Moon, the Valet Pike, the Silver Moon, and every evolution and mastery rite below Ultimate. The Ultimate ones need the eclipse itself.
+- Every rite that is worked "at night" (the Night Watch too) uses the same window: after 12786 and before 23216.
+- **Moonstone** is crafted from an amethyst shard and a Werewolves silver ingot, in any order. The Alpha Trial, the Rite of Lineage: Awaken, the Rite of the Moon and the werewolf brother rite take one.
+- The hub's **moon calendar** (Home, or the almanac on the Path page) shows the next full moons and any lunar events.
 
 ## Quick table
 

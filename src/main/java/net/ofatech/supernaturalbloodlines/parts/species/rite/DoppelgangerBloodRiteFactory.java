@@ -1,5 +1,6 @@
 package net.ofatech.supernaturalbloodlines.parts.species.rite;
 
+import net.ofatech.supernaturalbloodlines.shared.rite.RiteTell;
 import com.mojang.serialization.MapCodec;
 import java.util.List;
 import java.util.UUID;
@@ -70,7 +71,7 @@ public record DoppelgangerBloodRiteFactory() implements RiteFactory {
                     if (owner instanceof ServerPlayer who && id != null && refusal != DoppelgangerRiteRules.NO_OWNER && refusal != DoppelgangerRiteRules.OWNER_AWAY) {
                         RiteTargets.refuseAbout(caster, who, refusal); // whether the taglocked player carries the gene is theirs to hear
                     } else {
-                        caster.displayClientMessage(Component.translatable(refusal), true);
+                        RiteTell.refuse(caster, refusal);
                     }
                 }
                 return cancel();

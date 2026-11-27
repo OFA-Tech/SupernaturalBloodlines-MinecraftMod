@@ -1,5 +1,6 @@
 package net.ofatech.supernaturalbloodlines.parts.species.pack;
 
+import net.ofatech.supernaturalbloodlines.shared.rite.RiteTell;
 
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
@@ -106,11 +107,12 @@ public record LineageRiteFactory(Mode mode) implements RiteFactory {
         @Override
         protected boolean onStart(RiteParams params) {
             if (!ModList.get().isLoaded("werewolves")) {
+                RiteTell.refuse(level.getPlayerByUUID(params.caster), RiteTell.NEEDS_WEREWOLVES);
                 return cancel();
             }
             Optional<ServerPlayer> found = RiteTargets.centrePlayerOrCaster(this, params, level);
             if (found.isEmpty()) {
-                return cancel();
+                return cancel(); // silent: no player on the centre
             }
             ServerPlayer target = found.get();
             if (mode == Mode.REVEAL) {
@@ -120,13 +122,12 @@ public record LineageRiteFactory(Mode mode) implements RiteFactory {
             }
             ServerPlayer caster = RiteTargets.performer(findEntity(params.caster), params.caster, target).orElse(null);
             if (caster == null) {
-                return cancel(); // the performer left: only the performer may stand for themselves, so nobody is asked and nobody is changed
+                return cancel(); // silent: the performer left: only the performer may stand for themselves, so nobody is asked and nobody is changed
             }
             // it changes the target, so it asks them first, and the caster is never told why it did not work (an Augustine, a hybrid and a human all answer the same)
             RiteTargets.Told asked = RiteTargets.consentAnswer(caster == target, target.isShiftKeyDown(), RiteTargets.SNEAK_TO_ACCEPT);
             if (asked != null) {
-                caster.displayClientMessage(Component.translatable(asked.caster()), true);
-                target.displayClientMessage(Component.translatable(asked.target()), true);
+                RiteTargets.tell(caster, target, asked);
                 return cancel();
             }
             String refusal = awaken(target, level.getGameTime());

@@ -1,5 +1,6 @@
 package net.ofatech.supernaturalbloodlines.parts.species.unlock;
 
+import net.ofatech.supernaturalbloodlines.shared.rite.RiteTell;
 import de.teamlapen.vampirism.api.VReference;
 import de.teamlapen.vampirism.api.VampirismAPI;
 import java.util.ArrayList;
@@ -176,7 +177,7 @@ public final class RiteUnlocks {
             fix(p, rite);
         }
         if (notify && fresh > 0) {
-            p.displayClientMessage(Component.translatable("supernaturalbloodlines.rites.new_kind"), true);
+            RiteTell.say(p, "supernaturalbloodlines.rites.new_kind");
         }
         return fresh;
     }

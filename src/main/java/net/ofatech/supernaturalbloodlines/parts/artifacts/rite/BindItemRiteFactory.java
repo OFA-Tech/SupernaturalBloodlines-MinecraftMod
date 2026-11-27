@@ -1,5 +1,6 @@
 package net.ofatech.supernaturalbloodlines.parts.artifacts.rite;
 
+import net.ofatech.supernaturalbloodlines.shared.rite.RiteTell;
 import net.ofatech.supernaturalbloodlines.shared.supernatural.TaskSignals;
 import net.minecraft.core.registries.BuiltInRegistries;
 
@@ -66,25 +67,25 @@ public record BindItemRiteFactory(Item input, Item output, Faction faction) impl
         protected boolean onStart(RiteParams params) {
             Optional<ServerPlayer> found = RiteTargets.centrePlayerOrCaster(this, params, level);
             if (found.isEmpty()) {
-                return cancel();
+                return cancel(); // silent: no player on the centre
             }
             ServerPlayer target = found.get();
             ServerPlayer caster = RiteTargets.performer(findEntity(params.caster), params.caster, target).orElse(null);
             if (caster == null) {
-                return cancel(); // the performer left: only the performer may stand for themselves, so nobody is asked and nobody is changed
+                return cancel(); // silent: the performer left: only the performer may stand for themselves, so nobody is asked and nobody is changed
             }
 
             Optional<ItemStack> source = params.consumedItems.stream().filter(s -> s.is(factory.input)).findFirst();
             if (source.isEmpty()) {
-                caster.displayClientMessage(Component.translatable(NO_ITEM), true);
+                RiteTell.refuse(caster, NO_ITEM, factory.input.getDescription());
                 return cancel();
             }
             if (source.get().get(ArtifactItems.BOUND_TO.get()) != null) {
-                caster.displayClientMessage(Component.translatable(ALREADY_BOUND), true);
+                RiteTell.refuse(caster, ALREADY_BOUND);
                 return cancel();
             }
             if (!factory.faction.accepts(FactionRiteFactory.baseFaction(VampirismAPI.factionPlayerHandler(target)))) {
-                caster.displayClientMessage(Component.translatable(FactionRiteFactory.WRONG_FACTION), true);
+                RiteTargets.refuseAbout(caster, target, FactionRiteFactory.WRONG_FACTION); // the faction of the one on the centre is theirs to hear
                 return cancel();
             }
             ItemStack bound = new ItemStack(factory.output);

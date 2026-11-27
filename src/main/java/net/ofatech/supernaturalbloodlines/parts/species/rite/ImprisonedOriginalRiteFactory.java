@@ -1,5 +1,7 @@
 package net.ofatech.supernaturalbloodlines.parts.species.rite;
 
+import net.ofatech.supernaturalbloodlines.core.moon.MoonRule;
+import net.ofatech.supernaturalbloodlines.shared.rite.RiteTell;
 import com.mojang.serialization.MapCodec;
 import java.util.List;
 import java.util.Optional;
@@ -74,10 +76,10 @@ public record ImprisonedOriginalRiteFactory() implements RiteFactory {
             boolean down = there.map(Imprisonment::isDown).orElse(false);
             boolean ring = Imprisonment.ringClosed(level, getPos(), SpeciesConfig.ringRadius());
             if (targetBlood == null) {
-                return LineRules.imprisonedRefusal(new LineRules.ImprisonedFacts(witch, LunarEclipse.active(server), Optional.empty(),
+                return LineRules.imprisonedRefusal(new LineRules.ImprisonedFacts(witch, MoonRule.eclipseNight(level.dimensionType().hasFixedTime(), level.getDayTime(), net.ofatech.supernaturalbloodlines.shared.moon.EclipseFeed.active(server)), Optional.empty(),
                         false, false, Optional.empty(), trapped, down, ring));
             }
-            return LineRules.imprisonedRefusal(new LineRules.ImprisonedFacts(witch, LunarEclipse.active(server), Optional.of(targetBlood),
+            return LineRules.imprisonedRefusal(new LineRules.ImprisonedFacts(witch, MoonRule.eclipseNight(level.dimensionType().hasFixedTime(), level.getDayTime(), net.ofatech.supernaturalbloodlines.shared.moon.EclipseFeed.active(server)), Optional.of(targetBlood),
                     SireCall.player(server, targetBlood) instanceof ServerPlayer here && here.level() == level, Lines.isOriginalId(server, targetBlood), Lines.rootOf(server, targetBlood),
                     trapped, down, ring));
         }
@@ -85,7 +87,7 @@ public record ImprisonedOriginalRiteFactory() implements RiteFactory {
         @Override
         protected boolean onStart(RiteParams params) {
             if (!(findEntity(params.caster) instanceof ServerPlayer performer)) {
-                return cancel();
+                return cancel(); // silent: the performer left
             }
             if (!SpeciesConfig.lineRitesEnabled()) {
                 return refuse(performer, BrokenLineRiteFactory.RITES_OFF);
@@ -117,7 +119,7 @@ public record ImprisonedOriginalRiteFactory() implements RiteFactory {
                     boolean aboutTheCircle = failure.get().equals(LineRules.FAILS) || failure.get().equals(LineRules.REFUSAL_PREFIX + "nobody_trapped");
                     String why = !aboutTheCircle ? failure.get()
                             : Imprisonment.trappedRoot(level, getPos()).equals(Optional.of(root)) ? RING_BROKEN : ESCAPED;
-                    performer.sendSystemMessage(Component.translatable(why));
+                    RiteTell.refuse(performer, why);
                 }
                 return false;
             }
@@ -154,7 +156,7 @@ public record ImprisonedOriginalRiteFactory() implements RiteFactory {
         }
 
         private boolean refuse(ServerPlayer performer, String key) {
-            performer.displayClientMessage(Component.translatable(key), true);
+            RiteTell.refuse(performer, key);
             return cancel();
         }
     }

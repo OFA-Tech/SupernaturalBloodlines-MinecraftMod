@@ -53,4 +53,15 @@ class LocatorRulesTest {
         assertTrue(LocatorRules.findable(true, true, true, true, 2000.0 * 2000, 2000, false, false, now, until), "exactly at the range");
         assertTrue(LocatorRules.findable(true, true, true, true, 0, 2000, false, false, 4999, until), "the last tick");
     }
+
+    /** LocatorGameTests puts its target 2 blocks into a cell and leans on this: the point is always a quarter to three quarters into its cell. */
+    @Test
+    void theBlurredPointIsAQuarterToThreeQuartersIntoItsCell() {
+        for (long seed = 0; seed < 2000; seed++) {
+            LocatorRules.Pt p = LocatorRules.blur(64 + 2.5, -96 + 2.5, seed, 32);
+            double inX = p.x() - 64;
+            double inZ = p.z() + 96;
+            org.junit.jupiter.api.Assertions.assertTrue(inX >= 8 && inX < 24 && inZ >= 8 && inZ < 24, "seed " + seed + ": " + inX + ", " + inZ);
+        }
+    }
 }

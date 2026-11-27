@@ -1,5 +1,6 @@
 package net.ofatech.supernaturalbloodlines.parts.artifacts.ward;
 
+import net.ofatech.supernaturalbloodlines.shared.rite.RiteTell;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
@@ -66,15 +67,15 @@ public record WardRiteFactory(WardRules.Kind mode) implements RiteFactory {
         @Override
         protected boolean onStart(RiteParams params) {
             if (!(findEntity(params.caster) instanceof ServerPlayer caster)) {
-                return cancel();
+                return cancel(); // silent: the performer left
             }
             ServerPlayer owner = caster;
             Optional<ServerPlayer> onCentre = level.getEntitiesOfClass(ServerPlayer.class, new AABB(pos).expandTowards(0, 1, 0), p -> p.isAlive() && !p.isSpectator())
                     .stream().min(Comparator.comparingDouble(p -> p.distanceToSqr(pos.getX() + 0.5, pos.getY(), pos.getZ() + 0.5)));
             if (onCentre.isPresent() && onCentre.get() != caster) {
                 if (!onCentre.get().isShiftKeyDown()) {
-                    caster.displayClientMessage(Component.translatable(CANCELLED), true);
-                    onCentre.get().displayClientMessage(Component.translatable(SNEAK_TO_OWN), true);
+                    RiteTell.refuse(caster, CANCELLED);
+                    RiteTell.say(onCentre.get(), SNEAK_TO_OWN); // a request, not a refusal
                     return cancel();
                 }
                 owner = onCentre.get();
@@ -92,14 +93,14 @@ public record WardRiteFactory(WardRules.Kind mode) implements RiteFactory {
                             kind == WardRules.Kind.AREA ? ArtifactsConfig.wardRadius() : 1, owner.getUUID(), ArtifactsConfig.wardMaxPerOwner())
                     : Optional.empty();
             if (ward.isEmpty()) {
-                caster.displayClientMessage(Component.translatable(WONT_TAKE), true);
+                RiteTell.refuse(caster, WONT_TAKE);
                 return false; // not cancelled: the ingredients and the altar's power are spent, whatever the reason
             }
             if (caster != owner) {
                 index.inviteAll(owner.getUUID(), caster.getUUID(), ArtifactsConfig.wardMaxInvites());
-                caster.displayClientMessage(Component.translatable(RAISED), true);
+                RiteTell.say(caster, RAISED);
             }
-            owner.displayClientMessage(Component.translatable(RAISED), true);
+            RiteTell.say(owner, RAISED);
             return false;
         }
 
