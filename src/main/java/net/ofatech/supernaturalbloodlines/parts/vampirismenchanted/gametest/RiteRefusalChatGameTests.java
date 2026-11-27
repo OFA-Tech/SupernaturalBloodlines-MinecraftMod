@@ -87,8 +87,12 @@ public final class RiteRefusalChatGameTests {
      * Every rite of this mod, worked by a plain human at noon with no ingredients: nothing is said twice on a channel, and every action-bar line such a
      * caster gets is a refusal (nothing succeeds for them), so it is in chat too. An answer that was always a chat line (the lineage reveal) stays one.
      */
-    /** The chat lines a rite gives as an answer, not a refusal: whether you carry the werewolf gene. */
-    private static final java.util.Set<String> CHAT_ANSWERS = java.util.Set.of("supernaturalbloodlines.lineage.gene_yes", "supernaturalbloodlines.lineage.gene_no");
+    /**
+     * The chat lines a rite gives as an answer, not a refusal: whether you carry the werewolf gene, and ManasCore's own line when a rite teaches a
+     * skill (the Ancestral Calling works for a plain caster when Werewolves is not there to need a wolf).
+     */
+    private static final java.util.Set<String> CHAT_ANSWERS = java.util.Set.of("supernaturalbloodlines.lineage.gene_yes", "supernaturalbloodlines.lineage.gene_no",
+            "manascore.skill.learn_skill");
 
     @GameTest(template = "empty", templateNamespace = NS, timeoutTicks = 400)
     public static void everyRiteRefusesAPlainCasterOnBothChannels(GameTestHelper helper) {
