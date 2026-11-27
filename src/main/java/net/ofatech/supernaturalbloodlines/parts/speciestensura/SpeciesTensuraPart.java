@@ -19,6 +19,7 @@ import net.ofatech.supernaturalbloodlines.parts.speciestensura.gametest.ApexGame
 import net.ofatech.supernaturalbloodlines.parts.speciestensura.gametest.ApexWerewolfGameTests;
 import net.ofatech.supernaturalbloodlines.parts.speciestensura.gametest.RankSkillsGameTests;
 import net.ofatech.supernaturalbloodlines.parts.speciestensura.gametest.GhoulTensuraGameTests;
+import net.ofatech.supernaturalbloodlines.parts.speciestensura.gametest.HumanLikeProbeGameTests;
 import net.ofatech.supernaturalbloodlines.parts.speciestensura.gametest.SirelineTensuraGameTests;
 import net.ofatech.supernaturalbloodlines.parts.speciestensura.gametest.SpeciesLayerGameTests;
 import net.ofatech.supernaturalbloodlines.parts.speciestensura.gametest.SpeciesTensuraWerewolvesGameTests;
@@ -63,6 +64,7 @@ public final class SpeciesTensuraPart {
             e.register(net.ofatech.supernaturalbloodlines.parts.speciestensura.gametest.ApexUndeadSwitchGameTests.class);
             e.register(SirelineTensuraGameTests.class);
             e.register(GhoulTensuraGameTests.class);
+            e.register(HumanLikeProbeGameTests.class);
             if (EnabledParts.isEnabled("supernatural")) {
                 e.register(SpeciesTensuraSkillRuleGameTests.class);
             }

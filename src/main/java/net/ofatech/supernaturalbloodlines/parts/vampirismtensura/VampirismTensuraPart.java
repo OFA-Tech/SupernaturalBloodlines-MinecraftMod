@@ -8,6 +8,8 @@ import net.neoforged.fml.ModList;
 import net.neoforged.fml.config.ModConfig;
 import net.neoforged.neoforge.event.RegisterGameTestsEvent;
 import net.ofatech.supernaturalbloodlines.SupernaturalBloodlines;
+import net.ofatech.supernaturalbloodlines.parts.vampirismtensura.gametest.RaceHookGameTests;
+import net.ofatech.supernaturalbloodlines.parts.vampirismtensura.gametest.VampirismMenuHookGameTests;
 import net.ofatech.supernaturalbloodlines.parts.vampirismtensura.gametest.VampirismTensuraGameTests;
 import net.ofatech.supernaturalbloodlines.parts.vampirismtensura.gametest.WerewolvesGameTests;
 import net.ofatech.supernaturalbloodlines.parts.vampirismtensura.werewolves.WerewolfRaceSync;
@@ -37,6 +39,8 @@ public final class VampirismTensuraPart {
         // the Werewolves tests link Werewolves classes, so they are registered only when it is loaded
         modBus.addListener((RegisterGameTestsEvent e) -> {
             e.register(VampirismTensuraGameTests.class);
+            e.register(RaceHookGameTests.class);
+            e.register(VampirismMenuHookGameTests.class);
             if (werewolves) {
                 e.register(WerewolvesGameTests.class);
             }
