@@ -82,6 +82,13 @@ class ActionIconTest {
                 wrong.add(name + " is a copy of " + twin);
             }
         }
+        Map<String, String> owner = new TreeMap<>();
+        for (var e : icons.entrySet()) {
+            String other = owner.putIfAbsent(e.getValue(), e.getKey());
+            if (other != null && !e.getValue().equals("unknown")) {
+                wrong.add(e.getKey() + " uses the icon of " + other + " (" + e.getValue() + ")");
+            }
+        }
         assertEquals(List.of(), wrong);
     }
 
