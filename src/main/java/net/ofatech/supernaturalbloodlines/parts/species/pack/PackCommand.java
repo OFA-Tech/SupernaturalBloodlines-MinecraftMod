@@ -252,9 +252,10 @@ public final class PackCommand {
         if (blocker != null) {
             String blockerName = net.ofatech.supernaturalbloodlines.parts.species.group.clan.ClanDiscipline.name(alpha.server, blocker);
             int left = net.ofatech.supernaturalbloodlines.core.group.clan.ExileRules.daysLeft(GroupIndex.get(alpha.serverLevel()).banUntil(ownGroup.toString(), blocker), PackIndex.now());
-            return blocker.equals(target.getUUID()) ? (left == 1 ? net.ofatech.supernaturalbloodlines.parts.species.group.clan.ClanText.error("exiled_still.one", name(target))
-                    : net.ofatech.supernaturalbloodlines.parts.species.group.clan.ClanText.error("exiled_still", name(target), left))
-                    : net.ofatech.supernaturalbloodlines.parts.species.group.clan.ClanText.error("exiled_brings", name(target), blockerName);
+            boolean brotherhood = type == GroupType.BROTHERHOOD;
+            return blocker.equals(target.getUUID()) ? (left == 1 ? barText(brotherhood, "exiled_still.one", name(target))
+                    : barText(brotherhood, "exiled_still", name(target), left))
+                    : barText(brotherhood, "exiled_brings", name(target), blockerName);
         }
         long now = alpha.serverLevel().getGameTime();
         target.sendSystemMessage(inviteMessage(net.ofatech.supernaturalbloodlines.shared.supernatural.ProfileLink.name(name(alpha), alpha.getUUID()), REQUESTS.open(alpha.getUUID(), target.getUUID(), now), index.betasOf(target.getUUID()).size(), type));
@@ -363,7 +364,15 @@ public final class PackCommand {
         PartyLink.sync(p.server, p.getUUID(), true);
         p.sendSystemMessage(GroupText.of(type, "joined", name(alpha)));
         alpha.sendSystemMessage(GroupText.of(type, "joined_leader", name(p)));
+        // a brother who comes in with a higher mark than the leader's takes the lead now, not at the next sweep
+        net.ofatech.supernaturalbloodlines.parts.species.group.brotherhood.BrotherhoodRegistry.onMarkChanged(p);
         return null;
+    }
+
+    /** The refusal for somebody barred from the group: the clan words for a clan, the brotherhood words for a brotherhood. */
+    private static Component barText(boolean brotherhood, String base, Object... args) {
+        return brotherhood ? net.ofatech.supernaturalbloodlines.parts.species.group.brotherhood.BrotherhoodText.error(base, args)
+                : net.ofatech.supernaturalbloodlines.parts.species.group.clan.ClanText.error(base, args);
     }
 
     @Nullable

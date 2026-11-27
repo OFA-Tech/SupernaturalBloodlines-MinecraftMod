@@ -656,3 +656,46 @@ Proved by `ClanHookGameTests` (a failing proof would be a finding; all passed on
 - `CircleQuery.dayWalker` is false for a clan leader and true for a member with `DAY_WALKER` (Task 9 changed it: the leader counts now; `theCovenRiteSeesAClanLeaderAsADayWalkerSincePlan20c`).
 - `ModConfigSpec.correct` keeps a stored `false` under a default of `true` and fills a missing key with `true`: the default flip of `sun_ring_day_walker_only` reaches new files only.
 - Not checked in source: Enhanced Celestials' use of `setDayTime` (All Rights Reserved, no source); the jump rule covers any forward jump and setup 15 runs it for real.
+## Brotherhood: hooks read (plan 20d, Task 0)
+Proved by `BrotherhoodHookGameTests`, `KolSpawnSitesTest`, `BloodlineEventAppendTest` and `GlowHoldTest` (a failing proof would be a finding; all passed on the first run). The only production edits of Task 0 are visibility changes: `MarkTracker.isPrey`, `MarkTracker.killerOf` (`@VisibleForTesting`) and `SparkHandler.isInnocent` are public.
+- **Vampirism has no hunter mark API.** `IHunterPlayer` and `IFactionPlayer` have no method with `mark` or `kill` in its name; a Vampirism hunter (level 1) has species `NONE` and `markKills` 0. The brotherhood's mark is `BloodlineState.markKills`, meaningful for a Hunter of the Five only. A plain human is species `NONE`, human-like, in no faction, not a vampire, not a werewolf, wolf lineage `NONE`; a vampire, hunter, witch, Potential and tribrid each differ in at least one of those.
+- **A transient `ATTACK_DAMAGE` modifier multiplies** with `hunter_mark` and `pack_bonus` (1.0802 x 1.04 x 1.10 x 1.06 within 1e-9), is **not** in `attribute.save()`, survives `MarkTracker.sync`, is left alone by `StalePartModifiers.strip`, and a real `Player.attack` by a fake player does exactly 12% more damage (0.2247 to 0.2516).
+- `GlowPayload.send` to a fake player answers `false` and `overrideSpy` sees the attempt. A client ignores a glow id for an entity it has not loaded (`HunterSenseClient` reads `level.getEntity`, `GlowHold.missing` only expires it; `GlowHoldTest`).
+- **The kill feed:** `MarkTracker.killerOf` credits the killer for a villager and a human victim by a direct source and by kill credit alone, and a cancelled death never reaches a `LOW`, not-cancelled listener.
+- **Innocent and prey:** villager innocent and not prey; a human who did not fight innocent, not prey; a human who hit the killer 100 ticks ago not innocent, 300 ticks ago innocent; a witch or siphoner player who did not fight **innocent and not prey** (so the Code counts them); a vampire prey; a zombie and a cow neither innocent nor prey (a Witch mob likewise).
+- `PackIndex.samePack` is true for two members of one group whatever Werewolves is; `MarkTracker.samePack` is the wolf guard (false without Werewolves): the curse's same-brotherhood exemption uses the group graph.
+- A second `HunterCurse.curse` keeps the first timer and one roster entry; `liftAll` marks an offline killer in `liftedCurses` and `onLogin` frees them.
+- A witch who leads a coven and joins the hunters switches the group to a brotherhood through the faction event. A hunter who leaves the faction leads a **coven** today (Task 4 turns it around: a plain human keeps the brotherhood).
+- `BossDirector.spawnKol` has three callers (the director's roll, `/boss` debug, the test rig); `BloodlineEvent` is never read by position (appending is safe).
+
+
+### Brotherhood (plan 20d)
+
+- [x] Fit and type derivation; mark and shared leadership.
+- [x] Brothers in arms, shared sight, the Code, timed curse and Kol warning.
+- [x] Viewer-only hub payload, Map and Code cards.
+
+For multi-type groups, the runtime entry point is `BrotherhoodScope.appliesTo`. Resolve the typed group there; marks, shared sight, the attack bonus, the Code, curse and Kol should not independently guess type.
+
+### Brotherhood settings
+
+All rows are under Groups in the operator-only Admin page (`supernaturalbloodlines-groups.toml`). The server rechecks permission on edits.
+
+| Key | Default | Effect |
+| --- | ---: | --- |
+| `brotherhood_enabled` | true | Founding and perks; off retains saved rows and still expires timed curses |
+| `lead_by_mark` | true | Immediate takeover by a higher eligible mark |
+| `arms_percent` | 3 | Attack bonus per nearby brother; 0 disables the bonus |
+| `arms_max_percent` | 12 | Attack bonus cap |
+| `arms_radius` | 24 | Attack bonus distance in blocks |
+| `sight_share_enabled` | true | Forward the prey sense |
+| `sight_radius` | 48 | Shared sight distance from the sensor in blocks |
+| `code_enabled` | true | Judge new breaks; existing breaker periods still expire |
+| `code_mark_penalty_percent` | 25 | Mark lost per break; 0 disables mark loss |
+| `code_breaker_hours` | 24 | Breaker duration in real hours |
+| `code_strikes` | 3 | Breaks needed for an expulsion |
+| `code_strikes_days` | 7 | Real-day strike window |
+| `code_exile_days` | 7 | Real days barred from that group |
+| `curse_extends_enabled` | true | Extend the old curse rule to unmarked brothers |
+| `brotherhood_curse_hours` | 48 | New timed curse duration in real hours |
+| `kol_warning_enabled` | true | Warn the other fitting online brothers |

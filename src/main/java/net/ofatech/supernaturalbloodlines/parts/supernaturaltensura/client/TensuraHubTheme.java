@@ -356,8 +356,16 @@ public final class TensuraHubTheme implements HubTheme, HubThemeViews {
             boolean hot = a.enabled() && (ctx.hovered(b) || ctx.focused("detail:" + a.id()));
             Part part = KitFaces.button(a.primary(), a.enabled(), hot, false);
             UiKit.draw(g, this, part, b);
-            String label = LabelFit.cut(a.label().getString(), b.w() - 8, font::width);
-            g.drawString(font, label, b.x() + (b.w() - font.width(label)) / 2, b.y() + (b.h() - 8) / 2, UiKit.label(this, part), false);
+            String full = a.label().getString();
+            int room = b.w() - 8;
+            // a label a little too long is drawn slightly smaller rather than cut ("Leave the brotherhood"); a much longer one is still cut
+            float scale = font.width(full) > room && font.width(full) * 0.8f <= room ? (float) room / font.width(full) : 1f;
+            String label = scale < 1f ? full : LabelFit.cut(full, room, font::width);
+            g.pose().pushPose();
+            g.pose().translate(b.x() + (b.w() - font.width(label) * scale) / 2f, b.y() + (b.h() - 8 * scale) / 2f, 0);
+            g.pose().scale(scale, scale, 1f);
+            g.drawString(font, label, 0, 0, UiKit.label(this, part), false);
+            g.pose().popPose();
         }
         int limit = by - 2;
         int y = r.y() + 7;

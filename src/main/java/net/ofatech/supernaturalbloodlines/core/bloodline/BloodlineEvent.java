@@ -11,6 +11,8 @@ public enum BloodlineEvent {
     /** The player chose Give up while standing in the dying state of the turning (plan 18b). */
     TURNING_GAVE_UP,
     /** The Rite of Augustine (R201) and Wes's syringe (R202) make a plain vampire an Augustine (R200). */
-    RITE_OF_AUGUSTINE, AUGUSTINE_SYRINGE
+    RITE_OF_AUGUSTINE, AUGUSTINE_SYRINGE,
+    /** A brother killed an innocent (plan 20d, R294): a Hunter of the Five loses a share of the mark. Never saved. */
+    CODE_BROKEN
 }
 

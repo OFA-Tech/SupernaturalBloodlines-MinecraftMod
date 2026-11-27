@@ -120,7 +120,7 @@ public final class SparkRulesGameTests {
         online(first, second, killer);
         try {
             helper.assertTrue(PackRules.pathOpen(state(killer)) && state(killer).protectPath(), "the killer's path is not open and protected by default: " + state(killer));
-            first.setLastHurtMob(killer); // a fight, not an innocent kill (blue eyes would close the path on their own)
+            net.ofatech.supernaturalbloodlines.parts.species.pack.FightLedger.record(first.getUUID(), killer.getUUID(), net.ofatech.supernaturalbloodlines.parts.species.pack.PackIndex.now()); // a fight, not an innocent kill (blue eyes would close the path on their own)
             kill(killer, first);
             helper.assertTrue(state(killer).rank() == Rank.OMEGA && !state(killer).heldSpark() && !state(killer).stoleSpark(), "the protected killer took it: " + state(killer));
             helper.assertTrue(PackRules.pathOpen(state(killer)), "the path was closed by a destroyed spark");
@@ -410,7 +410,7 @@ public final class SparkRulesGameTests {
         ServerPlayer b = alpha(helper, 5, 4.5);
         online(fought, unprovoked, a, b);
         try {
-            a.setLastHurtMob(fought);
+            net.ofatech.supernaturalbloodlines.parts.species.pack.FightLedger.record(a.getUUID(), fought.getUUID(), net.ofatech.supernaturalbloodlines.parts.species.pack.PackIndex.now());
             kill(fought, a);
             helper.assertTrue(fought.received("supernaturalbloodlines.pack.spark_destroyed") && !fought.received("supernaturalbloodlines.pack.spark_destroyed_innocent"),
                     "a kill in a fight was not told as a plain destroyed spark: " + fought.keys());

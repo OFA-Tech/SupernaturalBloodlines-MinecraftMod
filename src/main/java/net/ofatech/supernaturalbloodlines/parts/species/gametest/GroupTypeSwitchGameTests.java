@@ -30,7 +30,7 @@ import net.ofatech.supernaturalbloodlines.parts.species.pack.PackIndex;
 @PrefixGameTestTemplate(false)
 public final class GroupTypeSwitchGameTests {
     private static final String NS = SupernaturalBloodlines.MODID;
-    private static final String CHANGED = "supernaturalbloodlines.group.type_changed.coven";
+    private static final String CHANGED = "supernaturalbloodlines.group.type_changed.brotherhood";
 
     private GroupTypeSwitchGameTests() {
     }
@@ -48,7 +48,7 @@ public final class GroupTypeSwitchGameTests {
     }
 
     @GameTest(template = "empty", templateNamespace = NS)
-    public static void aHybridLeaderWhoBecomesAHumanSwitchesToACoven(GameTestHelper helper) {
+    public static void aHybridLeaderWhoBecomesAHumanSwitchesToABrotherhood(GameTestHelper helper) {
         TalkingDuelist leader = hybridLeader(helper, 1.5);
         TalkingDuelist a = human(helper, 2.5);
         online(leader, a);
@@ -57,7 +57,7 @@ public final class GroupTypeSwitchGameTests {
             helper.assertTrue(join(leader, a) && stored(helper, leader.getUUID()) == GroupType.PACK, "no pack to begin with: " + Groups.typeOf(leader));
             BloodlineAccess.set(leader, BloodlineState.NONE);
             GroupSwitcher.refresh(leader);
-            helper.assertTrue(stored(helper, leader.getUUID()) == GroupType.COVEN && Groups.typeOf(a) == GroupType.COVEN, "the group is " + stored(helper, leader.getUUID()));
+            helper.assertTrue(stored(helper, leader.getUUID()) == GroupType.BROTHERHOOD && Groups.typeOf(a) == GroupType.BROTHERHOOD, "the group is " + stored(helper, leader.getUUID()));
             helper.assertTrue(a.received(CHANGED), "the member was not told");
         } finally {
             clean(helper, leader, a);
@@ -123,11 +123,13 @@ public final class GroupTypeSwitchGameTests {
             helper.assertTrue(join(leader, a) && stored(helper, leader.getUUID()) == GroupType.CLAN, "no clan: " + Groups.typeOf(leader));
             groups.setRank(a.getUUID(), GroupRank.DAY_WALKER);
             VampirismAPI.factionPlayerHandler(leader).leaveFaction(false);
+            BloodlineAccess.set(leader, BloodlineState.NONE.toBuilder().species(Species.WITCH).build());
             GroupSwitcher.refresh(leader);
             helper.assertTrue(stored(helper, leader.getUUID()) == GroupType.COVEN, "no switch to a coven");
             helper.assertTrue(groups.rankOf(a.getUUID(), GroupType.COVEN) == GroupRank.NONE, "a clan rank shows in a coven");
             helper.assertTrue(groups.rankOf(a.getUUID(), GroupType.CLAN) == GroupRank.DAY_WALKER, "the clan rank was deleted by the switch");
             groups.setRank(a.getUUID(), GroupRank.ELDER); // promoted while it was a coven
+            BloodlineAccess.set(leader, BloodlineState.NONE);
             VampirismAPI.factionPlayerHandler(leader).setFactionAndLevel(VReference.VAMPIRE_FACTION, 1);
             GroupSwitcher.refresh(leader);
             helper.assertTrue(stored(helper, leader.getUUID()) == GroupType.CLAN && groups.rankOf(a.getUUID(), GroupType.CLAN) == GroupRank.DAY_WALKER, "the Day Walker rank did not come back after the Elder one");
@@ -214,7 +216,7 @@ public final class GroupTypeSwitchGameTests {
         try {
             helper.assertTrue(join(leader, a) && stored(helper, leader.getUUID()) == GroupType.CLAN, "no clan: " + Groups.typeOf(leader));
             VampirismAPI.factionPlayerHandler(leader).leaveFaction(false);
-            helper.assertTrue(stored(helper, leader.getUUID()) == GroupType.COVEN, "the group is still " + stored(helper, leader.getUUID()) + " after the leader left the vampires");
+            helper.assertTrue(stored(helper, leader.getUUID()) == GroupType.BROTHERHOOD, "the group is still " + stored(helper, leader.getUUID()) + " after the leader left the vampires (a plain human leads a brotherhood)");
             VampirismAPI.factionPlayerHandler(leader).setFactionAndLevel(VReference.VAMPIRE_FACTION, 1);
             helper.assertTrue(stored(helper, leader.getUUID()) == GroupType.CLAN, "the group did not go back to a clan");
         } finally {

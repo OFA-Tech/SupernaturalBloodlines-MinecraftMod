@@ -30,7 +30,7 @@ A Hunter of the Five with **no prey kill for 3 in-game days** (72,000 ticks; the
 
 ## Losing the mark
 
-If a marked hunter is **killed by prey** (any entity, mobs too), they **lose the mark** and a random **online human-like hunter** (with no species) becomes a **potential**. With nobody online, the choice waits until the next hunter joins. A potential's **first prey kill completes the Five**: they become a Hunter of the Five. A potential who leaves the hunters owes a new one, like a lost mark.
+If a marked hunter is **killed by prey** (any entity, mobs too; a tamed pet's kill counts for its owner; a death by fire, lava or a fall counts for whoever last punched them in the last 10 seconds, never for kill credit alone, the void or /kill; a prey brother of the same brotherhood is no exception), they **lose the mark** and a random **online human-like hunter** (with no species) becomes a **potential**. With nobody online, the choice waits until the next hunter joins. A potential's **first prey kill completes the Five**: they become a Hunter of the Five. A potential who leaves the hunters owes a new one, like a lost mark.
 
 ## Hunter's curse
 
@@ -58,3 +58,8 @@ No skills, **+10% max aura**. Apex race: **Eternal Hunter** (not undead). See [T
 
 - A hunter with the hidden gene: the gene stays latent forever.
 - A Hunter of the Five who joins a non-hunter faction loses the mark.
+
+
+### In a Brotherhood
+
+A Code break costs a Hunter of the Five a quarter of their mark by default, but does not change their species or reset the instinct clock. A prey player who kills an unmarked brother receives the same Hunter's Curse, limited to 48 real hours by default or until a Potential awakens; a prey member of the same brotherhood is not spared, but a prey player is spared if the brother, or any brother of that brotherhood, had deliberately damaged them in the last 10 seconds (thorns or pets do not count). A prey player's tamed pet that kills a brother curses its owner. Killing a marked brother brings the old curse, which then ends only when a Potential awakens, even if a timed curse was already running.

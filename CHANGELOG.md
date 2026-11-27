@@ -1,5 +1,19 @@
 # Changelog
 
+## Unreleased (plan 20d: brotherhoods)
+
+- A plain human now leads a Brotherhood rather than a Coven. Founding still requires a hunter unless open founding is enabled. Members stay when a leader changes the group's type.
+- The Code's "innocent" is a villager, or a player who did not deliberately damage the killer, or any brother of the killer's brotherhood, in the last 10 real seconds: a melee hit, or a projectile, potion or TNT of their own. Defending a brother does not count when that brother started the fight, and a prey player who started a fight with a brother is not shielded by that brother hitting back. A Hybrid Leap's blow counts like a punch. A willing feed or a skill's check is never a hit. A hit a shield or Resistance soaked up counts, a 0-damage snowball does not, and a hit on a brother's tamed pet counts as a hit on him. Thorns and the attacker's pets do not count. A brother is judged for their killing blow and their tamed pet's kill. A death by fire, lava, a fall, poison or drowning goes to whoever last landed a direct melee hit on the victim in the last 10 seconds; a sweep, TNT or stray arrow does not count. The void, /kill and kill credit alone are not judged. The werewolf spark's innocent kill uses the same hit rule.
+- The highest eligible mark takes the lead; a tie keeps the incumbent. Nearby brothers add 3% attack damage each, up to 12%. Shared sight forwards the prey outline, not kills or mark progress.
+- Killing an innocent costs part of the mark and starts a Code-breaker day. Three strikes in a week expel and bar a member for seven days; the leader cannot be expelled while leading.
+- Killing an unmarked brother can bring the Hunter's Curse to a prey player for 48 real hours or until a Potential awakens. A curse in progress keeps its original end, except that killing a marked brother turns it into the untimed curse. A marked hunter's killer is found the same way (the blow, the pet's owner, or the last direct melee striker for a death by the world), so kill credit alone, the void and /kill neither cost the mark nor curse, and being in the same brotherhood spares no prey killer. Same-group prey killers are cursed too, and a prey player's tamed pet that kills a brother curses its owner; kill credit alone curses nobody. A killer is not cursed if that brotherhood had deliberately damaged them in the last 10 seconds; thorns or pets do not count. When Kol hunts a brother, fitting online brothers get a warning that names only the target.
+- The Group page shows the viewer's mark, the First Brother's mark, the Map and the Code. Map and ring art are placeholders; the Map is not a route to the Cure. The attack bonus line reflects the last hub snapshot (requests are limited to once per 20 ticks).
+- Sixteen settings are available from the operator-only Admin page. No command rows were added. The optional hub channel moved to protocol **19**: update client and server together.
+
+### Rolling back
+
+Turn `brotherhood_enabled` off to disable founding and perks without deleting rows; timed curses still expire. Before swapping jars, stop the server and back up the world and `supernaturalbloodlines-groups.toml`. A 20c jar preserves the unknown `marks`, `curses` and `code_breakers` rows in `supernaturalbloodlines_groups.dat`; the existing `bans` rows survive too. Human-led groups derive Coven again, with Brotherhood data dormant. A 20c jar (hub protocol 18) does not know the 48-hour deadline, so timed curses never expire after a rollback: let them expire on 20d or apply `HUNTER_CURSE_LIFTED` via `/sb debug` before downgrading. The `CODE_BROKEN` event itself is never saved. An older jar can rewrite the config without the new settings.
+
 ## Unreleased (plan 20c: clans)
 
 ### Added

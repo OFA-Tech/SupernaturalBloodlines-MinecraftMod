@@ -109,7 +109,8 @@ public final class TargetChecks {
                 return false;
             }
         }
-        return CommonHooks.onPlayerAttackTarget(user, target);
+        // asked as a question (a probe), so nothing that tracks real swings counts it
+        return DamageProbe.run(() -> CommonHooks.onPlayerAttackTarget(user, target));
     }
 
     private static boolean packMates(ServerPlayer a, ServerPlayer b) {

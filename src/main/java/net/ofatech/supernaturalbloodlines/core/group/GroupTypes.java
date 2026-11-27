@@ -8,14 +8,14 @@ public final class GroupTypes {
     }
 
     /** The facts about a leader the type reads. */
-    public record Leader(Species species, boolean vampire, boolean werewolf, boolean hunter) {
+    public record Leader(Species species, boolean vampire, boolean werewolf, boolean hunter, boolean humanLike) {
     }
 
     /** What a would-be founder is, for the founding gate. */
     public record Fit(boolean activeAlpha, boolean vampire, boolean magicUser, boolean hunter) {
     }
 
-    /** First match wins: werewolf or hybrid type, hunter, vampire, everything else. */
+    /** First match wins: werewolf or hybrid type, hunter, vampire, a plain human (no species, human-like), everything else. */
     public static GroupType of(Leader l) {
         if (l.werewolf() || l.species().hybridType()) {
             return GroupType.PACK;
@@ -28,6 +28,9 @@ public final class GroupTypes {
             default -> false;
         }) {
             return GroupType.CLAN;
+        }
+        if (l.species() == Species.NONE && l.humanLike()) {
+            return GroupType.BROTHERHOOD;
         }
         return GroupType.COVEN;
     }

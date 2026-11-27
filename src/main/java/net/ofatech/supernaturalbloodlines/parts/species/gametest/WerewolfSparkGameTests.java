@@ -580,7 +580,7 @@ public final class WerewolfSparkGameTests {
             helper.assertTrue(state(attacker).killedInnocent(), "killing a peaceful player was not innocent");
             ServerPlayer duel = wolf(helper, Rank.OMEGA, null);
             try {
-                human.setLastHurtMob(duel);
+                net.ofatech.supernaturalbloodlines.parts.species.pack.FightLedger.record(human.getUUID(), duel.getUUID(), net.ofatech.supernaturalbloodlines.parts.species.pack.PackIndex.now());
                 kill(duel, human);
                 helper.assertFalse(state(duel).killedInnocent(), "a player who attacked first was an innocent");
             } finally {
@@ -590,13 +590,12 @@ public final class WerewolfSparkGameTests {
             ServerPlayer old = wolf(helper, Rank.OMEGA, null);
             ServerPlayer rival = TestPlayers.createDuelist(helper);
             try {
-                rival.setLastHurtMob(old);
-                rival.tickCount += 150;
+                net.ofatech.supernaturalbloodlines.parts.species.pack.FightLedger.record(rival.getUUID(), old.getUUID(), net.ofatech.supernaturalbloodlines.parts.species.pack.PackIndex.now() - 7_500);
                 kill(old, rival);
-                helper.assertFalse(state(old).killedInnocent(), "a fight 150 ticks ago still counts as a fight");
-                rival.tickCount += 100;
+                helper.assertFalse(state(old).killedInnocent(), "a fight 7.5 s ago still counts as a fight");
+                net.ofatech.supernaturalbloodlines.parts.species.pack.FightLedger.record(rival.getUUID(), old.getUUID(), net.ofatech.supernaturalbloodlines.parts.species.pack.PackIndex.now() - 12_500);
                 kill(old, rival);
-                helper.assertTrue(state(old).killedInnocent(), "a fight 250 ticks ago made the victim not innocent");
+                helper.assertTrue(state(old).killedInnocent(), "a fight 12.5 s ago made the victim not innocent");
             } finally {
                 clean(old);
             }

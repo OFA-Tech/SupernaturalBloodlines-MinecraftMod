@@ -66,6 +66,7 @@ public final class HunterCurse {
         for (UUID offline : Set.copyOf(roster.cursed())) {
             roster.setLiftedCurse(offline, true);
             roster.setCursed(offline, false);
+            lifted(offline);
         }
     }
 
@@ -74,6 +75,36 @@ public final class HunterCurse {
         roster.setCursed(p.getUUID(), false);
         roster.setLiftedCurse(p.getUUID(), false);
         NEXT.remove(p.getUUID());
+        lifted(p.getUUID());
+    }
+
+    private static final java.util.List<java.util.function.Consumer<UUID>> LIFT_HOOKS = new java.util.concurrent.CopyOnWriteArrayList<>();
+
+    /** Told, with the player's id, every time a curse ends: lifted online, marked to be lifted at login, or dropped because the player was cured. */
+    public static void onLift(java.util.function.Consumer<UUID> hook) {
+        LIFT_HOOKS.add(hook);
+    }
+
+    private static void lifted(UUID id) {
+        for (java.util.function.Consumer<UUID> hook : LIFT_HOOKS) {
+            try {
+                hook.accept(id);
+            } catch (RuntimeException e) {
+                net.ofatech.supernaturalbloodlines.SupernaturalBloodlines.LOGGER.error("A hook of the curse lifting failed", e);
+            }
+        }
+    }
+
+    /** Frees one online player now. */
+    public static void liftOne(ServerPlayer p) {
+        lift(p, FiveRoster.get(p.serverLevel()));
+    }
+
+    /** Frees one player who is not here: it is done at their next login. */
+    public static void liftLater(MinecraftServer server, UUID id) {
+        FiveRoster roster = FiveRoster.get(server.overworld());
+        roster.setLiftedCurse(id, true);
+        roster.setCursed(id, false);
     }
 
     public static void onLogin(ServerPlayer p) {
@@ -124,6 +155,7 @@ public final class HunterCurse {
             if (!BloodlineAccess.get(p).hunterCurse()) {
                 it.remove(); // freed some other way (the cure)
                 FiveRoster.get(server.overworld()).setCursed(p.getUUID(), false);
+                lifted(p.getUUID());
                 continue;
             }
             HallucinationPayload.send(p, HallucinationPayload.Kind.random(p.getRandom()));

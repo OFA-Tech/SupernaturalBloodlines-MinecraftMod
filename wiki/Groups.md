@@ -44,3 +44,9 @@ A clan is led by a vampire-like head (a vampire, an Original, an Augustine, a va
 **Exile.** The head can exile a member (`/group exile <player>`): they cannot rejoin that clan for 7 days. A kick has no bar.
 
 All of it works without Werewolves, and the numbers are in [Configuration](Configuration#groups-supernaturalbloodlines-groupstoml). Brotherhood perks come in a later update.
+
+## Brotherhood
+
+Hunters can found a Brotherhood. Plain humans can join and lead one; with open founding off, they cannot found one. The First Brother leads until an eligible online brother has a strictly higher mark. A tie keeps the leader. Nearby fitting brothers add attack damage and can share prey sight, but never kills. The Group page shows the Map and Code and only your mark and the First Brother's.
+
+A player who hits a brother is fair game for every brother, unless that brother started the fight. A willing feed is never a hit. The Code judges a brother who kills an innocent: a villager, or a player who did not deliberately damage the brother, any other brother, or a brother's tamed pet in the last 10 seconds. That means melee, or their own arrow, potion or TNT; a blocked or soaked-up hit counts, while a 0-damage snowball, thorns and pets do not. A tamed pet's kill counts for its owner. A death by fire, lava, a fall, poison or drowning counts for the brother whose direct melee hit last landed on the victim in the last 10 seconds; a sweep, TNT or stray arrow does not. The void, /kill and kill credit alone do not count.

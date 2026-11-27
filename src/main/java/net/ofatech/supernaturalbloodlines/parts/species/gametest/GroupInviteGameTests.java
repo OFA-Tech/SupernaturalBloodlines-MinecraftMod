@@ -101,7 +101,7 @@ public final class GroupInviteGameTests {
         online(a, b);
         try {
             var refused = PackCommand.invite(a, b);
-            helper.assertTrue(refused != null && key(refused).equals("supernaturalbloodlines.group.not_fit.coven"), "the refusal was " + key(refused));
+            helper.assertTrue(refused != null && key(refused).equals("supernaturalbloodlines.group.not_fit.brotherhood"), "the refusal was " + key(refused));
             helper.assertTrue(PackIndex.get(helper.getLevel()).betasOf(a.getUUID()).isEmpty(), "a group was made");
         } finally {
             clean(helper, a, b);
@@ -110,13 +110,13 @@ public final class GroupInviteGameTests {
     }
 
     @GameTest(template = "empty", templateNamespace = NS)
-    public static void openFoundingLetsAHumanLeadACoven(GameTestHelper helper) {
+    public static void openFoundingLetsAHumanLeadAGroup(GameTestHelper helper) {
         TalkingDuelist a = human(helper, 1.5);
         TalkingDuelist b = human(helper, 2.5);
         online(a, b);
         GroupsConfig.override("open_founding", true);
         try {
-            helper.assertTrue(join(a, b) && Groups.typeOf(b) == GroupType.COVEN, "open founding did not lift the gate");
+            helper.assertTrue(join(a, b) && Groups.typeOf(b) == GroupType.BROTHERHOOD, "open founding did not lift the gate");
         } finally {
             clean(helper, a, b);
         }

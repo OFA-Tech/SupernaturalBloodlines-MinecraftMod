@@ -86,7 +86,7 @@ public final class GroupWolfGameTests {
             helper.assertTrue(Groups.typeOf(beta) == GroupType.PACK, "no pack to begin with");
             BloodlineAccess.set(leader, BloodlineState.NONE);
             GroupSwitcher.refresh(leader);
-            helper.assertTrue(Groups.typeOf(beta) == GroupType.COVEN, "the group is " + Groups.typeOf(beta) + ", the leader derives " + Groups.derive(leader));
+            helper.assertTrue(Groups.typeOf(beta) == GroupType.BROTHERHOOD, "the group is " + Groups.typeOf(beta) + ", the leader derives " + Groups.derive(leader));
             helper.assertTrue(index.alphaOf(beta.getUUID()).map(leader.getUUID()::equals).orElse(false), "the Beta left the index");
             helper.assertTrue(leader.getUUID().equals(BloodlineAccess.get(beta).wolf().packAlpha()) && BloodlineAccess.get(beta).wolf().rank() == Rank.BETA, "the wolf state changed: " + BloodlineAccess.get(beta).wolf());
         } finally {

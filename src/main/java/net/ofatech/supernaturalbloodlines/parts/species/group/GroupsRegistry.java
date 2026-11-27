@@ -22,10 +22,12 @@ public final class GroupsRegistry {
         PackAbsence.register();
         PartyLink.register();
         AllyProtection.register();
+        net.ofatech.supernaturalbloodlines.parts.species.pack.FightLedger.register();
         GroupIndex.register();
         GroupSwitcher.register();
         net.ofatech.supernaturalbloodlines.parts.species.group.coven.CovenRegistry.register();
         net.ofatech.supernaturalbloodlines.parts.species.group.clan.ClanRegistry.register();
+        net.ofatech.supernaturalbloodlines.parts.species.group.brotherhood.BrotherhoodRegistry.register();
         NeoForge.EVENT_BUS.addListener((RegisterCommandsEvent e) -> GroupCommand.register(e.getDispatcher()));
         NeoForge.EVENT_BUS.addListener((PlayerEvent.PlayerLoggedOutEvent e) -> PackCommand.forget(e.getEntity().getUUID()));
     }

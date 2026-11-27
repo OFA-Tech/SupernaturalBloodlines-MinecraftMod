@@ -11,6 +11,8 @@ import net.ofatech.supernaturalbloodlines.core.bloodline.Species;
 import net.ofatech.supernaturalbloodlines.core.bloodline.WolfState.Lineage;
 import net.ofatech.supernaturalbloodlines.core.group.GroupType;
 import net.ofatech.supernaturalbloodlines.core.group.GroupTypes;
+import net.ofatech.supernaturalbloodlines.core.group.brotherhood.BrotherhoodFit;
+import net.ofatech.supernaturalbloodlines.parts.species.SpeciesEligibility;
 import net.ofatech.supernaturalbloodlines.parts.species.pack.PackIndex;
 import net.ofatech.supernaturalbloodlines.parts.vampirismenchanted.VampirismSupernatural;
 
@@ -34,11 +36,23 @@ public final class Groups {
         return s == Species.WITCH || s == Species.SIPHONER || s == Species.HERETIC;
     }
 
+    /** What the brotherhood's fit reads about a player: the hunter fact given, the rest live. */
+    public static BrotherhoodFit.Facts brotherFacts(ServerPlayer p, boolean hunter) {
+        var state = BloodlineAccess.get(p);
+        boolean werewolf = VampirismSupernatural.isWerewolf(p) || state.wolf().lineage() != Lineage.NONE;
+        return new BrotherhoodFit.Facts(hunter, state.species(), VampirismSupernatural.isVampire(p), werewolf, SpeciesEligibility.isHumanLike(p));
+    }
+
+    /** A plain human: no species, human-like, no vampire and no werewolf fact, and not a hunter. */
+    public static boolean isPlainHuman(ServerPlayer p) {
+        return BrotherhoodFit.fits(brotherFacts(p, false));
+    }
+
     /** The type this player's own kind leads, from the facts that can be read now. */
     public static GroupType derive(ServerPlayer p) {
         var state = BloodlineAccess.get(p);
         boolean werewolf = VampirismSupernatural.isWerewolf(p) || state.wolf().lineage() != Lineage.NONE;
-        return GroupTypes.of(new GroupTypes.Leader(state.species(), VampirismSupernatural.isVampire(p), werewolf, isHunter(p)));
+        return GroupTypes.of(new GroupTypes.Leader(state.species(), VampirismSupernatural.isVampire(p), werewolf, isHunter(p), SpeciesEligibility.isHumanLike(p)));
     }
 
     /** The type of the group the player is in, else the type their own kind would lead. */

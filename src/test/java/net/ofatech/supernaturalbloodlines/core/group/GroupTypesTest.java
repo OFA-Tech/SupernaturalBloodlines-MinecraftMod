@@ -12,7 +12,7 @@ import org.junit.jupiter.api.Test;
 /** Spec 3.1: the derivation, row by row, and 3.2: the founding gate. */
 class GroupTypesTest {
     private static GroupType of(Species s, boolean vampire, boolean werewolf, boolean hunter) {
-        return GroupTypes.of(new Leader(s, vampire, werewolf, hunter));
+        return GroupTypes.of(new Leader(s, vampire, werewolf, hunter, true));
     }
 
     @Test
@@ -68,8 +68,46 @@ class GroupTypesTest {
     }
 
     @Test
-    void aHumanIsCovenType() {
-        assertEquals(GroupType.COVEN, of(Species.NONE, false, false, false));
+    void aPlainHumanLeadsABrotherhood() {
+        assertEquals(GroupType.BROTHERHOOD, of(Species.NONE, false, false, false));
+    }
+
+    @Test
+    void aRaceThatIsNotHumanLikeStillLeadsACoven() {
+        assertEquals(GroupType.COVEN, GroupTypes.of(new Leader(Species.NONE, false, false, false, false)));
+    }
+
+    @Test
+    void aVampireWithNoSpeciesStillLeadsAClan() {
+        assertEquals(GroupType.CLAN, of(Species.NONE, true, false, false));
+    }
+
+    @Test
+    void aHybridIsStillAPack() {
+        assertEquals(GroupType.PACK, of(Species.HYBRID, false, false, false));
+    }
+
+    @Test
+    void aWitchSiphonerHereticStillLeadACoven() {
+        for (Species s : new Species[] {Species.WITCH, Species.SIPHONER, Species.HERETIC}) {
+            assertEquals(GroupType.COVEN, of(s, false, false, false), s.name());
+        }
+    }
+
+    @Test
+    void theOrderIsPackHunterVampireHumanRest() {
+        assertEquals(GroupType.PACK, of(Species.NONE, true, true, true), "werewolf first");
+        assertEquals(GroupType.BROTHERHOOD, of(Species.NONE, true, false, true), "hunter before vampire");
+        assertEquals(GroupType.CLAN, of(Species.NONE, true, false, false), "vampire before human");
+        assertEquals(GroupType.BROTHERHOOD, of(Species.NONE, false, false, false), "human");
+        assertEquals(GroupType.COVEN, GroupTypes.of(new Leader(Species.NONE, false, false, false, false)), "the rest");
+        assertEquals(GroupType.BROTHERHOOD, GroupTypes.of(new Leader(Species.NONE, false, false, true, false)), "a hunter needs no human-like check");
+    }
+
+    @Test
+    void aHumanStillCannotFound() {
+        assertFalse(GroupTypes.canFound(GroupType.BROTHERHOOD, new Fit(false, false, false, false), false));
+        assertTrue(GroupTypes.canFound(GroupType.BROTHERHOOD, new Fit(false, false, false, false), true));
     }
 
     @Test

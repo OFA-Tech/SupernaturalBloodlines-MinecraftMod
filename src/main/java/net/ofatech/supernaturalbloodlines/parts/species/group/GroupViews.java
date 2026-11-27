@@ -38,7 +38,7 @@ public final class GroupViews {
             rows.add(row(p, leader, "leader", GroupRank.NONE));
             for (UUID id : packs.betasOf(leader)) {
                 GroupRank rank = groups.rankOf(id, type);
-                rows.add(row(p, id, rank == GroupRank.NONE ? "member" : rank.id(), rank));
+                rows.add(row(p, id, rank != GroupRank.NONE ? rank.id() : type == GroupType.BROTHERHOOD && isPotential(p, id) ? "potential" : "member", rank));
             }
             for (UUID ally : packs.alliesOf(leader)) {
                 rows.add(row(p, ally, "ally", GroupRank.NONE));
@@ -50,6 +50,18 @@ public final class GroupViews {
         int days = since <= 0 ? 0 : (int) Math.max(0, (PackIndex.now() - since) / PackAbsence.DAY_MILLIS);
         String name = PackAccess.nameOf(p.server, leader);
         return new GroupView(type, true, viewer, GroupView.clip(name == null ? leader.toString().substring(0, 8) : name, GroupWire.MAX_NAME), days, rows);
+    }
+
+    /**
+     * A brotherhood's member row says so for a Potential who is here: the one word the spec takes from a kind. Only the Potential and brothers who fit read
+     * it (a prey member must not learn who will be the next hunter); somebody who is away is a Brother to everyone.
+     */
+    private static boolean isPotential(ServerPlayer viewer, UUID id) {
+        if (!viewer.getUUID().equals(id) && !net.ofatech.supernaturalbloodlines.parts.species.group.brotherhood.BrotherhoodScope.fits(viewer)) {
+            return false;
+        }
+        ServerPlayer member = SireCall.player(viewer.server, id);
+        return member != null && net.ofatech.supernaturalbloodlines.core.BloodlineAccess.get(member).species() == net.ofatech.supernaturalbloodlines.core.bloodline.Species.POTENTIAL;
     }
 
     private static GroupView.Row row(ServerPlayer viewer, UUID id, String rank, GroupRank groupRank) {

@@ -1,0 +1,94 @@
+package net.ofatech.supernaturalbloodlines.parts.species.group.brotherhood;
+
+import java.util.List;
+import java.util.UUID;
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ServerPlayer;
+import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.event.entity.player.PlayerEvent;
+import net.neoforged.neoforge.event.tick.ServerTickEvent;
+import net.ofatech.supernaturalbloodlines.core.BloodlineAccess;
+import net.ofatech.supernaturalbloodlines.parts.species.pack.PackIndex;
+import net.ofatech.supernaturalbloodlines.parts.species.sireline.SireCall;
+
+/** What the brotherhood perks listen to, with or without Werewolves (the species part registers it through {@code GroupsRegistry}). */
+public final class BrotherhoodRegistry {
+    private static final int SWEEP = 200;
+    private static boolean registered;
+
+    private BrotherhoodRegistry() {
+    }
+
+    public static synchronized void register() {
+        if (registered) {
+            return;
+        }
+        registered = true;
+        // only a change of the mark or of the kind can move the lead or the recorded mark: this is a hot path
+        BloodlineAccess.addListener((p, change) -> {
+            if (change.before().markKills() != change.after().markKills() || change.before().species() != change.after().species()) {
+                onMarkChanged(p);
+            }
+        });
+        net.ofatech.supernaturalbloodlines.parts.species.hunter.HunterInstinct.onSense(BrotherhoodSight::share);
+        net.ofatech.supernaturalbloodlines.parts.species.hunter.MarkTracker.onDeathResolved(Codes::onResolved);
+        net.ofatech.supernaturalbloodlines.parts.species.hunter.MarkTracker.onDeathResolved(BrotherhoodCurse::onResolved);
+        net.ofatech.supernaturalbloodlines.parts.species.hunter.HunterCurse.onLift(id -> {
+            var server = net.neoforged.neoforge.server.ServerLifecycleHooks.getCurrentServer();
+            if (server != null) {
+                net.ofatech.supernaturalbloodlines.parts.species.group.GroupIndex.get(server.overworld()).clearCurse(id);
+            }
+        });
+        NeoForge.EVENT_BUS.addListener((PlayerEvent.PlayerLoggedInEvent e) -> {
+            if (e.getEntity() instanceof ServerPlayer p) {
+                BrotherhoodCurse.expire(p.server);
+                onMarkChanged(p);
+            }
+        });
+        NeoForge.EVENT_BUS.addListener((ServerTickEvent.Post e) -> {
+            if (e.getServer().getTickCount() % SWEEP == 0) {
+                sweep(e.getServer());
+            }
+            if (e.getServer().getTickCount() % 20 == 0) {
+                BrotherhoodArms.refresh(e.getServer());
+            }
+        });
+        NeoForge.EVENT_BUS.addListener((PlayerEvent.PlayerLoggedOutEvent e) -> {
+            if (e.getEntity() instanceof ServerPlayer p) {
+                BrotherhoodArms.remove(p);
+            }
+        });
+    }
+
+    public static synchronized boolean registered() {
+        return registered;
+    }
+
+    /** Records the player's mark and lets the lead move. */
+    public static void onMarkChanged(ServerPlayer p) {
+        BrotherhoodMarks.record(p);
+        if (BrotherhoodScope.of(p.serverLevel(), p.getUUID()) != null) {
+            BrotherhoodViews.push(p.server, p.getUUID());
+        }
+        BrotherhoodLead.check(p.server, p.getUUID());
+    }
+
+    /** Every online member's recorded mark is refreshed, and every brotherhood's lead is checked. */
+    public static void sweep(MinecraftServer server) {
+        PackIndex packs = PackIndex.get(server.overworld());
+        BrotherhoodCurse.expire(server);
+        net.ofatech.supernaturalbloodlines.parts.species.group.GroupIndex.get(server.overworld()).pruneCode(PackIndex.now(),
+                net.ofatech.supernaturalbloodlines.core.group.brotherhood.CodeRules.windowMillis(net.ofatech.supernaturalbloodlines.parts.species.group.GroupsConfig.codeStrikesDays()));
+        for (UUID leader : List.copyOf(packs.leaders())) {
+            if (BrotherhoodScope.isBrotherhood(server.overworld(), leader)) {
+                for (UUID id : packs.pack(leader)) {
+                    ServerPlayer p = SireCall.player(server, id);
+                    if (p != null) {
+                        BrotherhoodMarks.record(p);
+                    }
+                }
+                BrotherhoodLead.check(server, leader);
+            }
+        }
+    }
+}

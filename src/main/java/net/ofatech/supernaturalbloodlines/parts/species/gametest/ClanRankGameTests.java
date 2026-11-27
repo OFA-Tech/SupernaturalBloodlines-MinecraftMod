@@ -275,7 +275,7 @@ public final class ClanRankGameTests {
         try {
             for (net.ofatech.supernaturalbloodlines.core.bloodline.Species s : net.ofatech.supernaturalbloodlines.core.bloodline.Species.values()) {
                 net.ofatech.supernaturalbloodlines.core.BloodlineAccess.set(p, net.ofatech.supernaturalbloodlines.core.bloodline.BloodlineState.NONE.toBuilder().species(s).build());
-                boolean clanKind = net.ofatech.supernaturalbloodlines.core.group.GroupTypes.of(new net.ofatech.supernaturalbloodlines.core.group.GroupTypes.Leader(s, true, false, false)) == GroupType.CLAN;
+                boolean clanKind = net.ofatech.supernaturalbloodlines.core.group.GroupTypes.of(new net.ofatech.supernaturalbloodlines.core.group.GroupTypes.Leader(s, true, false, false, true)) == GroupType.CLAN;
                 helper.assertTrue(net.ofatech.supernaturalbloodlines.parts.species.group.clan.ClanScope.fits(p) == clanKind, "a vampire of species " + s + (clanKind ? " should fit" : " should not fit") + " a clan");
             }
         } finally {

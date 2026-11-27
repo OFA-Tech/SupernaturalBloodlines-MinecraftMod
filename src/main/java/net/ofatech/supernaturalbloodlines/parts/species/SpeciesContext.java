@@ -35,6 +35,7 @@ public final class SpeciesContext {
                 .withVampireBloodTicks(SpeciesConfig.vampireBloodTicks())
                 .withBloodSource(bloodSource)
                 .withGameTime(gameTime)
-                .withWerewolvesLoaded(ModList.get().isLoaded("werewolves"));
+                .withWerewolvesLoaded(ModList.get().isLoaded("werewolves"))
+                .withCodePenaltyPercent(net.ofatech.supernaturalbloodlines.parts.species.group.GroupsConfig.codeMarkPenaltyPercent());
     }
 }

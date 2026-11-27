@@ -3,6 +3,7 @@ package net.ofatech.supernaturalbloodlines.parts.species.group;
 import java.util.List;
 import net.neoforged.neoforge.common.ModConfigSpec;
 import net.ofatech.supernaturalbloodlines.SupernaturalBloodlines;
+import net.ofatech.supernaturalbloodlines.core.group.brotherhood.BrotherhoodSwitches;
 import net.ofatech.supernaturalbloodlines.core.group.clan.CharterCost;
 import net.ofatech.supernaturalbloodlines.core.group.clan.ClanSwitches;
 
@@ -115,6 +116,28 @@ public final class GroupsConfig {
     private static final Whole FEED_SHARE_CAP_PER_MINUTE = whole("feed_share_cap_per_minute", 4, 1, 100, "The most blood one clanmate can receive from shares in a minute.");
     private static final Whole SIRELINE_BONUS_PERCENT = whole("sireline_bonus_percent", 3, 0, 50, "Percent attack damage for each clanmate of your sireline nearby. 0 = off.");
     private static final Whole SIRELINE_BONUS_MAX_PERCENT = whole("sireline_bonus_max_percent", 15, 0, 100, "The most the sire-line bonus adds, in percent.");
+
+    private static final Flag BROTHERHOOD_ENABLED = flag("brotherhood_enabled", true,
+            "Every brotherhood perk. Off: no new brotherhood, no hunting-together bonus, no shared sight, no Code, no lead by mark, no Kol warning and no curse extension. Nothing is deleted, and a curse already running still ends on time.");
+    private static final Flag LEAD_BY_MARK = flag("lead_by_mark", true,
+            "The brother whose mark becomes strictly higher than the leader's takes the lead at once; a tie keeps the leader. Off: the lead only moves the way it does in any group.");
+    private static final Whole ARMS_PERCENT = whole("arms_percent", 3, 0, 50, "Percent attack damage for each other brother who fits, standing nearby. 0 = off.");
+    private static final Whole ARMS_MAX_PERCENT = whole("arms_max_percent", 12, 0, 100, "The most the hunting-together bonus adds, in percent.");
+    private static final Whole ARMS_RADIUS = whole("arms_radius", 24, 2, 64, "Blocks around a brother another brother must be within to count.");
+    private static final Flag SIGHT_SHARE_ENABLED = flag("sight_share_enabled", true, "A brother with the prey sense shares what they sense with the brothers who lack it.");
+    private static final Whole SIGHT_RADIUS = whole("sight_radius", 48, 8, 128, "Blocks around the brother who senses a brother must be within to see what they sense.");
+    private static final Flag CODE_ENABLED = flag("code_enabled", true, "The Code: a brother who kills an innocent loses mark and is a Code-breaker for a day. Off: nobody is judged; breakers already marked run out.");
+    private static final Whole CODE_MARK_PENALTY_PERCENT = whole("code_mark_penalty_percent", 25, 0, 100,
+            "The percent of the mark a Hunter of the Five loses for breaking the Code (at least 1 kill when they have any). 0 = no loss.");
+    private static final Whole CODE_BREAKER_HOURS = whole("code_breaker_hours", 24, 1, 720, "Real hours a brother is a Code-breaker: no hunting-together bonus given or received, no shared sight, no lead.");
+    private static final Whole CODE_STRIKES = whole("code_strikes", 3, 2, 20, "Breaks of the Code within code_strikes_days that expel the brother.");
+    private static final Whole CODE_STRIKES_DAYS = whole("code_strikes_days", 7, 1, 365, "Days a break counts towards an expulsion.");
+    private static final Whole CODE_EXILE_DAYS = whole("code_exile_days", 7, 1, 365, "Days an expelled brother cannot rejoin that brotherhood.");
+    private static final Flag CURSE_EXTENDS_ENABLED = flag("curse_extends_enabled", true,
+            "The Hunter's Curse also falls on a vampire who kills any brother, not only a marked hunter. Off: the old rule only.");
+    private static final Whole BROTHERHOOD_CURSE_HOURS = whole("brotherhood_curse_hours", 48, 1, 720,
+            "Real hours the curse for an unmarked brother's death lasts, unless a Potential awakens first. A curse already running keeps its end even when this is changed.");
+    private static final Flag KOL_WARNING_ENABLED = flag("kol_warning_enabled", true, "The other brothers are warned when a brother is being hunted.");
 
     static {
         SPEC = B.build();
@@ -399,5 +422,74 @@ public final class GroupsConfig {
 
     public static int sirelineBonusMaxPercent() {
         return SIRELINE_BONUS_MAX_PERCENT.get();
+    }
+
+    public static boolean brotherhoodEnabled() {
+        return BROTHERHOOD_ENABLED.get();
+    }
+
+    /** Groups on and brotherhoods on: the master switch of every brotherhood perk (R298). */
+    public static boolean brotherhoodPerksOn() {
+        return BrotherhoodSwitches.perksOn(groupsEnabled(), brotherhoodEnabled());
+    }
+
+    public static boolean leadByMark() {
+        return LEAD_BY_MARK.get();
+    }
+
+    public static int armsPercent() {
+        return ARMS_PERCENT.get();
+    }
+
+    public static int armsMaxPercent() {
+        return ARMS_MAX_PERCENT.get();
+    }
+
+    public static int armsRadius() {
+        return ARMS_RADIUS.get();
+    }
+
+    public static boolean sightShareEnabled() {
+        return SIGHT_SHARE_ENABLED.get();
+    }
+
+    public static int sightRadius() {
+        return SIGHT_RADIUS.get();
+    }
+
+    public static boolean codeEnabled() {
+        return CODE_ENABLED.get();
+    }
+
+    public static int codeMarkPenaltyPercent() {
+        return CODE_MARK_PENALTY_PERCENT.get();
+    }
+
+    public static int codeBreakerHours() {
+        return CODE_BREAKER_HOURS.get();
+    }
+
+    public static int codeStrikes() {
+        return CODE_STRIKES.get();
+    }
+
+    public static int codeStrikesDays() {
+        return CODE_STRIKES_DAYS.get();
+    }
+
+    public static int codeExileDays() {
+        return CODE_EXILE_DAYS.get();
+    }
+
+    public static boolean curseExtendsEnabled() {
+        return CURSE_EXTENDS_ENABLED.get();
+    }
+
+    public static int brotherhoodCurseHours() {
+        return BROTHERHOOD_CURSE_HOURS.get();
+    }
+
+    public static boolean kolWarningEnabled() {
+        return KOL_WARNING_ENABLED.get();
     }
 }
