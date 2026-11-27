@@ -9,6 +9,15 @@ import org.jetbrains.annotations.Nullable;
  * assigns. A slot picked twice, or an action picked twice, is unpicked. Clearing a slot is its own gesture.
  */
 public final class LoadoutTabModel {
+    /** The height of an action row; a greyed row has a second line under the name that says why it cannot be used now. */
+    public static final int ROW = 18;
+    public static final int REASON_LINE = 10;
+    /** The lang key of that line: "Can't use now: %s". */
+    public static final String CANT_USE = "supernaturalbloodlines.hub.skills.loadout.cant_use";
+
+    public static int rowHeight(boolean greyed) {
+        return greyed ? ROW + REASON_LINE : ROW;
+    }
     /** @param id null clears the slot */
     public record Assignment(int slot, @Nullable ResourceLocation id) {
     }

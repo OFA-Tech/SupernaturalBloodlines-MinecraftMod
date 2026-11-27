@@ -230,11 +230,32 @@ public final class WheelCatalogueGameTests {
     }
 
     @GameTest(template = "empty", templateNamespace = NS)
-    public static void visionEntryIsListedOnlyForAVampirismVampire(GameTestHelper helper) {
+    public static void visionEntryIsListedOnlyForAVampirismVampire(GameTestHelper helper) throws ReflectiveOperationException {
         ServerPlayer vampire = ActionGameTests.vampire(helper);
+        unlockAVision(vampire);
         helper.assertTrue(has(vampire, PowerSource.VAMPIRISM, VampirismVision.ID), "a vampire has no Vision entry");
         ServerPlayer human = TestPlayers.create(helper);
         helper.assertTrue(!has(human, PowerSource.VAMPIRISM, VampirismVision.ID), "a human has a Vision entry");
+        helper.succeed();
+    }
+
+    static void unlockAVision(ServerPlayer p) throws ReflectiveOperationException {
+        var vision = VampirismAPI.vampireVisionRegistry().getVisions().get(0);
+        VampirismAPI.vampirePlayer(p).getClass().getMethod("unlockVision", de.teamlapen.vampirism.api.entity.player.vampire.IVampireVision.class)
+                .invoke(VampirismAPI.vampirePlayer(p), vision);
+    }
+
+    /** Plan 23 Task 6: the Vision entry needs a vision the vampire has unlocked (a skill gives it); without one there is nothing to cycle. */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aVampireWithNoVisionSkillHasNoVisionEntry(GameTestHelper helper) throws ReflectiveOperationException {
+        ServerPlayer p = ActionGameTests.vampire(helper);
+        for (var v : VampirismAPI.vampireVisionRegistry().getVisions()) {
+            VampirismAPI.vampirePlayer(p).getClass().getMethod("unUnlockVision", de.teamlapen.vampirism.api.entity.player.vampire.IVampireVision.class)
+                    .invoke(VampirismAPI.vampirePlayer(p), v);
+        }
+        helper.assertTrue(!VampirismVision.unlocked(p) && !has(p, PowerSource.VAMPIRISM, VampirismVision.ID), "a vampire with no vision has a Vision entry");
+        unlockAVision(p);
+        helper.assertTrue(VampirismVision.unlocked(p) && has(p, PowerSource.VAMPIRISM, VampirismVision.ID), "a vampire with a vision has no Vision entry");
         helper.succeed();
     }
 
@@ -253,8 +274,9 @@ public final class WheelCatalogueGameTests {
     }
 
     @GameTest(template = "empty", templateNamespace = NS)
-    public static void visionHandleMissingMeansNoEntryAndOneWarning(GameTestHelper helper) {
+    public static void visionHandleMissingMeansNoEntryAndOneWarning(GameTestHelper helper) throws ReflectiveOperationException {
         ServerPlayer p = ActionGameTests.vampire(helper);
+        unlockAVision(p);
         VampirismVision.forceMissingForTest(true);
         try {
             helper.assertTrue(!has(p, PowerSource.VAMPIRISM, VampirismVision.ID), "the Vision entry is listed without a handle");

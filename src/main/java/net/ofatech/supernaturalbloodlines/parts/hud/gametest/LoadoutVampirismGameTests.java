@@ -163,15 +163,67 @@ public final class LoadoutVampirismGameTests {
         helper.succeed();
     }
 
-    /** A cured vampire keeps the list; its slots show greyed later (the client), nothing is cleared here. */
+    /**
+     * Plan 23 Task 6 (was loadoutNotClearedOnFactionChange): a cured vampire's slots are freed by the once-a-second pass, Bite too, and the human keeps
+     * nothing; a second pass changes nothing. When they are a vampire again, Bite and the action are offered again.
+     */
     @GameTest(template = "empty", templateNamespace = NS)
-    public static void loadoutNotClearedOnFactionChange(GameTestHelper helper) {
+    public static void aCuredVampiresSlotsAreFreed(GameTestHelper helper) {
         ServerPlayer p = vampire(helper);
         ResourceLocation action = anActionOf(VReference.VAMPIRE_FACTION);
         unlock(p, action);
-        LoadoutService.set(p, 5, action);
+        LoadoutService.offerDefaults(p);
+        helper.assertTrue(LoadoutService.set(p, 5, action) == null, "setup: the action was refused");
+        helper.assertTrue(!LoadoutService.prune(p), "a prune freed a slot of a vampire: " + LoadoutService.get(p));
         VampirismAPI.factionPlayerHandler(p).setFactionAndLevel(null, 0);
-        helper.assertTrue(LoadoutService.get(p).get(5).equals(Optional.of(action)), "the faction change cleared slot 6: " + LoadoutService.get(p));
+        helper.assertTrue(LoadoutService.prune(p), "nothing was freed for a cured vampire");
+        Loadout l = LoadoutService.get(p);
+        helper.assertTrue(!l.contains(action) && !l.contains(Loadout.BITE), "a cured vampire kept " + l.slots());
+        helper.assertTrue(!LoadoutService.prune(p), "a second pass freed something again");
+        helper.assertTrue(VampirismAPI.factionPlayerHandler(p).setFactionAndLevel(VReference.VAMPIRE_FACTION, 4), "could not make a vampire again");
+        LoadoutService.offerDefaults(p);
+        helper.assertTrue(LoadoutService.get(p).get(0).equals(Optional.of(Loadout.BITE)), "Bite was not offered again: " + LoadoutService.get(p).slots());
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void setBiteIsRefusedForAHuman(GameTestHelper helper) {
+        ServerPlayer human = TestPlayers.createMortal(helper);
+        String refusal = LoadoutService.set(human, 0, Loadout.BITE);
+        helper.assertTrue(refusal != null && refusal.endsWith("not_unlocked"), "a human could put Bite in a slot: " + refusal);
+        helper.assertTrue(LoadoutService.get(human).get(0).isEmpty(), "a refused set changed the loadout");
+        ServerPlayer p = vampire(helper);
+        helper.assertTrue(LoadoutService.set(p, 0, Loadout.BITE) == null, "a vampire could not put Bite in a slot");
+        ServerPlayer wolf = TestPlayers.createMortal(helper);
+        if (ModList.get().isLoaded("werewolves")) {
+            var werewolves = java.util.Arrays.stream(VampirismAPI.factionRegistry().getPlayableFactions()).filter(f -> f.getID().toString().equals("werewolves:werewolf")).findFirst().orElseThrow();
+            helper.assertTrue(VampirismAPI.factionPlayerHandler(wolf).setFactionAndLevel(werewolves, 1), "could not make a werewolf");
+            helper.assertTrue(LoadoutService.set(wolf, 0, Loadout.BITE) == null, "a werewolf could not put Bite in a slot");
+        }
+        helper.succeed();
+    }
+
+    /** A save from before plan 23 gave every new player Bite in slot 1: a human's is freed, and given back when they can bite. */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void anOldSavesBiteIsFreedForAHuman(GameTestHelper helper) {
+        ServerPlayer human = TestPlayers.createMortal(helper);
+        human.setData(net.ofatech.supernaturalbloodlines.core.attachment.ModAttachments.HUD_LOADOUT, Loadout.DEFAULT.with(0, Loadout.BITE).withBiteOffered());
+        helper.assertTrue(LoadoutService.prune(human) && LoadoutService.get(human).get(0).isEmpty(), "the old Bite stayed: " + LoadoutService.get(human).slots());
+        helper.assertTrue(VampirismAPI.factionPlayerHandler(human).setFactionAndLevel(VReference.VAMPIRE_FACTION, 1), "could not make a vampire");
+        LoadoutService.offerDefaults(human);
+        helper.assertTrue(LoadoutService.get(human).get(0).equals(Optional.of(Loadout.BITE)), "Bite did not come back: " + LoadoutService.get(human).slots());
+        helper.succeed();
+    }
+
+    /** A power the player cleared by hand while they could still use it is not put back by the once-a-second pass. */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aHandClearedPowerStaysCleared(GameTestHelper helper) {
+        ServerPlayer p = vampire(helper);
+        LoadoutService.offerDefaults(p);
+        helper.assertTrue(LoadoutService.set(p, 0, null) == null, "setup: Bite could not be cleared");
+        LoadoutService.prune(p);
+        LoadoutService.offerDefaults(p);
+        helper.assertTrue(!LoadoutService.get(p).contains(Loadout.BITE), "a hand-cleared Bite came back: " + LoadoutService.get(p).slots());
         helper.succeed();
     }
 }

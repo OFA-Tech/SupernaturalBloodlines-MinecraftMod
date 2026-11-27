@@ -254,7 +254,7 @@ public final class WheelActions {
     }
 
     public static WheelRules.SlotTarget target(WheelEntry e) {
-        return WheelRules.slotTarget(e.ref().source(), e.slottable());
+        return WheelRules.slotTarget(e.ref(), e.slottable());
     }
 
     /** Puts the power in slot {@code index} of its target and switches the HUD to the mode that slot belongs to. */

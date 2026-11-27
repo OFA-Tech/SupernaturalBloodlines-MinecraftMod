@@ -65,6 +65,41 @@ public final class VampirismVision {
         return v == null ? Component.empty() : Component.translatable(v.getTranslationKey());
     }
 
+    private static java.lang.reflect.Field visionStatus;
+    private static java.lang.reflect.Field unlockedVisions;
+    private static boolean visionsResolved;
+
+    /**
+     * Whether the vampire has unlocked any vision (a skill gives each one): Vampirism keeps the set in {@code VampirePlayer.vision.unlockedVisions},
+     * not in its API, so it is read by reflection, resolved once. If that is gone (Vampirism changed) the answer is true, so the entry is not lost and
+     * the key itself answers as before; one warning.
+     */
+    public static boolean unlocked(ServerPlayer p) {
+        if (!visionsResolved) {
+            visionsResolved = true;
+            try {
+                Class<?> cls = Class.forName("de.teamlapen.vampirism.entity.player.vampire.VampirePlayer");
+                visionStatus = cls.getDeclaredField("vision");
+                visionStatus.setAccessible(true);
+                unlockedVisions = visionStatus.getType().getDeclaredField("unlockedVisions");
+                unlockedVisions.setAccessible(true);
+            } catch (ReflectiveOperationException | RuntimeException | LinkageError e) {
+                warnings++;
+                visionStatus = null;
+                SupernaturalBloodlines.LOGGER.warn("Wheel: Vampirism's unlocked visions were not found ({}); the Vision entry no longer checks them", e.toString());
+            }
+        }
+        if (visionStatus == null) {
+            return true;
+        }
+        try {
+            Object status = visionStatus.get(VampirismAPI.vampirePlayer(p));
+            return status != null && !((java.util.Collection<?>) unlockedVisions.get(status)).isEmpty();
+        } catch (ReflectiveOperationException | RuntimeException e) {
+            return true;
+        }
+    }
+
     public static boolean active(ServerPlayer p) {
         return VampirismAPI.vampirePlayer(p).getActiveVision() != null;
     }

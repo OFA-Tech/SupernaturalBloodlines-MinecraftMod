@@ -12,11 +12,17 @@ public final class WheelRules {
     public static java.util.List<PowerRef> loadoutPowers(java.util.List<PowerRef> all) {
         java.util.List<PowerRef> out = new java.util.ArrayList<>();
         for (PowerRef r : all) {
-            if (slotTarget(r.source(), true) == SlotTarget.LOADOUT) {
+            if (slotTarget(r, true) == SlotTarget.LOADOUT) {
                 out.add(r);
             }
         }
         return out;
+    }
+
+    /** Where a right click on {@code ref} puts it: the source's place, but nowhere for a power no Loadout slot takes (Vampirism's Vision). */
+    public static SlotTarget slotTarget(PowerRef ref, boolean slottable) {
+        SlotTarget t = slotTarget(ref.source(), slottable);
+        return t == SlotTarget.LOADOUT && !net.ofatech.supernaturalbloodlines.core.hud.LoadoutRules.slottable(ref.source(), ref.id()) ? SlotTarget.NONE : t;
     }
 
     public static SlotTarget slotTarget(PowerSource source, boolean slottable) {

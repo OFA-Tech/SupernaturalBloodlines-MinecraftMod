@@ -17,5 +17,8 @@ class LoadoutPowersTest {
                 r(PowerSource.WEREWOLVES, "werewolves:howl"), r(PowerSource.INFINITY, "infinity:soul"), r(PowerSource.GREAT_SAGE, "greatsage:scan"));
         assertEquals(List.of(all.get(0), all.get(2), all.get(3)), WheelRules.loadoutPowers(all), "ours, Vampirism's and Werewolves' go in our Loadout; Tensura has its own presets and stones and Great Sage have no slot");
         assertEquals(List.of(), WheelRules.loadoutPowers(List.of()));
+        // plan 23 (owner answer 3): Vampirism's Vision is the one Vampirism entry that no slot takes, so the page does not list it
+        assertEquals(List.of(), WheelRules.loadoutPowers(List.of(r(PowerSource.VAMPIRISM, "vampirism:vision"))));
+        assertEquals(WheelRules.SlotTarget.NONE, WheelRules.slotTarget(r(PowerSource.VAMPIRISM, "vampirism:vision"), false), "a right click on Vision tries a slot");
     }
 }
