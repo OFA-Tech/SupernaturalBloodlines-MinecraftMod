@@ -22,9 +22,9 @@ public final class LabelRow {
         return !thin || col == marked || col % 2 == 0 && Math.abs(col - marked) != 1;
     }
 
-    /** The left x of a label of {@code width} centred under its cell and kept inside {@code [left, left + cols * cell)}. */
-    public static int x(int left, int col, int cell, int cols, int width) {
+    /** The left x of a label of {@code width} centred under its cell and kept inside {@code [left, right)}. */
+    public static int x(int left, int right, int col, int cell, int width) {
         int centred = left + col * cell + (cell - width) / 2;
-        return Math.max(left, Math.min(centred, left + cols * cell - width));
+        return Math.max(left, Math.min(centred, right - width));
     }
 }

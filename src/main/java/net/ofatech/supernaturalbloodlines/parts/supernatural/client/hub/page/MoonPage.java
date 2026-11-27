@@ -50,7 +50,7 @@ public final class MoonPage implements HubPageView {
         t.drawRule(f.g, r.x(), y + 2, r.w());
         y += 8;
 
-        int cell = Math.max(12, r.w() / COLUMNS);
+        int cell = r.w() / COLUMNS; // never wider than the column: the last day stays inside it
         int icon = Math.max(8, Math.min(16, cell - 4));
         int rowH = icon + PageKit.LINE + 6;
         boolean[] thin = new boolean[2];
@@ -75,7 +75,7 @@ public final class MoonPage implements HubPageView {
             KitDraw.icon(f.g, Icons.moon(day.phase()), x, gy, icon, day.full() ? t.accent() : t.ink());
             if (LabelRow.shown(col, thin[row], MoonCalendar.daysToFull(phase) % COLUMNS)) {
                 Component label = dayLabel(day.offset());
-                f.g.drawString(f.font(), label, LabelRow.x(r.x(), col, cell, COLUMNS, f.font().width(label)), gy + icon + 2, day.full() ? t.accent() : t.muted(), false);
+                f.g.drawString(f.font(), label, LabelRow.x(r.x(), r.right(), col, cell, f.font().width(label)), gy + icon + 2, day.full() ? t.accent() : t.muted(), false);
             }
             f.target(id, box, dayTip(day, events), null);
             if (f.focused(id)) {
