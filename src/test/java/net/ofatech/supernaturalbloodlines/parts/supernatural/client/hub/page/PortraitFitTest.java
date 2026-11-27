@@ -6,6 +6,11 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.ArrayList;
 import java.util.List;
 import net.ofatech.supernaturalbloodlines.SourceTree;
+import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.theme.BloodMoonTheme;
+import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.theme.GrimoireTheme;
+import net.ofatech.supernaturalbloodlines.parts.supernaturaltensura.client.TensuraHubTheme;
+import net.ofatech.supernaturalbloodlines.shared.hub.Contrast;
+import net.ofatech.supernaturalbloodlines.shared.hub.HubTheme;
 import net.ofatech.supernaturalbloodlines.shared.hub.Rect;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.PackRing;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.PortraitGeometry;
@@ -52,9 +57,36 @@ class PortraitFitTest {
             assertTrue(!src.contains("Shapes.Shape.ROUND"), page + " draws a round shape itself");
             assertTrue(!src.contains("PlayerFaceRenderer"), page + " draws a face itself");
         }
+        assertTrue(!SourceTree.read(PAGES + "BookPackPage.java").contains("size + 4"), "BookPackPage works out a ring frame itself");
+        String ring = SourceTree.read("src/main/java/net/ofatech/supernaturalbloodlines/shared/hub/kit/PackRing.java");
+        assertTrue(!ring.contains("size() / 2 + 2") && ring.contains("PortraitGeometry.frame("), "PackRing works out a frame itself");
         String body = portraitBody();
         assertTrue(body.contains("PortraitGeometry.of(") && body.contains("Shapes.Shape.SOFT"), "BookKit.portrait does not draw the square frame:\n" + body);
         assertTrue(!body.contains("ROUND"), "BookKit.portrait still draws a round frame:\n" + body);
+    }
+
+    /** The face itself is drawn in the geometry's face box, not a box worked out again in the drawing code. */
+    @Test
+    void thePortraitDrawsTheFaceInTheGeometrysFaceBox() {
+        String body = portraitBody();
+        assertTrue(body.contains("face(g, name, b.face().x(), b.face().y(), b.face().w());"), "BookKit.portrait does not draw the face at b.face():\n" + body);
+        assertTrue(body.contains("b.frame().x(), b.frame().y(), b.frame().w(), border") && body.contains("b.paper().x(), b.paper().y(), b.paper().w(), paper"),
+                "BookKit.portrait does not draw the frame and paper at their boxes:\n" + body);
+    }
+
+    @Test
+    void theFrameColoursStandOutFromThePaperInEveryTheme() {
+        for (HubTheme theme : List.of(new GrimoireTheme(), new BloodMoonTheme(), new TensuraHubTheme())) {
+            for (int frame : new int[] {theme.accent(), theme.muted()}) {
+                double ratio = Contrast.ratio(frame, theme.paper());
+                assertTrue(ratio >= 3, theme.getClass().getSimpleName() + ": a portrait frame of " + Integer.toHexString(frame) + " is " + ratio + ":1 on the paper");
+            }
+        }
+    }
+
+    @Test
+    void ringNamesKeepFourPixelsOfAir() {
+        assertTrue(BookPackPage.RING_NAME_PAD >= 4, "ring names keep " + BookPackPage.RING_NAME_PAD + " px");
     }
 
     @Test
@@ -90,6 +122,8 @@ class PortraitFitTest {
                     shared.retainAll(pixels(Shapes.Shape.SOFT, frames.get(j)));
                     assertTrue(shared.isEmpty() && !frames.get(i).overlaps(frames.get(j)), "ring frames " + i + " and " + j + " overlap: " + frames.get(i) + " " + frames.get(j)
                             + " (" + layout.slots().size() + " faces of " + layout.size() + ")");
+                    Rect grown = new Rect(frames.get(i).x() - 1, frames.get(i).y() - 1, frames.get(i).w() + 2, frames.get(i).h() + 2);
+                    assertTrue(!grown.overlaps(frames.get(j)), "no pixel of air between ring frames " + frames.get(i) + " and " + frames.get(j));
                 }
             }
         }
@@ -108,6 +142,36 @@ class PortraitFitTest {
     }
 
     @Test
+    void clearOfFacesSeesTheWholeFrameAtOddSizes() {
+        for (int size = PackRing.MIN_SIZE + 1; size <= 47; size += 2) {
+            PackRing.Layout layout = PackRing.layout(List.of(new PackRing.Member("a", PackRing.Role.ALPHA)), 200, 150, 60, size);
+            PackRing.Slot s = layout.slots().get(0);
+            Rect frame = PortraitGeometry.frame(s.x(), s.y(), s.size());
+            assertTrue(!PackRing.clearOfFaces(layout, frame.right() - 1, frame.bottom() - 1, 1, 1, 0), "the last pixel of a " + s.size() + " frame counts as clear");
+            assertTrue(!PackRing.clearOfFaces(layout, frame.x(), frame.y(), 1, 1, 0), "the first pixel of a " + s.size() + " frame counts as clear");
+            assertTrue(PackRing.clearOfFaces(layout, frame.right(), frame.y(), 1, 1, 0), "the pixel right of a " + s.size() + " frame is taken");
+            assertTrue(PackRing.clearOfFaces(layout, frame.x(), frame.bottom(), 1, 1, 0), "the pixel under a " + s.size() + " frame is taken");
+            assertTrue(!PackRing.clearOfFaces(layout, frame.right(), frame.y(), 1, 1, 1), "the pad is not kept right of a " + s.size() + " frame");
+            assertEquals(frame.bottom() + 3, PackRing.moreLabelY(layout, 0), "the more line under a " + s.size() + " frame");
+        }
+    }
+
+    @Test
+    void theFrameTopStaysInItsRowAndWhatFollowsHasAGap() {
+        for (String page : List.of("HomePage.java", "ProfilePage.java")) {
+            String src = SourceTree.read(PAGES + page);
+            assertTrue(src.contains("PortraitGeometry.cyAt(y, face)") && src.contains("PortraitGeometry.below(y, face)"), page + " places its portrait vertically itself");
+        }
+        for (int top : new int[] {0, 9, 57}) {
+            for (int face : new int[] {27, 28, 40, 41, 48}) {
+                Rect frame = PortraitGeometry.frame(PortraitGeometry.cxAt(10, face), PortraitGeometry.cyAt(top, face), face);
+                assertEquals(top, frame.y(), "a " + face + " frame starts above its row at " + top);
+                assertEquals(2, PortraitGeometry.below(top, face) - frame.bottom(), "the gap under a " + face + " frame");
+            }
+        }
+    }
+
+    @Test
     void theFrameStaysInsideItsColumn() {
         for (String page : List.of("HomePage.java", "ProfilePage.java")) {
             String src = SourceTree.read(PAGES + page);
@@ -115,7 +179,7 @@ class PortraitFitTest {
         }
         // the column's left edge in GUI pixels at gui scales 2 and 4 of a 1920x1080 window, for the three themes' first columns
         for (int left : new int[] {12, 19, 24, 31, 38, 45, 60, 96}) {
-            for (int face : new int[] {28, 40, 48}) {
+            for (int face : new int[] {27, 28, 40, 41, 48}) {
                 Rect frame = PortraitGeometry.of(PortraitGeometry.cxAt(left, face), 40, face).frame();
                 assertEquals(left, frame.x(), "a " + face + " frame starts left of its column at " + left);
             }

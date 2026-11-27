@@ -108,7 +108,7 @@ public final class HomePage implements HubPageView {
         y = section(f, r, y, "you");
         String name = f.view.player().getGameProfile().getName();
         int face = 28;
-        BookKit.portrait(f.g, name, PortraitGeometry.cxAt(r.x(), face), y + 2 + face / 2, face, t.accent(), t.paper());
+        BookKit.portrait(f.g, name, PortraitGeometry.cxAt(r.x(), face), PortraitGeometry.cyAt(y, face), face, t.accent(), t.paper());
         int tx = PortraitGeometry.besideX(r.x(), face);
         int ty = PageKit.title(f, Component.literal(name), tx, y + 2, r.right() - tx, t.ink());
         WolfState wolf = f.view.bloodline().wolf();
@@ -131,7 +131,7 @@ public final class HomePage implements HubPageView {
             f.g.drawString(f.font(), chip, cx + 4, cy + 2, text, false);
             cx += w + 4;
         }
-        y = Math.max(y + 2 + face + 4, cy + 14);
+        y = Math.max(PortraitGeometry.below(y, face), cy + 14);
         y = PageKit.wrapped(f, Component.translatable(KEY + "sp", f.view.state().sp()), r.x(), y, r.w(), t.ink());
         if (f.view.ghoul()) {
             y = PageKit.wrapped(f, Component.translatable(KEY + "ghoul"), r.x(), y + 2, r.w(), t.muted());

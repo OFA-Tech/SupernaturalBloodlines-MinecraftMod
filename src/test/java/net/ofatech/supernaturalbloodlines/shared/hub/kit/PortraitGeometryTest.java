@@ -24,7 +24,7 @@ class PortraitGeometryTest {
     }
 
     @Test
-    void theFrameIsTheFacePlusFour() {
+    void ofGivesAFrameFourWiderThanTheFace() {
         for (int size = 6; size <= 64; size++) {
             PortraitGeometry.Boxes b = PortraitGeometry.of(100, 80, size);
             assertEquals(size, b.face().w(), "face " + size);
@@ -37,7 +37,7 @@ class PortraitGeometryTest {
     }
 
     @Test
-    void thePaperIsOnePixelUnderTheFrame() {
+    void ofGivesAPaperOnePixelInsideTheFrame() {
         for (int size = 6; size <= 64; size++) {
             PortraitGeometry.Boxes b = PortraitGeometry.of(37, 41, size);
             assertEquals(new Rect(b.frame().x() + 1, b.frame().y() + 1, size + 2, size + 2), b.paper(), "paper " + size);
@@ -45,7 +45,7 @@ class PortraitGeometryTest {
     }
 
     @Test
-    void theFaceIsCentred() {
+    void ofCentresTheFaceOnThePoint() {
         for (int size = 6; size <= 64; size++) {
             PortraitGeometry.Boxes b = PortraitGeometry.of(50, 60, size);
             assertEquals(50 - size / 2, b.face().x(), "face left " + size);
@@ -55,7 +55,7 @@ class PortraitGeometryTest {
     }
 
     @Test
-    void everyFaceCornerIsInsideTheFrame() {
+    void theSoftShapeHoldsEveryFaceCorner() {
         for (int size = 6; size <= 64; size++) {
             PortraitGeometry.Boxes b = PortraitGeometry.of(64, 64, size);
             assertTrue(cornersInside(Shapes.Shape.SOFT, b.frame(), b.face()), "a corner of a " + size + " face leaves its frame");
@@ -63,27 +63,6 @@ class PortraitGeometryTest {
         }
     }
 
-    private static boolean oldRoundHolds(int size) {
-        int cx = 64;
-        int cy = 64;
-        Rect oldFrame = new Rect(cx - size / 2 - 2, cy - size / 2 - 2, size + 4, size + 4);
-        int oldFace = Math.max(6, size - 2);
-        return cornersInside(Shapes.Shape.ROUND, oldFrame, new Rect(cx - size / 2 + 1, cy - size / 2 + 1, oldFace, oldFace));
-    }
-
-    /**
-     * The bug the owner saw, kept as a test of the old shape so nobody brings it back: the round frame with the old {@code size - 2} face loses its
-     * corners at Home's and Profile's sizes. The ring's faces (8 to 16) happened to fit the round frame; they get the square one for one look everywhere.
-     */
-    @Test
-    void theRoundFrameLosesTheCornersAtTheSizesInUse() {
-        for (int size : List.of(28, 40, 48)) {
-            assertTrue(!oldRoundHolds(size), "the old round frame held a " + size + " face");
-        }
-        for (int size = PackRing.MIN_SIZE; size <= 16; size++) {
-            assertTrue(oldRoundHolds(size), "the old round frame lost a ring face of " + size);
-        }
-    }
     @Test
     void softKeepsTheEdgeMidpoints() {
         for (int size = 1; size <= 64; size++) {
@@ -119,7 +98,7 @@ class PortraitGeometryTest {
     }
 
     @Test
-    void besideTheFaceIsFourPixelsClearOfTheFrame() {
+    void besideXIsFourPixelsClearOfTheFrame() {
         for (int size : new int[] {28, 40, 48}) {
             for (int left : new int[] {0, 7, 133}) {
                 Rect frame = PortraitGeometry.of(PortraitGeometry.cxAt(left, size), 50, size).frame();

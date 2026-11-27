@@ -16,6 +16,7 @@ import net.ofatech.supernaturalbloodlines.shared.hub.kit.Detail;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.LineColors;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.PackRing;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.PortraitGeometry;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.RingLabels;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.TextCache;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.client.KitDraw;
@@ -37,6 +38,8 @@ public final class BookPackPage implements HubPageView {
     private static final int NAMED_MAX = 12;
     /** A name round the ring is kept while at least this many pixels of it fit clear of the faces and the other names; below that it is left to the tooltip. */
     private static final int RING_NAME_MIN = 22;
+    /** Air between a ring name and anything else (a frame, another name). */
+    static final int RING_NAME_PAD = 4;
 
     @Nullable
     private String selected;
@@ -548,7 +551,7 @@ public final class BookPackPage implements HubPageView {
         List<RingLabels.Request> asked = new ArrayList<>();
         for (PackRing.Slot slot : ring.slots()) {
             int size = slot.size();
-            blocked.add(new Rect(slot.x() - size / 2 - 2, slot.y() - size / 2 - 2, size + 4, size + 4));
+            blocked.add(PortraitGeometry.frame(slot.x(), slot.y(), size));
             if (named) {
                 String n = TextCache.cut(f.font(), slot.member().id(), 56, f.font()::width);
                 int nw = BookKit.smallWidth(f, n);
@@ -560,7 +563,7 @@ public final class BookPackPage implements HubPageView {
             }
         }
         Rect nameBounds = new Rect(s.x(), top - 12, areaW, s.bottom() - top + 12);
-        List<Rect> where = new ArrayList<>(TextCache.ring(asked, blocked, nameBounds, RING_NAME_MIN, 2));
+        List<Rect> where = new ArrayList<>(TextCache.ring(asked, blocked, nameBounds, RING_NAME_MIN, RING_NAME_PAD));
         // a name with no room beside its face (a small ring, GUI scale 4) goes under it, then over it, rather than being left to the tooltip
         for (int i = 0; i < where.size(); i++) {
             if (where.get(i) != null) {
@@ -569,7 +572,7 @@ public final class BookPackPage implements HubPageView {
             PackRing.Slot slot = ring.slots().get(i);
             List<Rect> taken = new ArrayList<>(blocked);
             where.stream().filter(java.util.Objects::nonNull).forEach(taken::add);
-            where.set(i, RingLabels.underOrOver(asked.get(i), slot.x(), slot.y(), slot.size(), taken, nameBounds, RING_NAME_MIN, 2));
+            where.set(i, RingLabels.underOrOver(asked.get(i), slot.x(), slot.y(), slot.size(), taken, nameBounds, RING_NAME_MIN, RING_NAME_PAD));
         }
         int named_i = 0;
         for (PackRing.Slot slot : ring.slots()) {
@@ -583,7 +586,7 @@ public final class BookPackPage implements HubPageView {
                     BookKit.small(f, Component.literal(n), at.x(), at.y(), at.w() + 4, slot.member().role().small() ? t.muted() : t.ink());
                 }
             }
-            f.target("ring:" + slot.member().id(), new Rect(slot.x() - size / 2 - 2, slot.y() - size / 2 - 2, size + 4, size + 4),
+            f.target("ring:" + slot.member().id(), PortraitGeometry.frame(slot.x(), slot.y(), size),
                     List.of(Component.literal(slot.member().id()), Component.translatable(KEY + "open_profile")), openProfile(f, slot.member().id()));
         }
         if (ring.hidden() > 0) {

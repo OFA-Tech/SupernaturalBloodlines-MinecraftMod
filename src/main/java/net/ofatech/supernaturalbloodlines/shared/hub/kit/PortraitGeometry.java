@@ -4,6 +4,9 @@ import net.ofatech.supernaturalbloodlines.shared.hub.Rect;
 
 /** Where a player's face, its paper and its square frame go: the frame is 2 px outside the face on each side (1 px border, 1 px paper). Pure. */
 public final class PortraitGeometry {
+    /** How much wider and taller the frame is than the face. */
+    public static final int FRAME_EXTRA = 4;
+
     public record Boxes(Rect frame, Rect paper, Rect face) {
     }
 
@@ -14,16 +17,32 @@ public final class PortraitGeometry {
     public static Boxes of(int cx, int cy, int size) {
         int x = cx - size / 2;
         int y = cy - size / 2;
-        return new Boxes(new Rect(x - 2, y - 2, size + 4, size + 4), new Rect(x - 1, y - 1, size + 2, size + 2), new Rect(x, y, size, size));
+        int rim = FRAME_EXTRA / 2;
+        return new Boxes(new Rect(x - rim, y - rim, size + FRAME_EXTRA, size + FRAME_EXTRA), new Rect(x - 1, y - 1, size + 2, size + 2), new Rect(x, y, size, size));
+    }
+
+    /** The frame alone, the space a portrait takes. */
+    public static Rect frame(int cx, int cy, int size) {
+        return of(cx, cy, size).frame();
     }
 
     /** The centre x that puts the frame's left edge on {@code left}. */
     public static int cxAt(int left, int size) {
-        return left + size / 2 + 2;
+        return left + size / 2 + FRAME_EXTRA / 2;
+    }
+
+    /** The centre y that puts the frame's top edge on {@code top}. */
+    public static int cyAt(int top, int size) {
+        return top + size / 2 + FRAME_EXTRA / 2;
     }
 
     /** Where text beside a portrait whose frame starts at {@code left} begins: 4 px clear of the frame. */
     public static int besideX(int left, int size) {
-        return left + size + 8;
+        return left + size + FRAME_EXTRA + 4;
+    }
+
+    /** Where what comes under a portrait whose frame starts at {@code top} begins: 2 px clear of the frame. */
+    public static int below(int top, int size) {
+        return top + size + FRAME_EXTRA + 2;
     }
 }
