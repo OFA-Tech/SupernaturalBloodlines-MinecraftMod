@@ -70,9 +70,18 @@ public final class RecordingPlayer extends FakePlayer {
         return (int) chatKeys.stream().filter(key::equals).count();
     }
 
-    /** A rite refusal as R357 wants it: once on the action bar and once in chat. */
+    /** A rite refusal as R357 wants it: once on the action bar and once in chat (a night refusal's chat line is its whole text, {@code .detail}). */
     public boolean refusedOnBothChannels(String key) {
-        return countOnActionBar(key) == 1 && countInChat(key) == 1;
+        return countOnActionBar(key) == 1 && countInChat(chatKeyOf(key)) == 1;
+    }
+
+    /** The key a refusal's chat copy carries. */
+    public static String chatKeyOf(String key) {
+        String detail = net.ofatech.supernaturalbloodlines.shared.rite.RiteTell.FULL_MOON_DETAIL.get(key);
+        if (detail == null) {
+            detail = net.ofatech.supernaturalbloodlines.shared.rite.RiteTell.ECLIPSE_DETAIL.get(key);
+        }
+        return detail == null ? key : detail;
     }
 
     private boolean lastWasBar;
@@ -83,7 +92,7 @@ public final class RecordingPlayer extends FakePlayer {
      */
     private void record(Component message, boolean actionBar) {
         if (message.getContents() instanceof TranslatableContents t) {
-            boolean copyOfBar = !actionBar && lastWasBar && !keys.isEmpty() && keys.get(keys.size() - 1).equals(t.getKey());
+            boolean copyOfBar = !actionBar && lastWasBar && !keys.isEmpty() && chatKeyOf(keys.get(keys.size() - 1)).equals(t.getKey());
             if (!copyOfBar) {
                 keys.add(t.getKey());
             }

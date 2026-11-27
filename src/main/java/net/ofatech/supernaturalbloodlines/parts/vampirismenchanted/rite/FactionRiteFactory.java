@@ -201,20 +201,16 @@ public record FactionRiteFactory(BloodlineEvent event, Faction faction, boolean 
             if (consents) {
                 RiteTargets.Told asked = RiteTargets.consentAnswer(caster == target, target.isShiftKeyDown(), RiteTargets.SNEAK_TO_BE_MADE_AUGUSTINE);
                 if (asked != null) {
-                    RiteTell.refuse(caster, asked.caster());
-                    RiteTell.refuse(target, asked.target());
+                    RiteTargets.tell(caster, target, asked);
                     return cancel();
                 }
             }
             IFactionPlayerHandler h = VampirismAPI.factionPlayerHandler(target);
             BaseFaction current = baseFaction(h);
             BloodlineState before = BloodlineAccess.get(target);
+            // every refusal from here on is about the one on the centre: a caster who is someone else hears the one generic line (R201, R362)
             if (!factory.faction.accepts(current) && !rulesDecide(before.species())) {
-                if (consents) {
-                    RiteTargets.refuseAbout(caster, target, WRONG_FACTION);
-                } else {
-                    RiteTell.refuse(caster, WRONG_FACTION);
-                }
+                RiteTargets.refuseAbout(caster, target, WRONG_FACTION);
                 return cancel();
             }
 
@@ -222,12 +218,7 @@ public record FactionRiteFactory(BloodlineEvent event, Faction faction, boolean 
             BloodlineContext ctx = FactionRiteHooks.context(target, current, level.getGameTime());
             Outcome preview = BloodlineRules.apply(before, factory.event, ctx);
             if (preview.refused()) {
-                if (factory.event == BloodlineEvent.RITE_OF_THE_MOON || consents) {
-                    // the Moon rite's refusals (no gene, not an Original) are two answers to "do they carry the gene?": the target is told, the caster is not
-                    RiteTargets.refuseAbout(caster, target, preview.refusalKey());
-                } else {
-                    RiteTell.refuse(caster, preview.refusalKey());
-                }
+                RiteTargets.refuseAbout(caster, target, preview.refusalKey());
                 return cancel();
             }
             if (preview.actions().isEmpty() && preview.state().equals(before)) {
@@ -238,7 +229,7 @@ public record FactionRiteFactory(BloodlineEvent event, Faction faction, boolean 
             for (Outcome.Action a : preview.actions()) {
                 IPlayableFaction<?> to = joinTarget(a);
                 if (to != null && !joinAllowed(h, to, leaves)) {
-                    RiteTell.refuse(caster, JOIN_DENIED);
+                    RiteTargets.refuseAbout(caster, target, JOIN_DENIED);
                     return cancel();
                 }
             }

@@ -86,7 +86,7 @@ public record HarvestRiteFactory(int minCircle) implements RiteFactory {
             for (ServerPlayer p : payers.values()) {
                 if (p.experienceLevel < shares[i++]) {
                     if (caster != null) {
-                        RiteTell.refuse(caster, LEVELS);
+                        RiteTell.refuse(caster, LEVELS, GroupsConfig.harvestXpLevels(), java.util.Arrays.stream(shares).max().orElse(0));
                     }
                     return cancel();
                 }

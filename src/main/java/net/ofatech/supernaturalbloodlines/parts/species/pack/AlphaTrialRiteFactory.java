@@ -88,7 +88,7 @@ public record AlphaTrialRiteFactory(String faction, boolean requiresFullMoon) im
         var wolf = PackAccess.wolf(p);
         TrialRules.Refusal refusal = TrialRules.gate(SpeciesConfig.trial().enabled(), wolf, VampirismSupernatural.isWerewolf(p),
                 VampirismAPI.factionPlayerHandler(p).getCurrentLevel(), SpeciesConfig.trial().minLevel(),
-                MoonRule.nightFor(needsFullMoon, level.dimensionType().hasFixedTime(), level.getMoonPhase(), level.getDayTime(), LunarEclipse.active(level.getServer())), true, false, false, false);
+                MoonRule.nightFor(needsFullMoon, level.dimensionType().hasFixedTime(), level.getMoonPhase(), level.getDayTime(), net.ofatech.supernaturalbloodlines.shared.moon.EclipseFeed.active(level.getServer())), true, false, false, false);
         return TrialRules.notice(() -> AlphaTrialBoss.running(level, p.getUUID()), refusal);
     }
 
@@ -108,7 +108,7 @@ public record AlphaTrialRiteFactory(String faction, boolean requiresFullMoon) im
         var wolf = PackAccess.wolf(p);
         TrialRules.Refusal refusal = TrialRules.gate(SpeciesConfig.trial().enabled(), wolf, VampirismSupernatural.isWerewolf(p),
                 VampirismAPI.factionPlayerHandler(p).getCurrentLevel(), SpeciesConfig.trial().minLevel(),
-                MoonRule.nightFor(needsFullMoon, level.dimensionType().hasFixedTime(), level.getMoonPhase(), level.getDayTime(), LunarEclipse.active(level.getServer())), transformed,
+                MoonRule.nightFor(needsFullMoon, level.dimensionType().hasFixedTime(), level.getMoonPhase(), level.getDayTime(), net.ofatech.supernaturalbloodlines.shared.moon.EclipseFeed.active(level.getServer())), transformed,
                 AlphaTrialBoss.running(level, p.getUUID()), TrueAlphaWarning.applies(wolf.rank(), PackRules.pathOpen(wolf)), LEDGER.valid(p.getUUID(), now));
         switch (refusal) {
             case NONE -> {

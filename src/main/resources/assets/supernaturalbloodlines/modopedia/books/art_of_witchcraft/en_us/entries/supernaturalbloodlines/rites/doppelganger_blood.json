@@ -29,7 +29,7 @@
       "components": [
         {
           "template": "modopedia:page/headered_text",
-          "text": "Needs the Werewolves mod.",
+          "text": "This rite needs the Werewolves mod.",
           "header": "Doppelgänger"
         }
       ]

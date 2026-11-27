@@ -29,7 +29,16 @@
       "components": [
         {
           "template": "modopedia:page/headered_text",
-          "text": "You and your pack can have only so many brothers (a server setting). A refusal tells you why and gives the ingredients back.\n\nMoonstone: craft it from an amethyst shard and a silver ingot, in any order.\n\nNeeds the Werewolves mod.",
+          "text": "You and your pack can have only so many brothers (a server setting). A refusal tells you why and gives the ingredients back.\n\nMoonstone: craft it from an amethyst shard and a silver ingot (from Werewolves), in any order.",
+          "header": "Werewolf Brother"
+        }
+      ]
+    },
+    {
+      "components": [
+        {
+          "template": "modopedia:page/headered_text",
+          "text": "This rite needs the Werewolves mod.",
           "header": "Werewolf Brother"
         }
       ]

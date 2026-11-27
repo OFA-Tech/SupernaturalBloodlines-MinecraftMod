@@ -29,7 +29,7 @@
       "components": [
         {
           "template": "modopedia:page/headered_text",
-          "text": "Full forms need the Werewolves level the server sets; below it the ring gives half forms.\n\nNeeds the Werewolves mod.",
+          "text": "Full forms need the Werewolves level the server sets; below it the ring gives half forms.\n\nThis rite needs the Werewolves mod.",
           "header": "Ward of the Moon"
         }
       ]

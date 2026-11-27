@@ -75,7 +75,7 @@ public record WardRiteFactory(WardRules.Kind mode) implements RiteFactory {
             if (onCentre.isPresent() && onCentre.get() != caster) {
                 if (!onCentre.get().isShiftKeyDown()) {
                     RiteTell.refuse(caster, CANCELLED);
-                    RiteTell.refuse(onCentre.get(), SNEAK_TO_OWN);
+                    RiteTell.say(onCentre.get(), SNEAK_TO_OWN); // a request, not a refusal
                     return cancel();
                 }
                 owner = onCentre.get();

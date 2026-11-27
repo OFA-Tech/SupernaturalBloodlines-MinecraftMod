@@ -29,7 +29,7 @@
       "components": [
         {
           "template": "modopedia:page/headered_text",
-          "text": "Needs a full moon: the moon must be full (phase 0) between dusk and dawn, in the Overworld. An eclipse counts too. The hub's moon calendar shows when the next one rises.\n\nNeeds the Werewolves mod.",
+          "text": "Needs a full moon: the moon must be full, between dusk and dawn, in the Overworld. An eclipse counts too. The hub's moon calendar shows when the next one rises.\n\nThis rite needs the Werewolves mod.",
           "header": "The Silver Moon"
         }
       ]

@@ -15,6 +15,7 @@ import net.ofatech.supernaturalbloodlines.shared.hub.HubLayout;
 import net.ofatech.supernaturalbloodlines.shared.hub.HubTheme;
 import net.ofatech.supernaturalbloodlines.shared.hub.Rect;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.Icons;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelRow;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.client.KitDraw;
 import net.ofatech.supernaturalbloodlines.shared.supernatural.WorldNowHook;
 
@@ -52,6 +53,14 @@ public final class MoonPage implements HubPageView {
         int cell = Math.max(12, r.w() / COLUMNS);
         int icon = Math.max(8, Math.min(16, cell - 4));
         int rowH = icon + PageKit.LINE + 6;
+        boolean[] thin = new boolean[2];
+        for (int row = 0; row < 2; row++) {
+            int widest = 0;
+            for (int col = 0; col < COLUMNS; col++) {
+                widest = Math.max(widest, f.font().width(dayLabel(row * COLUMNS + col)));
+            }
+            thin[row] = LabelRow.thin(widest, cell);
+        }
         for (MoonCalendar.Day day : MoonCalendar.days(phase, MoonCalendar.DAYS)) {
             int col = day.offset() % COLUMNS;
             int row = day.offset() / COLUMNS;
@@ -64,8 +73,10 @@ public final class MoonPage implements HubPageView {
                 KitDraw.tickRing(f.g, x + icon / 2, gy + icon / 2, icon / 2 + 2, 16, 1f, color, color);
             });
             KitDraw.icon(f.g, Icons.moon(day.phase()), x, gy, icon, day.full() ? t.accent() : t.ink());
-            Component label = day.offset() == 0 ? Component.translatable(KEY + "now") : Component.literal("+" + day.offset());
-            f.g.drawString(f.font(), label, box.x() + (cell - f.font().width(label)) / 2, gy + icon + 2, day.full() ? t.accent() : t.muted(), false);
+            if (LabelRow.shown(col, thin[row])) {
+                Component label = dayLabel(day.offset());
+                f.g.drawString(f.font(), label, LabelRow.x(r.x(), col, cell, COLUMNS, f.font().width(label)), gy + icon + 2, day.full() ? t.accent() : t.muted(), false);
+            }
             f.target(id, box, dayTip(day, events), null);
             if (f.focused(id)) {
                 t.drawFocus(f.g, box);
@@ -80,6 +91,10 @@ public final class MoonPage implements HubPageView {
         int sy = f.begin(HubLayout.SIDE);
         sy = side(f, s, sy, level, phase, events);
         f.end(sy);
+    }
+
+    private static Component dayLabel(int offset) {
+        return offset == 0 ? Component.translatable(KEY + "now") : Component.literal("+" + offset);
     }
 
     private static List<Component> dayTip(MoonCalendar.Day day, net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.LunarMoodClient.View events) {

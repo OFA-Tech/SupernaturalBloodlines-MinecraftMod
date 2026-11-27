@@ -227,6 +227,7 @@ public final class AugustineMakingGameTests {
             helper.assertTrue(BloodlineAccess.get(target).species() == Species.NONE, "an unwilling vampire was made an Augustine");
             helper.assertTrue(caster.heard().equals(FactionRiteFactory.NO_EFFECT), "the caster heard " + caster.heard() + " of an unwilling target");
             helper.assertTrue(target.receivedOnActionBar(RiteTargets.SNEAK_TO_BE_MADE_AUGUSTINE), "the target was not asked to sneak");
+            helper.assertTrue(target.countInChat(RiteTargets.SNEAK_TO_BE_MADE_AUGUSTINE) == 0, "a request to sneak went to chat (it is a prompt: action bar only)");
             helper.assertTrue(dropped(helper, "vampirism:garlic") == 4, "the unwilling target's ingredients were not given back");
         } finally {
             clearDropped(helper);

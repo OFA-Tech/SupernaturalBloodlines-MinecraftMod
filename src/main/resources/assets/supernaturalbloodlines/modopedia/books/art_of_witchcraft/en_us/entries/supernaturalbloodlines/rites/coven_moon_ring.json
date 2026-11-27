@@ -20,7 +20,7 @@
       "components": [
         {
           "template": "modopedia:page/headered_text",
-          "text": "The ring is theirs alone. A werewolf with no pack, or no werewolf, gets nothing.\n\nNeeds the Werewolves mod.",
+          "text": "The ring is theirs alone. A werewolf with no pack, or no werewolf, gets nothing.\n\nThis rite needs the Werewolves mod.",
           "header": "Coven Moon Ring"
         }
       ]

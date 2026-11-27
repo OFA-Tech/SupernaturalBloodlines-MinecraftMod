@@ -77,7 +77,7 @@ public record BindItemRiteFactory(Item input, Item output, Faction faction) impl
 
             Optional<ItemStack> source = params.consumedItems.stream().filter(s -> s.is(factory.input)).findFirst();
             if (source.isEmpty()) {
-                RiteTell.refuse(caster, NO_ITEM);
+                RiteTell.refuse(caster, NO_ITEM, factory.input.getDescription());
                 return cancel();
             }
             if (source.get().get(ArtifactItems.BOUND_TO.get()) != null) {
@@ -85,7 +85,7 @@ public record BindItemRiteFactory(Item input, Item output, Faction faction) impl
                 return cancel();
             }
             if (!factory.faction.accepts(FactionRiteFactory.baseFaction(VampirismAPI.factionPlayerHandler(target)))) {
-                RiteTell.refuse(caster, FactionRiteFactory.WRONG_FACTION);
+                RiteTargets.refuseAbout(caster, target, FactionRiteFactory.WRONG_FACTION); // the faction of the one on the centre is theirs to hear
                 return cancel();
             }
             ItemStack bound = new ItemStack(factory.output);

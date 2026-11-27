@@ -63,6 +63,21 @@ class MoonRuleTest {
         assertFalse(MoonRule.nightFor(true, false, 3, MoonRule.NIGHT_END, true), "dawn");
     }
 
+    /** One eclipse rule for every rite (evolution, mastery, the line rites, the Frequency): only at night, only where there is a night. */
+    @Test
+    void anEclipseCountsOnlyAtNightAndOnlyWhereThereIsANight() {
+        assertTrue(MoonRule.eclipseNight(false, 18000, true));
+        assertFalse(MoonRule.eclipseNight(false, 6000, true), "an eclipse at noon");
+        assertFalse(MoonRule.eclipseNight(true, 18000, true), "an eclipse in the Nether");
+        assertFalse(MoonRule.eclipseNight(false, 18000, false), "no eclipse");
+        for (String file : java.util.List.of("parts/evolutionrites/rite/EvolutionRiteFactory.java", "parts/evolutionrites/rite/MasteryRiteFactory.java",
+                "parts/species/rite/BrokenLineRiteFactory.java", "parts/species/rite/ImprisonedOriginalRiteFactory.java", "parts/bosses/rite/FrequencyRiteFactory.java")) {
+            String src = net.ofatech.supernaturalbloodlines.SourceTree.read("src/main/java/net/ofatech/supernaturalbloodlines/" + file);
+            assertTrue(src.contains("MoonRule.eclipseNight("), file + " does not read the one eclipse rule");
+            assertFalse(src.contains("LunarEclipse.active("), file + " reads the eclipse without the night");
+        }
+    }
+
     @Test
     void aFixedTimeDimensionIsNeverAFullMoon() {
         assertFalse(MoonRule.nightFor(true, true, 0, 18000, true), "the Nether with an eclipse running in the Overworld");

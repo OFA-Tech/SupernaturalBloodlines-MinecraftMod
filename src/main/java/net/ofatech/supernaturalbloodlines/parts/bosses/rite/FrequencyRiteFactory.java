@@ -57,7 +57,7 @@ public record FrequencyRiteFactory() implements RiteFactory {
             FrequencyRules.Result result = FrequencyRules.act(entry.phase, entry.hostsMade, BossDirector.modsPresent(BossId.BEAST_OF_GEVAUDAN),
                     BossesConfig.enabled(BossId.BEAST_OF_GEVAUDAN), net.ofatech.supernaturalbloodlines.parts.artifacts.werewolves.WolfsbaneStrains.isWerewolfType(caster),
                     level.dimension() == net.minecraft.world.level.Level.OVERWORLD, BossDirector.fullMoonNightNow(level.getServer().overworld())
-                    || net.ofatech.supernaturalbloodlines.core.moon.MoonRule.nightFor(true, false, 3, level.getServer().overworld().getDayTime(),
+                    || net.ofatech.supernaturalbloodlines.core.moon.MoonRule.eclipseNight(false, level.getServer().overworld().getDayTime(),
                             net.ofatech.supernaturalbloodlines.shared.moon.EclipseFeed.active(level.getServer())));
             boolean done = switch (result) {
                 case MAKE_HOST -> BeastDirector.spawnHost(level, caster, null).isPresent();

@@ -110,7 +110,7 @@ public record MasteryRiteFactory(Tier tier) implements RiteFactory {
             boolean fullMoon = MoonRule.isFullMoonNight(level.dimensionType().hasFixedTime(), level.getMoonPhase(), level.getDayTime());
             MasteryRules.Facts facts = new MasteryRules.Facts(EvolutionRitesConfig.masteryEnabled() && EvolutionRitesConfig.ritesEnabled()
                     && (riteTier != Tier.ULTIMATE || EvolutionRitesConfig.ultimateRitesEnabled()),
-                    SeveranceRiteFactory.isWitchType(BloodlineAccess.get(caster).species()), fullMoon, LunarEclipse.active(level.getServer()), caster == target,
+                    SeveranceRiteFactory.isWitchType(BloodlineAccess.get(caster).species()), fullMoon, MoonRule.eclipseNight(level.dimensionType().hasFixedTime(), level.getDayTime(), net.ofatech.supernaturalbloodlines.shared.moon.EclipseFeed.active(level.getServer())), caster == target,
                     target.isShiftKeyDown(), choice.isPresent(), inst.isPresent(), inst.map(ManasSkillInstance::isTemporarySkill).orElse(false),
                     inst.map(i -> MasteryApply.done(target, i)).orElse(false), skillTier, riteTier,
                     choice.map(id -> EvolutionRitesConfig.masteryRefusedSkills().contains(id.toString())).orElse(false),
@@ -217,8 +217,7 @@ public record MasteryRiteFactory(Tier tier) implements RiteFactory {
                 sayAbout(caster, target, Component.translatable(key));
             } else if (reason == MasteryRules.Reason.NO_CONSENT) {
                 RiteTargets.Told told = RiteTargets.consentAnswer(false, false, key);
-                RiteTell.refuse(caster, told.caster());
-                RiteTell.refuse(target, told.target());
+                RiteTargets.tell(caster, target, told);
             } else {
                 RiteTell.refuse(caster, key);
             }

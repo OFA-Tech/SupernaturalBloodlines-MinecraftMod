@@ -446,6 +446,29 @@ public final class MasteryGameTests {
         helper.succeed();
     }
 
+    /** R358, one eclipse rule: an eclipse running at noon opens neither the Unique (full moon) nor the Ultimate (eclipse) mastery rite. */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void anEclipseAtNoonOpensNoMasteryRite(GameTestHelper helper) {
+        if (noRite(helper)) {
+            return;
+        }
+        RecordingPlayer caster = performer(helper, Species.WITCH);
+        RecordingPlayer target = onTheCircle(helper, true, EP);
+        try {
+            ManasSkillInstance inst = give(target, "tensura:anti_skill", 0);
+            MasteryChoice.choose(target, ResourceLocation.parse("tensura:anti_skill"));
+            EvoTestSupport.atEclipseAtNoon(helper, () -> start(helper, rite(Tier.UNIQUE), caster, items(Tier.UNIQUE)));
+            helper.assertTrue(!inst.isMastered(target) && caster.received("supernaturalbloodlines.rite.needs_full_moon"), "Unique at noon: " + caster.heard());
+            clearDropped(helper);
+            noCircle();
+            EvoTestSupport.atEclipseAtNoon(helper, () -> start(helper, rite(Tier.ULTIMATE), caster, items(Tier.ULTIMATE)));
+            helper.assertTrue(caster.received("supernaturalbloodlines.rite.needs_eclipse"), "Ultimate at noon: " + caster.heard());
+        } finally {
+            clean(helper, caster, target);
+        }
+        helper.succeed();
+    }
+
     @GameTest(template = "empty", templateNamespace = NS)
     public static void thePerformerNeverLearnsTheChosenSkill(GameTestHelper helper) {
         if (noRite(helper)) {

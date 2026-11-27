@@ -70,6 +70,24 @@ final class EvoTestSupport {
         });
     }
 
+    /** A lunar eclipse running at noon of a full-moon day, where it does not count (R358: only between dusk and dawn). */
+    static void atEclipseAtNoon(GameTestHelper helper, Runnable body) {
+        ServerLevel level = helper.getLevel();
+        var server = level.getServer();
+        long before = level.getDayTime();
+        long base = before - Math.floorMod(before, CYCLE);
+        level.setDayTime(base + NIGHT);
+        helper.assertTrue(LunarEclipse.start(server) || LunarEclipse.active(server), "could not start the eclipse");
+        level.setDayTime(base + 6000);
+        try {
+            helper.assertTrue(LunarEclipse.active(server), "the eclipse ended when the clock moved to noon");
+            body.run();
+        } finally {
+            LunarEclipse.stop(server);
+            level.setDayTime(before);
+        }
+    }
+
     /** In the level, away from the circle, as a witch-type performer. */
     static RecordingPlayer performer(GameTestHelper helper, Species species) {
         RecordingPlayer p = RecordingPlayer.create(helper);

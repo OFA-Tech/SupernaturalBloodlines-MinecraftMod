@@ -196,7 +196,7 @@ public record EvolutionRiteFactory(EvolutionRecipe recipe) implements RiteFactor
             boolean retired = grant.isPresent() && EvoSkills.retired(level.getServer(), grant.get());
             boolean enabled = EvolutionRitesConfig.recipeOpen(recipe.id(), recipe.tier()) && probe.map(p -> p.enabledIn(level)).orElse(true);
             return new EvolutionRules.Facts(enabled, Recipes.modLoaded(recipe.requiresMod()), hooks, roadOpen,
-                    SeveranceRiteFactory.isWitchType(BloodlineAccess.get(caster).species()), fullMoon, LunarEclipse.active(level.getServer()), caster == target,
+                    SeveranceRiteFactory.isWitchType(BloodlineAccess.get(caster).species()), fullMoon, MoonRule.eclipseNight(level.dimensionType().hasFixedTime(), level.getDayTime(), net.ofatech.supernaturalbloodlines.shared.moon.EclipseFeed.active(level.getServer())), caster == target,
                     target.isShiftKeyDown(), holds, kindOk, needs, satisfied, owned, enoughEp, retired);
         }
 
@@ -206,8 +206,7 @@ public record EvolutionRiteFactory(EvolutionRecipe recipe) implements RiteFactor
                 RiteTargets.refuseAbout(caster, target, key);
             } else if (reason == EvolutionRules.Reason.NO_CONSENT) {
                 RiteTargets.Told told = RiteTargets.consentAnswer(false, false, key);
-                RiteTell.refuse(caster, told.caster());
-                RiteTell.refuse(target, told.target());
+                RiteTargets.tell(caster, target, told);
             } else {
                 RiteTell.refuse(caster, key);
             }

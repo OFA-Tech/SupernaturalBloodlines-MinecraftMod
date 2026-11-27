@@ -21,19 +21,19 @@ import org.junit.jupiter.api.Test;
  * the book, and its refusal), and what it says is what the code does ({@link MoonRule}).
  */
 class MoonTextTest {
-    static final String MOON_LINE = "Needs a full moon: the moon must be full (phase 0) between dusk and dawn, in the Overworld. An eclipse counts too. "
+    static final String MOON_LINE = "Needs a full moon: the moon must be full, between dusk and dawn, in the Overworld. An eclipse counts too. "
             + "The hub's moon calendar shows when the next one rises.";
     static final String ECLIPSE_LINE = "An eclipse happens on some full-moon nights (the server's chance). It lasts until dawn, and an eclipse also counts "
             + "as a full moon for every rite that needs one.";
-    static final String WEREWOLVES_LINE = "Needs the Werewolves mod.";
+    static final String WEREWOLVES_LINE = "This rite needs the Werewolves mod.";
     private static final String DESC = "supernaturalbloodlines.hub.rites.desc.";
     private static final Path RITES = SourceTree.root().resolve("src/main/resources/data/supernaturalbloodlines/enchanted/circle_magic/rite");
     private static final Path MOONSTONE = SourceTree.root().resolve("src/main/resources/data/supernaturalbloodlines/recipe/moonstone.json");
     /** The rites whose code reads the lunar eclipse. */
     private static final Set<String> ECLIPSE_RITES = Set.of("rite_of_the_broken_line", "rite_of_the_imprisoned_original", "mastery_ultimate", "evolve_blood_sovereign", "evolve_raphael");
-    /** The refusals that tell a player the night is wrong for a rite that needs a full moon. */
-    private static final List<String> MOON_REFUSALS = List.of("supernaturalbloodlines.rite.needs_full_moon", "supernaturalbloodlines.trial.not_night",
-            "supernaturalbloodlines.rite.frequency.not_night");
+    /** The refusals that tell a player the night is wrong: a short line on the action bar, the whole of it in chat ({@code .detail}). */
+    private static final List<String> MOON_REFUSALS = List.copyOf(net.ofatech.supernaturalbloodlines.shared.rite.RiteTell.FULL_MOON);
+    private static final List<String> ECLIPSE_REFUSALS = List.copyOf(net.ofatech.supernaturalbloodlines.shared.rite.RiteTell.ECLIPSE);
 
     private static JsonObject lang() throws IOException {
         return JsonParser.parseString(SourceTree.read("src/main/resources/assets/supernaturalbloodlines/lang/en_us.json")).getAsJsonObject();
@@ -96,7 +96,8 @@ class MoonTextTest {
         for (JsonElement e : recipe.getAsJsonArray("ingredients")) {
             String id = e.getAsJsonObject().get("item").getAsString();
             String name = id.substring(id.indexOf(':') + 1).replace('_', ' ');
-            parts.add(("aeiou".indexOf(name.charAt(0)) >= 0 ? "an " : "a ") + name);
+            String from = id.startsWith("minecraft:") ? "" : " (from " + Character.toUpperCase(id.charAt(0)) + id.substring(1, id.indexOf(':')) + ")";
+            parts.add(("aeiou".indexOf(name.charAt(0)) >= 0 ? "an " : "a ") + name + from);
         }
         return "Moonstone: craft it from " + String.join(" and ", parts) + ", in any order.";
     }
@@ -108,10 +109,19 @@ class MoonTextTest {
         assertTrue(MoonRule.isFullMoon(false, 0) && !MoonRule.isFullMoon(true, 0), "the texts say phase 0 and the Overworld");
         JsonObject lang = lang();
         for (String key : MOON_REFUSALS) {
-            String text = lang.get(key).getAsString();
-            for (String must : List.of("full moon", "phase 0", "dusk", "dawn", "Overworld", "eclipse")) {
-                assertTrue(text.contains(must), key + " does not say " + must + ": " + text);
+            String text = lang.get(key + ".detail").getAsString();
+            for (String must : List.of("full moon", "dusk", "dawn", "Overworld", "eclipse", "moon calendar")) {
+                assertTrue(text.contains(must), key + ".detail does not say " + must + ": " + text);
             }
+            assertTrue(lang.get(key).getAsString().endsWith("(see chat)."), key + ": the action bar line is the short one");
+        }
+        for (String key : ECLIPSE_REFUSALS) {
+            assertTrue(lang.get(key + ".detail").getAsString().endsWith(ECLIPSE_LINE), key + ".detail does not say how an eclipse happens");
+            assertTrue(lang.get(key).getAsString().endsWith("(see chat)."), key + ": the action bar line is the short one");
+        }
+        assertTrue(lang.get("supernaturalbloodlines.rite.full_moon_in").getAsString().contains("%s"), "the days to the next full moon");
+        for (String k : lang.keySet()) {
+            assertTrue(!lang.get(k).getAsString().contains("phase 0"), k + " says phase 0: say \"when the moon is full\"");
         }
     }
 
@@ -173,6 +183,6 @@ class MoonTextTest {
 
     @Test
     void theMoonstoneLineIsReadFromTheRecipe() throws IOException {
-        assertEquals("Moonstone: craft it from an amethyst shard and a silver ingot, in any order.", moonstoneLine());
+        assertEquals("Moonstone: craft it from an amethyst shard and a silver ingot (from Werewolves), in any order.", moonstoneLine());
     }
 }

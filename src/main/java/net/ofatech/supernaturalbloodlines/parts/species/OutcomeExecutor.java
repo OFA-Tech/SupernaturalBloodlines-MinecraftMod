@@ -56,7 +56,7 @@ public final class OutcomeExecutor {
     public static void run(ServerPlayer p, Outcome o) {
         boolean ran = ReentrancyGuard.run(p.getUUID(), "species", () -> {
             if (o.refused()) {
-                p.sendSystemMessage(Component.translatable(o.refusalKey()));
+                net.ofatech.supernaturalbloodlines.shared.rite.RiteTell.refuse(p, o.refusalKey());
                 return;
             }
             // leave, then join, in that order (the rite factory's own runner); the kill comes last

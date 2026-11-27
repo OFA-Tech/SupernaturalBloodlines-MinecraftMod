@@ -127,8 +127,7 @@ public record LineageRiteFactory(Mode mode) implements RiteFactory {
             // it changes the target, so it asks them first, and the caster is never told why it did not work (an Augustine, a hybrid and a human all answer the same)
             RiteTargets.Told asked = RiteTargets.consentAnswer(caster == target, target.isShiftKeyDown(), RiteTargets.SNEAK_TO_ACCEPT);
             if (asked != null) {
-                RiteTell.refuse(caster, asked.caster());
-                RiteTell.refuse(target, asked.target());
+                RiteTargets.tell(caster, target, asked);
                 return cancel();
             }
             String refusal = awaken(target, level.getGameTime());

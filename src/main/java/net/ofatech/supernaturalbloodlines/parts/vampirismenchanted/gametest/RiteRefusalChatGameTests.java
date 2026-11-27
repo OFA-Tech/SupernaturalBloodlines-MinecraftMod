@@ -61,11 +61,12 @@ public final class RiteRefusalChatGameTests {
 
     @GameTest(template = "empty", templateNamespace = NS)
     public static void aSuccessIsNotInChat(GameTestHelper helper) {
-        if (RiteTestSupport.type(helper, "rite_of_cloaking") == null) {
+        if (!net.ofatech.supernaturalbloodlines.core.EnabledParts.isEnabled("bosses")) {
             SupernaturalBloodlines.LOGGER.info("RiteRefusalChat SKIPPED: the bosses part is off");
             helper.succeed();
             return;
         }
+        helper.assertTrue(RiteTestSupport.type(helper, "rite_of_cloaking") != null, "the bosses part is on but the Cloaking rite is missing");
         RecordingPlayer witch = RecordingPlayer.create(helper);
         BloodlineAccess.set(witch, BloodlineState.NONE.toBuilder().species(Species.WITCH).witchLayer(true).build());
         RiteTestSupport.place(helper, witch);
@@ -86,6 +87,9 @@ public final class RiteRefusalChatGameTests {
      * Every rite of this mod, worked by a plain human at noon with no ingredients: nothing is said twice on a channel, and every action-bar line such a
      * caster gets is a refusal (nothing succeeds for them), so it is in chat too. An answer that was always a chat line (the lineage reveal) stays one.
      */
+    /** The chat lines a rite gives as an answer, not a refusal: whether you carry the werewolf gene. */
+    private static final java.util.Set<String> CHAT_ANSWERS = java.util.Set.of("supernaturalbloodlines.lineage.gene_yes", "supernaturalbloodlines.lineage.gene_no");
+
     @GameTest(template = "empty", templateNamespace = NS, timeoutTicks = 400)
     public static void everyRiteRefusesAPlainCasterOnBothChannels(GameTestHelper helper) {
         long timeBefore = helper.getLevel().getDayTime();
@@ -111,7 +115,10 @@ public final class RiteRefusalChatGameTests {
             boolean refusedHere = false;
             for (String key : p.heardKeys()) {
                 int bar = p.countOnActionBar(key);
-                int chat = p.countInChat(key);
+                int chat = p.countInChat(RecordingPlayer.chatKeyOf(key));
+                if (bar == 0 && chat == 1 && !CHAT_ANSWERS.contains(key)) {
+                    wrong.add(id.getPath() + ": " + key + " came to a plain caster at noon in chat only (a refusal goes through RiteTell)");
+                }
                 if (bar > 1 || chat > 1) {
                     wrong.add(id.getPath() + ": " + key + " bar=" + bar + " chat=" + chat);
                 }

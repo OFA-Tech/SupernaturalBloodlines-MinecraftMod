@@ -29,7 +29,7 @@
       "components": [
         {
           "template": "modopedia:page/headered_text",
-          "text": "Moonstone: craft it from an amethyst shard and a silver ingot, in any order.\n\nNeeds the Werewolves mod.",
+          "text": "Moonstone: craft it from an amethyst shard and a silver ingot (from Werewolves), in any order.\n\nThis rite needs the Werewolves mod.",
           "header": "Lineage: Awaken"
         }
       ]

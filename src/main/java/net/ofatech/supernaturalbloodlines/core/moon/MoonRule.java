@@ -29,7 +29,12 @@ public final class MoonRule {
         if (!needsFullMoon) {
             return isNight(hasFixedTime, dayTime);
         }
-        return isFullMoonNight(hasFixedTime, phase, dayTime) || eclipse && isNight(hasFixedTime, dayTime);
+        return isFullMoonNight(hasFixedTime, phase, dayTime) || eclipseNight(hasFixedTime, dayTime, eclipse);
+    }
+
+    /** The one eclipse rule (R358): a running lunar eclipse counts only inside the night window, in a dimension with a day. */
+    public static boolean eclipseNight(boolean hasFixedTime, long dayTime, boolean eclipse) {
+        return eclipse && isNight(hasFixedTime, dayTime);
     }
 
     /** Dimensions with a fixed time (the Nether, the End) report phase 0 forever, which is not a full moon. */

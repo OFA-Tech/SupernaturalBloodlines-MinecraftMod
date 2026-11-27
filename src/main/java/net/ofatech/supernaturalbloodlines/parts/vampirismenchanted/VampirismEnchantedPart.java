@@ -32,6 +32,7 @@ public final class VampirismEnchantedPart {
             e.register(VampirismEnchantedDataGameTests.class);
             e.register(VampirismEnchantedGameTests.class);
             e.register(net.ofatech.supernaturalbloodlines.parts.vampirismenchanted.gametest.RiteRefusalChatGameTests.class);
+            e.register(net.ofatech.supernaturalbloodlines.parts.vampirismenchanted.gametest.StrangerRefusalGameTests.class);
             e.register(VampirismEnchantedPoppetGameTests.class);
             e.register(net.ofatech.supernaturalbloodlines.parts.vampirismenchanted.gametest.PlagueCurseGameTests.class);
             if (werewolves) {

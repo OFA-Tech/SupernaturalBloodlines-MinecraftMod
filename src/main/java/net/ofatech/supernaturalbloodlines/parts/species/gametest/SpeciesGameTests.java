@@ -91,8 +91,7 @@ public final class SpeciesGameTests {
         RecordingPlayer p = RecordingPlayer.create(helper);
         String key = Outcome.REFUSAL_PREFIX + "has_faction";
         OutcomeExecutor.run(p, new Outcome(BloodlineState.NONE, List.of(Action.JOIN_VAMPIRE), key));
-        helper.assertTrue(p.received(key), "no chat message for " + key);
-        helper.assertTrue(!p.receivedOnActionBar(key), "the refusal went to the action bar, not the chat");
+        helper.assertTrue(p.refusedOnBothChannels(key), "the refusal is not once on the action bar and once in chat (R357): " + p.heard());
         helper.assertTrue(handler(p).getCurrentFaction() == null, "a refused outcome still joined " + handler(p).getCurrentFaction());
         helper.succeed();
     }
