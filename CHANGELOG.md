@@ -1,5 +1,14 @@
 # Changelog
 
+## Unreleased (plan 23 PR-1a: portraits)
+
+- **A player's face sits in a square frame everywhere** (Home, Profile, and the pack, clan, coven and brotherhood rings): the frame is the face plus 4 pixels, its four corner pixels cut, so no corner of the face sticks out of a round ring any more. The faces are 2 px larger inside the same footprint; Home's and Profile's frame no longer starts a pixel left of its column.
+- A ring now keeps a pixel between the square frames of two neighbours, so it holds fewer faces at full size than before (for example 11 instead of 14 for 16 px faces on the widest ring): a big pack shows its faces a step smaller sooner, or counts one or two more under "+N more". Ring names keep 4 px of air from a frame and from each other.
+
+### Rolling back
+
+Nothing is stored: revert the commit.
+
 ## Unreleased (plan 23 PR-0: proofs)
 
 - No player-visible change. New game tests record what the race, human-like, menu and key hooks of the playtest fixes really do (`docs/superpowers/research/plan-23-hooks.md`), and a unit test checks every covered key id against the pack's key list.

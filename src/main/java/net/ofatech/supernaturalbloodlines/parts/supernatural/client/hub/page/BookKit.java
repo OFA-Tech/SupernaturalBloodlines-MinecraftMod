@@ -17,6 +17,7 @@ import net.ofatech.supernaturalbloodlines.shared.hub.kit.TitleFont;
 import net.ofatech.supernaturalbloodlines.shared.hub.Rect;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.KitSprites.Part;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.Shapes;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.PortraitGeometry;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.client.UiKit;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.client.KitDraw;
 import org.jetbrains.annotations.Nullable;
@@ -239,11 +240,12 @@ public final class BookKit {
         PlayerFaceRenderer.draw(g, skin, x, y, size);
     }
 
-    /** A face in a ring of {@code border}. */
+    /** A face of {@code size} in a square frame of {@code border} ({@link PortraitGeometry}): Home, Profile and every ring of faces. */
     public static void portrait(GuiGraphics g, String name, int cx, int cy, int size, int border, int paper) {
-        KitDraw.shape(g, Shapes.Shape.ROUND, cx - size / 2 - 2, cy - size / 2 - 2, size + 4, border);
-        KitDraw.shape(g, Shapes.Shape.ROUND, cx - size / 2 - 1, cy - size / 2 - 1, size + 2, paper);
-        face(g, name, cx - size / 2 + 1, cy - size / 2 + 1, Math.max(6, size - 2));
+        PortraitGeometry.Boxes b = PortraitGeometry.of(cx, cy, size);
+        KitDraw.shape(g, Shapes.Shape.SOFT, b.frame().x(), b.frame().y(), b.frame().w(), border);
+        KitDraw.shape(g, Shapes.Shape.SOFT, b.paper().x(), b.paper().y(), b.paper().w(), paper);
+        face(g, name, b.face().x(), b.face().y(), b.face().w());
     }
 
     private static int lighten(int argb) {

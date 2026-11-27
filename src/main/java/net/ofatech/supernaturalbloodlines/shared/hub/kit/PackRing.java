@@ -3,6 +3,7 @@ package net.ofatech.supernaturalbloodlines.shared.hub.kit;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import net.ofatech.supernaturalbloodlines.shared.hub.Rect;
 
 /**
  * The pack portrait ring: who stands where and how big. Alphas red, Betas gold, Packmates blue, Brothers brown; subordinates (the pack's
@@ -52,16 +53,38 @@ public final class PackRing {
 
     /** The smallest portrait; below this a face is not a face. */
     public static final int MIN_SIZE = 8;
-    /** The ring round a portrait is 2 px outside its face on each side; this is what must stay clear between the centres of two neighbours, on top of the faces: the two rings, 2 px of air and a pixel for the rounding of the positions. */
-    public static final int GAP = 7;
+    /** What must stay clear between the centres of two neighbours, on top of the faces: the two frames ({@link PortraitGeometry#FRAME_EXTRA}), 2 px of air and a pixel for the rounding of the positions. */
+    public static final int GAP = PortraitGeometry.FRAME_EXTRA + 3;
 
-    /** How many portraits of {@code size} fit round a ring of {@code radius}: the chord between two neighbours (not the arc) is at least {@code size + GAP}. */
+    /**
+     * How many portraits of {@code size} fit round a ring of {@code radius}: the chord between two neighbours (not the arc) is at least {@code size + GAP},
+     * and the square frames of two neighbours ({@link PortraitGeometry}) keep a pixel of air between them where the ring runs diagonally.
+     */
     public static int capacity(int radius, int size) {
+        return capacity(radius, size, 200);
+    }
+
+    /** {@link #capacity(int, int)}, but it stops counting at {@code limit}. */
+    private static int capacity(int radius, int size, int limit) {
         int n = 1;
-        while (n < 200 && 2 * radius * Math.sin(Math.PI / (n + 1)) >= size + GAP) {
+        while (n < limit && 2 * radius * Math.sin(Math.PI / (n + 1)) >= size + GAP && squaresClear(radius, size, n + 1)) {
             n++;
         }
         return n;
+    }
+
+    /** Whether {@code n} (two or more) square frames placed as {@link #layout} places them (rounded the same way) stay a pixel apart. */
+    private static boolean squaresClear(int radius, int size, int n) {
+        for (int i = 0; i < n; i++) {
+            double a = -Math.PI / 2 + 2 * Math.PI * i / n;
+            double b = -Math.PI / 2 + 2 * Math.PI * ((i + 1) % n) / n;
+            long dx = Math.abs(Math.round(radius * Math.cos(a)) - Math.round(radius * Math.cos(b)));
+            long dy = Math.abs(Math.round(radius * Math.sin(a)) - Math.round(radius * Math.sin(b)));
+            if (Math.max(dx, dy) < size + PortraitGeometry.FRAME_EXTRA + 1) {
+                return false;
+            }
+        }
+        return true;
     }
 
     /**
@@ -73,10 +96,10 @@ public final class PackRing {
         sorted.sort(Comparator.comparingInt(m -> m.role().ordinal()));
         int use = size;
         // the Alphas and Betas are drawn at the full size and the rest at half, but the ring is spaced for the full size
-        while (use > MIN_SIZE && capacity(radius, use) < sorted.size()) {
+        while (use > MIN_SIZE && capacity(radius, use, sorted.size()) < sorted.size()) {
             use--;
         }
-        int shown = Math.min(sorted.size(), capacity(radius, use));
+        int shown = Math.min(sorted.size(), capacity(radius, use, Math.max(1, sorted.size())));
         List<Slot> out = new ArrayList<>(shown);
         for (int i = 0; i < shown; i++) {
             double a = -Math.PI / 2 + 2 * Math.PI * i / Math.max(1, shown);
@@ -89,9 +112,10 @@ public final class PackRing {
 
     /** Whether a box (a line of text) stands clear of every portrait and its ring ({@code pad} px of air), so a line under the model never runs into a face. */
     public static boolean clearOfFaces(Layout layout, int x, int y, int w, int h, int pad) {
+        Rect box = new Rect(x, y, w, h);
         for (Slot s : layout.slots()) {
-            int half = s.size() / 2 + 2 + pad;
-            if (x < s.x() + half && s.x() - half < x + w && y < s.y() + half && s.y() - half < y + h) {
+            Rect frame = PortraitGeometry.frame(s.x(), s.y(), s.size());
+            if (box.overlaps(new Rect(frame.x() - pad, frame.y() - pad, frame.w() + 2 * pad, frame.h() + 2 * pad))) {
                 return false;
             }
         }
@@ -102,7 +126,7 @@ public final class PackRing {
     public static int moreLabelY(Layout layout, int cy) {
         int bottom = cy;
         for (Slot s : layout.slots()) {
-            bottom = Math.max(bottom, s.y() + s.size() / 2 + 2);
+            bottom = Math.max(bottom, PortraitGeometry.frame(s.x(), s.y(), s.size()).bottom());
         }
         return bottom + 3;
     }
