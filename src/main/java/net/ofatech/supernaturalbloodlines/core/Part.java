@@ -20,43 +20,39 @@ public enum Part {
             List.of("vampirism")),
     SUPERNATURAL_TENSURA("supernaturalTensura", "net.ofatech.supernaturalbloodlines.parts.supernaturaltensura.SupernaturalTensuraPart",
             List.of("vampirism", "tensura")),
-    HUD("hud", "net.ofatech.supernaturalbloodlines.parts.hud.HudPart", List.of()),
-    // no required mods: Enhanced Celestials 2 is found at runtime, and without it the part does nothing
-    CELESTIALS("celestials", "net.ofatech.supernaturalbloodlines.parts.celestials.CelestialsPart", List.of()),
-    // the first entity types of ours: Enchanted already requires GeckoLib, so naming it costs nobody anything (plan 17)
+    HUD("hud", "net.ofatech.supernaturalbloodlines.parts.hud.HudPart", List.of(), List.of("vampirism", "tensura")),
+    CELESTIALS("celestials", "net.ofatech.supernaturalbloodlines.parts.celestials.CelestialsPart", List.of(), List.of("enhancedcelestials2core")),
     BOSSES("bosses", "net.ofatech.supernaturalbloodlines.parts.bosses.BossesPart", List.of("vampirism", "enchanted", "geckolib")),
-    // plan 19: a witch-type performer opens a road to a skill that already exists (Tensura and its addons), and the Rite of Mastery
     EVOLUTION_RITES("evolutionRites", "net.ofatech.supernaturalbloodlines.parts.evolutionrites.EvolutionRitesPart", List.of("vampirism", "enchanted", "tensura"));
 
     private final String configKey;
     private final String initClass;
     private final List<String> requiredMods;
+    private final List<String> anyOfMods;
 
     Part(String configKey, String initClass, List<String> requiredMods) {
+        this(configKey, initClass, requiredMods, List.of());
+    }
+
+    Part(String configKey, String initClass, List<String> requiredMods, List<String> anyOfMods) {
         this.configKey = configKey;
         this.initClass = initClass;
         this.requiredMods = requiredMods;
+        this.anyOfMods = anyOfMods;
     }
 
-    public List<String> requiredMods() {
-        return requiredMods;
-    }
-
-    public String initClass() {
-        return initClass;
-    }
-
-    public String configKey() {
-        return configKey;
-    }
+    public List<String> requiredMods() { return requiredMods; }
+    public List<String> anyOfMods() { return anyOfMods; }
+    public String initClass() { return initClass; }
+    public String configKey() { return configKey; }
 
     public Set<Part> requiredParts() {
         return switch (this) {
-            case SPECIES -> Set.of(VAMPIRISM_ENCHANTED); // reuses its FactionRiteFactory
+            case SPECIES -> Set.of(VAMPIRISM_ENCHANTED);
             case SPECIES_TENSURA -> Set.of(SPECIES);
-            case EVOLUTION_RITES -> Set.of(SPECIES_TENSURA); // the witch types, RiteTargets, the eclipse and the rite unlocks
-            case BOSSES -> Set.of(SPECIES); // NPC Originals are the roots of the lines the species part keeps
-            case ARTIFACTS -> Set.of(VAMPIRISM_ENCHANTED); // reuses its RiteTargets and FactionRiteHooks
+            case EVOLUTION_RITES -> Set.of(SPECIES_TENSURA);
+            case BOSSES -> Set.of(SPECIES);
+            case ARTIFACTS -> Set.of(VAMPIRISM_ENCHANTED);
             case SUPERNATURAL_TENSURA -> Set.of(SUPERNATURAL);
             default -> Set.of();
         };

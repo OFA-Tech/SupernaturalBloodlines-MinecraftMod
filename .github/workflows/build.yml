@@ -47,3 +47,15 @@ jobs:
 
       - name: Run GameTests with the species and artifacts parts off
         run: ./gradlew runGameTestServer "-PpartsOff=species,artifacts" --console=plain
+
+      - name: Run GameTests with no linked mods (zero-mod baseline)
+        run: ./gradlew runGameTestServer -PnoLinkedMods --console=plain
+
+      - name: Run GameTests with Vampirism only
+        run: ./gradlew runGameTestServer -PaddonJars=vampirism --console=plain
+
+      - name: Run GameTests with Tensura only
+        run: ./gradlew runGameTestServer -PaddonJars=tensura --console=plain
+
+      - name: Run GameTests with Enchanted only
+        run: ./gradlew runGameTestServer -PaddonJars=enchanted --console=plain
