@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.EnumSet;
+import java.util.List;
 import java.util.Set;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
