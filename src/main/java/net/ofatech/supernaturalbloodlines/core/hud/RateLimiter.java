@@ -20,7 +20,8 @@ public final class RateLimiter {
     private final Map<UUID, Window> windows = new ConcurrentHashMap<>();
 
     public boolean tryAcquire(UUID player, long nowTick, int limitPerSecond) {
-        Window w = windows.computeIfAbsent(player, k -> new Window());
+        // H2 fix: merge() guarantees atomic creation + access, avoiding race between computeIfAbsent and synchronized
+        Window w = windows.merge(player, new Window(), (existing, fresh) -> existing);
         synchronized (w) {
             // a clock that went backwards (a restarted tick counter) starts a new window too
             if (nowTick < w.start || nowTick - w.start >= WINDOW_TICKS) {
@@ -33,7 +34,8 @@ public final class RateLimiter {
 
     /** True once per window for a player who is over the rate: a flood is told "too quick" once a second, not once per payload (the reply would double the flood). */
     public boolean tellOnce(UUID player, long nowTick) {
-        Window w = windows.computeIfAbsent(player, k -> new Window());
+        // H2 fix: merge() guarantees atomic creation + access, avoiding race between computeIfAbsent and synchronized
+        Window w = windows.merge(player, new Window(), (existing, fresh) -> existing);
         synchronized (w) {
             if (nowTick < w.toldAt || nowTick - w.toldAt >= WINDOW_TICKS) {
                 w.toldAt = nowTick;

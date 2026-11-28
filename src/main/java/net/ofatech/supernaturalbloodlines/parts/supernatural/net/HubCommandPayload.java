@@ -23,6 +23,10 @@ public record HubCommandPayload(String rowId, List<String> args) implements Cust
             HubCommandPayload::new);
 
     public HubCommandPayload {
+        // C2 fix: enforce rowId length at construction to prevent memory pressure from oversized strings
+        if (rowId.length() > 8) {
+            throw new IllegalArgumentException("rowId too long: max 8 chars");
+        }
         args = List.copyOf(args);
     }
 

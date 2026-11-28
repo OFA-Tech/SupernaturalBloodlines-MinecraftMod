@@ -45,6 +45,22 @@ public final class WheelSync {
                 tick(p);
             }
         });
+        // H1 fix: clean up VIEWERS on logout, respawn, or dimension change to prevent memory leak
+        net.neoforged.neoforge.common.NeoForge.EVENT_BUS.addListener((net.neoforged.neoforge.event.entity.player.PlayerEvent.PlayerLoggedOutEvent e) -> {
+            if (e.getEntity() instanceof ServerPlayer p) {
+                close(p);
+            }
+        });
+        net.neoforged.neoforge.common.NeoForge.EVENT_BUS.addListener((net.neoforged.neoforge.event.entity.player.PlayerEvent.PlayerChangedDimensionEvent e) -> {
+            if (e.getEntity() instanceof ServerPlayer p) {
+                close(p);
+            }
+        });
+        net.neoforged.neoforge.common.NeoForge.EVENT_BUS.addListener((net.neoforged.neoforge.event.entity.player.PlayerEvent.PlayerRespawnEvent e) -> {
+            if (e.getEntity() instanceof ServerPlayer p) {
+                close(p);
+            }
+        });
     }
 
     public static boolean viewing(ServerPlayer p) {
