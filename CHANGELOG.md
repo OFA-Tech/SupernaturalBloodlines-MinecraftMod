@@ -1,5 +1,17 @@
 # Changelog
 
+## Unreleased (plan 23 PR-1c: skills and HUD)
+
+- **The Loadout page lists only what a slot can hold.** Vampirism's Vision is not listed (it is a one-key cycle the wheel runs), and a right click on it in the wheel no longer tries a slot. Bite is offered only to a player who can bite, and the server refuses it to anyone else. A grey row now says on the page why: "Can't use now: <reason>".
+- **A slot is freed when its power is gone** (a cure, a faction change, an Alpha who lost the rank): once, with one line on the action bar, and that power is offered again when it comes back. A power you cleared by hand still stays cleared. An old save that put Bite in a human's first slot has it freed.
+- **The wheel's Vision entry needs a vision you have unlocked** (Vampirism's vision skills).
+- **Pack ring:** a name cut beside its face ("Rim…") is drawn whole under or over the face when it fits there. For a pack's Alpha, "Accept an invitation" in the Tensura detail pane is a second button, not the main one (it still shows only with an invitation waiting).
+- Home's kind chip: tested against the server for every way to become a level-1 vampire. The reported "Human" did not reproduce; see the PR.
+
+### Rolling back
+
+Revert the commits. The loadout save format is unchanged; slots freed by the new pass stay empty after a rollback.
+
 ## Unreleased (plan 23 PR-1b: rites)
 
 - **Every rite refusal now also goes to chat**, once, as well as the action bar, so a refusal is not lost when the bar fades. Successes stay on the action bar. A rite of the werewolves without the Werewolves mod says so. Three vague refusals now name what is missing (a closed evolution rite, the item a binding rite needs, the circle's experience levels).

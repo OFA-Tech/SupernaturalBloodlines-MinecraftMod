@@ -116,6 +116,20 @@ public record Loadout(List<Optional<ResourceLocation>> slots, Set<ResourceLocati
         return this;
     }
 
+    /** Every slot holding {@code id} emptied. */
+    public Loadout without(ResourceLocation id) {
+        List<Optional<ResourceLocation>> list = new ArrayList<>(slots);
+        list.replaceAll(s -> s.filter(x -> !x.equals(id)));
+        return new Loadout(list, offered);
+    }
+
+    /** {@code id} no longer counts as offered: it is offered again the next time the player may have it. */
+    public Loadout withoutOffered(ResourceLocation id) {
+        Set<ResourceLocation> next = new java.util.HashSet<>(offered);
+        next.remove(id);
+        return new Loadout(slots, next);
+    }
+
     /** The first slot holding {@code id}, or -1. */
     public int slotOf(ResourceLocation id) {
         return slots.indexOf(Optional.of(id));

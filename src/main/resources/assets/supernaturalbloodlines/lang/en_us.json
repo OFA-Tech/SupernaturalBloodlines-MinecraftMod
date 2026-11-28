@@ -1435,6 +1435,7 @@
   "supernaturalbloodlines.hud.offer.placed": "%s added to slot %s (hub › Slots)",
   "supernaturalbloodlines.hud.offer.full": "%s: assign it in the hub, Slots tab",
   "supernaturalbloodlines.hub.skills.tab.loadout": "Slots",
+  "supernaturalbloodlines.hub.skills.loadout.cant_use": "Can't use now: %s",
   "supernaturalbloodlines.hub.skills.loadout.hint": "Pick an action, then a slot (or a slot, then an action).",
   "supernaturalbloodlines.hub.skills.tab.mastery": "Mastery",
   "supernaturalbloodlines.hub.skills.mastery.hint": "Choose the one skill the Rite of Mastery will master for you. A witch-type performer works the rite; the server checks your choice again.",

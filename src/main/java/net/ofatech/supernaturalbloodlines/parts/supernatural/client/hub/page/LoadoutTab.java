@@ -58,15 +58,20 @@ public final class LoadoutTab {
 
     private int action(HubScreen.Frame f, Rect r, int y, LoadoutAccess.Entry e) {
         HubTheme t = f.theme();
-        Rect hit = new Rect(r.x() - 1, y - 1, r.w() + 2, ROW);
+        boolean grey = e.greyedReason() != null;
+        Rect hit = new Rect(r.x() - 1, y - 1, r.w() + 2, LoadoutTabModel.rowHeight(grey));
         boolean picked = e.id().equals(model.pickedAction());
         if (picked) {
             f.g.fill(hit.x(), hit.y(), hit.right(), hit.bottom(), (t.accent() & 0xFFFFFF) | 0x22000000);
         }
-        boolean grey = e.greyedReason() != null;
         ClientIcons.draw(f.g, e.icon(), r.x(), y, 16, grey ? 0.4f : 1f);
         String text = LabelFit.cut(e.name().getString(), r.w() - 22, f.font()::width);
         f.g.drawString(f.font(), text, r.x() + 20, y + 4, grey ? t.muted() : t.ink(), false);
+        if (grey) {
+            // the reason is on the page, not only in the tooltip
+            String why = Component.translatable(LoadoutTabModel.CANT_USE, Component.translatable(e.greyedReason())).getString();
+            f.g.drawString(f.font(), LabelFit.cut(why, r.w() - 22, f.font()::width), r.x() + 20, y + 4 + LoadoutTabModel.REASON_LINE, t.muted(), false);
+        }
         List<Component> tip = new java.util.ArrayList<>(List.of(e.name()));
         if (e.note() != null) {
             tip.add(e.note());
@@ -79,7 +84,7 @@ public final class LoadoutTab {
         if (f.focused(id)) {
             t.drawFocus(f.g, hit);
         }
-        return y + ROW + 1;
+        return y + LoadoutTabModel.rowHeight(grey) + 1;
     }
 
     private void slots(HubScreen.Frame f, List<LoadoutAccess.Entry> entries) {

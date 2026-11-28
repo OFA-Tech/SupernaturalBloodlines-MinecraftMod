@@ -32,9 +32,34 @@ public final class LoadoutGameTests {
         helper.succeed();
     }
 
+    /**
+     * A player who can bite (plan 23: the server refuses Bite to anyone else): a Vampirism vampire. Without Vampirism nobody can bite, so the test checks that
+     * a human is refused and ends: @return the biter, or null when the test is over
+     */
+    static ServerPlayer biter(GameTestHelper helper) {
+        if (!net.ofatech.supernaturalbloodlines.parts.hud.bite.BiteService.usable()) {
+            ServerPlayer human = TestPlayers.create(helper);
+            helper.assertTrue(LoadoutService.set(human, 0, Loadout.BITE) != null, "Bite was put in a slot without Vampirism");
+            helper.succeed();
+            return null;
+        }
+        return LoadoutVampirismGameTests.vampire(helper);
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void setBiteIsRefusedForAHumanWhoCannotBite(GameTestHelper helper) {
+        ServerPlayer human = TestPlayers.create(helper);
+        String refusal = LoadoutService.set(human, 0, Loadout.BITE);
+        helper.assertTrue(refusal != null && refusal.endsWith("not_unlocked"), "a human put Bite in a slot: " + refusal);
+        helper.succeed();
+    }
+
     @GameTest(template = "empty", templateNamespace = NS)
     public static void biteCanMoveAndClear(GameTestHelper helper) {
-        ServerPlayer p = TestPlayers.create(helper);
+        ServerPlayer p = biter(helper);
+        if (p == null) {
+            return;
+        }
         helper.assertTrue(LoadoutService.set(p, 0, Loadout.BITE) == null, "Bite into slot 1 was refused");
         helper.assertTrue(LoadoutService.set(p, 3, Loadout.BITE) == null, "Bite into slot 4 was refused");
         helper.assertTrue(LoadoutService.set(p, 0, null) == null, "clearing slot 1 was refused");
@@ -70,7 +95,10 @@ public final class LoadoutGameTests {
 
     @GameTest(template = "empty", templateNamespace = NS)
     public static void loadoutSurvivesDeath(GameTestHelper helper) {
-        ServerPlayer p = TestPlayers.create(helper);
+        ServerPlayer p = biter(helper);
+        if (p == null) {
+            return;
+        }
         LoadoutService.set(p, 4, Loadout.BITE);
         ServerPlayer clone = TestPlayers.create(helper);
         clone.restoreFrom(p, false); // what a respawn does
@@ -81,7 +109,10 @@ public final class LoadoutGameTests {
 
     @GameTest(template = "empty", templateNamespace = NS)
     public static void payloadIdAndSlotAreOnlyNames(GameTestHelper helper) {
-        ServerPlayer p = TestPlayers.create(helper);
+        ServerPlayer p = biter(helper);
+        if (p == null) {
+            return;
+        }
         HudNet.forgetRateLimit(p);
         helper.assertTrue(HudNet.handleSetLoadout(p, new SetLoadoutPayload(2, Loadout.BITE.toString())) == null, "Bite by payload was refused");
         helper.assertTrue(LoadoutService.get(p).get(2).equals(Optional.of(Loadout.BITE)), "the payload did not set the slot");

@@ -8,13 +8,15 @@ import net.ofatech.supernaturalbloodlines.core.hud.OfferNotice;
 import net.neoforged.neoforge.network.PacketDistributor;
 import net.ofatech.supernaturalbloodlines.core.attachment.ModAttachments;
 import net.ofatech.supernaturalbloodlines.core.hud.Loadout;
+import net.ofatech.supernaturalbloodlines.core.hud.LoadoutRules;
 import net.ofatech.supernaturalbloodlines.parts.hud.net.LoadoutSyncPayload;
 import net.ofatech.supernaturalbloodlines.shared.hud.ExtraActions;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * The server side of the six Supernatural-mode slots. The ids a player may assign are Bite, or an action the player's current faction has
- * unlocked. A loadout is never cleared when the faction changes (a cured vampire keeps the list; its slots simply cannot be used).
+ * The server side of the six Supernatural-mode slots. The ids a player may assign are Bite (for a player who can bite), or an action the player's
+ * current faction has unlocked. A slot whose power is gone (a cure, a faction change, an Alpha who lost the rank) is freed once a second and the player
+ * is told; that power is offered again when it comes back ({@link #prune}).
  */
 public final class LoadoutService {
     public static final String KEY = "supernaturalbloodlines.hud.loadout.";
@@ -41,6 +43,7 @@ public final class LoadoutService {
         ExtraActions.onCooldown(net.ofatech.supernaturalbloodlines.parts.hud.net.ActionCooldownPayload::send);
         net.neoforged.neoforge.common.NeoForge.EVENT_BUS.addListener((net.neoforged.neoforge.event.tick.PlayerTickEvent.Post e) -> {
             if (e.getEntity() instanceof ServerPlayer p && p.tickCount % 20 == 0 && !(p instanceof net.neoforged.neoforge.common.util.FakePlayer)) {
+                prune(p);
                 offerDefaults(p);
             }
         });
@@ -77,6 +80,48 @@ public final class LoadoutService {
         told.forEach(m -> p.displayClientMessage(m, true));
     }
 
+    /** Whether the player can use {@code id} now: what {@link #set} accepts. */
+    public static boolean available(ServerPlayer p, ResourceLocation id) {
+        if (Loadout.BITE.equals(id)) {
+            return net.ofatech.supernaturalbloodlines.parts.hud.bite.BiteService.canBite(p);
+        }
+        java.util.Optional<ExtraActions.Action> extra = ExtraActions.get(id);
+        if (extra.isPresent()) {
+            return extra.get().available(p);
+        }
+        return ModList.get().isLoaded("vampirism") && FactionActions.byId(id) != null && FactionActions.unlocked(p, id);
+    }
+
+    /**
+     * Frees every slot whose power the player can no longer use, once, with one action-bar line per power, and marks it as not offered so it comes back
+     * when the power does ({@link LoadoutRules#prune}). A power the player cleared by hand is in no slot, so it stays out. @return whether anything changed
+     */
+    public static boolean prune(ServerPlayer p) {
+        Loadout before = get(p);
+        java.util.Set<ResourceLocation> stale = LoadoutRules.stale(before, id -> available(p, id));
+        if (stale.isEmpty()) {
+            return false;
+        }
+        p.setData(ModAttachments.HUD_LOADOUT, LoadoutRules.prune(before, id -> !stale.contains(id)));
+        sync(p);
+        for (ResourceLocation id : stale) {
+            p.displayClientMessage(Component.translatable(KEY + "freed", nameOf(id)), true);
+        }
+        return true;
+    }
+
+    private static Component nameOf(ResourceLocation id) {
+        if (Loadout.BITE.equals(id)) {
+            return Component.translatable("supernaturalbloodlines.hud.bite.name");
+        }
+        java.util.Optional<ExtraActions.Action> extra = ExtraActions.get(id);
+        if (extra.isPresent()) {
+            return extra.get().name();
+        }
+        var action = ModList.get().isLoaded("vampirism") ? FactionActions.byId(id) : null;
+        return action == null ? Component.literal(id.toString()) : action.getName();
+    }
+
     private static final String KEY_OFFER = "supernaturalbloodlines.hud.offer.";
     /** "player/action" pairs already told that there was no room, for this session. */
     private static final java.util.Set<String> FULL_TOLD = java.util.concurrent.ConcurrentHashMap.newKeySet();
@@ -103,6 +148,9 @@ public final class LoadoutService {
     public static String set(ServerPlayer p, int slot, @Nullable ResourceLocation id) {
         if (!Loadout.validSlot(slot)) {
             return KEY + "bad_slot";
+        }
+        if (Loadout.BITE.equals(id) && !net.ofatech.supernaturalbloodlines.parts.hud.bite.BiteService.canBite(p)) {
+            return KEY + "not_unlocked";
         }
         java.util.Optional<ExtraActions.Action> extra = id == null ? java.util.Optional.empty() : ExtraActions.get(id);
         if (extra.isPresent()) {

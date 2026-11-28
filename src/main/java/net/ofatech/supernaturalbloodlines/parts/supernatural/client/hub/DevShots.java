@@ -184,6 +184,39 @@ public final class DevShots {
     }
 
     /** {@code .species=AUGUSTINE}: the single-player player is made a vampire of that species on the integrated server (the pictures then show the real server state). */
+    /** {@code .command=a;b}: server commands run as the player (operator), so a shot shows the state a player would make by typing them. */
+    private static void asCommands(Minecraft mc, String commands) {
+        var server = mc.getSingleplayerServer();
+        if (server == null) {
+            return;
+        }
+        server.execute(() -> {
+            var p = server.getPlayerList().getPlayers().get(0);
+            for (String c : commands.split(";")) {
+                server.getCommands().performPrefixedCommand(p.createCommandSourceStack().withPermission(4), c.trim());
+            }
+        });
+    }
+
+    /** The kind the server and the client see, side by side in the log (plan 23 Task 4). */
+    private static void logKind(Minecraft mc) {
+        var server = mc.getSingleplayerServer();
+        var client = mc.player;
+        var cf = de.teamlapen.vampirism.api.VampirismAPI.factionPlayerHandler(client);
+        SupernaturalBloodlines.LOGGER.info("DEVSHOTS kind client: faction={} level={} bloodline={} races={}", cf.getCurrentFaction() == null ? null : cf.getCurrentFaction().getID(),
+                cf.getCurrentLevel(), net.ofatech.supernaturalbloodlines.core.BloodlineAccess.get(client),
+                net.ofatech.supernaturalbloodlines.shared.supernatural.PlayerRaces.of(client));
+        if (server != null) {
+            server.execute(() -> {
+                var p = server.getPlayerList().getPlayers().get(0);
+                var sf = de.teamlapen.vampirism.api.VampirismAPI.factionPlayerHandler(p);
+                SupernaturalBloodlines.LOGGER.info("DEVSHOTS kind server: faction={} level={} bloodline={} races={}", sf.getCurrentFaction() == null ? null : sf.getCurrentFaction().getID(),
+                        sf.getCurrentLevel(), net.ofatech.supernaturalbloodlines.core.BloodlineAccess.get(p),
+                        net.ofatech.supernaturalbloodlines.shared.supernatural.PlayerRaces.of(p));
+            });
+        }
+    }
+
     private static void asSpecies(Minecraft mc, String name) {
         var server = mc.getSingleplayerServer();
         if (server == null) {
@@ -234,6 +267,12 @@ public final class DevShots {
         }
         if (worldTicks == 1 && System.getProperty(PROPERTY + ".species") != null) {
             asSpecies(mc, System.getProperty(PROPERTY + ".species"));
+        }
+        if (worldTicks == 2 && System.getProperty(PROPERTY + ".command") != null) {
+            asCommands(mc, System.getProperty(PROPERTY + ".command"));
+        }
+        if (worldTicks == WORLD_TICKS - 1) {
+            logKind(mc);
         }
         if (worldTicks++ < WORLD_TICKS) {
             return;

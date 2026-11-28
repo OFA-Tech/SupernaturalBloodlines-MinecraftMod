@@ -83,6 +83,20 @@ public final class RingLabels {
         return null;
     }
 
+    /**
+     * A name that was cut beside its face ("Rim…") moves under or over the face when it fits whole there: a whole name beats a cut one in the place it
+     * liked. {@code taken} is everything else on the page (the faces and the other names).
+     *
+     * @return the rectangle to draw the name in: the whole one, or {@code got} when the name was not cut or no whole place clears
+     */
+    public static @Nullable Rect preferWhole(Request asked, @Nullable Rect got, int faceX, int faceY, int faceSize, List<Rect> taken, Rect bounds, int gap) {
+        if (got == null || got.w() >= asked.w()) {
+            return got;
+        }
+        Rect whole = underOrOver(asked, faceX, faceY, faceSize, taken, bounds, asked.w(), gap);
+        return whole != null ? whole : got;
+    }
+
     /** The height of one line of a name. */
     public static final int LINE = 9;
 

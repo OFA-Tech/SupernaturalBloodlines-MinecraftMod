@@ -10,6 +10,7 @@ import net.neoforged.fml.ModList;
 import net.ofatech.supernaturalbloodlines.SupernaturalBloodlines;
 import net.ofatech.supernaturalbloodlines.core.attachment.ModAttachments;
 import net.ofatech.supernaturalbloodlines.core.hud.Loadout;
+import net.ofatech.supernaturalbloodlines.core.hud.LoadoutRules;
 import net.ofatech.supernaturalbloodlines.parts.hud.action.LoadoutService;
 import net.ofatech.supernaturalbloodlines.parts.hud.client.vampirism.ClientActions;
 import net.ofatech.supernaturalbloodlines.parts.hud.net.SetLoadoutPayload;
@@ -60,9 +61,16 @@ public final class ClientLoadout implements LoadoutAccess.Provider {
             }
             return list;
         }
-        list.add(new LoadoutAccess.Entry(Loadout.BITE, Component.translatable("supernaturalbloodlines.hud.bite.name"), BITE_ICON, BiteView.note(), BiteView.greyed()));
+        var player = Minecraft.getInstance().player;
+        if (player == null) {
+            return list;
+        }
+        // the server refuses Bite to a player who cannot bite (LoadoutService.set), so the page does not offer it
+        if (LoadoutRules.biteListed(net.ofatech.supernaturalbloodlines.parts.hud.bite.BiteService.canBite(player))) {
+            list.add(new LoadoutAccess.Entry(Loadout.BITE, Component.translatable("supernaturalbloodlines.hud.bite.name"), BITE_ICON, BiteView.note(), BiteView.greyed()));
+        }
         for (var a : net.ofatech.supernaturalbloodlines.shared.hud.ExtraActions.all()) {
-            if (net.minecraft.client.Minecraft.getInstance().player != null && a.available(net.minecraft.client.Minecraft.getInstance().player)) {
+            if (a.available(player)) {
                 list.add(new LoadoutAccess.Entry(a.id(), a.name(), a.icon(), a.note(), null));
             }
         }
