@@ -10,10 +10,11 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.world.item.Item;
-import net.neoforged.fml.ModList;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 import net.ofatech.supernaturalbloodlines.SupernaturalBloodlines;
+import net.ofatech.supernaturalbloodlines.core.EnabledParts;
+import net.ofatech.supernaturalbloodlines.core.Part;
 
 /**
  * Every item this mod registers (whatever parts and linked mods are on in this run) has a {@code models/item} file and an English name.
@@ -47,8 +48,10 @@ public final class ItemModelCoverageGameTests {
                 noName.add(item.getDescriptionId());
             }
         }
-        // with no linked mod every part that registers items is off, and an empty registry is the right answer
-        helper.assertTrue(seen > 0 || !ModList.get().isLoaded("vampirism"), "no item of ours is registered, so the check proved nothing");
+        // if no item-registering part is enabled, an empty registry is the right answer
+        boolean anyItemPart = EnabledParts.snapshot().stream()
+                .anyMatch(p -> p == Part.ARTIFACTS || p == Part.SPECIES || p == Part.BOSSES || p == Part.SUPERNATURAL);
+        helper.assertTrue(seen > 0 || !anyItemPart, "no item of ours is registered, so the check proved nothing");
         helper.assertTrue(noModel.isEmpty(), "registered items with no models/item file: " + noModel);
         helper.assertTrue(noName.isEmpty(), "registered items with no lang key: " + noName);
         helper.succeed();

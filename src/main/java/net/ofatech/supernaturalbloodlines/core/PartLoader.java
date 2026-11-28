@@ -14,7 +14,9 @@ public final class PartLoader {
     public static Set<Part> enabledParts(Predicate<String> modLoaded, Predicate<Part> configEnabled) {
         Set<Part> parts = EnumSet.noneOf(Part.class);
         for (Part p : Part.values()) {
-            if (configEnabled.test(p) && p.requiredMods().stream().allMatch(modLoaded)) {
+            if (configEnabled.test(p)
+                    && p.requiredMods().stream().allMatch(modLoaded)
+                    && (p.anyOfMods().isEmpty() || p.anyOfMods().stream().anyMatch(modLoaded))) {
                 parts.add(p);
             }
         }
@@ -29,6 +31,9 @@ public final class PartLoader {
         String missing = part.requiredMods().stream().filter(modLoaded.negate()).collect(Collectors.joining(", "));
         if (!missing.isEmpty()) {
             return "disabled (missing: " + missing + ")";
+        }
+        if (!part.anyOfMods().isEmpty() && part.anyOfMods().stream().noneMatch(modLoaded)) {
+            return "disabled (needs one of: " + String.join(", ", part.anyOfMods()) + ")";
         }
         if (!configEnabled.test(part)) {
             return "disabled (config)";
