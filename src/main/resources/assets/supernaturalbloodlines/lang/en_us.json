@@ -2363,6 +2363,7 @@
   "supernaturalbloodlines.group.full.pack": "That pack is full.",
   "supernaturalbloodlines.group.wrong_type.pack": "That is not something a pack can do.",
   "supernaturalbloodlines.group.type_changed.pack": "Your group is now a pack.",
+  "supernaturalbloodlines.group.type_lost.pack": "You no longer fit your pack and have been removed.",
   "supernaturalbloodlines.group.noun.pack": "pack",
   "supernaturalbloodlines.group.noun.clan": "clan",
   "supernaturalbloodlines.group.noun.coven": "coven",

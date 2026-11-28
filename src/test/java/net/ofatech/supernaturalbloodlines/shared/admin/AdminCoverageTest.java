@@ -49,6 +49,7 @@ class AdminCoverageTest {
             new Known(BossesConfig.FILE, BossesConfig.SPEC, true, "BossesConfig.java"),
             new Known(net.ofatech.supernaturalbloodlines.parts.species.group.GroupsConfig.FILE, net.ofatech.supernaturalbloodlines.parts.species.group.GroupsConfig.SPEC, true, "GroupsConfig.java"),
         new Known(net.ofatech.supernaturalbloodlines.parts.evolutionrites.EvolutionRitesConfig.FILE, net.ofatech.supernaturalbloodlines.parts.evolutionrites.EvolutionRitesConfig.SPEC, true, "EvolutionRitesConfig.java"),
+            new Known(net.ofatech.supernaturalbloodlines.parts.enchantedcurses.EnchantedCursesConfig.FILE, net.ofatech.supernaturalbloodlines.parts.enchantedcurses.EnchantedCursesConfig.SPEC, true, "EnchantedCursesConfig.java"),
             new Known(HudClientConfig.FILE, HudClientConfig.SPEC, false, "HudClientConfig.java"),
             new Known(HubClientConfig.FILE, HubClientConfig.SPEC, false, "HubClientConfig.java"));
 
