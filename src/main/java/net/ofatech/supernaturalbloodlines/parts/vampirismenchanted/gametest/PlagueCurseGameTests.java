@@ -133,7 +133,7 @@ public final class PlagueCurseGameTests {
         List<HallucinationPayload.Kind> seen = new ArrayList<>();
         try {
             HallucinationPayload.overrideSpy((who, kind) -> seen.add(kind));
-            EnchantedCursesConfig.override("insanity_interval_seconds", 1);
+            VampirismEnchantedConfig.override("insanity_interval_seconds", 1);
             InsanityCurse curse = apply(p, PlagueCurses.INSANITY, 0);
             for (int i = 1; i <= 12; i++) {
                 curse.tick(p, 0, i);
@@ -160,7 +160,7 @@ public final class PlagueCurseGameTests {
         List<HallucinationPayload.Kind> seen = new ArrayList<>();
         try {
             HallucinationPayload.overrideSpy((who, kind) -> seen.add(kind));
-            EnchantedCursesConfig.override("insanity_interval_seconds", 1);
+            VampirismEnchantedConfig.override("insanity_interval_seconds", 1);
             VampirismEnchantedConfig.override("insanity_enabled", false);
             InsanityCurse curse = apply(p, PlagueCurses.INSANITY, 0);
             for (int i = 1; i <= 200; i++) {

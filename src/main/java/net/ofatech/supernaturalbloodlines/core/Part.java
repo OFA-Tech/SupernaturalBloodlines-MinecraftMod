@@ -49,8 +49,8 @@ public enum Part {
     public Set<Part> requiredParts() {
         return switch (this) {
             case SPECIES -> Set.of();
-            case SPECIES_TENSURA -> Set.of(SPECIES, SPECIES_RITES);
-            case EVOLUTION_RITES -> Set.of(SPECIES_RITES);
+            case SPECIES_TENSURA -> Set.of(SPECIES);
+            case EVOLUTION_RITES -> Set.of(SPECIES);
             case BOSSES -> Set.of(SPECIES);
             case ARTIFACTS -> Set.of();
             case SUPERNATURAL_TENSURA -> Set.of(SUPERNATURAL);

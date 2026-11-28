@@ -48,7 +48,10 @@ public final class GroupIndex extends SavedData {
     private static final String MARKS = "marks";
     private static final String CURSES = "curses";
     private static final String BREAKERS = "code_breakers";
-    private static final Set<String> KNOWN = Set.of(VERSION, IDS, TYPES, TYPE_SINCE, RANKS, CHANNEL, CONSENT, VOTES, BANS, COOLDOWNS, CHARTERS, CONTESTS, MARKS, CURSES, BREAKERS);
+    private static final String MULTI_TYPES = "multi_types";
+    private static final String TYPE_STAMPS = "type_stamps";
+    private static final String MAIN_TYPE = "main_type";
+    private static final Set<String> KNOWN = Set.of(VERSION, IDS, TYPES, TYPE_SINCE, RANKS, CHANNEL, CONSENT, VOTES, BANS, COOLDOWNS, CHARTERS, CONTESTS, MARKS, CURSES, BREAKERS, MULTI_TYPES, TYPE_STAMPS, MAIN_TYPE);
     private static final String KEY = "key";
     private static final String VALUE = "value";
     private static final String TYPE = "type";
@@ -74,6 +77,10 @@ public final class GroupIndex extends SavedData {
     // group -> its open challenge or running contest (plan 20c)
     private final Map<UUID, ContestRow> contests = new HashMap<>();
     // player rows of the brotherhood (plan 20d), not group rows: they outlive a lead change, a dissolved group and a type switch
+    // plan 20e: multi-type group rows (set of active types, per-type stamps, computed main type)
+    private final Map<UUID, Set<String>> multiTypes = new HashMap<>();
+    private final Map<UUID, Map<String, Long>> typeStamps = new HashMap<>();
+    private final Map<UUID, String> mainType = new HashMap<>();
     private final Map<UUID, Integer> marks = new HashMap<>();
     private final Map<UUID, Long> curses = new HashMap<>();
     private final Map<UUID, BreakerRow> breakers = new HashMap<>();
