@@ -300,6 +300,9 @@ public final class AdminEntries {
                 "code_strikes_days", "code_exile_days", "brotherhood_curse_hours")) {
             all.add(SettingEntry.of(GROUPS_FILE, gr, key, INT));
         }
+        all.add(SettingEntry.of(GROUPS_FILE, gr, "multi_type_groups", BOOL));
+        all.add(SettingEntry.of(GROUPS_FILE, gr, "circle_npcs_per_member", INT));
+        all.add(SettingEntry.of(GROUPS_FILE, gr, "type_lost_grace_seconds", INT));
         ALL = List.copyOf(all);
     }
 

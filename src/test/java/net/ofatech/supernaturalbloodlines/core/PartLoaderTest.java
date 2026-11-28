@@ -78,12 +78,13 @@ class PartLoaderTest {
     }
 
     @Test
-    void artifactsNeedVampirismEnchanted() {
-        Set<Part> parts = PartLoader.enabledParts(id -> true, p -> p != Part.VAMPIRISM_ENCHANTED);
-        assertFalse(parts.contains(Part.ARTIFACTS));
-        assertTrue(Part.ARTIFACTS.requiredParts().contains(Part.VAMPIRISM_ENCHANTED));
-        assertEquals("disabled (requires [VAMPIRISM_ENCHANTED])",
-                PartLoader.status(Part.ARTIFACTS, id -> true, p -> p != Part.VAMPIRISM_ENCHANTED));
+    void artifactsNeedOnlyVampirism() {
+        assertTrue(Part.ARTIFACTS.requiredParts().isEmpty());
+        assertEquals(List.of("vampirism"), Part.ARTIFACTS.requiredMods());
+        Set<Part> vampOnly = PartLoader.enabledParts(Set.of("vampirism")::contains, p -> true);
+        assertTrue(vampOnly.contains(Part.ARTIFACTS));
+        Set<Part> noVamp = PartLoader.enabledParts(id -> !id.equals("vampirism"), p -> true);
+        assertFalse(noVamp.contains(Part.ARTIFACTS));
     }
 
     @Test
@@ -101,8 +102,11 @@ class PartLoaderTest {
     }
 
     @Test
-    void supernaturalNeedsOnlyVampirism() {
-        assertEquals(EnumSet.of(Part.SUPERNATURAL, Part.HUD), PartLoader.enabledParts(Set.of("vampirism")::contains, p -> true));
+    void supernaturalAndArtifactsNeedOnlyVampirism() {
+        Set<Part> vampOnly = PartLoader.enabledParts(Set.of("vampirism")::contains, p -> true);
+        assertTrue(vampOnly.contains(Part.SUPERNATURAL));
+        assertTrue(vampOnly.contains(Part.HUD));
+        assertTrue(vampOnly.contains(Part.ARTIFACTS));
         assertFalse(PartLoader.enabledParts(id -> !id.equals("vampirism"), p -> true).contains(Part.SUPERNATURAL));
     }
 
