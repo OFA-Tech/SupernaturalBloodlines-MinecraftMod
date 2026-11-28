@@ -52,6 +52,9 @@ public final class SpeciesTensuraPart {
             net.ofatech.supernaturalbloodlines.parts.speciestensura.apex.ApexFallback.register();
         }
         GhoulRace.register();
+        container.registerConfig(ModConfig.Type.COMMON, RaceMapperConfig.SPEC, RaceMapperConfig.FILE);
+        AdminSpecs.register(RaceMapperConfig.FILE, RaceMapperConfig.SPEC);
+        RaceMapperListener.register();
         SubordinateLink.register();
         NpcSubordinates.register();
         SireNaming.register();
@@ -65,6 +68,8 @@ public final class SpeciesTensuraPart {
             e.register(SirelineTensuraGameTests.class);
             e.register(GhoulTensuraGameTests.class);
             e.register(HumanLikeProbeGameTests.class);
+            e.register(net.ofatech.supernaturalbloodlines.parts.speciestensura.gametest.RaceMapperGameTests.class);
+            e.register(net.ofatech.supernaturalbloodlines.parts.speciestensura.gametest.HumanLikeSetGameTests.class);
             if (EnabledParts.isEnabled("supernatural")) {
                 e.register(SpeciesTensuraSkillRuleGameTests.class);
             }
