@@ -72,6 +72,11 @@ repositories {
         url = 'https://maven.minecraftforge.net'
         content { includeGroup 'com.github.glitchfiend' }
     }
+    maven {
+        name = 'Wispforest'
+        url = 'https://maven.wispforest.io/releases'
+        content { includeGroup 'io.wispforest.accessories' }
+    }
 }
 
 base {

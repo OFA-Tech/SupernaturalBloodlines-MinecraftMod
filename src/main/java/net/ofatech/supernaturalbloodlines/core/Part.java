@@ -15,11 +15,11 @@ public enum Part {
     SPECIES_TENSURA("speciesTensura", "net.ofatech.supernaturalbloodlines.parts.speciestensura.SpeciesTensuraPart",
             List.of("vampirism", "enchanted", "tensura")),
     ARTIFACTS("artifacts", "net.ofatech.supernaturalbloodlines.parts.artifacts.ArtifactsPart",
-            List.of("vampirism", "enchanted")),
-    SUPERNATURAL("supernatural", "net.ofatech.supernaturalbloodlines.parts.supernatural.SupernaturalPart",
             List.of("vampirism")),
+    SUPERNATURAL("supernatural", "net.ofatech.supernaturalbloodlines.parts.supernatural.SupernaturalPart",
+            List.of(), List.of("vampirism", "tensura", "werewolves")),
     SUPERNATURAL_TENSURA("supernaturalTensura", "net.ofatech.supernaturalbloodlines.parts.supernaturaltensura.SupernaturalTensuraPart",
-            List.of("vampirism", "tensura")),
+            List.of("tensura")),
     HUD("hud", "net.ofatech.supernaturalbloodlines.parts.hud.HudPart", List.of(), List.of("vampirism", "tensura")),
     CELESTIALS("celestials", "net.ofatech.supernaturalbloodlines.parts.celestials.CelestialsPart", List.of(), List.of("enhancedcelestials2core")),
     BOSSES("bosses", "net.ofatech.supernaturalbloodlines.parts.bosses.BossesPart", List.of("vampirism", "enchanted", "geckolib")),
@@ -48,11 +48,11 @@ public enum Part {
 
     public Set<Part> requiredParts() {
         return switch (this) {
-            case SPECIES -> Set.of(VAMPIRISM_ENCHANTED);
-            case SPECIES_TENSURA -> Set.of(SPECIES);
-            case EVOLUTION_RITES -> Set.of(SPECIES_TENSURA);
+            case SPECIES -> Set.of();
+            case SPECIES_TENSURA -> Set.of(SPECIES, SPECIES_RITES);
+            case EVOLUTION_RITES -> Set.of(SPECIES_RITES);
             case BOSSES -> Set.of(SPECIES);
-            case ARTIFACTS -> Set.of(VAMPIRISM_ENCHANTED);
+            case ARTIFACTS -> Set.of();
             case SUPERNATURAL_TENSURA -> Set.of(SUPERNATURAL);
             default -> Set.of();
         };
