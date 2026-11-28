@@ -644,6 +644,9 @@ public final class GroupIndex extends SavedData {
     private void retire(UUID group) {
         types.remove(group);
         typeSince.remove(group);
+        multiTypes.remove(group);
+        typeStamps.remove(group);
+        mainType.remove(group);
         votes.values().removeIf(v -> v.group.equals(group));
         cooldowns.remove(group);
         charters.remove(group);

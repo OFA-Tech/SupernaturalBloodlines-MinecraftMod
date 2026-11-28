@@ -72,10 +72,15 @@ class PartLoaderTest {
     }
 
     @Test
-    void speciesNeedsVampirismEnchanted() {
-        Set<Part> parts = PartLoader.enabledParts(id -> true, p -> p != Part.VAMPIRISM_ENCHANTED);
-        assertFalse(parts.contains(Part.SPECIES));
-        assertFalse(parts.contains(Part.SPECIES_TENSURA));
+    void speciesNeedsVampirismAndEnchanted() {
+        // SPECIES requires both vampirism AND enchanted (requiredMods, not anyOf)
+        Set<Part> noEnchanted = PartLoader.enabledParts(id -> !id.equals("enchanted"), p -> true);
+        assertFalse(noEnchanted.contains(Part.SPECIES));
+        Set<Part> noVamp = PartLoader.enabledParts(id -> !id.equals("vampirism"), p -> true);
+        assertFalse(noVamp.contains(Part.SPECIES));
+        // With both present, SPECIES is enabled
+        Set<Part> both = PartLoader.enabledParts(Set.of("vampirism", "enchanted")::contains, p -> true);
+        assertTrue(both.contains(Part.SPECIES));
     }
 
     @Test
@@ -103,20 +108,30 @@ class PartLoaderTest {
     }
 
     @Test
-    void supernaturalAndArtifactsNeedOnlyVampirism() {
+    void supernaturalUsesAnyOfMods() {
+        // SUPERNATURAL uses anyOfMods: enabled if ANY of vampirism/tensura/werewolves is present
         Set<Part> vampOnly = PartLoader.enabledParts(Set.of("vampirism")::contains, p -> true);
         assertTrue(vampOnly.contains(Part.SUPERNATURAL));
         assertTrue(vampOnly.contains(Part.HUD));
         assertTrue(vampOnly.contains(Part.ARTIFACTS));
-        assertFalse(PartLoader.enabledParts(id -> !id.equals("vampirism"), p -> true).contains(Part.SUPERNATURAL));
+        // Still enabled with only tensura (anyOf)
+        Set<Part> tensuraOnly = PartLoader.enabledParts(Set.of("tensura")::contains, p -> true);
+        assertTrue(tensuraOnly.contains(Part.SUPERNATURAL));
+        // Disabled when NONE of the anyOf mods are present
+        Set<Part> none = PartLoader.enabledParts(id -> false, p -> true);
+        assertFalse(none.contains(Part.SUPERNATURAL));
     }
 
     @Test
-    void supernaturalTensuraNeedsVampirismTensuraAndSupernatural() {
+    void supernaturalTensuraNeedsTensuraAndSupernatural() {
+        // SUPERNATURAL_TENSURA requires tensura mod + SUPERNATURAL part
         Set<String> loaded = Set.of("vampirism", "tensura");
         assertTrue(PartLoader.enabledParts(loaded::contains, p -> true).contains(Part.SUPERNATURAL_TENSURA));
+        // Disabled without tensura mod
         assertFalse(PartLoader.enabledParts(Set.of("vampirism")::contains, p -> true).contains(Part.SUPERNATURAL_TENSURA));
-        assertFalse(PartLoader.enabledParts(Set.of("tensura")::contains, p -> true).contains(Part.SUPERNATURAL_TENSURA));
+        // Enabled with only tensura (SUPERNATURAL uses anyOf so it's also enabled)
+        assertTrue(PartLoader.enabledParts(Set.of("tensura")::contains, p -> true).contains(Part.SUPERNATURAL_TENSURA));
+        // Disabled when SUPERNATURAL part is off
         Set<Part> off = PartLoader.enabledParts(id -> true, p -> p != Part.SUPERNATURAL);
         assertFalse(off.contains(Part.SUPERNATURAL_TENSURA));
         assertEquals("disabled (requires [SUPERNATURAL])",

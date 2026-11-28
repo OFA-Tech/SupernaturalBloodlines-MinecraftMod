@@ -20,8 +20,18 @@ import net.ofatech.supernaturalbloodlines.shared.tensura.RaceTags;
  * and {@link #adminRemove}. The set is rebuilt lazily when the registry changes or after an admin mutation.
  */
 public final class HumanLikeSet {
-    private static final TagKey<ManasRace> HUMAN_LIKE =
-            TagKey.create(RaceAPI.getRaceRegistryKey(), ResourceLocation.fromNamespaceAndPath("tensura", "human_like"));
+    // Deferred: RaceAPI may not be on the classpath in unit tests; only resolve when build() runs on a live server.
+    private static volatile TagKey<ManasRace> humanLikeTag;
+
+    private static TagKey<ManasRace> getHumanLikeTag() {
+        TagKey<ManasRace> t = humanLikeTag;
+        if (t == null) {
+            t = TagKey.create(RaceAPI.getRaceRegistryKey(), ResourceLocation.fromNamespaceAndPath("tensura", "human_like"));
+            humanLikeTag = t;
+        }
+        return t;
+    }
+
     private static final Set<String> VAMPIRE_LINE = Set.of(
             "tensura:vampire", "tensura:vampire_overcomer", "tensura:vampire_lord", "tensura:divine_vampire");
 
@@ -34,7 +44,14 @@ public final class HumanLikeSet {
     public static Set<String> current() {
         Set<String> c = cached;
         if (c == null) {
-            c = build();
+            try {
+                c = build();
+            } catch (NoClassDefFoundError | ExceptionInInitializerError noManasCore) {
+                // Unit tests or environments without ManasCore: return only admin mutations.
+                Set<String> fallback = new TreeSet<>(adminAdded);
+                fallback.removeAll(adminRemoved);
+                c = Collections.unmodifiableSet(fallback);
+            }
             cached = c;
         }
         return c;
@@ -62,7 +79,7 @@ public final class HumanLikeSet {
         Set<String> base = new TreeSet<>();
         for (ResourceLocation id : RaceAPI.getRaceRegistry().getIds()) {
             ManasRace race = RaceAPI.getRaceRegistry().get(id);
-            if (race != null && race.createDefaultInstance().is(HUMAN_LIKE)) {
+            if (race != null && race.createDefaultInstance().is(getHumanLikeTag())) {
                 String s = id.toString();
                 if (!s.startsWith(SupernaturalBloodlines.MODID + ":")) {
                     base.add(s);

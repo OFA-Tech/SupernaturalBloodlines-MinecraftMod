@@ -139,6 +139,14 @@ public final class GroupsConfig {
             "Real hours the curse for an unmarked brother's death lasts, unless a Potential awakens first. A curse already running keeps its end even when this is changed.");
     private static final Flag KOL_WARNING_ENABLED = flag("kol_warning_enabled", true, "The other brothers are warned when a brother is being hunted.");
 
+    // plan 20e: multi-type group config keys
+    private static final Flag MULTI_TYPE_GROUPS = flag("multi_type_groups", false,
+            "Multi-type groups on. Off: every group keeps its single type as before.");
+    private static final Whole CIRCLE_NPCS_PER_MEMBER = whole("circle_npcs_per_member", 1, 0, 10,
+            "The most NPC subordinates a coven circle counts per member for potency.");
+    private static final Whole TYPE_LOST_GRACE_SECONDS = whole("type_lost_grace_seconds", 30, 0, 3600,
+            "Seconds a member who no longer fits any of the group's types stays before being removed.");
+
     static {
         SPEC = B.build();
     }

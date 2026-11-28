@@ -22,7 +22,7 @@ public final class MultiTypes {
         if (l.werewolf() || hybrid) {
             types.add(GroupType.PACK);
         }
-        if (vampireLike && (hybrid || isVampireSpecies(l.species()))) {
+        if (vampireLike || isVampireSpecies(l.species())) {
             types.add(GroupType.CLAN);
         }
         if (magicUser || l.species() == Species.TRIBRID) {
@@ -78,6 +78,6 @@ public final class MultiTypes {
     }
 
     private static boolean isVampireSpecies(Species s) {
-        return s == Species.NONE || s == Species.ORIGINAL || s == Species.AUGUSTINE || s == Species.SIPHONER;
+        return s == Species.ORIGINAL || s == Species.AUGUSTINE;
     }
 }

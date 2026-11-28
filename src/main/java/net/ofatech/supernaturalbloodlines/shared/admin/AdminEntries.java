@@ -303,6 +303,12 @@ public final class AdminEntries {
         all.add(SettingEntry.of(GROUPS_FILE, gr, "multi_type_groups", BOOL));
         all.add(SettingEntry.of(GROUPS_FILE, gr, "circle_npcs_per_member", INT));
         all.add(SettingEntry.of(GROUPS_FILE, gr, "type_lost_grace_seconds", INT));
+        // plan 23 Task 10: race mapper config
+        String rm = "supernaturalbloodlines-race_mapper.toml";
+        for (String key : List.of("bloodfiend_to_vampire", "direwolf_to_werewolf", "spirit_wolf_to_werewolf")) {
+            all.add(SettingEntry.of(rm, "speciesTensura", key, BOOL));
+        }
+        all.add(SettingEntry.of(rm, "speciesTensura", "bloodfiend_level_floors", LIST));
         ALL = List.copyOf(all);
     }
 
