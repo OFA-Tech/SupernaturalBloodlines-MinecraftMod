@@ -19,6 +19,7 @@ import net.neoforged.neoforge.event.server.ServerStoppedEvent;
 import net.ofatech.supernaturalbloodlines.core.group.GroupRank;
 import net.ofatech.supernaturalbloodlines.core.group.GroupType;
 import net.ofatech.supernaturalbloodlines.core.group.GroupSwitch;
+import net.ofatech.supernaturalbloodlines.core.group.MultiTypes;
 import net.ofatech.supernaturalbloodlines.core.group.clan.CharterState;
 import net.ofatech.supernaturalbloodlines.core.group.circle.Consent;
 import net.ofatech.supernaturalbloodlines.core.group.coven.VoteKind;
@@ -47,7 +48,10 @@ public final class GroupIndex extends SavedData {
     private static final String MARKS = "marks";
     private static final String CURSES = "curses";
     private static final String BREAKERS = "code_breakers";
-    private static final Set<String> KNOWN = Set.of(VERSION, IDS, TYPES, TYPE_SINCE, RANKS, CHANNEL, CONSENT, VOTES, BANS, COOLDOWNS, CHARTERS, CONTESTS, MARKS, CURSES, BREAKERS);
+    private static final String MULTI_TYPES = "multi_types";
+    private static final String TYPE_STAMPS = "type_stamps";
+    private static final String MAIN_TYPE = "main_type";
+    private static final Set<String> KNOWN = Set.of(VERSION, IDS, TYPES, TYPE_SINCE, RANKS, CHANNEL, CONSENT, VOTES, BANS, COOLDOWNS, CHARTERS, CONTESTS, MARKS, CURSES, BREAKERS, MULTI_TYPES, TYPE_STAMPS, MAIN_TYPE);
     private static final String KEY = "key";
     private static final String VALUE = "value";
     private static final String TYPE = "type";
@@ -73,6 +77,10 @@ public final class GroupIndex extends SavedData {
     // group -> its open challenge or running contest (plan 20c)
     private final Map<UUID, ContestRow> contests = new HashMap<>();
     // player rows of the brotherhood (plan 20d), not group rows: they outlive a lead change, a dissolved group and a type switch
+    // plan 20e: multi-type group rows (set of active types, per-type stamps, computed main type)
+    private final Map<UUID, Set<String>> multiTypes = new HashMap<>();
+    private final Map<UUID, Map<String, Long>> typeStamps = new HashMap<>();
+    private final Map<UUID, String> mainType = new HashMap<>();
     private final Map<UUID, Integer> marks = new HashMap<>();
     private final Map<UUID, Long> curses = new HashMap<>();
     private final Map<UUID, BreakerRow> breakers = new HashMap<>();
@@ -233,19 +241,70 @@ public final class GroupIndex extends SavedData {
         return group;
     }
 
-    /** A type this build does not know answers {@code PACK} and stays stored as it was. */
+    /** A type this build does not know answers {@code PACK} and stays stored as it was. Backward compat: returns main type. */
     public GroupType typeOf(UUID group) {
+        Set<String> mt = multiTypes.get(group);
+        if (mt != null && !mt.isEmpty()) {
+            return MultiTypes.mainType(mt.stream().map(id -> GroupType.parse(id).orElse(null)).filter(java.util.Objects::nonNull).collect(java.util.stream.Collectors.toSet()));
+        }
         return GroupType.parse(types.getOrDefault(group, GroupType.PACK.id())).orElse(GroupType.PACK);
     }
 
+    /** Backward compat: writes a singleton set alongside the old single-type keys. */
     public void setType(UUID group, GroupType type, long now) {
         types.put(group, type.id());
         typeSince.put(group, now);
-        setDirty();
+        setTypeSet(group, Set.of(type), now);
     }
 
     public long typeSince(UUID group) {
+        Map<String, Long> stamps = typeStamps.get(group);
+        if (stamps != null) {
+            String main = mainTypeOf(group).id();
+            Long s = stamps.get(main);
+            if (s != null) {
+                return s;
+            }
+        }
         return typeSince.getOrDefault(group, 0L);
+    }
+
+    /** The active type set for a group; empty when no row exists. */
+    public Set<GroupType> typesOf(UUID group) {
+        Set<String> raw = multiTypes.get(group);
+        if (raw == null || raw.isEmpty()) {
+            String single = types.get(group);
+            if (single != null) {
+                return GroupType.parse(single).map(Set::of).orElse(Set.of());
+            }
+            return Set.of();
+        }
+        return raw.stream().map(id -> GroupType.parse(id).orElse(null)).filter(java.util.Objects::nonNull).collect(java.util.stream.Collectors.toUnmodifiableSet());
+    }
+
+    /** Writes the full type set with per-type stamps and computed main type; also populates old single-type keys for backward compat. */
+    public void setTypeSet(UUID group, Set<GroupType> typeSet, long now) {
+        Set<String> ids = typeSet.stream().map(GroupType::id).sorted().collect(java.util.stream.Collectors.toUnmodifiableSet());
+        multiTypes.put(group, ids);
+        Map<String, Long> stamps = typeStamps.computeIfAbsent(group, k -> new HashMap<>());
+        for (String id : ids) {
+            stamps.putIfAbsent(id, now);
+        }
+        stamps.keySet().retainAll(ids);
+        GroupType main = MultiTypes.mainType(typeSet);
+        mainType.put(group, main.id());
+        types.put(group, main.id());
+        typeSince.put(group, stamps.getOrDefault(main.id(), now));
+        setDirty();
+    }
+
+    /** The main type of a group (first in canonical order); PACK when no row exists. */
+    public GroupType mainTypeOf(UUID group) {
+        String m = mainType.get(group);
+        if (m != null) {
+            return GroupType.parse(m).orElse(GroupType.PACK);
+        }
+        return typeOf(group);
     }
 
     /** The rank the member holds in a group of {@code type}; a rank of another type is dormant (kept, never shown), so it answers {@code NONE} here. */

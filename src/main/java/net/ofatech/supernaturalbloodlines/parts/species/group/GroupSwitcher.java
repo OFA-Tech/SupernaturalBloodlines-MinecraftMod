@@ -1,8 +1,11 @@
 package net.ofatech.supernaturalbloodlines.parts.species.group;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Consumer;
 import net.minecraft.server.MinecraftServer;
@@ -15,6 +18,7 @@ import net.neoforged.neoforge.server.ServerLifecycleHooks;
 import net.ofatech.supernaturalbloodlines.core.BloodlineAccess;
 import net.ofatech.supernaturalbloodlines.core.group.GroupSwitch;
 import net.ofatech.supernaturalbloodlines.core.group.GroupType;
+import net.ofatech.supernaturalbloodlines.core.group.MultiTypes;
 import net.ofatech.supernaturalbloodlines.parts.species.group.coven.CovenText;
 import net.ofatech.supernaturalbloodlines.parts.species.pack.PackIndex;
 import net.ofatech.supernaturalbloodlines.parts.species.pack.PackMembers;
