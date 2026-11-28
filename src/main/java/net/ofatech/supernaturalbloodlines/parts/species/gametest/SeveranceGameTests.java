@@ -8,6 +8,7 @@ import net.ofatech.supernaturalbloodlines.SupernaturalBloodlines;
 import net.ofatech.supernaturalbloodlines.core.BloodlineAccess;
 import net.ofatech.supernaturalbloodlines.core.bloodline.BloodlineState;
 import net.ofatech.supernaturalbloodlines.core.bloodline.Species;
+import net.neoforged.fml.ModList;
 import net.ofatech.supernaturalbloodlines.gametest.TestPlayers;
 import net.ofatech.supernaturalbloodlines.parts.species.SpeciesRegistries;
 import net.ofatech.supernaturalbloodlines.parts.species.sireline.Compulsion;
@@ -37,6 +38,7 @@ public final class SeveranceGameTests {
 
     @GameTest(template = "empty", templateNamespace = NS)
     public static void severedHybridCanHurtTheSire(GameTestHelper helper) {
+        if (!ModList.get().isLoaded("werewolves")) { helper.succeed(); return; }
         ServerPlayer sire = TestPlayers.createDuelist(helper);
         ServerPlayer hybrid = TestPlayers.createDuelist(helper);
         try {
@@ -102,6 +104,7 @@ public final class SeveranceGameTests {
 
     @GameTest(template = "empty", templateNamespace = NS)
     public static void aNewSireEndsTheSeverance(GameTestHelper helper) {
+        if (!ModList.get().isLoaded("werewolves")) { helper.succeed(); return; }
         ServerPlayer first = TestPlayers.createDuelist(helper);
         ServerPlayer second = TestPlayers.createDuelist(helper);
         ServerPlayer hybrid = TestPlayers.createDuelist(helper);

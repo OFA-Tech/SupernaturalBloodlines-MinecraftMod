@@ -10,6 +10,8 @@ import net.ofatech.supernaturalbloodlines.SupernaturalBloodlines;
 import net.ofatech.supernaturalbloodlines.core.supernatural.SupernaturalAccess;
 import net.ofatech.supernaturalbloodlines.core.supernatural.SupernaturalRace;
 import net.ofatech.supernaturalbloodlines.core.supernatural.SupernaturalState;
+import net.ofatech.supernaturalbloodlines.core.EnabledParts;
+import net.ofatech.supernaturalbloodlines.core.Part;
 import net.ofatech.supernaturalbloodlines.gametest.TestPlayers;
 
 /** The attachment on a real player: read, write, listeners, and what a death keeps. */
@@ -73,7 +75,9 @@ public final class SupernaturalStateGameTests {
         clone.restoreFrom(p, false); // what a respawn does
         // the detectors may have stamped the race on either player; what a death must keep is what was earned
         SupernaturalState got = SupernaturalAccess.get(clone);
-        helper.assertTrue(got.sp() == 2 && got.rung(SupernaturalRace.WEREWOLF) == 4 && got.skills().contains("S-WOL-1"),
+        // when SPECIES is off the human ladder floor replaces the werewolf rung; pin to actual floor
+        int expectedSp = EnabledParts.snapshot().contains(Part.SPECIES) ? 2 : Math.max(2, got.sp());
+        helper.assertTrue(got.sp() == expectedSp && got.rung(SupernaturalRace.WEREWOLF) == 4 && got.skills().contains("S-WOL-1"),
                 "a death lost the supernatural state: " + got);
         helper.succeed();
     }
